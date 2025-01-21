@@ -1,0 +1,3696 @@
+{
+  "layers": {
+    "base": {
+      "tiles": [
+        {
+          "x": 1,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 1,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 2,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 3,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 4,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 5,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 6,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 6,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 5,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 4,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 3,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 2,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 1,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 2
+          }
+        },
+        {
+          "x": 1,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 1,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 1,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 1,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 2,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 3,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 4,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 5,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 6,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 6,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 6,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 6,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 6,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 6,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 5,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 4,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 3,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 2,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 4
+          }
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 2,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 3,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 4,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 5,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 9,
+            "row": 4
+          }
+        },
+        {
+          "x": 3,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 4
+          }
+        },
+        {
+          "x": 2,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 4,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 5,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 5,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 4,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 3,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 2,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 2,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 4
+          }
+        },
+        {
+          "x": 3,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 4,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 5,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 7,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 7,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 3
+          }
+        },
+        {
+          "x": 8,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 9,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 10,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 2
+          }
+        },
+        {
+          "x": 11,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 12,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 13,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 14,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 8,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 9,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 4
+          }
+        },
+        {
+          "x": 10,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 11,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 12,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 9,
+            "row": 4
+          }
+        },
+        {
+          "x": 13,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 14,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 1,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 2,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 3,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 4,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 5,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 6,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 7,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 7,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 7,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 6,
+            "row": 2
+          }
+        },
+        {
+          "x": 7,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 7,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 8,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 9,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 10,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 1
+          }
+        },
+        {
+          "x": 11,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 12,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 13,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 14,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 8,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 9,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 10,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 11,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 12,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 13,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 14,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 0,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 1
+          }
+        },
+        {
+          "x": 7,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 1
+          }
+        },
+        {
+          "x": 7,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 4
+          }
+        },
+        {
+          "x": 8,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 9,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 10,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 11,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 12,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 13,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 14,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 15,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 15,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 15,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 15,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 15,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 4
+          }
+        },
+        {
+          "x": 15,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 15,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 16,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 4
+          }
+        },
+        {
+          "x": 16,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 15,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 23,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 9,
+            "row": 4
+          }
+        },
+        {
+          "x": 23,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 23,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 23,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 23,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 23,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 4
+          }
+        },
+        {
+          "x": 23,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 22,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 21,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 9,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 17,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 4
+          }
+        },
+        {
+          "x": 16,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 16,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 16,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 4
+          }
+        },
+        {
+          "x": 18,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 4
+          }
+        },
+        {
+          "x": 21,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 15,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 15,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 17,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 19,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 22,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 22,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 21,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 20,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 17,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 20,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 19,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 4
+          }
+        },
+        {
+          "x": 19,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 9,
+            "row": 4
+          }
+        },
+        {
+          "x": 19,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 20,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 21,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 20,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 19,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 2
+          }
+        },
+        {
+          "x": 17,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 2
+          }
+        },
+        {
+          "x": 17,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 10,
+            "row": 3
+          }
+        },
+        {
+          "x": 21,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 7,
+            "row": 4
+          }
+        },
+        {
+          "x": 20,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 4
+          }
+        },
+        {
+          "x": 19,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 18,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 3
+          }
+        },
+        {
+          "x": 17,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 19,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 20,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 21,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 22,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 17,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 20,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 21,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 22,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 19,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 14,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 14,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 14,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 14,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 24,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 21,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 21,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 6,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 2
+          }
+        },
+        {
+          "x": 16,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 1
+          }
+        },
+        {
+          "x": 23,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 1
+          }
+        },
+        {
+          "x": 24,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 1
+          }
+        },
+        {
+          "x": 23,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "x": 24,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 4,
+            "row": 4
+          }
+        },
+        {
+          "x": 14,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 4
+          }
+        },
+        {
+          "x": 16,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 1,
+            "row": 4
+          }
+        },
+        {
+          "x": 16,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 17,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 22,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 1
+          }
+        },
+        {
+          "x": 23,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 17,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 19,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 20,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 21,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 22,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 18,
+          "y": 14,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 2,
+            "row": 1
+          }
+        },
+        {
+          "x": 12,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 12,
+            "row": 5
+          }
+        },
+        {
+          "x": 13,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 12,
+            "row": 5
+          }
+        }
+      ]
+    },
+    "collision": {
+      "tiles": [
+        {
+          "x": 2,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 1,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 0,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 0,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 0,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 0,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 0,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 3,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 4,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 5,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 6,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 7,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 7,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 8,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 9,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 10,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 11,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 12,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 13,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 14,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 15,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 16,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 17,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 18,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 18,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 18,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 18,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 16,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 16,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 17,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 18,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 19,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 20,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 21,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 22,
+          "y": 12,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 23,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 23,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 23,
+          "y": 9,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 21,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 21,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 21,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 21,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 22,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 23,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 24,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 24,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 24,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 24,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 24,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 24,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 14,
+          "y": -3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 14,
+          "y": -2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 14,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 14,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 24,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 15,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 16,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 17,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 18,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 19,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 20,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 21,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 22,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 23,
+          "y": -5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 7,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 6,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 5,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 4,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 3,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 2,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 1,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 8,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 9,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 10,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 11,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 12,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 13,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 14,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 16,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 23,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 22,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 17,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        }
+      ]
+    },
+    "decor": {
+      "tiles": [
+        {
+          "x": 1,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 3
+          }
+        },
+        {
+          "x": 2,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 3
+          }
+        },
+        {
+          "x": 1,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 2
+          }
+        },
+        {
+          "x": 2,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 2
+          }
+        },
+        {
+          "x": 10,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 12,
+            "row": 5
+          }
+        },
+        {
+          "x": 6,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 11,
+            "row": 2
+          }
+        },
+        {
+          "x": 6,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 11,
+            "row": 3
+          }
+        },
+        {
+          "x": 13,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 1
+          }
+        },
+        {
+          "x": 14,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 1
+          }
+        },
+        {
+          "x": 8,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 1
+          }
+        },
+        {
+          "x": 11,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 1
+          }
+        },
+        {
+          "x": 17,
+          "y": 5,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 1
+          }
+        },
+        {
+          "x": 22,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 11,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 11,
+            "row": 3
+          }
+        },
+        {
+          "x": 22,
+          "y": 3,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 11,
+            "row": 3
+          }
+        },
+        {
+          "x": 23,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 11,
+            "row": 2
+          }
+        },
+        {
+          "x": 17,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 5
+          }
+        },
+        {
+          "x": 18,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 5
+          }
+        },
+        {
+          "x": 19,
+          "y": 11,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 13,
+            "row": 5
+          }
+        },
+        {
+          "x": 18,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 1
+          }
+        },
+        {
+          "x": 21,
+          "y": 13,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 8,
+            "row": 1
+          }
+        }
+      ]
+    },
+    "entities": {
+      "tiles": [
+        {
+          "x": 2,
+          "y": 4,
+          "sprite_id": {
+            "tilesheet": "ui",
+            "col": 1,
+            "row": 2
+          }
+        },
+        {
+          "x": 18,
+          "y": -1,
+          "sprite_id": {
+            "tilesheet": "ui",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 20,
+          "y": 10,
+          "sprite_id": {
+            "tilesheet": "ui",
+            "col": 4,
+            "row": 2
+          }
+        },
+        {
+          "x": 4,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "ui",
+            "col": 2,
+            "row": 2
+          }
+        },
+        {
+          "x": 23,
+          "y": 2,
+          "sprite_id": {
+            "tilesheet": "ui",
+            "col": 3,
+            "row": 2
+          }
+        }
+      ]
+    },
+    "overlay": {
+      "tiles": [
+        {
+          "x": 1,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 2,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 3,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 4,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 5,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 6,
+          "y": 0,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 8,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 9,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 10,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 12,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 13,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 7,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 4
+          }
+        },
+        {
+          "x": 14,
+          "y": 1,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 6,
+            "row": 4
+          }
+        },
+        {
+          "x": 15,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 16,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 17,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 18,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 19,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 20,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 21,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 22,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 23,
+          "y": -4,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 17,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 22,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 3,
+            "row": 4
+          }
+        },
+        {
+          "x": 21,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 4
+          }
+        },
+        {
+          "x": 18,
+          "y": 8,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 6,
+            "row": 4
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "samples": {
+    "14": {
+      "sprite_id": {
+        "tilesheet": "cosmic_lilac",
+        "col": 6,
+        "row": 8
+      }
+    },
+    "15": {
+      "sprite_id": {
+        "tilesheet": "cosmic_lilac",
+        "col": 2,
+        "row": 8
+      }
+    },
+    "16": {
+      "sprite_id": {
+        "tilesheet": "ui",
+        "col": 2,
+        "row": 2
+      }
+    },
+    "17": {
+      "sprite_id": {
+        "tilesheet": "ui",
+        "col": 3,
+        "row": 2
+      }
+    },
+    "18": {
+      "sprite_id": {
+        "tilesheet": "ui",
+        "col": 4,
+        "row": 2
+      }
+    },
+    "19": {
+      "sprite_id": {
+        "tilesheet": "cosmic_lilac",
+        "col": 6,
+        "row": 8
+      }
+    },
+    "20": {
+      "sprite_id": {
+        "tilesheet": "cosmic_lilac",
+        "col": 7,
+        "row": 8
+      }
+    },
+    "21": {
+      "sprite_id": {
+        "tilesheet": "cosmic_lilac",
+        "col": 8,
+        "row": 8
+      }
+    },
+    "22": {
+      "sprite_id": {
+        "tilesheet": "cosmic_lilac",
+        "col": 6,
+        "row": 8
+      }
+    },
+    "23": {
+      "sprite_id": {
+        "tilesheet": "cosmic_lilac",
+        "col": 6,
+        "row": 8
+      }
+    }
+  }
+}

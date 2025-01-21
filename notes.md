@@ -1,0 +1,6 @@
+ - rogue like
+ - check point allow you to save progress
+ - can go back and try new paths
+ - when you do, the world rerolls
+ - different endings, unlock other endings, returnal styles
+ - 
