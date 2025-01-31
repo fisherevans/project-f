@@ -1,0 +1,100 @@
+package runtime
+
+import (
+	game2 "fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/states/adventure"
+	"fisherevans.com/project/f/internal/game/states/state_selector"
+	"fisherevans.com/project/f/internal/game/states/tools/map_editor"
+	"fisherevans.com/project/f/internal/util"
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
+	"image/color"
+	"math"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"runtime"
+	"time"
+)
+
+func Run() {
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
+
+	cfg := opengl.WindowConfig{
+		Title:     "Project F",
+		Bounds:    pixel.R(0, 0, game2.GameWidth*3.5, game2.GameHeight*5),
+		Resizable: true,
+		VSync:     true,
+	}
+	window, err := opengl.NewWindow(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx := game2.NewContext(state_selector.New(
+		state_selector.Destination{
+			Name: "Adventure",
+			State: func() game2.State {
+				return adventure.New("dummy")
+			},
+		},
+		state_selector.Destination{
+			Name: "Map Editor",
+			State: func() game2.State {
+				return map_editor.New(window)
+			},
+		},
+	))
+
+	// Create the fixed-size canvas
+	canvas := opengl.NewCanvas(pixel.R(0, 0, game2.GameWidth, game2.GameHeight))
+	canvas.SetSmooth(false)
+
+	last := time.Now()
+	frameStats := util.NewFrameStats(600)
+	gameLogicStats := util.NewFrameStats(600)
+
+	var m runtime.MemStats
+
+	for !window.Closed() {
+		if window.JustPressed(pixel.KeyF4) {
+			os.Exit(0)
+		}
+
+		// Calculate the time delta
+		now := time.Now()
+		deltaTime := now.Sub(last).Seconds()
+		frameStats.AddFrameTime(deltaTime)
+		last = now
+
+		window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
+		canvas.Clear(color.RGBA{R: 10, G: 10, B: 10, A: 255})
+
+		// Calculate scale and offset for whole-number scaling
+		windowWidth, windowHeight := window.Bounds().Size().XY()
+		scaleX := math.Floor(windowWidth / game2.GameWidth)
+		scaleY := math.Floor(windowHeight / game2.GameHeight)
+		ctx.CanvasScale = math.Min(scaleX, scaleY) // Use the smaller scale
+		canvasMatrix := pixel.IM.Scaled(pixel.ZV, ctx.CanvasScale).Moved(window.Bounds().Center())
+		windowMousePosition := window.MousePosition()
+		ctx.CanvasMousePosition = canvasMatrix.Unproject(windowMousePosition).Add(canvas.Bounds().Center())
+
+		ctx.Update(window)
+		ctx.GetActiveState().OnTick(ctx, canvas, canvas.Bounds(), deltaTime)
+
+		canvas.Draw(window, canvasMatrix)
+
+		runtime.ReadMemStats(&m)
+		ctx.DebugTL("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
+		ctx.DebugTL("Tile Delta %s", frameStats)
+		ctx.DebugTL("Game Logic %s", gameLogicStats)
+		game2.RenderDebugLines(window, ctx.PopDebugLines())
+
+		gameLogicDur := time.Now().Sub(now).Seconds()
+		gameLogicStats.AddFrameTime(gameLogicDur)
+
+		window.Update()
+	}
+}
