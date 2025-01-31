@@ -101,7 +101,7 @@ In between runs, you can use facilities on your research vessel.
 - **Manage Loadouts**: Animech loadouts can be created, updated, saved, and loaded into your Animech. This allows you to alter what capabilities, combat strategies, and Animetric Cores you have available for your next run.
 - **Receive Communications**: You may be sent messages from Thanadox Industries or other people you come across in your travels.
 
-### Special Events
+## Special Events
 
 Beyond the core game loop, special events can happen that grant special rewards or progress the story:
 

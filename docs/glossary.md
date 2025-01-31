@@ -43,6 +43,8 @@
 
 ## RPG Elements / Stats
 
+> *More on combat [here](combat-and-progression.md)...*
+
   - **Animechs:**
 
     - **Shield** (SHLD) is the temporary amount of damage that can be taken before Sync begins taking damage

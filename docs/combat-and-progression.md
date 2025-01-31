@@ -1,4 +1,9 @@
-- 
+# Combat & Progression
+
+
+
+
+
 - When exploring, you will come across Specimen, which are agressive and fight you.
 - You can choose to run away, defeat, or capture it.
   - To run away, attempt - chance to fail based on ratio of your level to the specimen.
