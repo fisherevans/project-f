@@ -62,7 +62,7 @@ You learn later on that:
 
 ### World Building
 
-Context about the world this game is set in
+Context about the world this game is set in...
 
 ## Chapters
 
@@ -107,6 +107,8 @@ While exploring, you find evidence of nefarious acts done by the company
 - You find a way to still release the data, as well as proof of all the bad things both sides were doing.
 - Both organization have to close up shop after the backlash
 - you start an independent research network that makes all their research public and is transparent about their practices
+
+TODO, make the end worth while...
 
 ## Additional Ideas
 

@@ -1,12 +1,13 @@
-# Project F
+# Project F (Primortal?)
 
-> The title is a work in progress. The letter F might intidcate how many times I've started a game and not finished it.
+> The title is a work in progress. The letter F might indicate how many times I've started a game and not finished it. I'm leaning towards "Primortal" which is [fairly unique](https://www.google.com/search?q=primortal&source=hp&oq=primortal).
 
-A party-based rogue-like collect-em-all space RPG, designed to be played in the form factor of a Game Boy Advance.
+A single player, party-based, rogue-like, collect-em-all, space RPG, designed to be played in the form factor of a Game Boy Advance.
 
 - [Game Summary (Below)](#game-summary)
 - [Glossary](glossary.md)
 - [Story](story.md)
+- [Types](types.md)
 - [Combat and Progression](combat-and-progression.md)
 - [Requirements](requirements.md)
 
@@ -51,12 +52,15 @@ While exploring as your Animech:
   - These could be other human characters, other Animechs, military robots, and more.
   - You cannot capture Specimen in these encounters, nor try to escape.
   - Defeating them grant experience points, research points, and other items & resources.
+- When battling:
+  - Your Animech can load a Animetric Core of a Primortal to gain it's abilities, strengths, weaknesses, and physical traits.
+  - When fighting, combatants use skills to deal damage to their opponent of a certain skill/damage type. The recipient's body type determine how effective that damage is.
+  
 - You will likely find one or more boss encounters through a Biome. These are stronger enemies, but offer greater rewards.
   - Combat during these encounters may have special rules you need to follow or adapt to.
   - Some bosses are Specimen that can be captured.
 - You will come across NPCs, settlements, traders, items, and other types interactive encounters that will progress the story or offer unique opportunities to obtain various resources.
   - These encounters will progress the story and unlock coordinates of other planets with new biomes to explore.
-
 - You will encounter checkpoints. These are locations that:
   - Have the equipment necessary to heal your Animech
   - Re-sync your Primortals recovering any lost SYNC in battle

@@ -45,14 +45,14 @@
 
 > *More on combat [here](combat-and-progression.md)...*
 
-  - **Animechs:**
+- **Animechs:**
 
     - **Shield** (SHLD) is the temporary amount of damage that can be taken before Sync begins taking damage
     - **Integrity** (INTG) is the base health of the Animech, depleted after the Primortals are desynced, or while not in an imprinted mode.
     - **Experience** (EXP) is gained from combat encounters and levels up the Animech
     - The level of the animech adds an upper cap to the skill tree, requiring higher levels to unlock newer skills for Primortals
 
-    **Primortals:**
+- **Primortals:**
 
     - **Sync** (SYNC) determines the Primortal's endurance in battle, damage taken after the Shielf is depleted.
     - **Kinetic** (KIN) increases physical skill effectiveness
@@ -60,4 +60,11 @@
 
     - **Research Points** (RPTS) are gained from combat encounters and from capturing like-specimen
       - They can be spent to either increase Primortal stats, or unlock Primortal skills 
+
+- **Body Type**: The physical characteristics of a Specimen
+    - Organic, Metal, Rock, Crystal, Synthetic, Liquid, Gas, Abyssal
+
+- **Skill Type**: The type of damage dealt by a skill
+    - Kinetic, Voltaic, Thermal, Sonic, Magnetic, Acidic, Gamma, Abyssal
+- **Affinity**: Of a skill type, applies bonuses to attack and defense of that type.
 
