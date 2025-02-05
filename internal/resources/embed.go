@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -112,12 +111,7 @@ func save[T any](source *map[string]T, localResource LocalResource, resourceName
 	}
 
 	// Check if the local file exists
-	_, packageFilePath, _, ok := runtime.Caller(0)
-	if !ok {
-		return fmt.Errorf("unable to determine caller")
-	}
-	folder := filepath.Dir(packageFilePath)
-	localPath := filepath.Join(folder, localResource.FileRoot, resourceName+"."+localResource.FileExtension)
+	localPath := filepath.Join(assets.LocalFolderPath(), localResource.FileRoot, resourceName+"."+localResource.FileExtension)
 	if _, err := os.Stat(localPath); err == nil {
 		backupSuffix := time.Now().Format(".backup_2006-01-02_15-04-05")
 		backupPath := localPath + backupSuffix

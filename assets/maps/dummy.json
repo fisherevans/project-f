@@ -3396,55 +3396,6 @@
         }
       ]
     },
-    "entities": {
-      "tiles": [
-        {
-          "x": 2,
-          "y": 4,
-          "sprite_id": {
-            "tilesheet": "ui",
-            "col": 1,
-            "row": 2
-          }
-        },
-        {
-          "x": 18,
-          "y": -1,
-          "sprite_id": {
-            "tilesheet": "ui",
-            "col": 2,
-            "row": 2
-          }
-        },
-        {
-          "x": 20,
-          "y": 10,
-          "sprite_id": {
-            "tilesheet": "ui",
-            "col": 4,
-            "row": 2
-          }
-        },
-        {
-          "x": 4,
-          "y": 2,
-          "sprite_id": {
-            "tilesheet": "ui",
-            "col": 2,
-            "row": 2
-          }
-        },
-        {
-          "x": 23,
-          "y": 2,
-          "sprite_id": {
-            "tilesheet": "ui",
-            "col": 3,
-            "row": 2
-          }
-        }
-      ]
-    },
     "overlay": {
       "tiles": [
         {
@@ -3691,6 +3642,48 @@
           }
         }
       ]
+    }
+  },
+  "entities": {
+    "npc-1": {
+      "x": 2,
+      "y": 2,
+      "type": "blob",
+      "metadata": null
+    },
+    "npc-2": {
+      "x": 16,
+      "y": -2,
+      "type": "blob",
+      "metadata": {
+        "speed": "fast"
+      }
+    },
+    "npc-3": {
+      "x": 21,
+      "y": 1,
+      "type": "blob",
+      "metadata": null
+    },
+    "npc-4": {
+      "x": 21,
+      "y": 10,
+      "type": "blob",
+      "metadata": null
+    },
+    "npc-5": {
+      "x": 6,
+      "y": 5,
+      "type": "blob",
+      "metadata": {
+        "movement": "static"
+      }
+    },
+    "player": {
+      "x": 4,
+      "y": 5,
+      "type": "player",
+      "metadata": null
     }
   }
 }

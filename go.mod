@@ -7,6 +7,7 @@ toolchain go1.22.10
 require (
 	github.com/gopxl/pixel/v2 v2.3.0
 	golang.org/x/image v0.20.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

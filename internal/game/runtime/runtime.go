@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	game2 "fisherevans.com/project/f/internal/game"
+	game "fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/states/adventure"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
 	"fisherevans.com/project/f/internal/game/states/tools/map_editor"
@@ -24,7 +24,7 @@ func Run() {
 
 	cfg := opengl.WindowConfig{
 		Title:     "Project F",
-		Bounds:    pixel.R(0, 0, game2.GameWidth*3.5, game2.GameHeight*5),
+		Bounds:    pixel.R(0, 0, game.GameWidth*3.5, game.GameHeight*5),
 		Resizable: true,
 		VSync:     true,
 	}
@@ -33,23 +33,23 @@ func Run() {
 		panic(err)
 	}
 
-	ctx := game2.NewContext(state_selector.New(
+	ctx := game.NewContext(state_selector.New(
 		state_selector.Destination{
 			Name: "Adventure",
-			State: func() game2.State {
+			State: func() game.State {
 				return adventure.New("dummy")
 			},
 		},
 		state_selector.Destination{
 			Name: "Map Editor",
-			State: func() game2.State {
+			State: func() game.State {
 				return map_editor.New(window)
 			},
 		},
 	))
 
 	// Create the fixed-size canvas
-	canvas := opengl.NewCanvas(pixel.R(0, 0, game2.GameWidth, game2.GameHeight))
+	canvas := opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight))
 	canvas.SetSmooth(false)
 
 	last := time.Now()
@@ -74,8 +74,8 @@ func Run() {
 
 		// Calculate scale and offset for whole-number scaling
 		windowWidth, windowHeight := window.Bounds().Size().XY()
-		scaleX := math.Floor(windowWidth / game2.GameWidth)
-		scaleY := math.Floor(windowHeight / game2.GameHeight)
+		scaleX := math.Floor(windowWidth / game.GameWidth)
+		scaleY := math.Floor(windowHeight / game.GameHeight)
 		ctx.CanvasScale = math.Min(scaleX, scaleY) // Use the smaller scale
 		canvasMatrix := pixel.IM.Scaled(pixel.ZV, ctx.CanvasScale).Moved(window.Bounds().Center())
 		windowMousePosition := window.MousePosition()
@@ -90,7 +90,8 @@ func Run() {
 		ctx.DebugTL("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
 		ctx.DebugTL("Tile Delta %s", frameStats)
 		ctx.DebugTL("Game Logic %s", gameLogicStats)
-		game2.RenderDebugLines(window, ctx.PopDebugLines())
+		game.RenderDebugLines(window, ctx.PopDebugLines())
+		game.RenderNotifications(window, ctx.PopNotifications(deltaTime))
 
 		gameLogicDur := time.Now().Sub(now).Seconds()
 		gameLogicStats.AddFrameTime(gameLogicDur)

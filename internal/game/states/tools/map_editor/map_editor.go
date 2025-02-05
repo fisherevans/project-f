@@ -2,29 +2,45 @@ package map_editor
 
 import (
 	"fisherevans.com/project/f/internal/game"
-	resources2 "fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"image/color"
 	"math"
 )
 
-var keyboardMoveRate = resources2.TileSizeF64 * 5
+var keyboardMoveRate = resources.TileSizeF64 * 5
 var mouseScrollRate = 3.0
 var cameraLagSpeed = 5.0
 
+type editMode int
+
+const (
+	editModeLayers editMode = iota
+	editModeEntities
+)
+
 type MapEditor struct {
 	cameraLocation pixel.Vec
-	cameraLag      pixel.Vec
 	cameraMatrix   pixel.Matrix
 
+	win      *opengl.Window
+	editMode editMode
+
+	// layers stuff
 	swatch *Swatch
 
 	selectedMap     string
-	selectedLayer   resources2.MapLayerName
+	selectedLayer   resources.MapLayerName
 	layerRenderMode layerRenderMode
 
-	win *opengl.Window
+	// entity stuff
+	lastDeletedEntity *entityReference
+}
+
+type entityReference struct {
+	id     string
+	entity *resources.Entity
 }
 
 type layerRenderMode string
@@ -52,7 +68,7 @@ func New(window *opengl.Window) *MapEditor {
 		cameraMatrix:    pixel.IM,
 		swatch:          newSwatch(),
 		selectedMap:     "dummy",
-		selectedLayer:   resources2.LayerBase,
+		selectedLayer:   resources.LayerBase,
 		layerRenderMode: layerRenderMix,
 		win:             window,
 	}
@@ -63,7 +79,7 @@ func (m *MapEditor) OnTick(gameCtx *game.Context, target pixel.Target, targetBou
 		Context: gameCtx,
 	}
 
-	mouseMapPosition := m.cameraMatrix.Unproject(ctx.CanvasMousePosition).Scaled(1 / resources2.TileSizeF64)
+	mouseMapPosition := m.cameraMatrix.Unproject(ctx.CanvasMousePosition).Scaled(1 / resources.TileSizeF64)
 	ctx.MouseMapLocation.X, ctx.MouseMapLocation.Y = int(math.Round(mouseMapPosition.X)), int(math.Round(mouseMapPosition.Y))
 	ctx.MouseInCanvas = targetBounds.Contains(ctx.CanvasMousePosition)
 	if ctx.MouseInCanvas {
@@ -74,15 +90,13 @@ func (m *MapEditor) OnTick(gameCtx *game.Context, target pixel.Target, targetBou
 
 	m.readInputs(ctx, timeDelta)
 
-	m.cameraLag = m.cameraLag.Add(m.cameraLocation.Sub(m.cameraLag).Scaled(math.Min(2*timeDelta, 1.0) * cameraLagSpeed))
-	cameraLagRounded := m.cameraLag //pixel.V(math.Round(m.cameraLag.X), math.Round(m.cameraLag.Y))
 	m.cameraMatrix = pixel.IM.
-		Moved(pixel.V(-cameraLagRounded.X, -cameraLagRounded.Y)).
+		Moved(pixel.V(-m.cameraLocation.X, -m.cameraLocation.Y)).
 		Moved(targetBounds.Center())
 
 	hitSelected := false
-	for _, layerName := range resources2.MapLayerOrder {
-		layer, exists := resources2.Maps[m.selectedMap].Layers[layerName]
+	for _, layerName := range resources.MapLayerOrder {
+		layer, exists := m.getSelectedMap().Layers[layerName]
 		if !exists {
 			continue
 		}
@@ -112,24 +126,49 @@ func (m *MapEditor) OnTick(gameCtx *game.Context, target pixel.Target, targetBou
 		alpha := uint8(255 * transparency)
 		mask := color.RGBA{alpha, alpha, alpha, alpha}
 		for _, tile := range layer.Tiles {
-			spriteRef := resources2.Sprites[tile.SpriteId]
-			spriteRef.Sprite.DrawColorMask(target, m.cameraMatrix.Moved(pixel.V(float64(tile.X*resources2.TileSize), float64(tile.Y*resources2.TileSize))), mask)
+			spriteRef := resources.Sprites[tile.SpriteId]
+			spriteRef.Sprite.DrawColorMask(target, m.cameraMatrix.Moved(pixel.V(float64(tile.X*resources.TileSize), float64(tile.Y*resources.TileSize))), mask)
 		}
 	}
 
-	m.swatch.DrawCanvasOverlay(ctx, m.win, target, m.cameraMatrix)
-	m.swatch.DrawSwatch(ctx, m.win)
+	for _, entity := range m.getSelectedMap().Entities {
+		alpha := uint8(128)
+		mask := color.RGBA{alpha, alpha, alpha, alpha}
+		entitySpriteExists.DrawColorMask(target, m.cameraMatrix.Moved(pixel.V(float64(entity.X*resources.TileSize), float64(entity.Y*resources.TileSize))), mask)
+	}
 
-	ctx.DebugBR("map: %s", m.selectedMap)
-	ctx.DebugBR("layer: %s", m.selectedLayer)
-	ctx.DebugBR("swatch: %s", m.swatch.SelectedSwatch)
+	switch m.editMode {
+	case editModeLayers:
+		m.swatch.DrawCanvasOverlay(ctx, m.win, target, m.cameraMatrix)
+		m.swatch.DrawSwatch(ctx, m.win)
+		ctx.DebugBR("map: %s", m.selectedMap)
+		ctx.DebugBR("layer: %s", m.selectedLayer)
+		ctx.DebugBR("swatch: %s", m.swatch.SelectedSwatch)
+	case editModeEntities:
+		m.DrawEntityOverlay(ctx, m.win, target, m.cameraMatrix)
+		ctx.DebugTR("layer entities")
+	}
+
 }
 
-func (m *MapEditor) mouseTile(ctx *Context, mapName string, layerName resources2.MapLayerName) (*resources2.Tile, int, bool) {
-	for index, tile := range resources2.Maps[mapName].Layers[layerName].Tiles {
+func (m *MapEditor) mouseTile(ctx *Context, layerName resources.MapLayerName) (*resources.Tile, int, bool) {
+	for index, tile := range m.getSelectedMap().Layers[layerName].Tiles {
 		if tile.X == ctx.MouseMapLocation.X && tile.Y == ctx.MouseMapLocation.Y {
 			return tile, index, true
 		}
 	}
 	return nil, -1, false
+}
+
+func (m *MapEditor) mouseEntity(ctx *Context) (string, *resources.Entity) {
+	for id, entity := range m.getSelectedMap().Entities {
+		if entity.X == ctx.MouseMapLocation.X && entity.Y == ctx.MouseMapLocation.Y {
+			return id, entity
+		}
+	}
+	return "", nil
+}
+
+func (m *MapEditor) getSelectedMap() *resources.Map {
+	return resources.Maps[m.selectedMap]
 }

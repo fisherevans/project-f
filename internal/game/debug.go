@@ -8,8 +8,15 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
+type Notification struct {
+	text        string
+	elapsed     float64
+	displayTime float64
+}
+
 type DebugInfo struct {
-	lines map[DebugArea][]string
+	lines         map[DebugArea][]string
+	notifications []*Notification
 }
 
 func (d *DebugInfo) DebugTL(format string, a ...any) {
@@ -44,6 +51,28 @@ func (d *DebugInfo) PopDebugLines() map[DebugArea][]string {
 	return out
 }
 
+func (d *DebugInfo) Notify(format string, args ...any) {
+	d.notifications = append(d.notifications, &Notification{
+		text:        fmt.Sprintf(format, args...),
+		elapsed:     0,
+		displayTime: 5,
+	})
+}
+
+func (d *DebugInfo) PopNotifications(elapsed float64) []string {
+	var texts []string
+	filtered := d.notifications[:0] // Reuse the same slice memory
+	for _, notification := range d.notifications {
+		texts = append(texts, notification.text)
+		notification.elapsed += elapsed
+		if notification.elapsed < notification.displayTime {
+			filtered = append(filtered, notification)
+		}
+	}
+	d.notifications = filtered
+	return texts
+}
+
 var debugText = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
 var debugPadding = 10.0
 
@@ -69,5 +98,18 @@ func RenderDebugLines(win *opengl.Window, areaLines map[DebugArea][]string) {
 		case AreaBottomRight:
 			debugText.Draw(win, pixel.IM.Moved(pixel.V(right, bottom)))
 		}
+	}
+}
+
+func RenderNotifications(win *opengl.Window, notifications []string) {
+	if len(notifications) == 0 {
+		return
+	}
+	for id, notification := range notifications {
+		debugText.Clear()
+		debugText.WriteString(notification + "\n")
+		dy := (debugPadding + debugText.LineHeight) * (float64(id) + 1)
+		debugText.Draw(win, pixel.IM.Moved(pixel.V((win.Bounds().W()-debugText.Bounds().W())/2, win.Bounds().H()-dy)))
+		dy += debugText.LineHeight * 1.5
 	}
 }

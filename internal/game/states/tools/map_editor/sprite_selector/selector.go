@@ -2,39 +2,40 @@ package sprite_selector
 
 import (
 	"fisherevans.com/project/f/internal/game"
-	resources2 "fisherevans.com/project/f/internal/resources"
+	resources "fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"slices"
 )
 
-type SelectionConsumer func(resources2.SwatchSample)
+type SelectionConsumer func(*resources.SwatchSample)
 
 type SpriteSelector struct {
-	win         *opengl.Window
-	selected    resources2.SwatchSample
-	parentState game.State
-	consumer    SelectionConsumer
+	win                  *opengl.Window
+	selected             *resources.SwatchSample
+	backState, nextState game.State
+	consumer             SelectionConsumer
 }
 
-func New(win *opengl.Window, initialSelection resources2.SwatchSample, parent game.State, onSelect SelectionConsumer) game.State {
+func New(win *opengl.Window, initialSelection *resources.SwatchSample, backState, nextState game.State, onSelect SelectionConsumer) game.State {
 	return &SpriteSelector{
-		win:         win,
-		selected:    initialSelection,
-		parentState: parent,
-		consumer:    onSelect,
+		win:       win,
+		selected:  initialSelection,
+		backState: backState,
+		nextState: nextState,
+		consumer:  onSelect,
 	}
 }
 
-var selectedOverlaySprite = resources2.GetSprite("ui", 3, 1)
+var selectedOverlaySprite = resources.GetSprite("ui", 3, 1)
 
 func (s *SpriteSelector) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 	s.listenToInputs(ctx)
 	startY := targetBounds.H()
-	for spriteId, spriteRef := range resources2.Tilesheets[s.selected.SpriteId.Tilesheet].Sprites {
-		x := float64(spriteId.Column * resources2.TileSize)
-		y := startY - float64(spriteId.Row*resources2.TileSize)
+	for spriteId, spriteRef := range resources.Tilesheets[s.selected.SpriteId.Tilesheet].Sprites {
+		x := float64(spriteId.Column * resources.TileSize)
+		y := startY - float64(spriteId.Row*resources.TileSize)
 		mat := pixel.IM.Moved(pixel.V(x, y))
 		spriteRef.Sprite.Draw(target, mat)
 		if spriteId == s.selected.SpriteId {
@@ -51,7 +52,7 @@ func (s *SpriteSelector) OnTick(ctx *game.Context, target pixel.Target, targetBo
 
 func (s *SpriteSelector) listenToInputs(ctx *game.Context) {
 	win := s.win
-	ts := resources2.Tilesheets[s.selected.SpriteId.Tilesheet]
+	ts := resources.Tilesheets[s.selected.SpriteId.Tilesheet]
 	if win.JustPressed(pixel.KeyUp) || win.Repeated(pixel.KeyUp) {
 		s.selected.SpriteId.Row--
 		if s.selected.SpriteId.Row <= 0 {
@@ -84,15 +85,15 @@ func (s *SpriteSelector) listenToInputs(ctx *game.Context) {
 	}
 	if win.JustPressed(pixel.KeyEnter) || win.JustPressed(pixel.KeyTab) {
 		s.consumer(s.selected)
-		ctx.SwapActiveState(s.parentState)
+		ctx.SwapActiveState(s.nextState)
 	}
 	if win.JustPressed(pixel.KeyBackspace) || win.JustPressed(pixel.KeyEscape) {
-		ctx.SwapActiveState(s.parentState)
+		ctx.SwapActiveState(s.backState)
 	}
 }
 
 func (s *SpriteSelector) changeSheet(amount int) {
-	sheets := util.SortedKeys(resources2.Tilesheets)
+	sheets := util.SortedKeys(resources.Tilesheets)
 	next := slices.Index(sheets, s.selected.SpriteId.Tilesheet) + amount
 	if next < 0 {
 		next += len(sheets)
@@ -100,8 +101,8 @@ func (s *SpriteSelector) changeSheet(amount int) {
 	if next >= len(sheets) {
 		next = 0
 	}
-	s.selected = resources2.SwatchSample{
-		SpriteId: resources2.SpriteId{
+	s.selected = &resources.SwatchSample{
+		SpriteId: resources.SpriteId{
 			Tilesheet: sheets[next],
 			Row:       1,
 			Column:    1,

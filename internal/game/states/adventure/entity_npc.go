@@ -49,3 +49,14 @@ func (n *NPC) Sprite() *pixel.Sprite {
 	}
 	return resources.Sprites[npcRandomSpriteId].Sprite
 }
+
+func (n *NPC) Interact(ctx *game.Context, adv *State, source Entity) {
+	adv.actions.Add(NewChainedActions(
+		NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
+			return NewFollowCamera(n.EntityId, s.camera.CurrentLocation(), EntityCameraSpeedSlow)
+		}),
+		NewDelayAction(NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
+			return NewFollowCamera(s.player.EntityId, s.camera.CurrentLocation(), EntityCameraSpeedSlow)
+		}), 10)))
+	adv.chatters.Add(newBasicEntityChatter(n.EntityId, "sup, guy", 5))
+}

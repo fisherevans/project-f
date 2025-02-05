@@ -10,28 +10,28 @@ import (
 	"regexp"
 )
 
-type TextConsumer func(string) bool
+type TextConsumer func(*game.Context, string)
 
 type TextEntry struct {
 	win           *opengl.Window
 	prompt, input string
-	parentState   game.State
+	backState     game.State
 	consumer      TextConsumer
 }
 
-func New(win *opengl.Window, prompt, initialText string, parent game.State, onSelect TextConsumer) game.State {
+func New(win *opengl.Window, prompt, initialText string, backState game.State, onSelect TextConsumer) game.State {
 	return &TextEntry{
-		win:         win,
-		prompt:      prompt,
-		input:       initialText,
-		parentState: parent,
-		consumer:    onSelect,
+		win:       win,
+		prompt:    prompt,
+		input:     initialText,
+		backState: backState,
+		consumer:  onSelect,
 	}
 }
 
 var textDrawer = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
 
-var invalidChars = regexp.MustCompile("[^a-zA-Z0-9_-]")
+var invalidChars = regexp.MustCompile("[^a-zA-Z0-9_\\-]")
 
 func (s *TextEntry) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 	s.input += string(invalidChars.ReplaceAll([]byte(s.win.Typed()), []byte("")))
@@ -41,12 +41,10 @@ func (s *TextEntry) OnTick(ctx *game.Context, target pixel.Target, targetBounds 
 	}
 
 	if s.win.JustPressed(pixel.KeyEscape) {
-		ctx.SwapActiveState(s.parentState)
+		ctx.SwapActiveState(s.backState)
 	}
 	if s.win.JustPressed(pixel.KeyEnter) {
-		if s.consumer(s.input) {
-			ctx.SwapActiveState(s.parentState)
-		}
+		s.consumer(ctx, s.input)
 	}
 
 	textDrawer.Clear()

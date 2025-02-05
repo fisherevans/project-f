@@ -9,25 +9,25 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
-type Consumer[T any] func(T)
+type Consumer func(*game.Context, int)
 
 type MultiSelect[T any] struct {
-	win         *opengl.Window
-	prompt      string
-	selected    int
-	options     []T
-	parentState game.State
-	consumer    Consumer[T]
+	win       *opengl.Window
+	prompt    string
+	selected  int
+	options   []T
+	backState game.State
+	consumer  Consumer
 }
 
-func New[T any](win *opengl.Window, prompt string, initialSelection int, options []T, parent game.State, onSelect Consumer[T]) game.State {
+func New[T any](win *opengl.Window, prompt string, initialSelection int, options []T, backState game.State, onSelect Consumer) game.State {
 	return &MultiSelect[T]{
-		win:         win,
-		prompt:      prompt,
-		selected:    initialSelection,
-		options:     options,
-		parentState: parent,
-		consumer:    onSelect,
+		win:       win,
+		prompt:    prompt,
+		selected:  initialSelection,
+		options:   options,
+		backState: backState,
+		consumer:  onSelect,
 	}
 }
 
@@ -48,12 +48,11 @@ func (m *MultiSelect[T]) OnTick(ctx *game.Context, target pixel.Target, targetBo
 	}
 
 	if m.win.JustPressed(pixel.KeyEscape) {
-		ctx.SwapActiveState(m.parentState)
+		ctx.SwapActiveState(m.backState)
 	}
 
 	if m.win.JustPressed(pixel.KeyEnter) {
-		m.consumer(m.options[m.selected])
-		ctx.SwapActiveState(m.parentState)
+		m.consumer(ctx, m.selected)
 	}
 
 	textDrawer.Clear()

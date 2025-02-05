@@ -1,13 +1,14 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 )
 
 type MoveableEntity struct {
-	EntityReference
+	EntityId
 	CurrentLocation MapLocation
 	TargetLocation  MapLocation
 	Moving          bool
@@ -26,7 +27,7 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	moveDelta := timeDelta * m.MoveSpeed
 	m.MoveProgression += moveDelta
 	if m.MoveProgression >= 0.5 {
-		adv.unoccupy(m.CurrentLocation, m.EntityReference)
+		adv.unoccupy(m.CurrentLocation, m.EntityId)
 	}
 	if m.MoveProgression >= 1.0 {
 		m.CurrentLocation = m.TargetLocation
@@ -51,7 +52,7 @@ func (m *MoveableEntity) TriggerMovement(adv *State, dx, dy int) bool {
 		X: m.CurrentLocation.X + dx,
 		Y: m.CurrentLocation.Y + dy,
 	}
-	if !adv.attemptToOccupy(newLocation, m.EntityReference) {
+	if !adv.attemptToOccupy(newLocation, m.EntityId) {
 		return false
 	}
 	m.TargetLocation = newLocation
@@ -70,4 +71,20 @@ func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
 
 func (m *MoveableEntity) Location() MapLocation {
 	return m.CurrentLocation
+}
+
+func (m *MoveableEntity) Interact(ctx *game.Context, adv *State, source Entity) {
+	
+}
+
+// InteractLocation returns the map location in front of the entity if they are not currently moving
+func (m *MoveableEntity) InteractLocation() *MapLocation {
+	if m.Moving {
+		return nil
+	}
+	dx, dy := m.LastDirection.GetVector()
+	return &MapLocation{
+		X: m.CurrentLocation.X + dx,
+		Y: m.CurrentLocation.Y + dy,
+	}
 }

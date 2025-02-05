@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	Swatches = map[string]Swatch{}
+	Swatches = map[string]*Swatch{}
 
 	resourceSwatches = LocalResource{
 		FileRoot:        "swatches",
@@ -17,16 +17,16 @@ var (
 )
 
 type Swatch struct {
-	Samples map[pixel.Button]SwatchSample `json:"samples"`
+	Samples map[pixel.Button]*SwatchSample `json:"samples"`
 }
 
 type SwatchSample struct {
 	SpriteId SpriteId `json:"sprite_id"`
 }
 
-func (s Swatch) Copy() Swatch {
-	out := Swatch{
-		Samples: map[pixel.Button]SwatchSample{},
+func (s *Swatch) Copy() *Swatch {
+	out := &Swatch{
+		Samples: map[pixel.Button]*SwatchSample{},
 	}
 	for button, sample := range s.Samples {
 		out.Samples[button] = sample

@@ -25,9 +25,21 @@ func (c *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		charAnimation[c.LastDirection].Update(timeDelta)
 		return
 	}
-	if ctx.Controls.DPad().IsPressed() {
-		dx, dy := ctx.Controls.DPad().GetDirection().GetVector()
-		c.TriggerMovement(adv, dx, dy)
+	if adv.inputMode == inputModePlayerMovement {
+		if ctx.Controls.DPad().IsPressed() {
+			dx, dy := ctx.Controls.DPad().GetDirection().GetVector()
+			c.TriggerMovement(adv, dx, dy)
+		}
+		if ctx.Controls.ButtonA().JustPressedOrRepeated() {
+			interactLocation := c.InteractLocation()
+			if interactLocation != nil {
+				targetEntityId, exists := adv.occupiedBy(*interactLocation)
+				if exists {
+					targetEntity := adv.entities[targetEntityId]
+					targetEntity.Interact(ctx, adv, c)
+				}
+			}
+		}
 	}
 	currentDirection := ctx.Controls.DPad().GetDirection()
 	if currentDirection != c.LastDirection {

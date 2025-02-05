@@ -6,7 +6,7 @@ import (
 )
 
 type InnateEntity struct {
-	EntityReference
+	EntityId
 	MapLocation
 }
 
@@ -27,4 +27,8 @@ func (i *InnateEntity) RenderMapLocation() pixel.Vec {
 
 func (i *InnateEntity) Sprite() *pixel.Sprite {
 	return nil
+}
+
+func (i *InnateEntity) Interact(ctx *game.Context, adv *State, source Entity) {
+
 }
