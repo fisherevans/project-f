@@ -16,7 +16,7 @@ type Entity interface {
 	Update(ctx *game.Context, adv *State, timeDelta float64)
 	RenderMapLocation() pixel.Vec
 	Location() MapLocation
-	Sprite() *pixel.Sprite
+	Render(target pixel.Target, matrix pixel.Matrix)
 	GetEntityId() EntityId
 	Interact(ctx *game.Context, adv *State, source Entity)
 }

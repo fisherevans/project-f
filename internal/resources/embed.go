@@ -18,6 +18,7 @@ var (
 		resourceTilesheets,
 		resourceMaps,
 		resourceSwatches,
+		resourceFonts,
 	}
 )
 

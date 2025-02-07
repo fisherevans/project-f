@@ -1,7 +1,11 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/input"
 	resources "fisherevans.com/project/f/internal/resources"
+	"github.com/gopxl/pixel/v2"
+	"math/rand"
 )
 
 var npcRandomSpriteId = resources.SpriteId{
@@ -64,22 +68,41 @@ func initializeMap(a *State, m *resources.Map) {
 		switch entity.Type {
 		case "player":
 			a.player = &Player{
-				MoveableEntity: MoveableEntity{
-					EntityId:        entityId,
-					CurrentLocation: location,
-					MoveSpeed:       characterSpeed,
+				AnimatedMoveableEntity: AnimatedMoveableEntity{
+					MoveableEntity: MoveableEntity{
+						EntityId:        entityId,
+						CurrentLocation: location,
+						MoveSpeed:       characterSpeed,
+					},
+					Animations: map[input.Direction]*anim.AnimatedSprite{
+						input.Down:  anim.PigDown(),
+						input.Up:    anim.PigUp(),
+						input.Right: anim.PigRight(),
+						input.Left:  anim.PigLeft(),
+					},
 				},
 			}
 			a.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedMedium)
 			a.AddEntity(a.player)
 		case "blob":
 			npc := &NPC{
-				MoveableEntity: MoveableEntity{
-					EntityId:        entityId,
-					CurrentLocation: location,
-					MoveSpeed:       2,
+				AnimatedMoveableEntity: AnimatedMoveableEntity{
+					MoveableEntity: MoveableEntity{
+						EntityId:        entityId,
+						CurrentLocation: location,
+						MoveSpeed:       2,
+					},
+					Animations: map[input.Direction]*anim.AnimatedSprite{
+						input.Down:  anim.PigDown(),
+						input.Up:    anim.PigUp(),
+						input.Right: anim.PigRight(),
+						input.Left:  anim.PigLeft(),
+					},
+					ColorMask: pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
 				},
-				DoesMove: true,
+				DoesMove:        true,
+				IdleChance:      0.05,
+				MaxIdleDuration: 6,
 			}
 			switch entity.GetStringMetadata("movement", "") {
 			case "static":

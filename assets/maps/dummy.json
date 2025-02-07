@@ -3669,7 +3669,9 @@
       "x": 21,
       "y": 10,
       "type": "blob",
-      "metadata": null
+      "metadata": {
+        "movement": "horiz"
+      }
     },
     "npc-5": {
       "x": 6,

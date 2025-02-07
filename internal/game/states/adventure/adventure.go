@@ -85,7 +85,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	for _, entity := range s.locationSortedEntities() {
 		renderLocation := entity.RenderMapLocation().Scaled(resources.TileSizeF64)
-		entity.Sprite().Draw(s.batch, cameraMatrix.Moved(renderLocation))
+		entity.Render(s.batch, cameraMatrix.Moved(renderLocation))
 	}
 
 	for _, thisRenderLayer := range s.overlayRenderLayers {

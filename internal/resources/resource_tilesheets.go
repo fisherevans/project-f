@@ -88,6 +88,7 @@ func loadTilesheet(path string, resourceName string, data []byte) error {
 
 	return nil
 }
+
 func processTilesheets() error {
 	tilesheetBounds := map[string]*pixel.Rect{}
 

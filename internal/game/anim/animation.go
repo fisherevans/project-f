@@ -6,15 +6,15 @@ import (
 )
 
 type AnimatedSprite struct {
-	frames       []*pixel.Sprite
-	timePerFrame float64
-	progression  float64
-	currentFrame int
+	frames          []*pixel.Sprite
+	framesPerSecond float64
+	progression     float64
+	currentFrame    int
 }
 
-func FromSprites(tilesheet string, row, startCol, endCol int, timePerFrame float64) *AnimatedSprite {
+func FromSprites(tilesheet string, row, startCol, endCol int, framesPerSecond float64) *AnimatedSprite {
 	animated := &AnimatedSprite{
-		timePerFrame: timePerFrame,
+		framesPerSecond: framesPerSecond,
 	}
 	for col := startCol; col <= endCol; col++ {
 		ref := resources.Sprites[resources.SpriteId{
@@ -27,9 +27,9 @@ func FromSprites(tilesheet string, row, startCol, endCol int, timePerFrame float
 	return animated
 }
 
-func FromTilesheetRow(tilesheet string, row int, timePerFrame float64) *AnimatedSprite {
+func FromTilesheetRow(tilesheet string, row int, framesPerSecond float64) *AnimatedSprite {
 	animated := &AnimatedSprite{
-		timePerFrame: timePerFrame,
+		framesPerSecond: framesPerSecond,
 	}
 	ts := resources.Tilesheets[tilesheet]
 	for col := 1; col <= ts.Columns; col++ {
@@ -49,8 +49,9 @@ func (a *AnimatedSprite) Sprite() *pixel.Sprite {
 
 func (a *AnimatedSprite) Update(timeDelta float64) {
 	a.progression += timeDelta
-	for a.progression >= a.timePerFrame {
-		a.progression -= a.timePerFrame
+	secondsPerFrame := 1.0 / a.framesPerSecond
+	for a.progression >= secondsPerFrame {
+		a.progression -= secondsPerFrame
 		a.currentFrame++
 	}
 	a.currentFrame = a.currentFrame % len(a.frames)

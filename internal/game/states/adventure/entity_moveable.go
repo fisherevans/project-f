@@ -14,7 +14,7 @@ type MoveableEntity struct {
 	Moving          bool
 	MoveSpeed       float64
 	MoveProgression float64
-	LastDirection   input.Direction
+	FacingDirection input.Direction
 }
 
 func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
@@ -40,7 +40,8 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	return 0
 }
 
-func (m *MoveableEntity) TriggerMovement(adv *State, dx, dy int) bool {
+func (m *MoveableEntity) TriggerMovement(adv *State, direction input.Direction) bool {
+	dx, dy := direction.GetVector()
 	if m.Moving || (dx == 0 && dy == 0) {
 		return false
 	}
@@ -48,6 +49,7 @@ func (m *MoveableEntity) TriggerMovement(adv *State, dx, dy int) bool {
 		fmt.Printf("got an unexpect move: %d,%d\n", dx, dy)
 		return false
 	}
+	m.FacingDirection = direction
 	newLocation := MapLocation{
 		X: m.CurrentLocation.X + dx,
 		Y: m.CurrentLocation.Y + dy,
@@ -74,7 +76,7 @@ func (m *MoveableEntity) Location() MapLocation {
 }
 
 func (m *MoveableEntity) Interact(ctx *game.Context, adv *State, source Entity) {
-	
+
 }
 
 // InteractLocation returns the map location in front of the entity if they are not currently moving
@@ -82,7 +84,7 @@ func (m *MoveableEntity) InteractLocation() *MapLocation {
 	if m.Moving {
 		return nil
 	}
-	dx, dy := m.LastDirection.GetVector()
+	dx, dy := m.FacingDirection.GetVector()
 	return &MapLocation{
 		X: m.CurrentLocation.X + dx,
 		Y: m.CurrentLocation.Y + dy,
