@@ -1,8 +1,10 @@
 package util
 
 import (
+	"hash/fnv"
 	"image/color"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -61,4 +63,47 @@ func HexColor(hex string) color.Color {
 	}
 
 	return color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+}
+
+// HSLToRGB converts HSL color values to RGB.
+func HSLToRGB(h, s, l float64) color.Color {
+	c := (1 - math.Abs(2*l-1)) * s
+	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
+	m := l - c/2
+
+	var r, g, b float64
+
+	switch {
+	case 0 <= h && h < 60:
+		r, g, b = c, x, 0
+	case 60 <= h && h < 120:
+		r, g, b = x, c, 0
+	case 120 <= h && h < 180:
+		r, g, b = 0, c, x
+	case 180 <= h && h < 240:
+		r, g, b = 0, x, c
+	case 240 <= h && h < 300:
+		r, g, b = x, 0, c
+	case 300 <= h && h < 360:
+		r, g, b = c, 0, x
+	}
+
+	return color.RGBA{
+		R: uint8((r + m) * 255),
+		G: uint8((g + m) * 255),
+		B: uint8((b + m) * 255),
+		A: 255,
+	}
+}
+
+// StringToColor generates a stable color from a string with a fixed saturation and brightness.
+func StringToColor(input string, saturation, lightness float64) color.Color {
+	hasher := fnv.New32a()
+	hasher.Write([]byte(input))
+	hash := hasher.Sum32()
+
+	// Map the hash to a hue value (0-360 degrees)
+	hue := float64(hash % 360)
+
+	return HSLToRGB(hue, saturation, lightness)
 }

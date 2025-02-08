@@ -3,7 +3,7 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox2"
 	"github.com/gopxl/pixel/v2"
 	"sort"
 )
@@ -17,7 +17,7 @@ const (
 )
 
 type Chatter interface {
-	Message() string
+	Content() *textbox2.Content
 	State() ChatterState
 	RenderAbove() pixel.Vec
 	Update(ctx *game.Context, s *State, timeDelta float64)
@@ -35,7 +35,7 @@ func (c *ChatterSystem) Add(chatter Chatter) {
 	c.chatters = append(c.chatters, chatter)
 }
 
-var chatterBox = textbox.NewInstance(textbox.FontSmall, textbox.PaddingNarrow, game.GameWidth/3, textbox.AlignCenter, textbox.ExpandFit)
+var chatterBox = textbox2.NewInstance(textbox2.FontSmall, textbox2.PaddingNarrow, game.GameWidth/3, textbox2.AlignCenter, textbox2.ExpandFit)
 
 func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
 	c.sortChatters()
@@ -49,7 +49,8 @@ func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target,
 
 		renderMatrix := matrix.Moved(chatter.RenderAbove().Scaled(resources.TileSizeF64).Add(pixel.V(0, resources.TileSizeF64*0.75)))
 
-		chatterBox.Render(target, renderMatrix, chatter.Message())
+		chatter.Content().Update(ctx, timeDelta)
+		chatterBox.Render(ctx, target, renderMatrix, chatter.Content())
 	}
 	c.chatters = incompleteChatters
 }
@@ -70,7 +71,7 @@ func (c *ChatterSystem) sortChatters() {
 }
 
 type basicEntityChatter struct {
-	message        string
+	content        *textbox2.Content
 	target         EntityId
 	renderLocation pixel.Vec
 	displayTime    float64
@@ -88,8 +89,8 @@ func (b *basicEntityChatter) RenderAbove() pixel.Vec {
 	return b.renderLocation
 }
 
-func (b *basicEntityChatter) Message() string {
-	return b.message
+func (b *basicEntityChatter) Content() *textbox2.Content {
+	return b.content
 }
 
 func (b *basicEntityChatter) Update(ctx *game.Context, s *State, timeDelta float64) {
@@ -102,7 +103,7 @@ func (b *basicEntityChatter) Update(ctx *game.Context, s *State, timeDelta float
 func newBasicEntityChatter(target EntityId, displayTime float64, message string) Chatter {
 	return &basicEntityChatter{
 		displayTime: displayTime,
-		message:     message,
+		content:     chatterBox.NewRainbowPhrase(message),
 		target:      target,
 	}
 }

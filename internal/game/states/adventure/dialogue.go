@@ -2,7 +2,7 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox2"
 	"github.com/gopxl/pixel/v2"
 )
 
@@ -30,7 +30,7 @@ func (ds *DialogueSystem) HasPriority() bool {
 }
 
 var dialogueBoxMargin = 4
-var dialogueBox = textbox.NewInstance(textbox.FontLarge, textbox.PaddingNormal, game.GameWidth-dialogueBoxMargin*2, textbox.AlignLeft, textbox.ExpandFull)
+var dialogueBox = textbox2.NewInstance(textbox2.FontLarge, textbox2.PaddingNormal, game.GameWidth-dialogueBoxMargin*2, textbox2.AlignLeft, textbox2.ExpandFull)
 
 func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
@@ -39,7 +39,9 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 		return
 	}
 	dialogue := ds.queuedDialogues[0]
-	dialogueBox.Render(target, pixel.IM.Moved(pixel.V(game.GameWidth/2, float64(dialogueBoxMargin))), dialogue.Message())
+
+	dialogue.Content().Update(ctx, timeDelta)
+	dialogueBox.Render(ctx, target, pixel.IM.Moved(pixel.V(game.GameWidth/2, float64(dialogueBoxMargin))), dialogue.Content())
 	if ctx.Controls.ButtonA().JustPressed() {
 		ds.queuedDialogues = ds.queuedDialogues[1:]
 		dialogue.OnDismiss(ctx, s)
@@ -59,19 +61,29 @@ func (ds *DialogueSystem) flushPending() {
 
 type Dialogue interface {
 	Message() string
+	Content() *textbox2.Content
 	OnDismiss(*game.Context, *State)
 }
 
 type basicDialogue struct {
 	message string
+	content *textbox2.Content
 }
 
 func NewBasicDialogue(message string) Dialogue {
-	return &basicDialogue{message: message}
+	content := dialogueBox.NewRainbowPhrase(message)
+	return &basicDialogue{
+		message: message,
+		content: content,
+	}
 }
 
 func (b basicDialogue) Message() string {
 	return b.message
+}
+
+func (b basicDialogue) Content() *textbox2.Content {
+	return b.content
 }
 
 func (b basicDialogue) OnDismiss(context *game.Context, state *State) {
