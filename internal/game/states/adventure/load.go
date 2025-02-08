@@ -115,6 +115,16 @@ func initializeMap(a *State, m *resources.Map) {
 				npc.MoveableEntity.MoveSpeed = 6
 			}
 			a.AddEntity(npc)
+		case "chest":
+			chest := &EntityChest{
+				InnateEntity: InnateEntity{
+					EntityId:    entityId,
+					MapLocation: location,
+				},
+				hasItem: true,
+				item:    entity.GetStringMetadata("item", "a sock"),
+			}
+			a.AddEntity(chest)
 		}
 	}
 }

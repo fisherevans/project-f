@@ -2455,24 +2455,6 @@
     "collision": {
       "tiles": [
         {
-          "x": 2,
-          "y": 6,
-          "sprite_id": {
-            "tilesheet": "cosmic_lilac",
-            "col": 5,
-            "row": 8
-          }
-        },
-        {
-          "x": 1,
-          "y": 6,
-          "sprite_id": {
-            "tilesheet": "cosmic_lilac",
-            "col": 5,
-            "row": 8
-          }
-        },
-        {
           "x": 0,
           "y": 5,
           "sprite_id": {
@@ -3195,6 +3177,33 @@
         {
           "x": 17,
           "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 2,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 1,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 0,
+          "y": 6,
           "sprite_id": {
             "tilesheet": "cosmic_lilac",
             "col": 5,
@@ -3645,6 +3654,22 @@
     }
   },
   "entities": {
+    "locker-a": {
+      "x": 2,
+      "y": 6,
+      "type": "chest",
+      "metadata": {
+        "item": "a towel"
+      }
+    },
+    "locker-b": {
+      "x": 1,
+      "y": 6,
+      "type": "chest",
+      "metadata": {
+        "item": "a cake"
+      }
+    },
     "npc-1": {
       "x": 2,
       "y": 2,

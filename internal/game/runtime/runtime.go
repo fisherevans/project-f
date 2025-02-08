@@ -70,7 +70,7 @@ func Run() {
 		last = now
 
 		window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
-		canvas.Clear(color.RGBA{R: 10, G: 10, B: 10, A: 255})
+		canvas.Clear(ctx.GetActiveState().ClearColor())
 
 		// Calculate scale and offset for whole-number scaling
 		windowWidth, windowHeight := window.Bounds().Size().XY()

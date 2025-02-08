@@ -2,72 +2,72 @@
   "samples": {
     "14": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 6,
-        "row": 8,
-        "tilesheet": "cosmic_lilac"
+        "row": 8
       }
     },
     "15": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 11,
-        "row": 2,
-        "tilesheet": "cosmic_lilac"
+        "row": 2
       }
     },
     "16": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 11,
-        "row": 3,
-        "tilesheet": "cosmic_lilac"
+        "row": 3
       }
     },
     "17": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 12,
-        "row": 5,
-        "tilesheet": "cosmic_lilac"
+        "row": 5
       }
     },
     "18": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 13,
-        "row": 5,
-        "tilesheet": "cosmic_lilac"
+        "row": 5
       }
     },
     "19": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 13,
-        "row": 3,
-        "tilesheet": "cosmic_lilac"
+        "row": 3
       }
     },
     "20": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 13,
-        "row": 2,
-        "tilesheet": "cosmic_lilac"
+        "row": 2
       }
     },
     "21": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 13,
-        "row": 1,
-        "tilesheet": "cosmic_lilac"
+        "row": 1
       }
     },
     "22": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 8,
-        "row": 1,
-        "tilesheet": "cosmic_lilac"
+        "row": 1
       }
     },
     "23": {
       "sprite_id": {
+        "tilesheet": "cosmic_lilac",
         "col": 5,
-        "row": 8,
-        "tilesheet": "cosmic_lilac"
+        "row": 8
       }
     }
   }

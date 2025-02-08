@@ -14,6 +14,7 @@ import (
 type OnConfirmed func(ctx *game.Context)
 
 type Confirmation struct {
+	game.BaseState
 	progress    float64
 	win         *opengl.Window
 	prompt      []string

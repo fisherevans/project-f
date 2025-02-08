@@ -12,6 +12,7 @@ import (
 type SelectionConsumer func(*resources.SwatchSample)
 
 type SpriteSelector struct {
+	game.BaseState
 	win                  *opengl.Window
 	selected             *resources.SwatchSample
 	backState, nextState game.State

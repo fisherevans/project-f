@@ -13,6 +13,7 @@ import (
 type TextConsumer func(*game.Context, string)
 
 type TextEntry struct {
+	game.BaseState
 	win           *opengl.Window
 	prompt, input string
 	backState     game.State

@@ -17,7 +17,7 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	if p.Moving {
 		return
 	}
-	if adv.inputMode != inputModePlayerMovement {
+	if adv.inputMode() != inputModePlayerMovement {
 		return
 	}
 	if ctx.Controls.ButtonA().JustPressedOrRepeated() {

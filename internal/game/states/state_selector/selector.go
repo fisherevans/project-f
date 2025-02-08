@@ -14,6 +14,7 @@ type Destination struct {
 	State func() game.State
 }
 type Selector struct {
+	game.BaseState
 	selected int
 	states   []Destination
 }

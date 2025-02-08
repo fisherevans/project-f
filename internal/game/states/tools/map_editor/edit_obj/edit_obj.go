@@ -13,6 +13,7 @@ import (
 type OnApplied func()
 
 type Editor struct {
+	game.BaseState
 	win                  *opengl.Window
 	backState, nextState game.State
 	onApplied            OnApplied

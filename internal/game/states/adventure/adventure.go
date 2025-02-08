@@ -3,7 +3,9 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util"
 	"github.com/gopxl/pixel/v2"
+	"image/color"
 	"math"
 	"sort"
 )
@@ -27,21 +29,21 @@ const (
 )
 
 type State struct {
+	game.BaseState
 	mapWidth, mapHeight int
 	baseRenderLayers    []renderLayer
 	overlayRenderLayers []renderLayer
 
-	camera    Camera
-	inputMode inputMode
-
+	camera Camera
 	player *Player
 
 	entities             map[EntityId]Entity
 	occupiedLocations    map[MapLocation]EntityId
 	movementRestrictions map[MapLocation]MovementRestriction
 
-	actions  *ActionQueue
-	chatters *ChatterSystem
+	actions   *ActionQueue
+	chatters  *ChatterSystem
+	dialogues *DialogueSystem
 
 	batch *pixel.Batch
 }
@@ -56,9 +58,16 @@ func New(mapName string) game.State {
 		camera:               NewStaticCamera(pixel.Vec{}),
 		actions:              NewActionQueue(),
 		chatters:             NewChatterSystem(),
+		dialogues:            NewDialogueSystem(),
 	}
 	initializeMap(a, m)
 	return a
+}
+
+var clearColor = util.HexColor("#18215D")
+
+func (s *State) ClearColor() color.Color {
+	return clearColor
 }
 
 func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
@@ -96,6 +105,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	s.batch.Clear()
 
 	s.chatters.OnTick(ctx, s, target, cameraMatrix, renderBounds, timeDelta)
+	s.dialogues.OnTick(ctx, s, target, renderBounds, timeDelta)
 
 	ctx.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
 }
@@ -113,4 +123,11 @@ func (s *State) locationSortedEntities() []Entity {
 		return iL.X < jL.X
 	})
 	return sortedEntities
+}
+
+func (s *State) inputMode() inputMode {
+	if s.dialogues.HasPriority() {
+		return inputModeDialogue
+	}
+	return inputModePlayerMovement
 }

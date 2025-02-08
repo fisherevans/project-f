@@ -3,6 +3,7 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/util"
 	"math/rand"
 )
 
@@ -11,6 +12,9 @@ type NPC struct {
 	DoesMove  bool
 	HorizOnly bool
 
+	Talking        bool
+	TalkingTowards EntityId
+
 	IdleChance      float64
 	MaxIdleDuration float64
 	idleDuration    float64
@@ -18,7 +22,17 @@ type NPC struct {
 
 func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	defer n.AnimatedMoveableEntity.Update(ctx, adv, timeDelta)
-	if !n.DoesMove || n.Moving {
+	if n.Moving {
+		return
+	}
+	if n.Talking {
+		ent, exists := adv.entities[n.TalkingTowards]
+		if exists {
+			n.FacingDirection = DirectionTowards(n.RenderMapLocation(), ent.RenderMapLocation())
+		}
+		return
+	}
+	if !n.DoesMove {
 		return
 	}
 	if n.idleDuration > 0 {
@@ -46,12 +60,15 @@ func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 }
 
 func (n *NPC) Interact(ctx *game.Context, adv *State, source Entity) {
-	//adv.actions.Add(NewChainedActions(
-	//	NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
-	//		return NewFollowCamera(n.EntityId, s.camera.CurrentLocation(), EntityCameraSpeedSlow)
-	//	}),
-	//	NewDelayAction(NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
-	//		return NewFollowCamera(s.player.EntityId, s.camera.CurrentLocation(), EntityCameraSpeedSlow)
-	//	}), 10)))
-	adv.chatters.Add(newBasicEntityChatter(n.EntityId, 10, "Hi Mister?"))
+	if n.Talking {
+		return
+	}
+	n.Talking = true
+	n.TalkingTowards = source.GetEntityId()
+	duration := 5.
+	adv.chatters.Add(newBasicEntityChatter(n.EntityId, duration, util.OneOffDialogues.Random()))
+	adv.actions.Add(NewDelayAction(NewSimpleAction(func(ctx *game.Context, _ *State) {
+		ctx.Notify("npc %s is no longer talking", n.EntityId)
+		n.Talking = false
+	}), duration))
 }

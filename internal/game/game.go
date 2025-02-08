@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"image/color"
 )
 
 const (
@@ -21,8 +22,16 @@ const (
 )
 
 type State interface {
+	ClearColor() color.Color
 	OnTick(ctx *Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64)
 }
+
+type BaseState struct{}
+
+func (s *BaseState) ClearColor() color.Color {
+	return color.Black
+}
+
 type Context struct {
 	DebugInfo
 

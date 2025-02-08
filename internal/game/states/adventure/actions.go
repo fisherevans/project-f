@@ -4,12 +4,14 @@ import (
 	"fisherevans.com/project/f/internal/game"
 )
 
-type ActionState bool
+type ActionState int
 
 const (
-	ActionIncomplete ActionState = false
-	ActionComplete               = true
+	ActionComplete ActionState = iota
+	ActionIncomplete
 )
+
+type ActionFunction func(*game.Context, *State, float64) ActionState
 
 type Action interface {
 	Execute(ctx *game.Context, s *State, timeDelta float64) ActionState
@@ -32,6 +34,7 @@ func (q *ActionQueue) Depth() int {
 }
 
 func (q *ActionQueue) ExecuteActions(ctx *game.Context, s *State, timeDelta float64) {
+	ctx.DebugBR("action queue: %d", len(q.actions))
 	remaining := q.actions[:0] // Reuse the same slice memory
 	for _, action := range q.actions {
 		if action.Execute(ctx, s, timeDelta) == ActionIncomplete {
@@ -42,11 +45,24 @@ func (q *ActionQueue) ExecuteActions(ctx *game.Context, s *State, timeDelta floa
 }
 
 type baseAction struct {
-	action func(*game.Context, *State, float64) ActionState
+	action ActionFunction
 }
 
 func (b *baseAction) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
 	return b.action(ctx, s, timeDelta)
+}
+
+func NewSimpleAction(action func(*game.Context, *State)) *baseAction {
+	return &baseAction{
+		action: func(ctx *game.Context, s *State, _ float64) ActionState {
+			action(ctx, s)
+			return ActionComplete
+		},
+	}
+}
+
+func NewAction(fn ActionFunction) Action {
+	return &baseAction{fn}
 }
 
 func NewChangeCameraAction(camera func(ctx *game.Context, s *State) Camera) Action {

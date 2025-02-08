@@ -12,6 +12,7 @@ import (
 type Consumer func(*game.Context, int)
 
 type MultiSelect[T any] struct {
+	game.BaseState
 	win       *opengl.Window
 	prompt    string
 	selected  int

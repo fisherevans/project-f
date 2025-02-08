@@ -21,6 +21,8 @@ const (
 )
 
 type MapEditor struct {
+	game.BaseState
+	
 	cameraLocation pixel.Vec
 	cameraMatrix   pixel.Matrix
 
