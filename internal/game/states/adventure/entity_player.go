@@ -39,7 +39,7 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		}
 		p.intentDuration += timeDelta
 		if p.intentDuration > 0.05 {
-			p.TriggerMovement(adv, ctx.Controls.DPad().GetDirection())
+			p.TriggerMovement(adv, direction)
 		}
 	}
 }

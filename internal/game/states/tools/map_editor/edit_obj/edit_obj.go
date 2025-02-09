@@ -52,19 +52,17 @@ func (s *Editor) OnTick(ctx *game.Context, target pixel.Target, targetBounds pix
 		ctx.SwapActiveState(s.backState)
 	}
 
-	if ctx.Controls.DPad().JustPressedOrRepeated() {
-		switch ctx.Controls.DPad().GetDirection() {
-		case input.Up:
-			s.selected--
-		case input.Down:
-			s.selected++
-		}
-		if s.selected < 0 {
-			s.selected = len(s.fields)
-		}
-		if s.selected >= len(s.fields)+len(s.actions) {
-			s.selected = 0
-		}
+	switch ctx.Controls.DPad().JustPressedDirection(true) {
+	case input.Up:
+		s.selected--
+	case input.Down:
+		s.selected++
+	}
+	if s.selected < 0 {
+		s.selected = len(s.fields)
+	}
+	if s.selected >= len(s.fields)+len(s.actions) {
+		s.selected = 0
 	}
 
 	if s.win.JustPressed(pixel.KeyEnter) {

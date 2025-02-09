@@ -28,20 +28,18 @@ func New(destinations ...Destination) game.State {
 var textDrawer = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
 
 func (s *Selector) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
-	if ctx.Controls.DPad().JustPressed() {
-		switch ctx.Controls.DPad().GetDirection() {
-		case input.Up:
-			s.selected--
-			if s.selected < 0 {
-				s.selected += len(s.states)
-			}
-		case input.Down:
-			s.selected++
-			if s.selected >= len(s.states) {
-				s.selected -= len(s.states)
-			}
-
+	switch ctx.Controls.DPad().JustPressedDirection(false) {
+	case input.Up:
+		s.selected--
+		if s.selected < 0 {
+			s.selected += len(s.states)
 		}
+	case input.Down:
+		s.selected++
+		if s.selected >= len(s.states) {
+			s.selected -= len(s.states)
+		}
+
 	}
 
 	if ctx.Controls.ButtonA().JustPressed() {

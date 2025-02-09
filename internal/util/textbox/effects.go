@@ -41,5 +41,4 @@ func (r *rumbleRenderEffect) Update(ctx *game.Context, timeDelta float64) {
 		r.dy = rand.Intn(3) - 1
 		r.dx = rand.Intn(3) - 1
 	}
-	ctx.DebugBR("delta: %d, %d", r.dx, r.dy)
 }

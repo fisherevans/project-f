@@ -17,17 +17,21 @@ type Config struct {
 	foreground color.Color
 	background color.Color
 
-	lineCount int
+	linesPerPage int
+	lineByLine   bool
+
+	scrollTimePerLine float64
 }
 
 func NewConfig(maxWidth int) Config {
 	c := Config{
-		maxWidth:   maxWidth,
-		alignment:  AlignLeft,
-		expandMode: ExpandFull,
-		foreground: pixel.RGB(.1, .2, .2),
-		background: pixel.RGB(.6, .9, .9),
-		lineCount:  0,
+		maxWidth:          maxWidth,
+		alignment:         AlignLeft,
+		expandMode:        ExpandFull,
+		foreground:        pixel.RGB(.1, .2, .2),
+		background:        pixel.RGB(.6, .9, .9),
+		linesPerPage:      0,
+		scrollTimePerLine: 0.2,
 	}
 	c = c.PaddingNormal()
 	return c
@@ -74,8 +78,9 @@ func (c Config) Background(background color.Color) Config {
 	return c
 }
 
-func (c Config) LineCount(count int) Config {
-	c.lineCount = count
+func (c Config) Paging(linesPerPage int, lineByLine bool) Config {
+	c.linesPerPage = linesPerPage
+	c.lineByLine = lineByLine
 	return c
 }
 

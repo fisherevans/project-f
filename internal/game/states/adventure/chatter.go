@@ -106,7 +106,7 @@ func (b *basicEntityChatter) Update(ctx *game.Context, s *State, timeDelta float
 }
 
 func newBasicEntityChatter(target EntityId, displayTime float64, message string) Chatter {
-	content := chatterBox.NewRainbowContent(message)
+	content := chatterBox.NewTestAllFeaturesContent(message)
 	//content.SetTypingSpeed(0.01)
 	return &basicEntityChatter{
 		displayTime: displayTime,

@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"github.com/gopxl/pixel/v2"
 )
@@ -31,8 +32,8 @@ func (ds *DialogueSystem) HasPriority() bool {
 
 var dialogueBoxMargin = 4
 var dialogueBox = textbox.NewInstance(
-	textbox.FontSmall,
-	textbox.NewConfig(game.GameWidth-dialogueBoxMargin*2).LineCount(2))
+	textbox.FontLarge,
+	textbox.NewConfig(game.GameWidth-dialogueBoxMargin*2).Paging(2, true))
 
 func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
@@ -44,15 +45,17 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 
 	dialogue.Content().Update(ctx, timeDelta)
 	dialogueBox.Render(ctx, target, pixel.IM.Moved(pixel.V(game.GameWidth/2, float64(dialogueBoxMargin))), dialogue.Content())
-	if ctx.Controls.ButtonA().JustPressed() {
+	if ctx.Controls.ButtonA().JustPressed() || ctx.Controls.ButtonB().IsPressed() {
 		if dialogue.Content().ContentFullyDisplayed() {
 			ds.queuedDialogues = ds.queuedDialogues[1:]
 			dialogue.OnDismiss(ctx, s)
 		} else if dialogue.Content().PageFullyDisplayed() {
 			dialogue.Content().NextPage()
 		} else {
-			dialogue.Content().TypeFaster()
+			dialogue.Content().ProgressFaster()
 		}
+	} else if ctx.Controls.DPad().DirectionJustPressed(input.Up) {
+		dialogue.Content().PreviousPage()
 	}
 }
 
@@ -79,7 +82,7 @@ type basicDialogue struct {
 }
 
 func NewBasicDialogue(message string) Dialogue {
-	content := dialogueBox.NewRainbowContent(message, textbox.WithTyping(0.0333))
+	content := dialogueBox.NewTestAllFeaturesContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
 		message: message,
 		content: content,

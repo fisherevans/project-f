@@ -108,3 +108,14 @@ func (d *DirectionalButton) updateDirectional(win *opengl.Window) {
 func (d *DirectionalButton) GetDirection() Direction {
 	return d.direction
 }
+
+func (d *DirectionalButton) JustPressedDirection(allowRepeated bool) Direction {
+	if d.JustPressed() || (d.JustPressedOrRepeated() && allowRepeated) {
+		return d.GetDirection()
+	}
+	return NotPressed
+}
+
+func (d *DirectionalButton) DirectionJustPressed(dir Direction) bool {
+	return d.JustPressed() && d.GetDirection() == dir
+}

@@ -19,6 +19,7 @@
     - shield/integrity display when entering these
   - darkness/limited view
 - Dialogue
+  - box slide up/down animation
   - text bubbles for players
   - pop ups for notifications/system details
   - glossary words are highlighted, pressing select pulls up the glossary entry
