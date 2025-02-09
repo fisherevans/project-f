@@ -2527,15 +2527,6 @@
           }
         },
         {
-          "x": 6,
-          "y": 6,
-          "sprite_id": {
-            "tilesheet": "cosmic_lilac",
-            "col": 5,
-            "row": 8
-          }
-        },
-        {
           "x": 7,
           "y": 5,
           "sprite_id": {
@@ -3203,6 +3194,24 @@
         },
         {
           "x": 0,
+          "y": 6,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 6,
+          "y": 7,
+          "sprite_id": {
+            "tilesheet": "cosmic_lilac",
+            "col": 5,
+            "row": 8
+          }
+        },
+        {
+          "x": 7,
           "y": 6,
           "sprite_id": {
             "tilesheet": "cosmic_lilac",
@@ -3711,6 +3720,14 @@
       "y": 5,
       "type": "player",
       "metadata": null
+    },
+    "test-tube-a": {
+      "x": 6,
+      "y": 6,
+      "type": "interest",
+      "metadata": {
+        "topic": "test-tube"
+      }
     }
   }
 }

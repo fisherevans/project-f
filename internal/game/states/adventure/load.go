@@ -116,15 +116,22 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			a.AddEntity(npc)
 		case "chest":
-			chest := &EntityChest{
+			a.AddEntity(&EntityChest{
 				InnateEntity: InnateEntity{
 					EntityId:    entityId,
 					MapLocation: location,
 				},
 				hasItem: true,
 				item:    entity.GetStringMetadata("item", "a sock"),
-			}
-			a.AddEntity(chest)
+			})
+		case "interest":
+			a.AddEntity(&EntityInterest{
+				InnateEntity: InnateEntity{
+					EntityId:    entityId,
+					MapLocation: location,
+				},
+				topic: entity.GetStringMetadata("topic", ""),
+			})
 		}
 	}
 }

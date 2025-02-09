@@ -2,7 +2,7 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/util/textbox2"
+	"fisherevans.com/project/f/internal/util/textbox"
 	"github.com/gopxl/pixel/v2"
 )
 
@@ -30,7 +30,9 @@ func (ds *DialogueSystem) HasPriority() bool {
 }
 
 var dialogueBoxMargin = 4
-var dialogueBox = textbox2.NewInstance(textbox2.FontLarge, textbox2.PaddingNormal, game.GameWidth-dialogueBoxMargin*2, textbox2.AlignLeft, textbox2.ExpandFull)
+var dialogueBox = textbox.NewInstance(
+	textbox.FontSmall,
+	textbox.NewConfig(game.GameWidth-dialogueBoxMargin*2).LineCount(2))
 
 func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
@@ -43,8 +45,14 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 	dialogue.Content().Update(ctx, timeDelta)
 	dialogueBox.Render(ctx, target, pixel.IM.Moved(pixel.V(game.GameWidth/2, float64(dialogueBoxMargin))), dialogue.Content())
 	if ctx.Controls.ButtonA().JustPressed() {
-		ds.queuedDialogues = ds.queuedDialogues[1:]
-		dialogue.OnDismiss(ctx, s)
+		if dialogue.Content().ContentFullyDisplayed() {
+			ds.queuedDialogues = ds.queuedDialogues[1:]
+			dialogue.OnDismiss(ctx, s)
+		} else if dialogue.Content().PageFullyDisplayed() {
+			dialogue.Content().NextPage()
+		} else {
+			dialogue.Content().TypeFaster()
+		}
 	}
 }
 
@@ -61,17 +69,17 @@ func (ds *DialogueSystem) flushPending() {
 
 type Dialogue interface {
 	Message() string
-	Content() *textbox2.Content
+	Content() *textbox.Content
 	OnDismiss(*game.Context, *State)
 }
 
 type basicDialogue struct {
 	message string
-	content *textbox2.Content
+	content *textbox.Content
 }
 
 func NewBasicDialogue(message string) Dialogue {
-	content := dialogueBox.NewRainbowPhrase(message)
+	content := dialogueBox.NewRainbowContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
 		message: message,
 		content: content,
@@ -82,7 +90,7 @@ func (b basicDialogue) Message() string {
 	return b.message
 }
 
-func (b basicDialogue) Content() *textbox2.Content {
+func (b basicDialogue) Content() *textbox.Content {
 	return b.content
 }
 

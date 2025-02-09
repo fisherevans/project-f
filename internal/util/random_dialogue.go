@@ -39,7 +39,7 @@ var OneOffDialogues = StringList{
 	"If it glows, it's either valuable or deadly.",
 	"This planet's got a bad history. Tread carefully.",
 	"I swear the specimens are learning.",
-	"Careful—Thanatek listens even when you think they aren't.",
+	"Careful - Thanatek listens even when you think they aren't.",
 	"Nobody makes it off-world without a price.",
 	"Watch your back. And your front. And above.",
 	"Ever wonder if we're the real experiments?",
