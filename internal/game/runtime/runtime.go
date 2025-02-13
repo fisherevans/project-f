@@ -10,17 +10,12 @@ import (
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"image/color"
 	"math"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"runtime"
 	"time"
 )
 
 func Run() {
-	go func() {
-		http.ListenAndServe("localhost:6060", nil)
-	}()
 
 	cfg := opengl.WindowConfig{
 		Title:     "Project F",
@@ -46,7 +41,7 @@ func Run() {
 				return map_editor.New(window)
 			},
 		},
-	))
+	), "1")
 
 	// Create the fixed-size canvas
 	canvas := opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight))
@@ -95,6 +90,8 @@ func Run() {
 
 		gameLogicDur := time.Now().Sub(now).Seconds()
 		gameLogicStats.AddFrameTime(gameLogicDur)
+
+		//pixel.NewSprite(resources.SpriteAtlas, resources.SpriteAtlas.Bounds()).Draw(window, pixel.IM.Moved(pixel.V(resources.SpriteAtlasSize/2, 0)))
 
 		window.Update()
 	}

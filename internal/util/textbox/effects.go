@@ -3,14 +3,12 @@ package textbox
 import (
 	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
-	"image/color"
 	"math/rand"
 )
 
 type RenderEffect interface {
-	ColorOverride() *color.Color
-	RenderDelta() pixel.Vec
 	Update(ctx *game.Context, timeDelta float64)
+	Apply(params *characterRenderParams)
 }
 
 type rumbleRenderEffect struct {
@@ -26,14 +24,6 @@ func newRumble(rate float64) *rumbleRenderEffect {
 	}
 }
 
-func (r *rumbleRenderEffect) ColorOverride() *color.Color {
-	return nil
-}
-
-func (r *rumbleRenderEffect) RenderDelta() pixel.Vec {
-	return pixel.V(float64(r.dx), float64(r.dy))
-}
-
 func (r *rumbleRenderEffect) Update(ctx *game.Context, timeDelta float64) {
 	r.elapsed += timeDelta
 	for r.elapsed > r.rate {
@@ -41,4 +31,8 @@ func (r *rumbleRenderEffect) Update(ctx *game.Context, timeDelta float64) {
 		r.dy = rand.Intn(3) - 1
 		r.dx = rand.Intn(3) - 1
 	}
+}
+
+func (r *rumbleRenderEffect) Apply(params *characterRenderParams) {
+	params.drawDelta = params.drawDelta.Add(pixel.V(float64(r.dx), float64(r.dy)))
 }

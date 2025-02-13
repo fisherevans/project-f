@@ -55,7 +55,7 @@
 - **Primortals:**
 
     - **Sync** (SYNC) determines the Primortal's endurance in battle, damage taken after the Shielf is depleted.
-    - **Kinetic** (KIN) increases physical skill effectiveness
+    - **Physical** (PHYS) increases physical skill effectiveness
     - **Aether** (AETH) increases aethereal skill effectiveness
 
     - **Research Points** (RPTS) are gained from combat encounters and from capturing like-specimen

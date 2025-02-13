@@ -3,6 +3,7 @@ package textbox
 type TypingController interface {
 	TypeSome(elapsed float64, typeFaster bool) int
 }
+
 type defaultTypingController struct {
 	partialWork      float64
 	timePerCharacter float64

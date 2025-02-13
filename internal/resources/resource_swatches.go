@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 )
@@ -11,7 +12,7 @@ var (
 	resourceSwatches = LocalResource{
 		FileRoot:        "swatches",
 		FileExtension:   "json",
-		FileLoader:      jsonLoader(&Swatches),
+		FileLoader:      unmarshaler(&Swatches, json.Unmarshal),
 		ResourceEncoder: jsonEncoder,
 	}
 )
@@ -21,7 +22,7 @@ type Swatch struct {
 }
 
 type SwatchSample struct {
-	SpriteId SpriteId `json:"sprite_id"`
+	SpriteId TilesheetSpriteId `json:"sprite_id"`
 }
 
 func (s *Swatch) Copy() *Swatch {

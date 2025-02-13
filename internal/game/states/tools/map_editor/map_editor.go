@@ -22,7 +22,7 @@ const (
 
 type MapEditor struct {
 	game.BaseState
-	
+
 	cameraLocation pixel.Vec
 	cameraMatrix   pixel.Matrix
 
@@ -128,7 +128,7 @@ func (m *MapEditor) OnTick(gameCtx *game.Context, target pixel.Target, targetBou
 		alpha := uint8(255 * transparency)
 		mask := color.RGBA{alpha, alpha, alpha, alpha}
 		for _, tile := range layer.Tiles {
-			spriteRef := resources.Sprites[tile.SpriteId]
+			spriteRef := resources.TilesheetSprites[tile.SpriteId]
 			spriteRef.Sprite.DrawColorMask(target, m.cameraMatrix.Moved(pixel.V(float64(tile.X*resources.TileSize), float64(tile.Y*resources.TileSize))), mask)
 		}
 	}

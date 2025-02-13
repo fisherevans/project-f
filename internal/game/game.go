@@ -2,6 +2,7 @@ package game
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"image/color"
@@ -41,13 +42,24 @@ type Context struct {
 	CanvasMousePosition pixel.Vec
 	MouseInCanvas       bool
 	Controls            *input.Controls
+
+	GameSave *rpg.GameSave
 }
 
-func NewContext(initialActiveState State) *Context {
+func NewContext(initialActiveState State, saveId string) *Context {
+	saves, err := rpg.LoadGameSaves()
+	if err != nil {
+		panic(err)
+	}
+	save, ok := saves[saveId]
+	if !ok {
+		panic("Save not found: " + saveId)
+	}
 	return &Context{
 		activeState: initialActiveState,
 		CanvasScale: 1.0,
 		Controls:    input.NewControls(),
+		GameSave:    save,
 	}
 }
 

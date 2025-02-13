@@ -3,7 +3,7 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 type EntityId string
@@ -25,12 +25,12 @@ type Entity interface {
 func (s *State) AddEntity(e Entity) bool {
 	_, exists := s.entities[e.GetEntityId()]
 	if exists {
-		log.Fatal("failed to add entity due to id conflict", e)
+		log.Fatal().Str("entityId", string(e.GetEntityId())).Msg("failed to add entity due to duplicate id")
 		return false
 	}
 	worked := s.attemptToOccupy(e.Location(), e.GetEntityId())
 	if !worked {
-		log.Fatal("failed to add entity due to location conflict", e)
+		log.Fatal().Str("entityId", string(e.GetEntityId())).Msg("failed to add entity due to location conflict")
 		return false
 	}
 	s.entities[e.GetEntityId()] = e

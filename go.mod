@@ -7,6 +7,7 @@ toolchain go1.22.10
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/gopxl/pixel/v2 v2.3.0
+	github.com/rs/zerolog v1.33.0
 	golang.org/x/image v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -17,5 +18,8 @@ require (
 	github.com/go-gl/mathgl v1.1.0 // indirect
 	github.com/gopxl/glhf/v2 v2.0.0 // indirect
 	github.com/gopxl/mainthread/v2 v2.1.1 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 )

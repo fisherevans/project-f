@@ -1,0 +1,29 @@
+save_id: "1"
+character_name: Isaac
+animech:
+    bonus_integrity: 10
+    bonus_shield: 30
+    upgrade_points: 3
+captured_primortals:
+    fire_slug:
+        nickname: Slug'em
+        bonus_sync: 40
+        bonus_physical_attack: 20
+        bonus_aether_attack: 5
+        research_points: 13
+        selected_skills:
+            - flame_surge
+            - tackle
+            - crush
+            - corrode
+        available_skills:
+            - tackle
+            - crush
+            - flame_surge
+            - heat_crash
+            - arc_blast
+            - corrode
+inventory:
+    items:
+        - type: towel
+          quantity: 3

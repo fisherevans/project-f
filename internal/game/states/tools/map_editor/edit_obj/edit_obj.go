@@ -7,6 +7,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/text"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/image/font/basicfont"
 )
 
@@ -75,7 +76,7 @@ func (s *Editor) OnTick(ctx *game.Context, target pixel.Target, targetBounds pix
 			s.actions[s.selected-len(s.fields)].Execute(ctx, s)
 			return
 		}
-		fmt.Println("selected object field is invalid!")
+		log.Error().Msg("selected object field is invalid!")
 	}
 
 	textDrawer.Clear()

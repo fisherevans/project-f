@@ -3,6 +3,9 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"github.com/gopxl/pixel/v2"
 )
@@ -12,10 +15,14 @@ type DialogueSystem struct {
 
 	toAppend  []Dialogue
 	toPrepend []Dialogue
+
+	frameBatch *pixel.Batch
 }
 
 func NewDialogueSystem() *DialogueSystem {
-	return &DialogueSystem{}
+	return &DialogueSystem{
+		frameBatch: pixel.NewBatch(&pixel.TrianglesData{}, resources.SpriteAtlas),
+	}
 }
 
 func (ds *DialogueSystem) Append(d Dialogue) {
@@ -30,10 +37,13 @@ func (ds *DialogueSystem) HasPriority() bool {
 	return len(ds.queuedDialogues) > 0
 }
 
-var dialogueBoxMargin = 4
+var dialogueFrameMargin = 4
+var dialogueFrame = resources.Frames["dialogue_frame"]
 var dialogueBox = textbox.NewInstance(
 	textbox.FontLarge,
-	textbox.NewConfig(game.GameWidth-dialogueBoxMargin*2).Paging(2, true))
+	textbox.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding()).
+		Paging(2, true).
+		Foreground(colors.HexColor("#00164e")))
 
 func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
@@ -44,17 +54,36 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 	dialogue := ds.queuedDialogues[0]
 
 	dialogue.Content().Update(ctx, timeDelta)
-	dialogueBox.Render(ctx, target, pixel.IM.Moved(pixel.V(game.GameWidth/2, float64(dialogueBoxMargin))), dialogue.Content())
-	if ctx.Controls.ButtonA().JustPressed() || ctx.Controls.ButtonB().IsPressed() {
-		if dialogue.Content().ContentFullyDisplayed() {
-			ds.queuedDialogues = ds.queuedDialogues[1:]
-			dialogue.OnDismiss(ctx, s)
-		} else if dialogue.Content().PageFullyDisplayed() {
+
+	ds.frameBatch.Clear()
+	frameBounds := pixel.R(
+		float64(dialogueFrameMargin),
+		float64(dialogueFrameMargin),
+		float64(game.GameWidth-dialogueFrameMargin),
+		float64(dialogueFrameMargin+dialogue.Content().Height()+dialogueFrame.VerticalPadding()))
+	frames.Draw(ds.frameBatch, dialogueFrame, frameBounds, pixel.IM)
+	ds.frameBatch.Draw(target)
+
+	bottomLeft := pixel.V(float64(dialogueFrameMargin+dialogueFrame.LeftPadding()), float64(dialogueFrameMargin+dialogueFrame.BottomPadding()))
+	dialogueBox.Render(ctx, target, pixel.IM.Moved(bottomLeft), dialogue.Content())
+
+	a := ctx.Controls.ButtonA().JustPressed()
+	bPressed := ctx.Controls.ButtonB().IsPressed()
+	bJustPressed := ctx.Controls.ButtonB().JustPressed()
+	down := ctx.Controls.DPad().DirectionJustPressed(input.Down)
+	up := ctx.Controls.DPad().DirectionJustPressed(input.Up)
+	if a || bPressed || bJustPressed || down {
+		if dialogue.Content().IsContentFullyDisplayed() {
+			if a || bJustPressed {
+				ds.queuedDialogues = ds.queuedDialogues[1:]
+				dialogue.OnDismiss(ctx, s)
+			}
+		} else if dialogue.Content().IsPageFullyDisplayed() {
 			dialogue.Content().NextPage()
 		} else {
 			dialogue.Content().ProgressFaster()
 		}
-	} else if ctx.Controls.DPad().DirectionJustPressed(input.Up) {
+	} else if up {
 		dialogue.Content().PreviousPage()
 	}
 }
@@ -82,7 +111,7 @@ type basicDialogue struct {
 }
 
 func NewBasicDialogue(message string) Dialogue {
-	content := dialogueBox.NewTestAllFeaturesContent(message, textbox.WithTyping(0.0333))
+	content := dialogueBox.NewComplexContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
 		message: message,
 		content: content,

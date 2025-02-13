@@ -5,8 +5,8 @@ import (
 	"fisherevans.com/project/f/internal/game/states/tools/map_editor/multi_select"
 	"fisherevans.com/project/f/internal/game/states/tools/map_editor/text_entry"
 	"fisherevans.com/project/f/internal/resources"
-	"fmt"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/rs/zerolog/log"
 	"reflect"
 )
 
@@ -36,19 +36,19 @@ func NewEditEntity(win *opengl.Window, parent game.State, entityId string, entit
 			case FieldTypeString:
 				ctx.SwapActiveState(text_entry.New(win, "Field Name", "", editor, func(ctx *game.Context, name string) {
 					if name == "" {
-						fmt.Println("can't be empty")
+						log.Error().Msg("can't be empty")
 						return
 					}
 					if entity.Metadata == nil {
 						entity.Metadata = make(map[string]interface{})
 					}
 					if _, exists := entity.Metadata[name]; exists {
-						fmt.Println("field " + name + " already exists")
+						log.Error().Msg("field " + name + " already exists")
 						return
 					}
 					ctx.SwapActiveState(text_entry.New(win, "Field Value", "", editor, func(ctx *game.Context, value string) {
 						if value == "" {
-							fmt.Println("can't be empty")
+							log.Error().Msg("can't be empty")
 							return
 						}
 						editor.fields = append(editor.fields, NewStringField("  "+name, value, false, metadataSetter(name)))

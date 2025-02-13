@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 	"image"
-	"image/draw"
 	_ "image/png"
-	"log"
-	"slices"
 )
 
 const (
@@ -18,14 +16,13 @@ const (
 )
 
 var (
-	Tilesheets = map[string]*TilesheetMetadata{}
-	Sprites    = map[SpriteId]*SpriteReference{}
+	Tilesheets       = map[string]*TilesheetMetadata{}
+	TilesheetSprites = map[TilesheetSpriteId]*SpriteReference{}
 
 	resourceTilesheets = LocalResource{
-		FileRoot:       "tilesheets",
-		FileExtension:  "png",
-		FileLoader:     loadTilesheet,
-		PostProcessing: processTilesheets,
+		FileRoot:      "tilesheets",
+		FileExtension: "png",
+		FileLoader:    loadTilesheet,
 	}
 
 	SpriteAtlas pixel.Picture
@@ -35,29 +32,22 @@ type TilesheetMetadata struct {
 	Name     string
 	Columns  int
 	Rows     int
-	Sprites  map[SpriteId]*SpriteReference
+	Sprites  map[TilesheetSpriteId]*SpriteReference
 	rawImage image.Image
 }
 
-type SpriteReference struct {
-	Source    pixel.Picture
-	Bounds    pixel.Rect
-	Sprite    *pixel.Sprite
-	Tilesheet *TilesheetMetadata
-}
-
-type SpriteId struct {
+type TilesheetSpriteId struct {
 	Tilesheet string `json:"tilesheet"`
 	Column    int    `json:"col"`
 	Row       int    `json:"row"`
 }
 
-func (s SpriteId) String() string {
+func (s TilesheetSpriteId) String() string {
 	return fmt.Sprintf("ts:%s,c:%d,r:%d", s.Tilesheet, s.Column, s.Row)
 }
 
 func GetSprite(tilesheet string, col, row int) *SpriteReference {
-	return Sprites[SpriteId{
+	return TilesheetSprites[TilesheetSpriteId{
 		Tilesheet: tilesheet,
 		Column:    col,
 		Row:       row,
@@ -67,96 +57,46 @@ func GetSprite(tilesheet string, col, row int) *SpriteReference {
 func loadTilesheet(path string, resourceName string, data []byte) error {
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
-		log.Printf("Failed to decode image %s: %v\n", path, err)
+		log.Error().Msgf("Failed to decode image %s: %v", path, err)
 		return nil // Continue with the next file
 	}
-	pictureData := pixel.PictureDataFromImage(img)
 
-	sheetWidth := pictureData.Bounds().W()
-	sheetHeight := pictureData.Bounds().H()
+	addAtlasImage(&img, func(atlas pixel.Picture, bounds pixel.Rect) {
+		pictureData := pixel.PictureDataFromImage(img)
 
-	tilesheet := &TilesheetMetadata{
-		Name:     resourceName,
-		Sprites:  map[SpriteId]*SpriteReference{},
-		Rows:     int(sheetHeight / TileSize),
-		Columns:  int(sheetWidth / TileSize),
-		rawImage: img,
-	}
+		sheetWidth := pictureData.Bounds().W()
+		sheetHeight := pictureData.Bounds().H()
 
-	Tilesheets[resourceName] = tilesheet
-	fmt.Printf("loaded tilesheet %s with %d columns and %d rows\n", resourceName, tilesheet.Columns, tilesheet.Rows)
-
-	return nil
-}
-
-func processTilesheets() error {
-	tilesheetBounds := map[string]*pixel.Rect{}
-
-	atlasImage := image.NewRGBA(image.Rect(0, 0, int(SpriteAtlasSize), int(SpriteAtlasSize)))
-	xOffset := 0
-	yOffset := 0
-	maxY := 0
-
-	var tilesheetNames []string
-	for tilesheetName := range Tilesheets {
-		tilesheetNames = append(tilesheetNames, tilesheetName)
-	}
-	slices.Sort(tilesheetNames)
-
-	for _, tilesheetName := range tilesheetNames {
-		tilesheetImage := Tilesheets[tilesheetName].rawImage
-		bounds := tilesheetImage.Bounds()
-		if xOffset+int(bounds.Dx()) > SpriteAtlasSize {
-			xOffset = 0
-			yOffset = maxY
+		tilesheet := &TilesheetMetadata{
+			Name:     resourceName,
+			Sprites:  map[TilesheetSpriteId]*SpriteReference{},
+			Rows:     int(sheetHeight / TileSize),
+			Columns:  int(sheetWidth / TileSize),
+			rawImage: img,
 		}
-		if yOffset+int(bounds.Dy()) > SpriteAtlasSize {
-			panic("SpriteAtlasSize is too small")
-		}
-		xStart := xOffset
-		xEnd := xStart + int(bounds.Dx())
-		yStart := yOffset
-		yEnd := yStart + int(bounds.Dy())
-		if yEnd > maxY {
-			maxY = yEnd
-		}
-		rect := image.Rect(xStart, yStart, xEnd, yEnd)
 
-		draw.Draw(atlasImage, rect, tilesheetImage, image.Pt(int(bounds.Min.X), int(bounds.Min.Y)), draw.Over)
+		Tilesheets[resourceName] = tilesheet
+		log.Info().Msgf("loaded tilesheet %s with %d columns and %d rows", resourceName, tilesheet.Columns, tilesheet.Rows)
 
-		// image.* treats top left as origin, pixel.* treats bottom left as origin
-		// swap to pixel rect here because sprite generation uses pixel.Picture
-		thisTilesheetBounds := pixel.R(float64(xStart), float64(SpriteAtlasSize)-float64(yEnd), float64(xEnd), float64(SpriteAtlasSize)-float64(yStart))
-		tilesheetBounds[tilesheetName] = &thisTilesheetBounds
-
-		xOffset += int(bounds.Dx())
-	}
-
-	SpriteAtlas = pixel.PictureDataFromImage(atlasImage)
-	for _, tilesheetMetadata := range Tilesheets {
-		tsBounds := tilesheetBounds[tilesheetMetadata.Name]
-
-		for y := 0; y < tilesheetMetadata.Rows; y++ {
-			for x := 0; x < tilesheetMetadata.Columns; x++ {
-				spriteId := SpriteId{
+		for y := 0; y < tilesheet.Rows; y++ {
+			for x := 0; x < tilesheet.Columns; x++ {
+				spriteId := TilesheetSpriteId{
 					Column:    x + 1,
-					Row:       tilesheetMetadata.Rows - y,
-					Tilesheet: tilesheetMetadata.Name,
+					Row:       tilesheet.Rows - y,
+					Tilesheet: tilesheet.Name,
 				}
-				posX := tsBounds.Min.X + (float64(x) * TileSizeF64)
-				posY := tsBounds.Min.Y + (float64(y) * TileSizeF64)
+				posX := bounds.Min.X + (float64(x) * TileSizeF64)
+				posY := bounds.Min.Y + (float64(y) * TileSizeF64)
 				r := pixel.R(posX, posY, posX+TileSizeF64, posY+TileSizeF64)
 				spriteRef := &SpriteReference{
-					Source:    SpriteAtlas,
-					Bounds:    r,
-					Sprite:    pixel.NewSprite(SpriteAtlas, r),
-					Tilesheet: tilesheetMetadata,
+					Source: atlas,
+					Bounds: r,
+					Sprite: pixel.NewSprite(atlas, r),
 				}
-				tilesheetMetadata.Sprites[spriteId] = spriteRef
-				Sprites[spriteId] = spriteRef
+				tilesheet.Sprites[spriteId] = spriteRef
+				TilesheetSprites[spriteId] = spriteRef
 			}
 		}
-	}
-
+	})
 	return nil
 }

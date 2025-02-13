@@ -4,18 +4,14 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
-	"image/color"
 )
 
 type Config struct {
 	maxWidth   int
-	alignment  Alignment
 	expandMode ExpandMode
+	alignment  Alignment
 
-	padding Padding
-
-	foreground color.Color
-	background color.Color
+	foreground pixel.RGBA
 
 	linesPerPage int
 	lineByLine   bool
@@ -28,12 +24,10 @@ func NewConfig(maxWidth int) Config {
 		maxWidth:          maxWidth,
 		alignment:         AlignLeft,
 		expandMode:        ExpandFull,
-		foreground:        pixel.RGB(.1, .2, .2),
-		background:        pixel.RGB(.6, .9, .9),
+		foreground:        pixel.RGB(0, 0, 0),
 		linesPerPage:      0,
 		scrollTimePerLine: 0.2,
 	}
-	c = c.PaddingNormal()
 	return c
 }
 
@@ -47,34 +41,8 @@ func (c Config) ExpandMode(mode ExpandMode) Config {
 	return c
 }
 
-func (c Config) Padded(padded Padding) Config {
-	c.padding = padded
-	return c
-}
-
-func (c Config) PaddingNarrow() Config {
-	c.padding = Padding{
-		x: 4,
-		y: 2,
-	}
-	return c
-}
-
-func (c Config) PaddingNormal() Config {
-	c.padding = Padding{
-		x: 5,
-		y: 3,
-	}
-	return c
-}
-
-func (c Config) Foreground(foreground color.Color) Config {
+func (c Config) Foreground(foreground pixel.RGBA) Config {
 	c.foreground = foreground
-	return c
-}
-
-func (c Config) Background(background color.Color) Config {
-	c.background = background
 	return c
 }
 
@@ -109,7 +77,7 @@ type Font struct {
 var FontSmall = Font{
 	atlas:        resources.Fonts.M6.Atlas,
 	letterHeight: 6,
-	lineSpacing:  2,
+	lineSpacing:  3,
 	tailHeight:   2,
 }
 
@@ -120,7 +88,6 @@ var FontLarge = Font{
 	tailHeight:   2,
 }
 
-type Padding struct {
-	x int
-	y int
+func (f Font) GetAtlas() *text.Atlas {
+	return f.atlas
 }

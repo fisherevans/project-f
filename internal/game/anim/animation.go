@@ -17,7 +17,7 @@ func FromSprites(tilesheet string, row, startCol, endCol int, framesPerSecond fl
 		framesPerSecond: framesPerSecond,
 	}
 	for col := startCol; col <= endCol; col++ {
-		ref := resources.Sprites[resources.SpriteId{
+		ref := resources.TilesheetSprites[resources.TilesheetSpriteId{
 			Tilesheet: tilesheet,
 			Row:       row,
 			Column:    col,
@@ -33,7 +33,7 @@ func FromTilesheetRow(tilesheet string, row int, framesPerSecond float64) *Anima
 	}
 	ts := resources.Tilesheets[tilesheet]
 	for col := 1; col <= ts.Columns; col++ {
-		ref := resources.Sprites[resources.SpriteId{
+		ref := resources.TilesheetSprites[resources.TilesheetSpriteId{
 			Tilesheet: tilesheet,
 			Row:       row,
 			Column:    col,

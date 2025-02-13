@@ -3,6 +3,7 @@ package textbox
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/util"
+	"github.com/gopxl/pixel/v2/ext/text"
 	"math"
 )
 
@@ -17,6 +18,10 @@ type Content struct {
 	startLine      int
 
 	progressFaster bool
+
+	// pre-computer
+	width  int
+	height int
 }
 
 type ContentOpt func(content *Content)
@@ -28,6 +33,14 @@ func WithTyping(timePerCharacter float64) ContentOpt {
 			fasterScale:      4,
 		}
 	}
+}
+
+func (c *Content) Width() int {
+	return c.width
+}
+
+func (c *Content) Height() int {
+	return c.height
 }
 
 func (c *Content) Update(ctx *game.Context, timeDelta float64) {
@@ -71,14 +84,14 @@ func (c *Content) ProgressFaster() {
 	c.progressFaster = true
 }
 
-func (c *Content) ContentFullyDisplayed() bool {
+func (c *Content) IsContentFullyDisplayed() bool {
 	if !c.onLastPage() {
 		return false
 	}
-	return c.PageFullyDisplayed()
+	return c.IsPageFullyDisplayed()
 }
 
-func (c *Content) PageFullyDisplayed() bool {
+func (c *Content) IsPageFullyDisplayed() bool {
 	if c.scrollPosition != float64(c.startLine) {
 		return false
 	}
@@ -137,71 +150,98 @@ func (c *Content) pageLines() []*line {
 	return c.lines[c.startLine:util.MinInt(c.startLine+c.tb.cfg.linesPerPage, len(c.lines))]
 }
 
-func (tb *Instance) newContent(cgroups []*cgroup, opts ...ContentOpt) *Content {
+func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *Content {
 	content := &Content{
 		tb: tb,
 	}
-	var pendingWhitespace []*cgroup
-	pendingWhitespaceText := ""
 	currentLine := newLine()
-	for _, cg := range cgroups {
-		cgString := cg.asString()
-		if cg.isWhitespace {
-			pendingWhitespace = append(pendingWhitespace, cg)
-			pendingWhitespaceText += cgString
-			continue
+
+	var pendingWhitespace, pendingText []*character
+
+	flushPendingText := func() {
+		if len(pendingText) > 0 {
+			potentialLineText := currentLine.text + asString(pendingWhitespace) + asString(pendingText)
+			if int(tb.text.BoundsOf(potentialLineText).W()) > tb.cfg.maxWidth {
+				content.appendLine(currentLine, tb.text)
+				currentLine = newLine()
+				pendingWhitespace = nil // drop pending space on new lines
+			} else {
+				currentLine.append(pendingWhitespace...)
+				pendingWhitespace = nil
+			}
+			currentLine.append(pendingText...)
+			pendingText = nil
 		}
-		pendingLineText := currentLine.text + pendingWhitespaceText + cgString
-		if int(tb.text.BoundsOf(pendingLineText).W()) > tb.maxTextWidth() {
-			pendingWhitespace = nil
-			pendingWhitespaceText = ""
-			pendingLineText = ""
-			currentLine.commit(tb.text)
-			content.appendLine(currentLine)
+	}
+
+	for _, characters := range paragraphs {
+		for _, c := range characters {
+			if c.isWhitespace() {
+				flushPendingText()
+				pendingWhitespace = append(pendingWhitespace, c)
+				continue
+			}
+			pendingText = append(pendingText, c)
+		}
+		flushPendingText()
+		if len(currentLine.characters) > 0 {
+			content.appendLine(currentLine, tb.text)
 			currentLine = newLine()
 		}
-		if len(pendingWhitespace) > 0 {
-			for _, space := range pendingWhitespace {
-				currentLine.append(space)
-			}
-			currentLine.text += pendingWhitespaceText
-			pendingWhitespace = nil
-			pendingWhitespaceText = ""
-		}
-		currentLine.append(cg)
-		currentLine.text += cgString
+		pendingText, pendingWhitespace = nil, nil
 	}
-	currentLine.commit(tb.text)
-	content.appendLine(currentLine)
 
 	content.setPage(0)
 
 	for _, opt := range opts {
 		opt(content)
 	}
+
+	// pre compute details
+	if tb.cfg.expandMode == ExpandFull {
+		content.width = tb.cfg.maxWidth
+	} else {
+		content.width = content.maxLineWidth
+	}
+
+	lineCount := tb.cfg.linesPerPage
+	if lineCount == 0 {
+		lineCount = len(content.lines)
+	}
+	content.height = (lineCount * tb.letterHeight) + ((lineCount - 1) * tb.lineSpacing) + tb.tailHeight*2
+
 	return content
 }
 
-func (c *Content) appendLine(l *line) {
+func (c *Content) appendLine(l *line, text *text.Text) {
 	c.lines = append(c.lines, l)
-	for _, cg := range l.cgroups {
-		for _, ch := range cg.characters {
-			if ch.effect == nil {
-				continue
-			}
-			c.registerEffect(ch.effect)
+	for _, ch := range l.characters {
+		for _, e := range ch.style.effects {
+			c.registerEffect(e)
 		}
 	}
+	l.commit(text)
 	if l.width > c.maxLineWidth {
 		c.maxLineWidth = l.width
 	}
 }
 
 func (c *Content) registerEffect(effect RenderEffect) {
+	if effect == nil {
+		return
+	}
 	for _, e := range c.effects {
 		if e == effect {
 			return
 		}
 	}
 	c.effects = append(c.effects, effect)
+}
+
+func (tb *Instance) NewSimpleContent(msg string, opts ...ContentOpt) *Content {
+	var characters []*character
+	for _, c := range []byte(msg) {
+		characters = append(characters, newCharacter(c, 1, tb.text, cStyle{}))
+	}
+	return tb.newContent([][]*character{characters}, opts...)
 }

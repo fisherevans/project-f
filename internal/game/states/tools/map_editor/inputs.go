@@ -11,7 +11,7 @@ import (
 	"fisherevans.com/project/f/internal/util"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
-	"gopkg.in/yaml.v3"
+	"github.com/rs/zerolog/log"
 	"slices"
 	"sort"
 	"strings"
@@ -75,7 +75,7 @@ func (m *MapEditor) inputsLayersMouse(ctx *Context) {
 			SpriteId: mouseTile.SpriteId,
 		}
 		resources.Swatches[m.swatch.SelectedSwatch].Samples[m.swatch.SelectedSample] = newSample
-		fmt.Printf("change active tile to (%s)\n", newSample.SpriteId)
+		log.Error().Msgf("change active tile to (%s)", newSample.SpriteId)
 		return
 	}
 	activeTile, isSet := resources.Swatches[m.swatch.SelectedSwatch].Samples[m.swatch.SelectedSample]
@@ -102,7 +102,7 @@ func (m *MapEditor) inputsLayersMouse(ctx *Context) {
 	newTile := &resources.Tile{
 		X: ctx.MouseMapLocation.X,
 		Y: ctx.MouseMapLocation.Y,
-		SpriteId: resources.SpriteId{
+		SpriteId: resources.TilesheetSpriteId{
 			Tilesheet: activeTile.SpriteId.Tilesheet,
 			Column:    activeTile.SpriteId.Column,
 			Row:       activeTile.SpriteId.Row,
@@ -246,7 +246,7 @@ func (m *MapEditor) inputsControlCommandsLayers(ctx *Context) {
 		initialSamples := resources.Swatches[m.swatch.SelectedSwatch].Copy()
 		ctx.SwapActiveState(text_entry.New(m.win, "New Swatch Name", m.swatch.SelectedSwatch, m, func(ctx *game.Context, newName string) {
 			if _, ok := resources.Swatches[newName]; ok {
-				fmt.Println("invalid swatch")
+				log.Error().Msg("invalid swatch")
 				return
 			}
 			resources.Swatches[newName] = initialSamples
@@ -327,11 +327,11 @@ func (m *MapEditor) inputsEntitiesMouse(ctx *Context) {
 			newLocation := ctx.MouseMapLocation
 			ctx.SwapActiveState(text_entry.New(m.win, "Entity ID", m.lastDeletedEntity.id, m, func(ctx *game.Context, newEntityId string) {
 				if newEntityId == "" {
-					fmt.Println("entity id can't be empty")
+					log.Error().Msg("entity id can't be empty")
 					return
 				}
 				if _, exists := m.getSelectedMap().Entities[newEntityId]; exists {
-					fmt.Println("entity id already in use")
+					log.Error().Msg("entity id already in use")
 					return
 				}
 				newEntity := m.lastDeletedEntity.entity.Copy()
@@ -356,8 +356,7 @@ func (m *MapEditor) inputsEntitiesMouse(ctx *Context) {
 		}
 		ctx.SwapActiveState(confirm.New(m.win, prompt, m, func(ctx *game.Context) {
 			m.getSelectedMap().RemoveEntity(entityId)
-			y, _ := yaml.Marshal(entity)
-			fmt.Println("Deleted entity: \n" + string(y))
+			log.Error().Interface("entity", entity).Msg("Deleted entity:")
 			m.lastDeletedEntity = &entityReference{
 				id:     entityId,
 				entity: entity,
@@ -377,7 +376,7 @@ func (m *MapEditor) inputsEntitiesMouse(ctx *Context) {
 	ctx.SwapActiveState(text_entry.New(m.win, "Entity ID", "", m, func(gameCtx *game.Context, id string) {
 		id = strings.Trim(id, " ")
 		if id == "" {
-			fmt.Println("entity id can't be empty")
+			log.Error().Msg("entity id can't be empty")
 			return
 		}
 		if _, exists := m.getSelectedMap().Entities[id]; exists {
@@ -387,7 +386,7 @@ func (m *MapEditor) inputsEntitiesMouse(ctx *Context) {
 		gameCtx.SwapActiveState(text_entry.New(m.win, "Entity Type", "", m, func(gameCtx *game.Context, entityType string) {
 			id = strings.Trim(id, " ")
 			if id == "" {
-				fmt.Println("entity id can't be empty")
+				log.Error().Msg("entity id can't be empty")
 				return
 			}
 			m.getSelectedMap().AddEntity(id, &resources.Entity{

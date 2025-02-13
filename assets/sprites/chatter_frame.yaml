@@ -1,0 +1,8 @@
+padding:
+  top: 2
+  bottom: 3
+  left: 3
+  right: 3
+defaults:
+  cutMargin: 3
+  frameMode: stretch

@@ -3,7 +3,7 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 	"image/color"
 	"math"
@@ -64,7 +64,7 @@ func New(mapName string) game.State {
 	return a
 }
 
-var clearColor = util.HexColor("#18215D")
+var clearColor = colors.HexColor("#18215D")
 
 func (s *State) ClearColor() color.Color {
 	return clearColor

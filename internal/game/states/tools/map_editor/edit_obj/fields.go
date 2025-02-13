@@ -4,8 +4,8 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/states/tools/map_editor/multi_select"
 	"fisherevans.com/project/f/internal/game/states/tools/map_editor/text_entry"
-	"fmt"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/rs/zerolog/log"
 )
 
 type FieldType string
@@ -65,7 +65,7 @@ func NewStringField(name, value string, allowEmpty bool, apply func(string)) Fie
 func (s *StringField) Edit(win *opengl.Window, parent game.State) game.State {
 	return text_entry.New(win, s.name, s.value, parent, func(ctx *game.Context, newValue string) {
 		if newValue == "" && !s.allowEmpty {
-			fmt.Println("can't be empty")
+			log.Error().Msg("can't be empty")
 			return
 		}
 		s.value = newValue

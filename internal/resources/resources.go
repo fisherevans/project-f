@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fisherevans.com/project/f/assets"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -19,6 +20,8 @@ var (
 		resourceMaps,
 		resourceSwatches,
 		resourceFonts,
+		resourceSprites,
+		resourceFrames,
 	}
 )
 
@@ -29,6 +32,7 @@ type resourceEncoder func(resource any) ([]byte, error)
 type LocalResource struct {
 	FileRoot        string
 	FileExtension   string
+	FileSuffix      string
 	FileLoader      fileLoader
 	PostProcessing  func() error
 	ResourceEncoder resourceEncoder
@@ -36,7 +40,8 @@ type LocalResource struct {
 
 func init() {
 	for _, localResource := range resources {
-		err := fs.WalkDir(assets.FS, localResource.FileRoot, fsFileHandler(localResource.FileLoader, localResource.FileExtension))
+		handler := fsFileHandler(localResource.FileLoader, localResource.FileExtension, localResource.FileSuffix)
+		err := fs.WalkDir(assets.FS, localResource.FileRoot, handler)
 		if err != nil {
 			panic(fmt.Sprintf("failed load load %s resources: %v", localResource.FileRoot, err))
 		}
@@ -47,15 +52,20 @@ func init() {
 			}
 		}
 	}
+	loadAtlas()
+	processFrames()
 }
 
-func fsFileHandler(handler fileLoader, extension string) func(string, fs.DirEntry, error) error {
+func fsFileHandler(handler fileLoader, extension string, suffix string) func(string, fs.DirEntry, error) error {
 	return func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("error accessing file %s: %w", path, err)
 		}
 
-		if d.IsDir() || !strings.HasSuffix(d.Name(), "."+extension) {
+		extensionSuffix := "." + extension
+		fullSuffix := suffix + extensionSuffix
+
+		if d.IsDir() || !strings.HasSuffix(d.Name(), fullSuffix) {
 			return nil
 		}
 
@@ -65,7 +75,7 @@ func fsFileHandler(handler fileLoader, extension string) func(string, fs.DirEntr
 		}
 
 		filename := filepath.Base(path)
-		resourceName := strings.TrimSuffix(filename, filepath.Ext(filename))
+		resourceName := strings.TrimSuffix(filename, extensionSuffix)
 
 		return handler(path, resourceName, data)
 	}
@@ -75,14 +85,14 @@ type postProcessor[T any] func(resourceName string, newResource T) error
 
 func printLoadSummary[T fmt.Stringer](resourceName string, newResource T) error {
 	resourceType := reflect.TypeOf(newResource).Name()
-	fmt.Printf("[%s] loaded %s: %s\n", resourceType, resourceName, newResource.String())
+	log.Info().Msgf("[%s] loaded %s: %s", resourceType, resourceName, newResource.String())
 	return nil
 }
 
-func jsonLoader[T any](dest *map[string]T, postProcessors ...postProcessor[T]) fileLoader {
+func unmarshaler[T any](dest *map[string]T, unmarshaler func([]byte, any) error, postProcessors ...postProcessor[T]) fileLoader {
 	return func(path, resourceName string, data []byte) error {
 		var newResource T
-		err := json.Unmarshal(data, &newResource)
+		err := unmarshaler(data, &newResource)
 		if err != nil {
 			return fmt.Errorf("failed to unmarshal json for %s: %w", path, err)
 		}
@@ -92,6 +102,7 @@ func jsonLoader[T any](dest *map[string]T, postProcessors ...postProcessor[T]) f
 			}
 		}
 		(*dest)[resourceName] = newResource
+		log.Info().Msgf("loaded file %s", path)
 		return nil
 	}
 }
@@ -122,7 +133,7 @@ func save[T any](source *map[string]T, localResource LocalResource, resourceName
 		}
 		err = cleanupBackups(localPath, 3)
 		if err != nil {
-			fmt.Printf("failed to cleanup backup %s: %w\n", resourceName, err)
+			log.Error().Msgf("failed to cleanup backup %s: %w", resourceName, err)
 		}
 	}
 
@@ -132,6 +143,6 @@ func save[T any](source *map[string]T, localResource LocalResource, resourceName
 		return fmt.Errorf("failed to write data to file %s: %w", localPath, err)
 	}
 
-	fmt.Printf("saved %s:%s to %s\n", localResource.FileRoot, resourceName, localPath)
+	log.Info().Msgf("saved %s:%s to %s", localResource.FileRoot, resourceName, localPath)
 	return nil
 }

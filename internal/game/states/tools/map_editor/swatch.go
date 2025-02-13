@@ -50,7 +50,7 @@ func (s *Swatch) DrawCanvasOverlay(ctx *Context, win *opengl.Window, target pixe
 		sprites = append(sprites, swatchSpriteDelete)
 	} else {
 		spriteId := resources.Swatches[s.SelectedSwatch].Samples[s.SelectedSample].SpriteId
-		sprites = append(sprites, resources.Sprites[spriteId].Sprite)
+		sprites = append(sprites, resources.TilesheetSprites[spriteId].Sprite)
 		sprites = append(sprites, swatchSpriteDraw)
 	}
 
@@ -71,7 +71,7 @@ func (s *Swatch) DrawSwatch(ctx *Context, win *opengl.Window) {
 			Moved(pixel.V((resources.TileSizeF64*(1+swatchKeyPadding))*float64(index), 0)).
 			Moved(pixel.V(resources.TileSizeF64/2, resources.TileSizeF64/2))
 		numberMatrix := tileMatrix.Moved(pixel.V(0, resources.TileSizeF64))
-		sprite := resources.Sprites[tile.SpriteId].Sprite
+		sprite := resources.TilesheetSprites[tile.SpriteId].Sprite
 		sprite.Draw(s.Canvas, tileMatrix)
 		swatchKeySprites[index].Draw(s.Canvas, numberMatrix)
 		if key == s.SelectedSample {

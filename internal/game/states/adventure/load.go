@@ -8,7 +8,7 @@ import (
 	"math/rand"
 )
 
-var npcRandomSpriteId = resources.SpriteId{
+var npcRandomSpriteId = resources.TilesheetSpriteId{
 	Tilesheet: "ui",
 	Column:    2,
 	Row:       2,
@@ -48,7 +48,7 @@ func initializeMap(a *State, m *resources.Map) {
 			thisRenderLayer.tiles[x] = make([]*resources.SpriteReference, a.mapHeight)
 		}
 		for _, tile := range m.Layers[layerName].Tiles {
-			ref := resources.Sprites[tile.SpriteId]
+			ref := resources.TilesheetSprites[tile.SpriteId]
 			thisRenderLayer.tiles[tile.X+dx][tile.Y+dy] = ref
 		}
 		if layerName == resources.LayerOverlay {

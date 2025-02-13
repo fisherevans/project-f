@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -11,7 +12,7 @@ var (
 	resourceMaps = LocalResource{
 		FileRoot:        "maps",
 		FileExtension:   "json",
-		FileLoader:      jsonLoader(&Maps),
+		FileLoader:      unmarshaler(&Maps, json.Unmarshal),
 		ResourceEncoder: jsonEncoder,
 	}
 )
@@ -53,9 +54,9 @@ type Layer struct {
 }
 
 type Tile struct {
-	X        int      `json:"x"`
-	Y        int      `json:"y"`
-	SpriteId SpriteId `json:"sprite_id"`
+	X        int               `json:"x"`
+	Y        int               `json:"y"`
+	SpriteId TilesheetSpriteId `json:"sprite_id"`
 }
 
 type Entity struct {
@@ -69,11 +70,11 @@ func (e *Entity) Copy() *Entity {
 	next := &Entity{}
 	encoded, err := json.Marshal(e)
 	if err != nil {
-		fmt.Printf("Error marshalling Entity: %v\n", err)
+		log.Error().Msgf("Error marshalling Entity: %v", err)
 		return next
 	}
 	if err := json.Unmarshal(encoded, next); err != nil {
-		fmt.Printf("Error unmarshalling Entity: %v\n", err)
+		log.Error().Msgf("Error unmarshalling Entity: %v", err)
 	}
 	return next
 }

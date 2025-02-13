@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/golang/freetype/truetype"
 	"github.com/gopxl/pixel/v2/ext/text"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/image/font"
-	"log"
 )
 
 var (
@@ -26,7 +26,7 @@ func loadFont(path string, resourceName string, data []byte) error {
 		return fmt.Errorf("failed to parse font from %s: %w", path, err)
 	}
 	FontRegistry[resourceName] = ttfFont
-	fmt.Printf("loaded font %s\n", resourceName)
+	log.Info().Msgf("loaded font %s", resourceName)
 	return nil
 }
 
@@ -109,7 +109,7 @@ type DefinedFont struct {
 func NewDefinedFont(resourceName string, size int) *DefinedFont {
 	ttf, exists := FontRegistry[resourceName]
 	if !exists {
-		log.Fatal("font not found in registry: ", resourceName)
+		log.Fatal().Msgf("font not found in registry: %s", resourceName)
 	}
 	face := truetype.NewFace(ttf, &truetype.Options{
 		Size:              float64(size),

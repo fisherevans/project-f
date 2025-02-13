@@ -103,7 +103,7 @@ func (s *SpriteSelector) changeSheet(amount int) {
 		next = 0
 	}
 	s.selected = &resources.SwatchSample{
-		SpriteId: resources.SpriteId{
+		SpriteId: resources.TilesheetSpriteId{
 			Tilesheet: sheets[next],
 			Row:       1,
 			Column:    1,

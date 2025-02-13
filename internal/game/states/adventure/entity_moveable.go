@@ -3,8 +3,8 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
-	"fmt"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type MoveableEntity struct {
@@ -46,7 +46,7 @@ func (m *MoveableEntity) TriggerMovement(adv *State, direction input.Direction) 
 		return false
 	}
 	if dx > 1 || dy > 1 || dx < -1 || dy < -1 || (dx != 0 && dy != 0) {
-		fmt.Printf("got an unexpect move: %d,%d\n", dx, dy)
+		log.Error().Msgf("got an unexpect move: %d,%d", dx, dy)
 		return false
 	}
 	m.FacingDirection = direction

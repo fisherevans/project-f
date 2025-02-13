@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -70,7 +71,7 @@ func cleanupBackups(fullpath string, n int) error {
 			if err := os.Remove(backup.path); err != nil {
 				return fmt.Errorf("failed to delete file %s: %w", backup.path, err)
 			}
-			fmt.Printf("Deleted: %s (prefix: %s)\n", backup.path, baseName)
+			log.Info().Msgf("Deleted: %s (prefix: %s)", backup.path, baseName)
 		}
 	}
 
