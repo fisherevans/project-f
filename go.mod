@@ -7,6 +7,7 @@ toolchain go1.22.10
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/gopxl/pixel/v2 v2.3.0
+	github.com/lafriks/go-tiled v0.13.0
 	github.com/rs/zerolog v1.33.0
 	golang.org/x/image v0.20.0
 	gopkg.in/yaml.v3 v3.0.1

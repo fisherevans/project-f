@@ -30,7 +30,7 @@ func (s *State) AddEntity(e Entity) bool {
 	}
 	worked := s.attemptToOccupy(e.Location(), e.GetEntityId())
 	if !worked {
-		log.Fatal().Str("entityId", string(e.GetEntityId())).Msg("failed to add entity due to location conflict")
+		log.Fatal().Str("entityId", string(e.GetEntityId())).Str("location", e.Location().String()).Msg("failed to add entity due to location conflict")
 		return false
 	}
 	s.entities[e.GetEntityId()] = e

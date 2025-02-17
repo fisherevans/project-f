@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="8" height="8" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="3">
+ <tileset firstgid="1" source="snowhex_base.tsx"/>
+ <layer id="1" name="base" width="8" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,1,1,1,1,1,1,0,
+0,114,0,0,0,0,2,0,
+0,114,0,1,2,0,2,0,
+0,114,0,114,115,0,2,0,
+0,114,0,0,0,0,2,0,
+0,115,115,115,115,115,115,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="5" name="decor" width="8" height="8" visible="0">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="6" name="overlay" width="8" height="8" visible="0">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="4" name="entities" visible="0">
+  <object id="2" gid="5150" x="80.1703" y="48.0198" width="16" height="16">
+   <properties>
+    <property name="type" value="player"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="2" name="collision" width="8" height="8" visible="0" locked="1">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,1,1,1,1,1,1,0,
+0,1,0,0,0,0,1,0,
+0,1,0,0,0,0,1,0,
+0,1,0,0,0,0,1,0,
+0,1,0,0,0,0,1,0,
+0,1,1,1,1,1,1,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+</map>

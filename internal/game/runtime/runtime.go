@@ -37,6 +37,12 @@ func Run() {
 			},
 		},
 		state_selector.Destination{
+			Name: "Adventure (tiled)",
+			State: func(ctx *game.Context) game.State {
+				return adventure.New("map1", ctx.GameSave)
+			},
+		},
+		state_selector.Destination{
 			Name: "Combat",
 			State: func(ctx *game.Context) game.State {
 				return combat.New(ctx.GameSave.NewDeployment(), func(ctx *game.Context, s *combat.State) {

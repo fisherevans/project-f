@@ -2,12 +2,17 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
+	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"math"
 )
 
 type MapLocation struct {
 	X, Y int
+}
+
+func (l MapLocation) String() string {
+	return fmt.Sprintf("(%d, %d)", l.X, l.Y)
 }
 
 func (l MapLocation) ToVec() pixel.Vec {

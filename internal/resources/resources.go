@@ -22,6 +22,7 @@ var (
 		resourceFonts,
 		resourceSprites,
 		resourceFrames,
+		resourceTiledMaps,
 	}
 )
 
