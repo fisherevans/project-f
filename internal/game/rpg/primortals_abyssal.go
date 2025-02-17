@@ -5,9 +5,9 @@ var Primortal_Nightbane = Primortal{
 	Name:                "Nightbane",
 	BaseSync:            18,
 	BasePhysicalAttack:  10,
-	BasePhysicalDefence: 4,
+	BasePhysicalDefense: 4,
 	BaseAetherAttack:    18,
-	BaseAetherDefence:   11,
+	BaseAetherDefense:   11,
 	BodyType:            BodyTypeAbyssal,
 	Affinity:            SkillTypeAbyssal,
 }.register()
@@ -17,9 +17,9 @@ var Primortal_Darkvein = Primortal{
 	Name:                "Darkvein",
 	BaseSync:            16,
 	BasePhysicalAttack:  9,
-	BasePhysicalDefence: 6,
+	BasePhysicalDefense: 6,
 	BaseAetherAttack:    22,
-	BaseAetherDefence:   15,
+	BaseAetherDefense:   15,
 	BodyType:            BodyTypeAbyssal,
 	Affinity:            SkillTypeGamma,
 }.register()

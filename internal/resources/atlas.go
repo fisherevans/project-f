@@ -40,7 +40,7 @@ func loadAtlas() {
 // createAtlasGuillotine tries to pack images into an atlas using a guillotine-like approach.
 // It returns the atlas as an *image.RGBA plus the pixel.Rect for each image’s location.
 // Larger-first packing is used to help efficiency.
-func createAtlasGuillotine(imgs []image.Image, atlasWidth, atlasHeight int) (*image.RGBA, []pixel.Rect) {
+func createAtlasGuillotine(imgs []image.Image, atlasWidth, atlasHeight Pixels) (*image.RGBA, []pixel.Rect) {
 	// Sort images largest-to-smallest by area (optional but often helps)
 	type indexedImage struct {
 		img  image.Image
@@ -62,9 +62,9 @@ func createAtlasGuillotine(imgs []image.Image, atlasWidth, atlasHeight int) (*im
 	}
 
 	// Create the atlas and init free rectangles
-	atlas := image.NewRGBA(image.Rect(0, 0, atlasWidth, atlasHeight))
+	atlas := image.NewRGBA(image.Rect(0, 0, atlasWidth.Int(), atlasHeight.Int()))
 	freeRects := []freeRect{
-		{0, 0, atlasWidth, atlasHeight}, // The entire space is free initially
+		{0, 0, atlasWidth.Int(), atlasHeight.Int()}, // The entire space is free initially
 	}
 
 	// This will store the final placement for each image, indexed by original order
@@ -80,7 +80,7 @@ func createAtlasGuillotine(imgs []image.Image, atlasWidth, atlasHeight int) (*im
 		return -1
 	}
 
-	for _, ii := range indexed {
+	for id, ii := range indexed {
 		img := ii.img
 		b := img.Bounds()
 		w, h := b.Dx(), b.Dy()
@@ -88,7 +88,7 @@ func createAtlasGuillotine(imgs []image.Image, atlasWidth, atlasHeight int) (*im
 		// Find a free rectangle that can fit this image
 		fi := findRect(w, h)
 		if fi == -1 {
-			log.Fatal().Msgf("atlast is too small (%dx%d) for %d images. Was able to fit %d images before failing", atlasWidth, atlasHeight, len(imgs), len(placements))
+			log.Fatal().Msgf("atlast is too small (%dx%d) for %d images. Was able to fit %d images before failing", atlasWidth, atlasHeight, len(imgs), id)
 			return nil, nil
 		}
 
@@ -101,9 +101,9 @@ func createAtlasGuillotine(imgs []image.Image, atlasWidth, atlasHeight int) (*im
 		// Bottom-left in pixel space: (fr.x, atlasHeight - (fr.y + h))
 		// Top-right in pixel space:   (fr.x + w, atlasHeight - fr.y)
 		minX := float64(fr.x)
-		minY := float64(atlasHeight - (fr.y + h))
+		minY := float64(atlasHeight.Int() - (fr.y + h))
 		maxX := float64(fr.x + w)
-		maxY := float64(atlasHeight - fr.y)
+		maxY := float64(atlasHeight.Int() - fr.y)
 		placements[ii.idx] = pixel.R(minX, minY, maxX, maxY)
 
 		// Remove the used freeRect

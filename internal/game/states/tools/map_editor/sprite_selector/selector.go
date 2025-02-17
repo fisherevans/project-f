@@ -17,6 +17,7 @@ type SpriteSelector struct {
 	selected             *resources.SwatchSample
 	backState, nextState game.State
 	consumer             SelectionConsumer
+	batch                *pixel.Batch
 }
 
 func New(win *opengl.Window, initialSelection *resources.SwatchSample, backState, nextState game.State, onSelect SelectionConsumer) game.State {
@@ -26,23 +27,29 @@ func New(win *opengl.Window, initialSelection *resources.SwatchSample, backState
 		backState: backState,
 		nextState: nextState,
 		consumer:  onSelect,
+		batch:     pixel.NewBatch(&pixel.TrianglesData{}, resources.SpriteAtlas),
 	}
 }
 
 var selectedOverlaySprite = resources.GetSprite("ui", 3, 1)
 
 func (s *SpriteSelector) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+	s.batch.Clear()
+
 	s.listenToInputs(ctx)
 	startY := targetBounds.H()
 	for spriteId, spriteRef := range resources.Tilesheets[s.selected.SpriteId.Tilesheet].Sprites {
-		x := float64(spriteId.Column * resources.TileSize)
-		y := startY - float64(spriteId.Row*resources.TileSize)
+		x := float64(spriteId.Column * resources.MapTileSize.Int())
+		y := startY - float64(spriteId.Row*resources.MapTileSize.Int())
 		mat := pixel.IM.Moved(pixel.V(x, y))
-		spriteRef.Sprite.Draw(target, mat)
+		spriteRef.Sprite.Draw(s.batch, mat)
 		if spriteId == s.selected.SpriteId {
-			selectedOverlaySprite.Sprite.Draw(target, mat)
+			selectedOverlaySprite.Sprite.Draw(s.batch, mat)
 		}
 	}
+
+	s.batch.Draw(target)
+
 	ctx.DebugTL("selected sprite: (%s)", s.selected.SpriteId)
 
 	ctx.DebugBR("wasd/arrows: change sprite")

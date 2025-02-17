@@ -1,15 +1,16 @@
 save_id: "1"
 character_name: Isaac
 animech:
-    bonus_integrity: 10
-    bonus_shield: 30
+    additional_integrity: 10
+    additional_shield: 30
     upgrade_points: 3
 captured_primortals:
     fire_slug:
+        primortal_type: fire_slug
         nickname: Slug'em
-        bonus_sync: 40
-        bonus_physical_attack: 20
-        bonus_aether_attack: 5
+        additional_sync: 40
+        additional_physical_attack: 20
+        additional_aether_attack: 5
         research_points: 13
         selected_skills:
             - flame_surge

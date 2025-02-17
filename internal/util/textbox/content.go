@@ -19,7 +19,9 @@ type Content struct {
 
 	progressFaster bool
 
-	// pre-computer
+	alignmentOverride *Alignment
+
+	// pre-computed
 	width  int
 	height int
 }
@@ -32,6 +34,12 @@ func WithTyping(timePerCharacter float64) ContentOpt {
 			timePerCharacter: timePerCharacter,
 			fasterScale:      4,
 		}
+	}
+}
+
+func WithAlignment(a Alignment) ContentOpt {
+	return func(c *Content) {
+		c.alignmentOverride = &a
 	}
 }
 

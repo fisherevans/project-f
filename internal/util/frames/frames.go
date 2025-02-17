@@ -5,12 +5,19 @@ import (
 	"github.com/gopxl/pixel/v2"
 )
 
-func Draw(target pixel.Target, frame *resources.SpriteFrame, rect pixel.Rect, matrix pixel.Matrix) {
+func Draw(target pixel.Target, frame *resources.SpriteFrame, rect pixel.Rect, matrix pixel.Matrix, opts ...Opt) {
 	// Split the rect into 9 sub-rectangles
 	top := float64(frame.CutMargin[resources.FrameTop])
 	left := float64(frame.CutMargin[resources.FrameLeft])
 	bottom := float64(frame.CutMargin[resources.FrameBottom])
 	right := float64(frame.CutMargin[resources.FrameRight])
+
+	options := &frameOptions{
+		color: pixel.RGBA{1, 1, 1, 1},
+	}
+	for _, opt := range opts {
+		opt(options)
+	}
 
 	subRects := map[resources.FrameSide]pixel.Rect{
 		resources.FrameTopLeft:     pixel.R(rect.Min.X, rect.Max.Y-top, rect.Min.X+left, rect.Max.Y),
@@ -24,7 +31,7 @@ func Draw(target pixel.Target, frame *resources.SpriteFrame, rect pixel.Rect, ma
 		resources.FrameBottomRight: pixel.R(rect.Max.X-right, rect.Min.Y, rect.Max.X, rect.Min.Y+bottom),
 	}
 
-	// Draw each sub-rectangle
+	// DrawColorMask() each sub-rectangl, options.colore
 	for side, subRect := range subRects {
 		sprite := frame.Sprites[side]
 		if sprite == nil {
@@ -38,30 +45,44 @@ func Draw(target pixel.Target, frame *resources.SpriteFrame, rect pixel.Rect, ma
 		switch frameMode {
 		case resources.FrameModeStretch:
 			scaleAround := matrix.Project(subRect.Center())
+			drawMatrix := matrix
 			switch side {
 			case resources.FrameTop, resources.FrameBottom:
-				sprite.Sprite.Draw(target, matrix.Moved(subRect.Center()).ScaledXY(scaleAround, pixel.V(subRect.W()/sprite.Bounds.W(), 1)))
+				drawMatrix = matrix.Moved(subRect.Center()).ScaledXY(scaleAround, pixel.V(subRect.W()/sprite.Bounds.W(), 1))
 			case resources.FrameLeft, resources.FrameRight:
-				sprite.Sprite.Draw(target, matrix.Moved(subRect.Center()).ScaledXY(scaleAround, pixel.V(1, subRect.H()/sprite.Bounds.H())))
+				drawMatrix = matrix.Moved(subRect.Center()).ScaledXY(scaleAround, pixel.V(1, subRect.H()/sprite.Bounds.H()))
 			case resources.FrameMiddle:
-				sprite.Sprite.Draw(target, matrix.Moved(subRect.Center()).ScaledXY(scaleAround, pixel.V(subRect.W()/sprite.Bounds.W(), subRect.H()/sprite.Bounds.H())))
+				drawMatrix = matrix.Moved(subRect.Center()).ScaledXY(scaleAround, pixel.V(subRect.W()/sprite.Bounds.W(), subRect.H()/sprite.Bounds.H()))
 			default: // corners never scale
-				sprite.Sprite.Draw(target, matrix.Moved(subRect.Center()))
+				drawMatrix = matrix.Moved(subRect.Center())
 			}
+			sprite.Sprite.DrawColorMask(target, drawMatrix, options.color)
 		case resources.FrameModeRepeat:
-			drawRepeated(target, matrix, sprite, subRect)
+			drawRepeated(target, matrix, sprite, subRect, options)
 		}
 	}
 
 }
 
-func drawRepeated(target pixel.Target, matrix pixel.Matrix, sprite *resources.SpriteReference, rect pixel.Rect) {
+type frameOptions struct {
+	color pixel.RGBA
+}
+
+type Opt func(*frameOptions)
+
+func WithColor(color pixel.RGBA) Opt {
+	return func(o *frameOptions) {
+		o.color = color
+	}
+}
+
+func drawRepeated(target pixel.Target, matrix pixel.Matrix, sprite *resources.SpriteReference, rect pixel.Rect, options *frameOptions) {
 	spriteWidth := sprite.Bounds.W()
 	spriteHeight := sprite.Bounds.H()
 
 	for x := rect.Min.X; x < rect.Max.X; x += spriteWidth {
 		for y := rect.Min.Y; y < rect.Max.Y; y += spriteHeight {
-			sprite.Sprite.Draw(target, matrix.Moved(pixel.V(x+spriteWidth/2, y+spriteHeight/2)))
+			sprite.Sprite.DrawColorMask(target, matrix.Moved(pixel.V(x+spriteWidth/2, y+spriteHeight/2)), options.color)
 		}
 	}
 }

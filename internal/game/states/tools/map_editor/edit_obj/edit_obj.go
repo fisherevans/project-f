@@ -53,7 +53,7 @@ func (s *Editor) OnTick(ctx *game.Context, target pixel.Target, targetBounds pix
 		ctx.SwapActiveState(s.backState)
 	}
 
-	switch ctx.Controls.DPad().JustPressedDirection(true) {
+	switch ctx.Controls.DPad().JustPressedOrRepeatedDirection() {
 	case input.Up:
 		s.selected--
 	case input.Down:

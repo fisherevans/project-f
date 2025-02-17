@@ -16,7 +16,7 @@ func (r renderLayer) Render(target pixel.Target, cameraMatrix pixel.Matrix, boun
 			if spriteRef == nil {
 				continue
 			}
-			spriteRef.Sprite.Draw(target, cameraMatrix.Moved(pixel.V(float64(x), float64(y)).Scaled(resources.TileSizeF64)))
+			spriteRef.Sprite.Draw(target, cameraMatrix.Moved(pixel.V(float64(x), float64(y)).Scaled(resources.MapTileSize.Float())))
 		}
 	}
 }

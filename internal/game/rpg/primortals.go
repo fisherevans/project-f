@@ -4,6 +4,13 @@ var Primortals = map[PrimortalType]Primortal{}
 
 type PrimortalType string
 
+func (pt PrimortalType) Primortal() Primortal {
+	if p, exists := Primortals[pt]; exists {
+		return p
+	}
+	panic("unknown primortal type: " + pt)
+}
+
 type BodyType string
 
 const (
@@ -23,9 +30,9 @@ type Primortal struct {
 
 	BaseSync            int
 	BasePhysicalAttack  int
-	BasePhysicalDefence int
+	BasePhysicalDefense int
 	BaseAetherAttack    int
-	BaseAetherDefence   int
+	BaseAetherDefense   int
 
 	BodyType BodyType
 	Affinity SkillType

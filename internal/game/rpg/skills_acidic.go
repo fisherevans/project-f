@@ -5,6 +5,7 @@ var Skill_AcidSpit = Skill{
 	Name:        "Acid Spit",
 	Description: "Expel a corrosive substance that melts defenses.",
 	Type:        SkillTypeAcidic,
+	Ticks:       simpleDamageSkillTicks(5, DamageMediumPhysical, 3),
 }.register()
 
 var Skill_Corrode = Skill{
@@ -12,4 +13,5 @@ var Skill_Corrode = Skill{
 	Name:        "Corrode",
 	Description: "Slowly break down an enemy's armor with acid.",
 	Type:        SkillTypeAcidic,
+	Ticks:       simpleDamageSkillTicks(3, DamageMediumAether, 5),
 }.register()

@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	go func() {
+	go func() { // expose pprof to diagnose memory usage
 		http.ListenAndServe("localhost:6060", nil)
 	}()
 	opengl.Run(runtime.Run)

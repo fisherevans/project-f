@@ -5,9 +5,9 @@ var Primortal_Polyvex = Primortal{
 	Name:                "Polyvex",
 	BaseSync:            18,
 	BasePhysicalAttack:  9,
-	BasePhysicalDefence: 10,
+	BasePhysicalDefense: 10,
 	BaseAetherAttack:    12,
-	BaseAetherDefence:   15,
+	BaseAetherDefense:   15,
 	BodyType:            BodyTypeSynthetic,
 	Affinity:            SkillTypeAcidic,
 }.register()
@@ -17,9 +17,9 @@ var Primortal_Cyronex = Primortal{
 	Name:                "Cyronex",
 	BaseSync:            16,
 	BasePhysicalAttack:  8,
-	BasePhysicalDefence: 10,
+	BasePhysicalDefense: 10,
 	BaseAetherAttack:    15,
-	BaseAetherDefence:   23,
+	BaseAetherDefense:   23,
 	BodyType:            BodyTypeSynthetic,
 	Affinity:            SkillTypeGamma,
 }.register()

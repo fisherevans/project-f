@@ -30,7 +30,7 @@ func newSwatch() *Swatch {
 		SelectedSample: swatchKeys[0],
 		SelectedSwatch: "default",
 	}
-	s.Canvas = opengl.NewCanvas(pixel.R(0, 0, float64(resources.TileSize*(1+swatchKeyPadding)*len(swatchKeys)), resources.TileSizeF64*2))
+	s.Canvas = opengl.NewCanvas(pixel.R(0, 0, resources.MapTileSize.Float()*(1+swatchKeyPadding)*float64(len(swatchKeys)), resources.MapTileSize.Float()*2))
 	return s
 }
 
@@ -54,7 +54,7 @@ func (s *Swatch) DrawCanvasOverlay(ctx *Context, win *opengl.Window, target pixe
 		sprites = append(sprites, swatchSpriteDraw)
 	}
 
-	drawMatrix := cameraMatrix.Moved(pixel.V(float64(ctx.MouseMapLocation.X*resources.TileSize), float64(ctx.MouseMapLocation.Y*resources.TileSize)))
+	drawMatrix := cameraMatrix.Moved(pixel.V(float64(ctx.MouseMapLocation.X*resources.MapTileSize.Int()), float64(ctx.MouseMapLocation.Y*resources.MapTileSize.Int())))
 	for _, sprite := range sprites {
 		sprite.Draw(target, drawMatrix)
 	}
@@ -68,9 +68,9 @@ func (s *Swatch) DrawSwatch(ctx *Context, win *opengl.Window) {
 			continue
 		}
 		tileMatrix := pixel.IM.
-			Moved(pixel.V((resources.TileSizeF64*(1+swatchKeyPadding))*float64(index), 0)).
-			Moved(pixel.V(resources.TileSizeF64/2, resources.TileSizeF64/2))
-		numberMatrix := tileMatrix.Moved(pixel.V(0, resources.TileSizeF64))
+			Moved(pixel.V((resources.MapTileSize.Float()*(1+swatchKeyPadding))*float64(index), 0)).
+			Moved(pixel.V(resources.MapTileSize.Float()/2, resources.MapTileSize.Float()/2))
+		numberMatrix := tileMatrix.Moved(pixel.V(0, resources.MapTileSize.Float()))
 		sprite := resources.TilesheetSprites[tile.SpriteId].Sprite
 		sprite.Draw(s.Canvas, tileMatrix)
 		swatchKeySprites[index].Draw(s.Canvas, numberMatrix)
@@ -81,7 +81,7 @@ func (s *Swatch) DrawSwatch(ctx *Context, win *opengl.Window) {
 	}
 	s.Canvas.Draw(win, pixel.IM.
 		Moved(s.Canvas.Bounds().Center()).
-		Moved(pixel.V(resources.TileSizeF64*swatchKeyPadding, resources.TileSizeF64*swatchKeyPadding)).
+		Moved(pixel.V(resources.MapTileSize.Float()*swatchKeyPadding, resources.MapTileSize.Float()*swatchKeyPadding)).
 		Scaled(pixel.ZV, ctx.CanvasScale))
 }
 

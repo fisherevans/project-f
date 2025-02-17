@@ -1,7 +1,7 @@
 package rpg
 
 type DeployedAnimech struct {
-	Animech
+	*Animech
 	AnimechExperience   int
 	PrimortalExperience map[PrimortalType]int
 	CurrentIntegrity    int
@@ -10,13 +10,13 @@ type DeployedAnimech struct {
 }
 
 type DeployedPrimortal struct {
-	CapturedPrimortal
+	*CapturedPrimortal
 	Experience  int
 	CurrentSync int
 
 	PhysicalAttackModifier  int
 	PhysicalDefenceModifier int
-	
+
 	AetherAttackModifier  int
 	AetherDefenceModifier int
 }

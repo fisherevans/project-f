@@ -5,6 +5,7 @@ var Skill_GammaStrike = Skill{
 	Name:        "Gamma Strike",
 	Description: "Deliver a strike laced with radiation, weakening foes.",
 	Type:        SkillTypeGamma,
+	Ticks:       simpleDamageSkillTicks(5, DamageMediumAether, 3),
 }.register()
 
 var Skill_FalloutWave = Skill{
@@ -12,4 +13,5 @@ var Skill_FalloutWave = Skill{
 	Name:        "Fallout Wave",
 	Description: "Release a lingering radiation field that saps enemy strength.",
 	Type:        SkillTypeGamma,
+	Ticks:       simpleDamageSkillTicks(3, DamageMediumAether, 5),
 }.register()

@@ -75,10 +75,10 @@ func initializeMap(a *State, m *resources.Map) {
 						MoveSpeed:       characterSpeed,
 					},
 					Animations: map[input.Direction]*anim.AnimatedSprite{
-						input.Down:  anim.PigDown(),
-						input.Up:    anim.PigUp(),
-						input.Right: anim.PigRight(),
-						input.Left:  anim.PigLeft(),
+						input.Down:  anim.RobotDown(),
+						input.Up:    anim.RobotUp(),
+						input.Right: anim.RobotRight(),
+						input.Left:  anim.RobotLeft(),
 					},
 				},
 			}
@@ -93,10 +93,10 @@ func initializeMap(a *State, m *resources.Map) {
 						MoveSpeed:       2,
 					},
 					Animations: map[input.Direction]*anim.AnimatedSprite{
-						input.Down:  anim.PigDown(),
-						input.Up:    anim.PigUp(),
-						input.Right: anim.PigRight(),
-						input.Left:  anim.PigLeft(),
+						input.Down:  anim.RobotDown(),
+						input.Up:    anim.RobotUp(),
+						input.Right: anim.RobotRight(),
+						input.Left:  anim.RobotLeft(),
 					},
 					ColorMask: pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
 				},
@@ -131,6 +131,13 @@ func initializeMap(a *State, m *resources.Map) {
 					MapLocation: location,
 				},
 				topic: entity.GetStringMetadata("topic", ""),
+			})
+		case "combat":
+			a.AddEntity(&EntityCombat{
+				InnateEntity: InnateEntity{
+					EntityId:    entityId,
+					MapLocation: location,
+				},
 			})
 		}
 	}

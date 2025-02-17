@@ -3,6 +3,7 @@ package runtime
 import (
 	game "fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/states/adventure"
+	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
 	"fisherevans.com/project/f/internal/game/states/tools/map_editor"
 	"fisherevans.com/project/f/internal/util"
@@ -31,13 +32,22 @@ func Run() {
 	ctx := game.NewContext(state_selector.New(
 		state_selector.Destination{
 			Name: "Adventure",
-			State: func() game.State {
-				return adventure.New("dummy")
+			State: func(ctx *game.Context) game.State {
+				return adventure.New("dummy", ctx.GameSave)
+			},
+		},
+		state_selector.Destination{
+			Name: "Combat",
+			State: func(ctx *game.Context) game.State {
+				return combat.New(ctx.GameSave.NewDeployment(), func(ctx *game.Context, s *combat.State) {
+					ctx.Notify("Combat complete!")
+					// TODO
+				})
 			},
 		},
 		state_selector.Destination{
 			Name: "Map Editor",
-			State: func() game.State {
+			State: func(ctx *game.Context) game.State {
 				return map_editor.New(window)
 			},
 		},
@@ -83,8 +93,8 @@ func Run() {
 
 		runtime.ReadMemStats(&m)
 		ctx.DebugTL("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
-		ctx.DebugTL("Tile Delta %s", frameStats)
-		ctx.DebugTL("Game Logic %s", gameLogicStats)
+		ctx.DebugTL("%s", frameStats.SummaryFPS())
+		ctx.DebugTL("Game Logic %s", gameLogicStats.SummaryMS())
 		game.RenderDebugLines(window, ctx.PopDebugLines())
 		game.RenderNotifications(window, ctx.PopNotifications(deltaTime))
 

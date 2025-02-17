@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
@@ -15,8 +16,8 @@ const (
 )
 
 var (
-	cameraRenderDistanceX = int(math.Ceil(float64(game.GameWidth) / resources.TileSizeF64 / 2.0))
-	cameraRenderDistanceY = int(math.Ceil(float64(game.GameHeight) / resources.TileSizeF64 / 2.0))
+	cameraRenderDistanceX = int(math.Ceil(float64(game.GameWidth) / resources.MapTileSize.Float() / 2.0))
+	cameraRenderDistanceY = int(math.Ceil(float64(game.GameHeight) / resources.MapTileSize.Float() / 2.0))
 )
 
 var _ game.State = &State{}
@@ -30,6 +31,9 @@ const (
 
 type State struct {
 	game.BaseState
+
+	animech *rpg.DeployedAnimech
+
 	mapWidth, mapHeight int
 	baseRenderLayers    []renderLayer
 	overlayRenderLayers []renderLayer
@@ -48,7 +52,7 @@ type State struct {
 	batch *pixel.Batch
 }
 
-func New(mapName string) game.State {
+func New(mapName string, save *rpg.GameSave) game.State {
 	m := resources.Maps[mapName]
 	a := &State{
 		entities:             make(map[EntityId]Entity),
@@ -61,10 +65,11 @@ func New(mapName string) game.State {
 		dialogues:            NewDialogueSystem(),
 	}
 	initializeMap(a, m)
+	a.animech = save.NewDeployment()
 	return a
 }
 
-var clearColor = colors.HexColor("#18215D")
+var clearColor = colors.HexColor("#000000")
 
 func (s *State) ClearColor() color.Color {
 	return clearColor
@@ -93,7 +98,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 
 	for _, entity := range s.locationSortedEntities() {
-		renderLocation := entity.RenderMapLocation().Scaled(resources.TileSizeF64)
+		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
 		entity.Render(s.batch, cameraMatrix.Moved(renderLocation))
 	}
 

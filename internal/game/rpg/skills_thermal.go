@@ -5,6 +5,7 @@ var Skill_FlameSurge = Skill{
 	Name:        "Flame Surge",
 	Description: "Unleash a wave of intense heat, scorching foes.",
 	Type:        SkillTypeThermal,
+	Ticks:       simpleDamageSkillTicks(5, DamageMediumAether, 6),
 }.register()
 
 var Skill_HeatCrash = Skill{
@@ -12,4 +13,5 @@ var Skill_HeatCrash = Skill{
 	Name:        "Heat Crash",
 	Description: "Superheat your body and slam into an enemy.",
 	Type:        SkillTypeThermal,
+	Ticks:       simpleDamageSkillTicks(10, DamageMediumAether, 2),
 }.register()

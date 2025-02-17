@@ -16,6 +16,8 @@ type Config struct {
 	linesPerPage int
 	lineByLine   bool
 
+	origin Origin
+
 	scrollTimePerLine float64
 }
 
@@ -49,6 +51,11 @@ func (c Config) Foreground(foreground pixel.RGBA) Config {
 func (c Config) Paging(linesPerPage int, lineByLine bool) Config {
 	c.linesPerPage = linesPerPage
 	c.lineByLine = lineByLine
+	return c
+}
+
+func (c Config) RenderFrom(origin Origin) Config {
+	c.origin = origin
 	return c
 }
 
@@ -88,6 +95,20 @@ var FontLarge = Font{
 	tailHeight:   2,
 }
 
+var FontLargeSpaced = Font{
+	atlas:        resources.Fonts.M7.Atlas,
+	letterHeight: 10,
+	lineSpacing:  3,
+	tailHeight:   2,
+}
+
 func (f Font) GetAtlas() *text.Atlas {
 	return f.atlas
 }
+
+type Origin int
+
+const (
+	BottomLeft Origin = iota
+	TopLeft
+)

@@ -62,8 +62,8 @@ func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target,
 		incompleteChatters = append(incompleteChatters, chatter)
 
 		renderMatrix := matrix.Moved(chatter.RenderAbove().
-			Scaled(resources.TileSizeF64).
-			Add(pixel.V(0, resources.TileSizeF64)))
+			Scaled(resources.MapTileSize.Float()).
+			Add(pixel.V(0, resources.MapTileSize.Float())))
 
 		frameWidth := chatter.Content().Width() + chatterFrame.HorizontalPadding()
 		frameHeight := chatter.Content().Height() + chatterFrame.VerticalPadding()

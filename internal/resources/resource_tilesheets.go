@@ -7,12 +7,25 @@ import (
 	"github.com/rs/zerolog/log"
 	"image"
 	_ "image/png"
+	"regexp"
+	"strconv"
 )
 
+type Pixels int
+
+func (p Pixels) Float() float64 {
+	return float64(p)
+}
+
+func (p Pixels) Int() int {
+	return int(p)
+}
+
 const (
-	TileSize        = 16
-	TileSizeF64     = float64(TileSize)
-	SpriteAtlasSize = 1024
+	DefaultTileSize Pixels = 16
+	MapTileSize     Pixels = DefaultTileSize
+
+	SpriteAtlasSize Pixels = 2048
 )
 
 var (
@@ -29,11 +42,13 @@ var (
 )
 
 type TilesheetMetadata struct {
-	Name     string
-	Columns  int
-	Rows     int
-	Sprites  map[TilesheetSpriteId]*SpriteReference
-	rawImage image.Image
+	Name       string
+	TileHeight Pixels
+	TileWidth  Pixels
+	Columns    int
+	Rows       int
+	Sprites    map[TilesheetSpriteId]*SpriteReference
+	rawImage   image.Image
 }
 
 type TilesheetSpriteId struct {
@@ -54,12 +69,27 @@ func GetSprite(tilesheet string, col, row int) *SpriteReference {
 	}]
 }
 
+var tilesheetSizeRegex = regexp.MustCompile(`^(.*)-(\d+)x(\d+)$`)
+
+func parseTilesheetName(input string) (string, Pixels, Pixels) {
+	m := tilesheetSizeRegex.FindStringSubmatch(input)
+	if len(m) == 4 {
+		base := m[1]
+		x, _ := strconv.Atoi(m[2])
+		y, _ := strconv.Atoi(m[3])
+		return base, Pixels(x), Pixels(y)
+	}
+	return input, DefaultTileSize, DefaultTileSize
+}
+
 func loadTilesheet(path string, resourceName string, data []byte) error {
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Error().Msgf("Failed to decode image %s: %v", path, err)
 		return nil // Continue with the next file
 	}
+
+	resourceName, tileWidth, tileHeight := parseTilesheetName(resourceName)
 
 	addAtlasImage(&img, func(atlas pixel.Picture, bounds pixel.Rect) {
 		pictureData := pixel.PictureDataFromImage(img)
@@ -68,15 +98,17 @@ func loadTilesheet(path string, resourceName string, data []byte) error {
 		sheetHeight := pictureData.Bounds().H()
 
 		tilesheet := &TilesheetMetadata{
-			Name:     resourceName,
-			Sprites:  map[TilesheetSpriteId]*SpriteReference{},
-			Rows:     int(sheetHeight / TileSize),
-			Columns:  int(sheetWidth / TileSize),
-			rawImage: img,
+			Name:       resourceName,
+			TileWidth:  tileWidth,
+			TileHeight: tileHeight,
+			Rows:       int(sheetHeight / float64(tileHeight)),
+			Columns:    int(sheetWidth / float64(tileWidth)),
+			rawImage:   img,
+			Sprites:    map[TilesheetSpriteId]*SpriteReference{},
 		}
 
 		Tilesheets[resourceName] = tilesheet
-		log.Info().Msgf("loaded tilesheet %s with %d columns and %d rows", resourceName, tilesheet.Columns, tilesheet.Rows)
+		log.Info().Msgf("loaded tilesheet %s (%dx%d) with %d columns and %d rows", resourceName, tilesheet.TileWidth, tilesheet.TileHeight, tilesheet.Columns, tilesheet.Rows)
 
 		for y := 0; y < tilesheet.Rows; y++ {
 			for x := 0; x < tilesheet.Columns; x++ {
@@ -85,9 +117,9 @@ func loadTilesheet(path string, resourceName string, data []byte) error {
 					Row:       tilesheet.Rows - y,
 					Tilesheet: tilesheet.Name,
 				}
-				posX := bounds.Min.X + (float64(x) * TileSizeF64)
-				posY := bounds.Min.Y + (float64(y) * TileSizeF64)
-				r := pixel.R(posX, posY, posX+TileSizeF64, posY+TileSizeF64)
+				posX := bounds.Min.X + (float64(x) * tilesheet.TileWidth.Float())
+				posY := bounds.Min.Y + (float64(y) * tilesheet.TileHeight.Float())
+				r := pixel.R(posX, posY, posX+tilesheet.TileWidth.Float(), posY+tilesheet.TileHeight.Float())
 				spriteRef := &SpriteReference{
 					Source: atlas,
 					Bounds: r,

@@ -1,0 +1,48 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "snowhex_base.tsx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "asha_idle-32x32.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "map1.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 695,
+                "y": 929
+            }
+        },
+        "snowhex_base.tsx": {
+            "scaleInDock": 4,
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "/Users/fisher/dev/project-f/assets/tilesheets",
+    "map.fixedSize": false,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "openFiles": [
+        "map1.tmx",
+        "snowhex_base.tsx"
+    ],
+    "project": "testbed.tiled-project",
+    "recentFiles": [
+        "snowhex_base.tsx",
+        "map1.tmx",
+        "asha_idle-32x32.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 32,
+        "width": 32
+    }
+}

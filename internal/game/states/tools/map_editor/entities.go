@@ -36,7 +36,7 @@ func (m *MapEditor) DrawEntityOverlay(ctx *Context, win *opengl.Window, target p
 		}
 	}
 
-	drawMatrix := cameraMatrix.Moved(pixel.V(float64(ctx.MouseMapLocation.X*resources.TileSize), float64(ctx.MouseMapLocation.Y*resources.TileSize)))
+	drawMatrix := cameraMatrix.Moved(pixel.V(float64(ctx.MouseMapLocation.X*resources.MapTileSize.Int()), float64(ctx.MouseMapLocation.Y*resources.MapTileSize.Int())))
 	for _, sprite := range sprites {
 		sprite.Draw(target, drawMatrix)
 	}

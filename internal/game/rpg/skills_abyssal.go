@@ -5,6 +5,7 @@ var Skill_VoidLash = Skill{
 	Name:        "Void Lash",
 	Description: "Strike with tendrils of void energy, ignoring armor.",
 	Type:        SkillTypeAbyssal,
+	Ticks:       simpleDamageSkillTicks(10, DamageMediumAether, 2),
 }.register()
 
 var Skill_Nullwave = Skill{
@@ -12,4 +13,5 @@ var Skill_Nullwave = Skill{
 	Name:        "Nullwave",
 	Description: "Emit a pulse that destabilizes energy-based beings.",
 	Type:        SkillTypeAbyssal,
+	Ticks:       simpleDamageSkillTicks(5, DamageMediumAether, 3),
 }.register()

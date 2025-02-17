@@ -29,9 +29,9 @@ The following commands are supported:
 - Shadow: {+s}Hello{-s}
   - Optional color argument: {+s:blue}Hello{-s}
 
-- Color: {+c:red}Hello{-c}
+- Color: {+c:warm_5}Hello{-c}
   - Required color argument, either by name or hex code:
-  - {+c:red}Hello{-c}
+  - {+c:warm_5}Hello{-c}
   - {+c:#ff0000}Hello{-c}
 
 - Typing Weight: {+w:0.5}He{+w:20}llo{-w}
@@ -40,7 +40,7 @@ The following commands are supported:
 - Rumble {+r}Hello{-r}
   - Optional scale argument, which is a number indicating the frequency of the rumble effect.
 
-- Wildcard: {+u}{+c:red}Hello{-*} - only valid with '-' to reset all template values.
+- Wildcard: {+u}{+c:warm_5}Hello{-*} - only valid with '-' to reset all template values.
 */
 func (tb *Instance) NewComplexContent(template string, opts ...ContentOpt) *Content {
 	var paragraphs [][]*character

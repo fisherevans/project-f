@@ -18,7 +18,7 @@ func (e *EntityInterest) Interact(ctx *game.Context, adv *State, source Entity) 
 	var msg string
 	switch e.topic {
 	case "test-tube":
-		msg = "The fluid inside the tube glows faintly, casting eerie shadows. Suspended within, the creature twitches, its form shifting between solid and vapor, as if undecided on existing. A single monitor flickers beside it, reading:\n{+u,+c:red,+s}STABILITY{+w:20} {-w}FLUCTUATING{-*}\nWhatever this thing was, it's still {+r:0.05}trying to be{-r}."
+		msg = "The fluid inside the tube glows faintly, casting eerie shadows. Suspended within, the creature twitches, its form shifting between solid and vapor, as if undecided on existing. A single monitor flickers beside it, reading:\n{+u,+c:warm_5,+s}STABILITY{+w:20} {-w}FLUCTUATING{-*}\nWhatever this thing was, it's still {+r:0.05}trying to be{-r}."
 		//msg = "Hello {+r}World{-r}!"
 	}
 	if msg == "" {

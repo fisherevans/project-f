@@ -46,14 +46,21 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 	for lineId, line := range pageLines {
 		lineTypingProgress := 0
 		y := float64(((renderLineCount - 1 - lineId) * (tb.letterHeight + tb.lineSpacing)) + tb.tailHeight + scrollDy)
+		if tb.cfg.origin == TopLeft {
+			y -= float64(content.height)
+		}
 		var x int
-		switch tb.cfg.alignment {
+		alignment := tb.cfg.alignment
+		if content.alignmentOverride != nil {
+			alignment = *content.alignmentOverride
+		}
+		switch alignment {
 		case AlignLeft:
 			x = 0
 		case AlignCenter:
 			x = (content.width - line.width) / 2
 		case AlignRight:
-			x = line.width - content.width
+			x = content.width - line.width
 		}
 		tb.text.Dot = pixel.V(float64(x), y)
 		for _, c := range line.characters {
@@ -111,8 +118,4 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 
 	tb.imd.Draw(target)
 	tb.text.Draw(target, matrix)
-
-	ctx.DebugBR("current page: %d (%.1f)", content.startLine, content.scrollPosition)
-	ctx.DebugBR("last page: %d", content.lastStartLine())
-	ctx.DebugBR("lines: %d", len(content.lines))
 }

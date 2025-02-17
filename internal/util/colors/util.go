@@ -9,6 +9,25 @@ import (
 	"strings"
 )
 
+type NamedColor pixel.RGBA
+
+var colorsByName = map[string]NamedColor{}
+
+func (c NamedColor) register(name string) pixel.RGBA {
+	if _, exists := colorsByName[name]; exists {
+		log.Fatal().Msgf("color name already exists: %s", name)
+	}
+	colorsByName[name] = c
+	return pixel.RGBA(c)
+}
+
+func ColorFromName(name string) pixel.RGBA {
+	if color, exists := colorsByName[name]; exists {
+		return pixel.RGBA(color)
+	}
+	panic("color name not found: " + name)
+}
+
 const hexErrMsg = "failed to parse color hex value"
 
 // HexColor converts #RGB, #RGBA, #RRGGBB, and #RRGGBBAA hex codes to colors (with or withou leading #)
@@ -37,7 +56,7 @@ func HexColor(hex string) pixel.RGBA {
 		a = parseHexByte(hex[6:8])
 	default:
 		log.Fatal().Msgf("%s: %s", hexErrMsg, hex)
-		
+
 	}
 
 	// Convert uint8 values to pixel.RGBA (normalized to 0-1 range)
@@ -109,5 +128,14 @@ func ScaleColor(c pixel.RGBA, v float64) pixel.RGBA {
 		G: c.G * v,
 		B: c.B * v,
 		A: c.A,
+	}
+}
+
+func WithAlpha(c pixel.RGBA, a float64) pixel.RGBA {
+	return pixel.RGBA{
+		R: c.R,
+		G: c.G,
+		B: c.B,
+		A: a,
 	}
 }

@@ -37,7 +37,7 @@ func (c cameraLocation) ComputeRenderDetails(ctx *game.Context, s *State, target
 		MaxY: util.MinInt(s.mapHeight-1, cameraMapY+cameraRenderDistanceY),
 	}
 	renderMatrix := pixel.IM.
-		Moved(c.location.Scaled(-1 * resources.TileSizeF64)).
+		Moved(c.location.Scaled(-1 * resources.MapTileSize.Float())).
 		Moved(targetBounds.Center())
 	return bounds, renderMatrix
 }

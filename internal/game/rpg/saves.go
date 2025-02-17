@@ -13,11 +13,28 @@ import (
 var gameSaveDirectory = "game_data/saves"
 
 type GameSave struct {
-	SaveId             string                              `yaml:"save_id"`
-	CharacterName      string                              `yaml:"character_name"`
-	Animech            *Animech                            `yaml:"animech"`
-	CapturedPrimortals map[PrimortalType]CapturedPrimortal `yaml:"captured_primortals"`
-	Inventory          *Inventory                          `yaml:"inventory"`
+	SaveId             string                               `yaml:"save_id"`
+	CharacterName      string                               `yaml:"character_name"`
+	Animech            *Animech                             `yaml:"animech"`
+	CapturedPrimortals map[PrimortalType]*CapturedPrimortal `yaml:"captured_primortals"`
+	Inventory          *Inventory                           `yaml:"inventory"`
+}
+
+func (g *GameSave) NewDeployment() *DeployedAnimech {
+	animech := &DeployedAnimech{
+		Animech:            g.Animech,
+		DeployedPrimortals: nil,
+	}
+	for _, p := range g.CapturedPrimortals {
+		animech.DeployedPrimortals = append(animech.DeployedPrimortals, &DeployedPrimortal{
+			CapturedPrimortal: p,
+			CurrentSync:       p.Base().BaseSync + p.AdditionalSync,
+		})
+		if len(animech.DeployedPrimortals) >= 3 {
+			break
+		}
+	}
+	return animech
 }
 
 func (g *GameSave) Save() error {

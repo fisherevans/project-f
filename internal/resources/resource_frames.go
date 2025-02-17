@@ -74,7 +74,9 @@ func processFrames() {
 		}
 
 		fillDefaults(&frame.CutMargin, frame.Defaults.CutMargin, FrameTop, FrameLeft, FrameBottom, FrameRight)
+
 		fillDefaults(&frame.Padding, frame.Defaults.Padding, FrameTop, FrameLeft, FrameBottom, FrameRight)
+
 		fillDefaults(&frame.FrameModes, frame.Defaults.FrameMode, FrameTop, FrameLeft, FrameBottom, FrameRight, FrameMiddle)
 
 		frame.splitRectUsingMargins(sprite.Bounds, func(rect pixel.Rect) *SpriteReference {
@@ -84,7 +86,7 @@ func processFrames() {
 				Sprite: pixel.NewSprite(sprite.Source, rect),
 			}
 		})
-
+		log.Info().Msgf("processed frame: %s", spriteId)
 	}
 
 }

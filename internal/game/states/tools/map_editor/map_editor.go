@@ -9,7 +9,7 @@ import (
 	"math"
 )
 
-var keyboardMoveRate = resources.TileSizeF64 * 5
+var keyboardMoveRate = resources.MapTileSize.Float() * 5
 var mouseScrollRate = 3.0
 var cameraLagSpeed = 5.0
 
@@ -28,6 +28,7 @@ type MapEditor struct {
 
 	win      *opengl.Window
 	editMode editMode
+	batch    *pixel.Batch
 
 	// layers stuff
 	swatch *Swatch
@@ -73,15 +74,17 @@ func New(window *opengl.Window) *MapEditor {
 		selectedLayer:   resources.LayerBase,
 		layerRenderMode: layerRenderMix,
 		win:             window,
+		batch:           pixel.NewBatch(&pixel.TrianglesData{}, resources.SpriteAtlas),
 	}
 }
 
 func (m *MapEditor) OnTick(gameCtx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+	m.batch.Clear()
 	ctx := &Context{
 		Context: gameCtx,
 	}
 
-	mouseMapPosition := m.cameraMatrix.Unproject(ctx.CanvasMousePosition).Scaled(1 / resources.TileSizeF64)
+	mouseMapPosition := m.cameraMatrix.Unproject(ctx.CanvasMousePosition).Scaled(1 / resources.MapTileSize.Float())
 	ctx.MouseMapLocation.X, ctx.MouseMapLocation.Y = int(math.Round(mouseMapPosition.X)), int(math.Round(mouseMapPosition.Y))
 	ctx.MouseInCanvas = targetBounds.Contains(ctx.CanvasMousePosition)
 	if ctx.MouseInCanvas {
@@ -129,28 +132,29 @@ func (m *MapEditor) OnTick(gameCtx *game.Context, target pixel.Target, targetBou
 		mask := color.RGBA{alpha, alpha, alpha, alpha}
 		for _, tile := range layer.Tiles {
 			spriteRef := resources.TilesheetSprites[tile.SpriteId]
-			spriteRef.Sprite.DrawColorMask(target, m.cameraMatrix.Moved(pixel.V(float64(tile.X*resources.TileSize), float64(tile.Y*resources.TileSize))), mask)
+			spriteRef.Sprite.DrawColorMask(m.batch, m.cameraMatrix.Moved(pixel.V(float64(tile.X*resources.MapTileSize.Int()), float64(tile.Y*resources.MapTileSize.Int()))), mask)
 		}
 	}
 
 	for _, entity := range m.getSelectedMap().Entities {
 		alpha := uint8(128)
 		mask := color.RGBA{alpha, alpha, alpha, alpha}
-		entitySpriteExists.DrawColorMask(target, m.cameraMatrix.Moved(pixel.V(float64(entity.X*resources.TileSize), float64(entity.Y*resources.TileSize))), mask)
+		entitySpriteExists.DrawColorMask(m.batch, m.cameraMatrix.Moved(pixel.V(float64(entity.X*resources.MapTileSize.Int()), float64(entity.Y*resources.MapTileSize.Int()))), mask)
 	}
 
 	switch m.editMode {
 	case editModeLayers:
-		m.swatch.DrawCanvasOverlay(ctx, m.win, target, m.cameraMatrix)
+		m.swatch.DrawCanvasOverlay(ctx, m.win, m.batch, m.cameraMatrix)
 		m.swatch.DrawSwatch(ctx, m.win)
 		ctx.DebugBR("map: %s", m.selectedMap)
 		ctx.DebugBR("layer: %s", m.selectedLayer)
 		ctx.DebugBR("swatch: %s", m.swatch.SelectedSwatch)
 	case editModeEntities:
-		m.DrawEntityOverlay(ctx, m.win, target, m.cameraMatrix)
+		m.DrawEntityOverlay(ctx, m.win, m.batch, m.cameraMatrix)
 		ctx.DebugTR("layer entities")
 	}
 
+	m.batch.Draw(target)
 }
 
 func (m *MapEditor) mouseTile(ctx *Context, layerName resources.MapLayerName) (*resources.Tile, int, bool) {

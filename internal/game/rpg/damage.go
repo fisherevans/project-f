@@ -115,6 +115,7 @@ type DamageResult struct {
 	Effectiveness     DamageEffectiveness
 	SourceHadAffinity bool
 	TargetHadAffinity bool
+	DamageType        SkillType
 }
 
 func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
@@ -145,5 +146,6 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 		Effectiveness:     effectiveness,
 		SourceHadAffinity: sourceHasAffinity,
 		TargetHadAffinity: targetHasAffinity,
+		DamageType:        source.SkillType,
 	}
 }
