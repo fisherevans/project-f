@@ -11,14 +11,21 @@ import (
 
 type AnimatedMoveableEntity struct {
 	MoveableEntity
-	Animations map[input.Direction]*anim.AnimatedSprite
+	Animations map[MoveState]map[input.Direction]*anim.AnimatedSprite
 	ColorMask  color.Color
+
+	lastUpdateDirection input.Direction
+	lastUpdateState     MoveState
 }
 
 func (a *AnimatedMoveableEntity) currentAnimation() *anim.AnimatedSprite {
-	animation, exists := a.Animations[a.FacingDirection]
+	moveAnimations, exists := a.Animations[a.MoveState]
 	if !exists {
-		animation, exists = a.Animations[input.Down]
+		moveAnimations, exists = a.Animations[MoveStateIdle]
+	}
+	animation, animExists := moveAnimations[a.FacingDirection]
+	if !animExists {
+		animation = moveAnimations[input.Down]
 	}
 	return animation
 }
@@ -28,11 +35,16 @@ func (a *AnimatedMoveableEntity) Update(ctx *game.Context, adv *State, timeDelta
 	if animation == nil {
 		return
 	}
-	if a.Moving {
-		animation.Update(timeDelta * a.MoveSpeed)
-		return
+	if a.lastUpdateDirection != a.FacingDirection || a.lastUpdateState != a.MoveState {
+		animation.Reset()
 	}
-	animation.Reset()
+	a.lastUpdateDirection = a.FacingDirection
+	a.lastUpdateState = a.MoveState
+	if a.IsMoving() {
+		animation.Update(timeDelta * a.GetCurrentSpeed())
+	} else {
+		animation.Update(timeDelta)
+	}
 }
 
 func (a *AnimatedMoveableEntity) Render(target pixel.Target, matrix pixel.Matrix) {

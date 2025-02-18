@@ -14,7 +14,12 @@ type Player struct {
 
 func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	defer p.AnimatedMoveableEntity.Update(ctx, adv, timeDelta)
-	if p.Moving {
+	if p.IsMoving() {
+		if ctx.Controls.ButtonB().IsPressed() {
+			p.MoveState = MoveStateRunning
+		} else {
+			p.MoveState = MoveStateWalking
+		}
 		return
 	}
 	if adv.inputMode() != inputModePlayerMovement {
@@ -39,7 +44,7 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		}
 		p.intentDuration += timeDelta
 		if p.intentDuration > 0.05 {
-			p.TriggerMovement(adv, direction)
+			p.TriggerMovement(adv, direction, ctx.Controls.ButtonB().IsPressed())
 		}
 	}
 }

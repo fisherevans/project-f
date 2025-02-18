@@ -3,6 +3,7 @@ package anim
 import (
 	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type AnimatedSprite struct {
@@ -33,11 +34,15 @@ func FromTilesheetRow(tilesheet string, row int, framesPerSecond float64) *Anima
 	}
 	ts := resources.Tilesheets[tilesheet]
 	for col := 1; col <= ts.Columns; col++ {
-		ref := resources.TilesheetSprites[resources.TilesheetSpriteId{
+		spriteId := resources.TilesheetSpriteId{
 			Tilesheet: tilesheet,
 			Row:       row,
 			Column:    col,
-		}]
+		}
+		ref := resources.TilesheetSprites[spriteId]
+		if ref == nil {
+			log.Fatal().Str("tilesheet", tilesheet).Int("row", row).Int("col", col).Msg("sprite not found when making animation")
+		}
 		animated.frames = append(animated.frames, ref.Sprite)
 	}
 	return animated

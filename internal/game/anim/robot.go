@@ -1,6 +1,6 @@
 package anim
 
-var robotFramesPerSecond = 2.0
+var robotFramesPerSecond = 10.0
 
 func RobotDown() *AnimatedSprite {
 	return FromTilesheetRow("robot", 2, pigFramesPerSecond)

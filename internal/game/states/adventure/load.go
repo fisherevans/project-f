@@ -60,7 +60,10 @@ func initializeMap(a *State, m *resources.Map) {
 	a.occupiedLocations = map[MapLocation]EntityId{}
 	for _, collisionTile := range m.Layers[resources.LayerCollision].Tiles {
 		location := adjustedLocation(collisionTile.X, collisionTile.Y)
-		a.movementRestrictions[location] = MovementNotAllowed{}
+		switch collisionTile.SpriteId {
+		case resources.TileCollisionBlock:
+			a.movementRestrictions[location] = MovementNotAllowed{}
+		}
 	}
 	for stringEntityId, entity := range m.Entities {
 		entityId := EntityId(stringEntityId)
@@ -72,13 +75,16 @@ func initializeMap(a *State, m *resources.Map) {
 					MoveableEntity: MoveableEntity{
 						EntityId:        entityId,
 						CurrentLocation: location,
-						MoveSpeed:       characterSpeed,
+						MoveSpeeds: map[MoveState]float64{
+							MoveStateWalking: characterSpeed,
+							MoveStateRunning: characterSpeed * 1.75,
+							MoveStateDashing: characterSpeed * 2,
+						},
 					},
-					Animations: map[input.Direction]*anim.AnimatedSprite{
-						input.Down:  anim.RobotDown(),
-						input.Up:    anim.RobotUp(),
-						input.Right: anim.RobotRight(),
-						input.Left:  anim.RobotLeft(),
+					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+						MoveStateIdle:    anim.AshaIdle(),
+						MoveStateWalking: anim.AshaWalk(),
+						MoveStateRunning: anim.AshaRun(),
 					},
 				},
 			}
@@ -90,13 +96,14 @@ func initializeMap(a *State, m *resources.Map) {
 					MoveableEntity: MoveableEntity{
 						EntityId:        entityId,
 						CurrentLocation: location,
-						MoveSpeed:       2,
+						MoveSpeeds: map[MoveState]float64{
+							MoveStateWalking: 2,
+						},
 					},
-					Animations: map[input.Direction]*anim.AnimatedSprite{
-						input.Down:  anim.RobotDown(),
-						input.Up:    anim.RobotUp(),
-						input.Right: anim.RobotRight(),
-						input.Left:  anim.RobotLeft(),
+					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+						MoveStateIdle:    anim.AshaIdle(),
+						MoveStateWalking: anim.AshaWalk(),
+						MoveStateRunning: anim.AshaRun(),
 					},
 					ColorMask: pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
 				},
@@ -112,7 +119,7 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			switch entity.GetStringMetadata("speed", "") {
 			case "fast":
-				npc.MoveableEntity.MoveSpeed = 6
+				npc.MoveableEntity.MoveSpeeds[MoveStateWalking] = 4
 			}
 			a.AddEntity(npc)
 		case "chest":

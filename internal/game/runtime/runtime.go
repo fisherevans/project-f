@@ -33,12 +33,6 @@ func Run() {
 		state_selector.Destination{
 			Name: "Adventure",
 			State: func(ctx *game.Context) game.State {
-				return adventure.New("dummy", ctx.GameSave)
-			},
-		},
-		state_selector.Destination{
-			Name: "Adventure (tiled)",
-			State: func(ctx *game.Context) game.State {
 				return adventure.New("map1", ctx.GameSave)
 			},
 		},

@@ -7,12 +7,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type MoveState int
+
+const (
+	MoveStateIdle MoveState = iota
+	MoveStateWalking
+	MoveStateRunning
+	MoveStateDashing
+)
+
 type MoveableEntity struct {
 	EntityId
 	CurrentLocation MapLocation
 	TargetLocation  MapLocation
-	Moving          bool
-	MoveSpeed       float64
+	MoveState       MoveState
+	MoveSpeeds      map[MoveState]float64
 	MoveProgression float64
 	FacingDirection input.Direction
 }
@@ -21,10 +30,11 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	if timeDelta < 0 {
 		return 0
 	}
-	if !m.Moving {
+	if !m.IsMoving() {
 		return 0
 	}
-	moveDelta := timeDelta * m.MoveSpeed
+	moveSpeed := m.GetCurrentSpeed()
+	moveDelta := timeDelta * moveSpeed
 	m.MoveProgression += moveDelta
 	if m.MoveProgression >= 0.5 {
 		adv.unoccupy(m.CurrentLocation, m.EntityId)
@@ -32,17 +42,17 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	if m.MoveProgression >= 1.0 {
 		m.CurrentLocation = m.TargetLocation
 		m.TargetLocation = MapLocation{}
-		m.Moving = false
+		m.MoveState = MoveStateIdle
 		remaining := m.MoveProgression - 1.0
 		m.MoveProgression = 0
-		return remaining / m.MoveSpeed // todo this is weird
+		return remaining / moveSpeed // todo this is weird
 	}
 	return 0
 }
 
-func (m *MoveableEntity) TriggerMovement(adv *State, direction input.Direction) bool {
+func (m *MoveableEntity) TriggerMovement(adv *State, direction input.Direction, running bool) bool {
 	dx, dy := direction.GetVector()
-	if m.Moving || (dx == 0 && dy == 0) {
+	if m.IsMoving() || (dx == 0 && dy == 0) {
 		return false
 	}
 	if dx > 1 || dy > 1 || dx < -1 || dy < -1 || (dx != 0 && dy != 0) {
@@ -58,13 +68,17 @@ func (m *MoveableEntity) TriggerMovement(adv *State, direction input.Direction) 
 		return false
 	}
 	m.TargetLocation = newLocation
-	m.Moving = true
+	if running {
+		m.MoveState = MoveStateRunning
+	} else {
+		m.MoveState = MoveStateWalking
+	}
 	return true
 }
 
 func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
 	location := m.CurrentLocation.ToVec()
-	if m.Moving {
+	if m.IsMoving() {
 		delta := m.TargetLocation.ToVec().Sub(m.CurrentLocation.ToVec()).Scaled(m.MoveProgression)
 		location = location.Add(delta)
 	}
@@ -81,7 +95,7 @@ func (m *MoveableEntity) Interact(ctx *game.Context, adv *State, source Entity) 
 
 // InteractLocation returns the map location in front of the entity if they are not currently moving
 func (m *MoveableEntity) InteractLocation() *MapLocation {
-	if m.Moving {
+	if m.IsMoving() {
 		return nil
 	}
 	dx, dy := m.FacingDirection.GetVector()
@@ -89,4 +103,16 @@ func (m *MoveableEntity) InteractLocation() *MapLocation {
 		X: m.CurrentLocation.X + dx,
 		Y: m.CurrentLocation.Y + dy,
 	}
+}
+
+func (m *MoveableEntity) IsMoving() bool {
+	return m.MoveState != MoveStateIdle
+}
+
+func (m *MoveableEntity) GetCurrentSpeed() float64 {
+	speed, exists := m.MoveSpeeds[m.MoveState]
+	if !exists {
+		speed = 0
+	}
+	return speed
 }

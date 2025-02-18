@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="17">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="18">
  <tileset firstgid="1" source="snowhex_base.tsx"/>
  <layer id="1" name="base" width="100" height="100">
   <data encoding="csv">
@@ -321,10 +321,12 @@
   </object>
   <object id="3" gid="5151" x="496" y="831.333" width="16" height="16">
    <properties>
+    <property name="movement" value="horiz"/>
+    <property name="speed" value="fast"/>
     <property name="type" value="blob"/>
    </properties>
   </object>
-  <object id="4" gid="5151" x="575.667" y="896.333" width="16" height="16">
+  <object id="4" gid="5151" x="575" y="800.333" width="16" height="16">
    <properties>
     <property name="movement" value="static"/>
     <property name="type" value="blob"/>
@@ -340,7 +342,7 @@
     <property name="type" value="blob"/>
    </properties>
   </object>
-  <object id="7" gid="5150" x="576.005" y="768.009" width="16" height="16">
+  <object id="7" gid="5150" x="576.005" y="754.009" width="16" height="16">
    <properties>
     <property name="type" value="player"/>
    </properties>
@@ -375,6 +377,11 @@
   <object id="15" gid="2414" x="1040.3" y="928.25" width="16" height="16">
    <properties>
     <property name="type" value="interest"/>
+   </properties>
+  </object>
+  <object id="17" gid="5151" x="591.429" y="735.596" width="16" height="16">
+   <properties>
+    <property name="type" value="combat"/>
    </properties>
   </object>
  </objectgroup>

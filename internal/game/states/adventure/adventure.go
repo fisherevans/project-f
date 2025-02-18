@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	characterSpeed = 5.0
+	characterSpeed = 3.0
 )
 
 var (
@@ -69,7 +69,7 @@ func New(mapName string, save *rpg.GameSave) game.State {
 	return a
 }
 
-var clearColor = colors.HexColor("#000000")
+var clearColor = colors.HexColor("#181425")
 
 func (s *State) ClearColor() color.Color {
 	return clearColor

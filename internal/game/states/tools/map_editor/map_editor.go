@@ -70,7 +70,7 @@ func New(window *opengl.Window) *MapEditor {
 	return &MapEditor{
 		cameraMatrix:    pixel.IM,
 		swatch:          newSwatch(),
-		selectedMap:     "dummy",
+		selectedMap:     "map1",
 		selectedLayer:   resources.LayerBase,
 		layerRenderMode: layerRenderMix,
 		win:             window,

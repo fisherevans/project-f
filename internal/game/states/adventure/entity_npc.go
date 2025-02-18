@@ -22,7 +22,7 @@ type NPC struct {
 
 func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	defer n.AnimatedMoveableEntity.Update(ctx, adv, timeDelta)
-	if n.Moving {
+	if n.IsMoving() {
 		return
 	}
 	if n.Talking {
@@ -43,7 +43,7 @@ func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		n.idleDuration = rand.Float64() * n.MaxIdleDuration
 		return
 	}
-	if n.TriggerMovement(adv, n.FacingDirection) {
+	if n.TriggerMovement(adv, n.FacingDirection, false) {
 		return
 	}
 	var dir input.Direction
@@ -56,7 +56,7 @@ func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	} else {
 		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
 	}
-	n.TriggerMovement(adv, dir)
+	n.TriggerMovement(adv, dir, false)
 }
 
 func (n *NPC) Interact(ctx *game.Context, adv *State, source Entity) {

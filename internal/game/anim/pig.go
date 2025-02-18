@@ -1,6 +1,6 @@
 package anim
 
-var pigFramesPerSecond = 2.0
+var pigFramesPerSecond = 10.0
 
 func PigDown() *AnimatedSprite {
 	return FromTilesheetRow("animated_pig", 2, pigFramesPerSecond)
