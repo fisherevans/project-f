@@ -55,6 +55,7 @@ type State struct {
 func New(mapName string, save *rpg.GameSave) game.State {
 	m := resources.Maps[mapName]
 	a := &State{
+
 		entities:             make(map[EntityId]Entity),
 		occupiedLocations:    make(map[MapLocation]EntityId),
 		movementRestrictions: make(map[MapLocation]MovementRestriction),

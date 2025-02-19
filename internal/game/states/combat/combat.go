@@ -27,6 +27,13 @@ type State struct {
 	Battle     *Battle
 
 	fx []FX
+
+	combatArrowAlpha       float64
+	combatArrowColumn      int
+	cachedContents         map[string]*textbox.Content
+	skillFlashTimeElapsed  float64
+	skillFlashAlpha        float64
+	skillFlashAlphaInverse float64
 }
 
 func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
@@ -40,6 +47,8 @@ func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
 		},
 		OnComplete: onComplete,
 		Battle:     &Battle{},
+
+		cachedContents: map[string]*textbox.Content{},
 	}
 }
 
@@ -107,6 +116,18 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 		},
 	})
 
+	if s.Player.GetCombatant().GetCurrentSync().Current <= 0 {
+		ctx.Notify("You died!")
+		s.OnComplete(ctx, s)
+		return
+	}
+
+	if s.Opponent.GetHealth().Current <= 0 {
+		ctx.Notify("You won!")
+		s.OnComplete(ctx, s)
+		return
+	}
+
 	var remainingFx []FX
 	for _, fx := range s.fx {
 		if !fx.Update(ctx, s, timeDelta) {
@@ -159,6 +180,8 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	for _, fx := range s.fx {
 		fx.Render(ctx, target)
 	}
+
+	s.renderSkills(ctx, target, pixel.V(float64(3), float64(3)), timeDelta)
 }
 
 var noneSelectedSprite = resources.Sprites["combat_tick_none_selected"]
@@ -195,7 +218,7 @@ func (s *State) drawActiveSkills(ctx *game.Context, target pixel.Target, targetB
 	}
 	s.drawCombatantSkills(ctx, target, matrix.Moved(pixel.V(0, float64(tickBarPadding/2))), opponentProgress, s.Battle.OpponentSkill, nil)
 	s.drawCombatantSkills(ctx, target, matrix.Moved(pixel.V(0, float64(-tickHeight-tickBarPadding/2))), playerProgress, s.Battle.PlayerSkill, s.Player.NextSkill)
-	//matrix = matrix.Moved(pixel.V(float64(-tickLength/2), 0))
+	matrix = matrix.Moved(pixel.V(float64(-tickLength/2), 0))
 	resources.Sprites["combat_tick_eater"].Sprite.Draw(target, matrix)
 }
 
@@ -218,6 +241,7 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 		ctx.DebugBR("no skill!")
 		x := noneSelectedSprite.Bounds.W() / 2
 		y := noneSelectedSprite.Bounds.H() / 2
+		noNextSkillAlpha *= s.skillFlashAlphaInverse
 		noneSelectedSprite.Sprite.DrawColorMask(target, matrix.Moved(pixel.V(x, y)), pixel.RGBA{noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha})
 	}
 }
@@ -277,6 +301,8 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 		}
 	}
 
+	ticksPerSecond := 2.0
+	b.PendingProgress += timeDelta * ticksPerSecond
 	for b.PendingProgress >= 1 {
 		if b.TickPlayerNext {
 			dmg, over := b.PlayerSkill.Tick(ctx, s, s.Player.GetCombatant(), s.Opponent)
@@ -294,8 +320,6 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 		b.PendingProgress -= 1.0
 		b.TickPlayerNext = !b.TickPlayerNext
 	}
-	ticksPerSecond := 2.0
-	b.PendingProgress += timeDelta * ticksPerSecond
 }
 
 func (s *State) emitDamageFx(dmgs []rpg.DamageResult, damagingPlayer bool) {

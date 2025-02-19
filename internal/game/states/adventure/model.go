@@ -19,6 +19,13 @@ func (l MapLocation) ToVec() pixel.Vec {
 	return pixel.V(float64(l.X), float64(l.Y))
 }
 
+func (l MapLocation) Moved(dx int, dy int) MapLocation {
+	return MapLocation{
+		X: l.X + dx,
+		Y: l.Y + dy,
+	}
+}
+
 type MapBounds struct {
 	MinX, MinY, MaxX, MaxY int
 }

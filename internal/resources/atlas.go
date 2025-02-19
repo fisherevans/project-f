@@ -130,5 +130,12 @@ func createAtlasGuillotine(imgs []image.Image, atlasWidth, atlasHeight Pixels) (
 		}
 	}
 
+	freeSpace := 0
+	for _, r := range freeRects {
+		freeSpace += r.w * r.h
+	}
+	totalSpace := atlasWidth.Int() * atlasHeight.Int()
+	log.Info().Msgf("Atlas packed %d images, using %d%% of available pixels.", len(imgs), (totalSpace-freeSpace)*100/totalSpace)
+
 	return atlas, placements
 }

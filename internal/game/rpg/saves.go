@@ -22,8 +22,12 @@ type GameSave struct {
 
 func (g *GameSave) NewDeployment() *DeployedAnimech {
 	animech := &DeployedAnimech{
-		Animech:            g.Animech,
-		DeployedPrimortals: nil,
+		Animech:             g.Animech,
+		AnimechExperience:   0,
+		PrimortalExperience: nil,
+		CurrentIntegrity:    BaseAnimechIntegrity + g.Animech.AdditionalIntegrity,
+		CurrentShield:       BaseAnimechShield + g.Animech.AdditionalShield,
+		DeployedPrimortals:  nil,
 	}
 	for _, p := range g.CapturedPrimortals {
 		animech.DeployedPrimortals = append(animech.DeployedPrimortals, &DeployedPrimortal{

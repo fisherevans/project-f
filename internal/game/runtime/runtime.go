@@ -16,6 +16,32 @@ import (
 	"time"
 )
 
+func initialState(window *opengl.Window) game.State {
+	return state_selector.New(
+		state_selector.Destination{
+			Name: "Adventure",
+			State: func(ctx *game.Context) game.State {
+				return adventure.New("map1", ctx.GameSave)
+			},
+		},
+		state_selector.Destination{
+			Name: "Combat",
+			State: func(ctx *game.Context) game.State {
+				return combat.New(ctx.GameSave.NewDeployment(), func(ctx *game.Context, s *combat.State) {
+					ctx.Notify("Combat complete!")
+					ctx.SwapActiveState(initialState(window))
+				})
+			},
+		},
+		state_selector.Destination{
+			Name: "Map Editor",
+			State: func(ctx *game.Context) game.State {
+				return map_editor.New(window)
+			},
+		},
+	)
+}
+
 func Run() {
 
 	cfg := opengl.WindowConfig{
@@ -29,29 +55,7 @@ func Run() {
 		panic(err)
 	}
 
-	ctx := game.NewContext(state_selector.New(
-		state_selector.Destination{
-			Name: "Adventure",
-			State: func(ctx *game.Context) game.State {
-				return adventure.New("map1", ctx.GameSave)
-			},
-		},
-		state_selector.Destination{
-			Name: "Combat",
-			State: func(ctx *game.Context) game.State {
-				return combat.New(ctx.GameSave.NewDeployment(), func(ctx *game.Context, s *combat.State) {
-					ctx.Notify("Combat complete!")
-					// TODO
-				})
-			},
-		},
-		state_selector.Destination{
-			Name: "Map Editor",
-			State: func(ctx *game.Context) game.State {
-				return map_editor.New(window)
-			},
-		},
-	), "1")
+	ctx := game.NewContext(initialState(window), "1")
 
 	// Create the fixed-size canvas
 	canvas := opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight))

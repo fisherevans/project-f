@@ -25,7 +25,8 @@ func ColorFromName(name string) pixel.RGBA {
 	if color, exists := colorsByName[name]; exists {
 		return pixel.RGBA(color)
 	}
-	panic("color name not found: " + name)
+	log.Error().Msgf("color name not found: %s", name)
+	return Black
 }
 
 const hexErrMsg = "failed to parse color hex value"
@@ -137,5 +138,14 @@ func WithAlpha(c pixel.RGBA, a float64) pixel.RGBA {
 		G: c.G,
 		B: c.B,
 		A: a,
+	}
+}
+
+func Alpha(alpha float64) pixel.RGBA {
+	return pixel.RGBA{
+		R: alpha,
+		G: alpha,
+		B: alpha,
+		A: alpha,
 	}
 }

@@ -43,7 +43,7 @@ func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		n.idleDuration = rand.Float64() * n.MaxIdleDuration
 		return
 	}
-	if n.TriggerMovement(adv, n.FacingDirection, false) {
+	if n.TriggerMovement(adv, n.GetFacingLocation(), MoveStateWalking) {
 		return
 	}
 	var dir input.Direction
@@ -56,7 +56,8 @@ func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	} else {
 		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
 	}
-	n.TriggerMovement(adv, dir, false)
+	n.FacingDirection = dir
+	n.TriggerMovement(adv, n.GetLocationInDirection(dir), MoveStateWalking)
 }
 
 func (n *NPC) Interact(ctx *game.Context, adv *State, source Entity) {

@@ -5,6 +5,7 @@ import (
 	"fisherevans.com/project/f/internal/util"
 	"github.com/gopxl/pixel/v2/ext/text"
 	"math"
+	"strings"
 )
 
 type Content struct {
@@ -216,7 +217,13 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	if lineCount == 0 {
 		lineCount = len(content.lines)
 	}
-	content.height = (lineCount * tb.letterHeight) + ((lineCount - 1) * tb.lineSpacing) + tb.tailHeight*2
+	content.height = (lineCount * tb.capHeight) + ((lineCount - 1) * tb.lineSpacing) + tb.tailHeight*2
+
+	if content.typingController == nil {
+		for _, line := range content.lines {
+			line.typingDone = line.typingTotal
+		}
+	}
 
 	return content
 }
@@ -244,6 +251,14 @@ func (c *Content) registerEffect(effect RenderEffect) {
 		}
 	}
 	c.effects = append(c.effects, effect)
+}
+
+func (c *Content) String() string {
+	var lines []string
+	for _, l := range c.lines {
+		lines = append(lines, l.text)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (tb *Instance) NewSimpleContent(msg string, opts ...ContentOpt) *Content {

@@ -376,6 +376,7 @@
   <object id="14" gid="3130" x="416.5" y="767" width="16" height="16"/>
   <object id="15" gid="2414" x="1040.3" y="928.25" width="16" height="16">
    <properties>
+    <property name="topic" value="knight"/>
     <property name="type" value="interest"/>
    </properties>
   </object>

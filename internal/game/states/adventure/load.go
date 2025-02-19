@@ -63,6 +63,12 @@ func initializeMap(a *State, m *resources.Map) {
 		switch collisionTile.SpriteId {
 		case resources.TileCollisionBlock:
 			a.movementRestrictions[location] = MovementNotAllowed{}
+		case resources.TileCollisionJumpHorizontal:
+			a.movementRestrictions[location] = MovementJumpTile{}
+		case resources.TileCollisionJumpVertical:
+			a.movementRestrictions[location] = MovementJumpTile{}
+		case resources.TileCollisionJumpAll:
+			a.movementRestrictions[location] = MovementJumpTile{}
 		}
 	}
 	for stringEntityId, entity := range m.Entities {
@@ -78,13 +84,14 @@ func initializeMap(a *State, m *resources.Map) {
 						MoveSpeeds: map[MoveState]float64{
 							MoveStateWalking: characterSpeed,
 							MoveStateRunning: characterSpeed * 1.75,
-							MoveStateDashing: characterSpeed * 2,
+							MoveStateDashing: characterSpeed * 1.5,
 						},
 					},
 					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
 						MoveStateIdle:    anim.AshaIdle(),
 						MoveStateWalking: anim.AshaWalk(),
 						MoveStateRunning: anim.AshaRun(),
+						MoveStateDashing: anim.Dash(),
 					},
 				},
 			}

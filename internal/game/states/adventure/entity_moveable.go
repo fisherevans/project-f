@@ -4,7 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
+	"slices"
 )
 
 type MoveState int
@@ -50,29 +50,31 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	return 0
 }
 
-func (m *MoveableEntity) TriggerMovement(adv *State, direction input.Direction, running bool) bool {
-	dx, dy := direction.GetVector()
-	if m.IsMoving() || (dx == 0 && dy == 0) {
+func (m *MoveableEntity) GetLocationInDirection(dir input.Direction) MapLocation {
+	return m.CurrentLocation.Moved(dir.GetVector())
+}
+
+func (m *MoveableEntity) GetFacingLocation() MapLocation {
+	return m.GetLocationInDirection(m.FacingDirection)
+}
+
+var validMovementMoveStates = []MoveState{MoveStateWalking, MoveStateRunning, MoveStateDashing}
+
+func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, desiredMoveState MoveState) bool {
+	if newLocation == m.CurrentLocation {
 		return false
 	}
-	if dx > 1 || dy > 1 || dx < -1 || dy < -1 || (dx != 0 && dy != 0) {
-		log.Error().Msgf("got an unexpect move: %d,%d", dx, dy)
+	if !slices.Contains(validMovementMoveStates, desiredMoveState) {
 		return false
 	}
-	m.FacingDirection = direction
-	newLocation := MapLocation{
-		X: m.CurrentLocation.X + dx,
-		Y: m.CurrentLocation.Y + dy,
+	if m.IsMoving() {
+		return false
 	}
 	if !adv.attemptToOccupy(newLocation, m.EntityId) {
 		return false
 	}
 	m.TargetLocation = newLocation
-	if running {
-		m.MoveState = MoveStateRunning
-	} else {
-		m.MoveState = MoveStateWalking
-	}
+	m.MoveState = desiredMoveState
 	return true
 }
 
@@ -93,15 +95,25 @@ func (m *MoveableEntity) Interact(ctx *game.Context, adv *State, source Entity) 
 
 }
 
+type InteractionTarget struct {
+	Location  MapLocation
+	Direction input.Direction
+}
+
+func (it *InteractionTarget) NextTile() {
+	dx, dy := it.Direction.GetVector()
+	it.Location = it.Location.Moved(dx, dy)
+}
+
 // InteractLocation returns the map location in front of the entity if they are not currently moving
-func (m *MoveableEntity) InteractLocation() *MapLocation {
+func (m *MoveableEntity) InteractLocation() *InteractionTarget {
 	if m.IsMoving() {
 		return nil
 	}
 	dx, dy := m.FacingDirection.GetVector()
-	return &MapLocation{
-		X: m.CurrentLocation.X + dx,
-		Y: m.CurrentLocation.Y + dy,
+	return &InteractionTarget{
+		Location:  m.CurrentLocation.Moved(dx, dy),
+		Direction: m.FacingDirection,
 	}
 }
 

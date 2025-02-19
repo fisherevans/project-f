@@ -41,11 +41,11 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 
 	tb.imd.Clear()
 
-	scrollDy := int((content.scrollPosition - float64(content.startLine)) * float64(tb.letterHeight+tb.lineSpacing))
+	scrollDy := int((content.scrollPosition - float64(content.startLine)) * float64(tb.capHeight+tb.lineSpacing))
 
 	for lineId, line := range pageLines {
 		lineTypingProgress := 0
-		y := float64(((renderLineCount - 1 - lineId) * (tb.letterHeight + tb.lineSpacing)) + tb.tailHeight + scrollDy)
+		y := float64(((renderLineCount - 1 - lineId) * (tb.capHeight + tb.lineSpacing)) + tb.tailHeight + scrollDy)
 		if tb.cfg.origin == TopLeft {
 			y -= float64(content.height)
 		}
@@ -63,6 +63,17 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			x = content.width - line.width
 		}
 		tb.text.Dot = pixel.V(float64(x), y)
+		var underlineColor pixel.RGBA
+		var underlineStart, underlineEnd *pixel.Vec
+		drawUnderline := func() {
+			if underlineStart == nil || underlineEnd == nil {
+				return
+			}
+			tb.imd.Color = underlineColor
+			tb.imd.Push(*underlineStart, *underlineEnd)
+			tb.imd.Line(1)
+
+		}
 		for _, c := range line.characters {
 			if lineTypingProgress >= line.typingDone {
 				break
@@ -80,15 +91,19 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			tb.text.Dot = tb.text.Dot.Add(renderParams.drawDelta)
 			// underline
 			if c.style.underline != nil {
-				start := matrix.Project(tb.text.Dot).Add(pixel.V(-1, -1))
+				listCharStart := matrix.Project(tb.text.Dot).Add(pixel.V(-1, -1))
 				extraLength := 0.0
 				if c.style.shadow != nil {
 					extraLength = 1
 				}
-				end := start.Add(pixel.V(float64(c.width)+2+extraLength, 0))
-				tb.imd.Color = c.style.underline.color
-				tb.imd.Push(start, end)
-				tb.imd.Line(1)
+				listCharEnd := listCharStart.Add(pixel.V(float64(c.width)+2+extraLength, 0))
+				if underlineStart == nil {
+					underlineStart = &listCharStart
+					underlineColor = c.style.underline.color
+				}
+				underlineEnd = &listCharEnd
+			} else if underlineStart != nil {
+				drawUnderline()
 			}
 			// shadow
 			if c.style.shadow != nil {
@@ -114,6 +129,7 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			x += c.width
 			lineTypingProgress += c.typingWeight
 		}
+		drawUnderline()
 	}
 
 	tb.imd.Draw(target)

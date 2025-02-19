@@ -75,31 +75,47 @@ const (
 )
 
 type Font struct {
-	atlas        *text.Atlas
-	letterHeight int
-	lineSpacing  int
-	tailHeight   int
+	atlas       *text.Atlas
+	capHeight   int
+	lineSpacing int
+	tailHeight  int
+}
+
+func (f Font) GetLetterHeight() int {
+	return f.capHeight
+}
+
+func (f Font) GetTailHeight() int {
+	return f.tailHeight
+}
+
+func (f Font) GetLineSpacing() int {
+	return f.lineSpacing
+}
+
+func (f Font) GetFullLineHeight() int {
+	return f.capHeight + f.tailHeight
 }
 
 var FontSmall = Font{
-	atlas:        resources.Fonts.M6.Atlas,
-	letterHeight: 6,
-	lineSpacing:  3,
-	tailHeight:   2,
+	atlas:       resources.Fonts.M6.Atlas,
+	capHeight:   6,
+	lineSpacing: 3,
+	tailHeight:  2,
 }
 
 var FontLarge = Font{
-	atlas:        resources.Fonts.M7.Atlas,
-	letterHeight: 7,
-	lineSpacing:  3,
-	tailHeight:   2,
+	atlas:       resources.Fonts.M7.Atlas,
+	capHeight:   7,
+	lineSpacing: 3,
+	tailHeight:  2,
 }
 
 var FontLargeSpaced = Font{
-	atlas:        resources.Fonts.M7.Atlas,
-	letterHeight: 10,
-	lineSpacing:  3,
-	tailHeight:   2,
+	atlas:       resources.Fonts.M7.Atlas,
+	capHeight:   10,
+	lineSpacing: 3,
+	tailHeight:  2,
 }
 
 func (f Font) GetAtlas() *text.Atlas {
