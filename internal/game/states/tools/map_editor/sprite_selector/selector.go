@@ -31,7 +31,7 @@ func New(win *opengl.Window, initialSelection *resources.SwatchSample, backState
 	}
 }
 
-var selectedOverlaySprite = resources.GetSprite("ui", 3, 1)
+var selectedOverlaySprite = resources.GetTilesheetSprite("ui", 3, 1)
 
 func (s *SpriteSelector) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()

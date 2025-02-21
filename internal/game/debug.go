@@ -75,8 +75,15 @@ func (d *DebugInfo) PopNotifications(elapsed float64) []string {
 
 var debugText = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
 var debugPadding = 10.0
+var showDebug = false
 
 func RenderDebugLines(win *opengl.Window, areaLines map[DebugArea][]string) {
+	if win.JustPressed(pixel.KeyPeriod) {
+		showDebug = !showDebug
+	}
+	if !showDebug {
+		return
+	}
 	for area, lines := range areaLines {
 		debugText.Clear()
 		for _, line := range lines {

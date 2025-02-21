@@ -91,6 +91,7 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			tb.text.Dot = tb.text.Dot.Add(renderParams.drawDelta)
 			// underline
 			if c.style.underline != nil {
+				// todo if outline, add 1px left and right to underline
 				listCharStart := matrix.Project(tb.text.Dot).Add(pixel.V(-1, -1))
 				extraLength := 0.0
 				if c.style.shadow != nil {
@@ -105,25 +106,52 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			} else if underlineStart != nil {
 				drawUnderline()
 			}
+			type render struct {
+				dx, dy int
+				color  pixel.RGBA
+			}
+			var renders []render
+			// outline
+			if c.style.outline != nil {
+				for dx := -1; dx <= 1; dx++ {
+					for dy := -1; dy <= 1; dy++ {
+						if dx == 0 && dy == 0 {
+							continue
+						}
+						renders = append(renders, render{
+							dx:    dx,
+							dy:    dy,
+							color: c.style.outline.color,
+						})
+					}
+				}
+			}
 			// shadow
 			if c.style.shadow != nil {
-				origDot := tb.text.Dot
 				for dx := 0; dx <= 1; dx++ {
 					for dy := 0; dy >= -1; dy-- {
 						if dx == 0 && dy == 0 {
 							continue
 						}
-						delta := pixel.V(float64(dx), float64(dy))
-						tb.text.Dot = origDot.Add(delta)
-						tb.text.Color = c.style.shadow.color
-						tb.text.WriteByte(c.c)
+						renders = append(renders, render{
+							dx:    dx,
+							dy:    dy,
+							color: c.style.shadow.color,
+						})
 					}
 				}
-				tb.text.Dot = origDot
 			}
-			// text
-			tb.text.Color = renderParams.foreground
-			tb.text.WriteByte(c.c)
+			// actual text
+			renders = append(renders, render{
+				color: renderParams.foreground,
+			})
+			origDot := tb.text.Dot
+			for _, r := range renders {
+				tb.text.Dot = origDot.Add(pixel.V(float64(r.dx), float64(r.dy)))
+				tb.text.Color = r.color
+				tb.text.WriteByte(c.c)
+			}
+			// todo do we need to reset the dot, or does adding the actual text at the end result in the desired result?
 			// undo effect delta
 			tb.text.Dot = tb.text.Dot.Sub(renderParams.drawDelta)
 			x += c.width

@@ -1,39 +1,16 @@
 package resources
 
 var (
-	TileCollisionBlock = TilesheetSpriteId{
-		Tilesheet: "snowhex_base",
-		Column:    65,
-		Row:       49,
-	}
-	TileCollisionJumpVertical = TilesheetSpriteId{
-		Tilesheet: "snowhex_base",
-		Column:    66,
-		Row:       49,
-	}
-	TileCollisionJumpAll = TilesheetSpriteId{
-		Tilesheet: "snowhex_base",
-		Column:    67,
-		Row:       49,
-	}
-	TileCollisionJumpHorizontal = TilesheetSpriteId{
-		Tilesheet: "snowhex_base",
-		Column:    68,
-		Row:       49,
-	}
-	TileCollisionStairsDown = TilesheetSpriteId{
-		Tilesheet: "snowhex_base",
-		Column:    69,
-		Row:       49,
-	}
-	TileCollisionStairsUp = TilesheetSpriteId{
-		Tilesheet: "snowhex_base",
-		Column:    70,
-		Row:       49,
-	}
-	TileCollisionDoor = TilesheetSpriteId{
-		Tilesheet: "snowhex_base",
-		Column:    71,
-		Row:       49,
-	}
+	TileCollisionBlock          = GetTilesheetSpriteId("snowhex_base", 65, 49)
+	TileCollisionJumpVertical   = GetTilesheetSpriteId("snowhex_base", 66, 49)
+	TileCollisionJumpAll        = GetTilesheetSpriteId("snowhex_base", 67, 49)
+	TileCollisionJumpHorizontal = GetTilesheetSpriteId("snowhex_base", 68, 49)
+	TileCollisionStairsDown     = GetTilesheetSpriteId("snowhex_base", 69, 49)
+	TileCollisionStairsUp       = GetTilesheetSpriteId("snowhex_base", 70, 49)
+	TileCollisionDoor           = GetTilesheetSpriteId("snowhex_base", 71, 49)
+
+	SpriteButtonA            = GetTilesheetSpriteId("ab_button_icons", 1, 1)
+	SpriteButtonB            = GetTilesheetSpriteId("ab_button_icons", 2, 1)
+	SpriteButtonAHighlighted = GetTilesheetSpriteId("ab_button_icons", 3, 1)
+	SpriteButtonBHighlighted = GetTilesheetSpriteId("ab_button_icons", 4, 1)
 )

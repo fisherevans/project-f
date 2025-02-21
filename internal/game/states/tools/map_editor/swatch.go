@@ -13,7 +13,7 @@ var swatchKeySprites []*pixel.Sprite
 
 func init() {
 	for index, _ := range swatchKeys {
-		swatchKeySprites = append(swatchKeySprites, resources.GetSprite("ui", index+1, 2).Sprite)
+		swatchKeySprites = append(swatchKeySprites, resources.GetTilesheetSprite("ui", index+1, 2).Sprite)
 	}
 }
 
@@ -34,10 +34,10 @@ func newSwatch() *Swatch {
 	return s
 }
 
-var swatchSpriteDelete = resources.GetSprite("ui", 1, 1).Sprite
-var swatchSpriteDraw = resources.GetSprite("ui", 2, 1).Sprite
-var swatchSpriteSelected = resources.GetSprite("ui", 3, 1).Sprite
-var swatchSpriteSelectedNumber = resources.GetSprite("ui", 1, 3).Sprite
+var swatchSpriteDelete = resources.GetTilesheetSprite("ui", 1, 1).Sprite
+var swatchSpriteDraw = resources.GetTilesheetSprite("ui", 2, 1).Sprite
+var swatchSpriteSelected = resources.GetTilesheetSprite("ui", 3, 1).Sprite
+var swatchSpriteSelectedNumber = resources.GetTilesheetSprite("ui", 1, 3).Sprite
 
 func (s *Swatch) DrawCanvasOverlay(ctx *Context, win *opengl.Window, target pixel.Target, cameraMatrix pixel.Matrix) {
 	if !ctx.MouseInCanvas {

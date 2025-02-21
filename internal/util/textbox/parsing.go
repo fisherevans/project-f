@@ -22,6 +22,8 @@ Command blocks are in the format: {+cmd1,-cmd2,...}
 - Each command is prefixed with a + to indicate "set a template value", or a - to indicate "unset a template value"
 - Each command then has a single character, indicated the command type. Some commands take arguments, which are separated by a : character.
 
+> Note on colors - ALL colors can either be Hex codes (#fff) or names (warm_5)
+
 The following commands are supported:
 - Underline: {+u}Hello{-u}
   - Optional color argument: {+u:blue}Hello{-u}
@@ -30,15 +32,17 @@ The following commands are supported:
   - Optional color argument: {+s:blue}Hello{-s}
 
 - Color: {+c:warm_5}Hello{-c}
-  - Required color argument, either by name or hex code:
-  - {+c:warm_5}Hello{-c}
-  - {+c:#ff0000}Hello{-c}
 
 - Typing Weight: {+w:0.5}He{+w:20}llo{-w}
   - Optional weight argument, which is a number indicating the weight of the character. This is used to determine how long it takes to type the character.
 
 - Rumble {+r}Hello{-r}
-  - Optional scale argument, which is a number indicating the frequency of the rumble effect.
+  - Multiple parameters are comma separated
+  - rumble rate: {+r:0.05}Hello{-r}
+  - extreme rumble: {+r:x}Hello{-r}
+
+- Outline {+o}Hello{-o}
+  - Optional color argument: {+o:blue}Hello{-o}
 
 - Wildcard: {+u}{+c:warm_5}Hello{-*} - only valid with '-' to reset all template values.
 */
@@ -84,6 +88,7 @@ type characterTemplate struct {
 	color       *cColor
 	shadow      *cShadow
 	underline   *cUnderline
+	outline     *cOutline
 	weightScale float64
 }
 
@@ -98,6 +103,7 @@ func (t *characterTemplate) newCharacter(char byte, text *text.Text) *character 
 		effects:   effects,
 		shadow:    t.shadow,
 		underline: t.underline,
+		outline:   t.outline,
 	})
 }
 
@@ -107,8 +113,11 @@ const (
 	cmdColor     = 'c'
 	cmdWeight    = 'w'
 	cmdRumble    = 'r'
+	cmdOutline   = 'o'
 	cmdWildcard  = '*'
 )
+
+var defaultColor = colors.Black
 
 func (t *characterTemplate) parseCommand(commandText string) {
 	commandText = strings.TrimSpace(commandText)
@@ -121,8 +130,10 @@ func (t *characterTemplate) parseCommand(commandText string) {
 			commandParts := strings.SplitN(strings.TrimPrefix(command, "+"), ":", 2)
 			subCmd := commandParts[0]
 			param := ""
+			var params []string
 			if len(commandParts) == 2 {
 				param = commandParts[1]
+				params = strings.Split(",", param)
 			}
 			if len(subCmd) != 1 {
 				log.Fatal().Msgf("invalid command %s from %s", subCmd, commandText)
@@ -130,11 +141,11 @@ func (t *characterTemplate) parseCommand(commandText string) {
 			switch subCmd[0] {
 			case cmdUnderline:
 				t.underline = &cUnderline{
-					color: requireColor(param, pixel.RGB(0.1, 0.1, 0.1)),
+					color: requireColorOrDefault(param, defaultColor),
 				}
 			case cmdShadow:
 				t.shadow = &cShadow{
-					color: requireColor(param, pixel.RGB(0.1, 0.1, 0.1)),
+					color: requireColorOrDefault(param, defaultColor),
 				}
 			case cmdColor:
 				if len(commandParts) != 2 {
@@ -151,7 +162,20 @@ func (t *characterTemplate) parseCommand(commandText string) {
 			case cmdWeight:
 				t.weightScale = requireFloat(param, 10.0)
 			case cmdRumble:
-				t.rumble = newRumble(requireFloat(param, 0.1))
+				rate := 0.1
+				extreme := false
+				for _, p := range params {
+					if p == "x" {
+						extreme = true
+					} else {
+						rate = requireFloat(param, rate)
+					}
+				}
+				t.rumble = newRumble(rate, extreme)
+			case cmdOutline:
+				t.outline = &cOutline{
+					color: requireColorOrDefault(param, defaultColor),
+				}
 			}
 		} else if strings.HasPrefix(command, "-") {
 			for _, subCmd := range strings.TrimPrefix(command, "-") {
@@ -166,21 +190,24 @@ func (t *characterTemplate) parseCommand(commandText string) {
 					t.weightScale = 1
 				case cmdRumble:
 					t.rumble = nil
+				case cmdOutline:
+					t.outline = nil
 				case cmdWildcard:
 					t.underline = nil
 					t.shadow = nil
 					t.color = nil
 					t.weightScale = 1
 					t.rumble = nil
+					t.outline = nil
 				default:
-					log.Fatal().Msgf("unknown command %b from %s", subCmd, commandText)
+					log.Fatal().Msgf("unknown command %s from %s", string([]byte{byte(subCmd)}), commandText)
 				}
 			}
 		}
 	}
 }
 
-func requireColor(param string, defaultColor pixel.RGBA) pixel.RGBA {
+func requireColorOrDefault(param string, defaultColor pixel.RGBA) pixel.RGBA {
 	if param == "" {
 		return defaultColor
 	}

@@ -63,7 +63,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 	centerMatrix := pixel.IM.Moved(bottomLeft).Moved(pixel.V(
 		float64(skillFrameWidth+(skillFrameHorizontalSpacing/2)),
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
-	resources.GetSprite("combat_skill_arrows", 1, 1).Sprite.Draw(target, centerMatrix)
+	resources.GetTilesheetSprite("combat_skill_arrows", 1, 1).Sprite.Draw(target, centerMatrix)
 	s.combatArrowAlpha -= timeDelta * 0.75
 	switch ctx.Controls.DPad().PressedDirection() {
 	case input.Up:
@@ -77,7 +77,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 	}
 	ctx.DebugTR("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
-		resources.GetSprite("combat_skill_arrows", s.combatArrowColumn, 1).Sprite.DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
+		resources.GetTilesheetSprite("combat_skill_arrows", s.combatArrowColumn, 1).Sprite.DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
 	}
 }
 

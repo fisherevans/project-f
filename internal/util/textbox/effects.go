@@ -16,11 +16,13 @@ type rumbleRenderEffect struct {
 	elapsed float64
 	dx      int
 	dy      int
+	extreme bool
 }
 
-func newRumble(rate float64) *rumbleRenderEffect {
+func newRumble(rate float64, extreme bool) *rumbleRenderEffect {
 	return &rumbleRenderEffect{
-		rate: rate,
+		rate:    rate,
+		extreme: extreme,
 	}
 }
 
@@ -28,8 +30,13 @@ func (r *rumbleRenderEffect) Update(ctx *game.Context, timeDelta float64) {
 	r.elapsed += timeDelta
 	for r.elapsed > r.rate {
 		r.elapsed -= r.rate
-		r.dy = rand.Intn(3) - 1
-		r.dx = rand.Intn(3) - 1
+		if r.extreme {
+			r.dy = rand.Intn(3) - 1
+			r.dx = rand.Intn(3) - 1
+		} else {
+			r.dy = rand.Intn(2) - 1
+			r.dx = rand.Intn(2) - 1
+		}
 	}
 }
 

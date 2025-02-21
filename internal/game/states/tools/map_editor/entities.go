@@ -6,12 +6,12 @@ import (
 	"github.com/gopxl/pixel/v2/backends/opengl"
 )
 
-var entitySpritePaste = resources.GetSprite("ui", 5, 1).Sprite
-var entitySpriteExists = resources.GetSprite("ui", 6, 1).Sprite
-var entitySpriteEdit = resources.GetSprite("ui", 7, 1).Sprite
-var entitySpriteDelete = resources.GetSprite("ui", 8, 1).Sprite
-var entitySpriteAdd = resources.GetSprite("ui", 9, 1).Sprite
-var entitySpriteOverlay = resources.GetSprite("ui", 10, 1).Sprite
+var entitySpritePaste = resources.GetTilesheetSprite("ui", 5, 1).Sprite
+var entitySpriteExists = resources.GetTilesheetSprite("ui", 6, 1).Sprite
+var entitySpriteEdit = resources.GetTilesheetSprite("ui", 7, 1).Sprite
+var entitySpriteDelete = resources.GetTilesheetSprite("ui", 8, 1).Sprite
+var entitySpriteAdd = resources.GetTilesheetSprite("ui", 9, 1).Sprite
+var entitySpriteOverlay = resources.GetTilesheetSprite("ui", 10, 1).Sprite
 
 func (m *MapEditor) DrawEntityOverlay(ctx *Context, win *opengl.Window, target pixel.Target, cameraMatrix pixel.Matrix) {
 	if !ctx.MouseInCanvas {

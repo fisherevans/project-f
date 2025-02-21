@@ -19,9 +19,10 @@ type FX interface {
 type DamageFX struct {
 	Damage rpg.DamageResult
 
-	Position pixel.Vec
-	Velocity pixel.Vec
-	Age      float64
+	Position   pixel.Vec
+	Velocity   pixel.Vec
+	Age        float64
+	SpeedScale float64
 }
 
 var damageFxMaxAge = 4.0
@@ -29,6 +30,9 @@ var damageFxText = text.New(pixel.ZV, resources.Fonts.M6.Atlas)
 var damageFxGravity = -100.0
 
 func (fx *DamageFX) Update(ctx *game.Context, s *State, timeDelta float64) bool {
+	if fx.SpeedScale > 0 {
+		timeDelta = timeDelta * fx.SpeedScale
+	}
 	fx.Age += timeDelta
 	fx.Position = fx.Position.Add(fx.Velocity.Scaled(timeDelta))
 	fx.Velocity = pixel.V(fx.Velocity.X, fx.Velocity.Y+damageFxGravity*timeDelta)

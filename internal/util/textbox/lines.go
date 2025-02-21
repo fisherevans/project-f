@@ -1,11 +1,9 @@
 package textbox
 
 import (
-	"fisherevans.com/project/f/internal/util/colors"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
-	"strings"
 )
 
 type cShadow struct {
@@ -20,11 +18,16 @@ type cUnderline struct {
 	color pixel.RGBA
 }
 
+type cOutline struct {
+	color pixel.RGBA
+}
+
 type cStyle struct {
 	effects   []RenderEffect
 	color     *cColor
 	shadow    *cShadow
 	underline *cUnderline
+	outline   *cOutline
 }
 
 func (s cStyle) String() string {
@@ -53,43 +56,6 @@ func (c *character) String() string {
 
 func (c *character) isWhitespace() bool {
 	return c.c == ' ' || c.c == '\t'
-}
-
-func newTestFeaturesCGroup(word string, colorOverride *cColor, text *text.Text) []*character {
-	var characters []*character
-	style := cStyle{
-		color: colorOverride,
-	}
-	if strings.Contains(word, "e") {
-		style.effects = append(style.effects, newRumble(0.1))
-	}
-	if len(word) == 5 {
-		style.shadow = &cShadow{
-			color: pixel.RGB(0.1, 0.1, 0.1),
-		}
-	}
-	if strings.Contains(word, "r") {
-		uColor := pixel.RGB(0.1, 0.1, 0.1)
-		if colorOverride != nil {
-			uColor = colors.ScaleColor(colorOverride.foreground, 0.75)
-		}
-		style.underline = &cUnderline{
-			color: uColor,
-		}
-	}
-	for _, ch := range []byte(word) {
-		weight := 1
-		switch ch {
-		case ' ':
-			weight = 0
-		case '.':
-			weight = 12
-		case ',':
-			weight = 6
-		}
-		characters = append(characters, newCharacter(ch, weight, text, style))
-	}
-	return characters
 }
 
 func asString(characters []*character) string {

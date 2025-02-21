@@ -13,6 +13,13 @@ type AnimatedSprite struct {
 	currentFrame    int
 }
 
+func (a *AnimatedSprite) ApplyPingPong() *AnimatedSprite {
+	for i := len(a.frames) - 2; i > 0; i-- {
+		a.frames = append(a.frames, a.frames[i])
+	}
+	return a
+}
+
 func FromSprites(tilesheet string, row, startCol, endCol int, framesPerSecond float64) *AnimatedSprite {
 	animated := &AnimatedSprite{
 		framesPerSecond: framesPerSecond,

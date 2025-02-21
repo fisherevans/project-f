@@ -61,12 +61,19 @@ func (s TilesheetSpriteId) String() string {
 	return fmt.Sprintf("ts:%s,c:%d,r:%d", s.Tilesheet, s.Column, s.Row)
 }
 
-func GetSprite(tilesheet string, col, row int) *SpriteReference {
+func GetTilesheetSprite(tilesheet string, col, row int) *SpriteReference {
 	return TilesheetSprites[TilesheetSpriteId{
 		Tilesheet: tilesheet,
 		Column:    col,
 		Row:       row,
 	}]
+}
+func GetTilesheetSpriteId(tilesheet string, col, row int) TilesheetSpriteId {
+	return TilesheetSpriteId{
+		Tilesheet: tilesheet,
+		Column:    col,
+		Row:       row,
+	}
 }
 
 var tilesheetSizeRegex = regexp.MustCompile(`^(.*)-(\d+)x(\d+)$`)
