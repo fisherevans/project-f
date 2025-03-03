@@ -5,12 +5,13 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 	"image"
+	"path/filepath"
 	"strings"
 )
 
 var (
-	Sprites         = map[string]*SpriteReference{}
-	NonAtlasSprites = map[string]*SpriteReference{}
+	sprites         = map[string]*SpriteReference{}
+	nonAtlasSprites = map[string]*SpriteReference{}
 
 	resourceSprites = LocalResource{
 		FileRoot:      "sprites",
@@ -19,41 +20,71 @@ var (
 	}
 )
 
+func GetSprite(name string) *SpriteReference {
+	sprite := sprites[name]
+	if sprite == nil {
+		log.Error().Msgf("missing sprite: %s", name)
+	}
+	return sprite
+}
+
+func GetNonAtlasSprite(name string) *SpriteReference {
+	sprite := nonAtlasSprites[name]
+	if sprite == nil {
+		log.Error().Msgf("missing non-atlas sprite: %s", name)
+	}
+	return sprite
+}
+
 var nonAtlasPrefixes = []string{
 	"background",
 }
 
-func loadSprite(path string, name string, data []byte) error {
+func loadSprite(path string, name string, tags []string, data []byte) error {
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Error().Msgf("Failed to decode image %s: %v", path, err)
 		return nil // Continue with the next file
 	}
 	atlasSprite := true
+	nameParts := strings.Split(name, string(filepath.Separator))
+	localName := nameParts[len(nameParts)-1]
 	for _, prefix := range nonAtlasPrefixes {
 		prefix = prefix + "_"
-		if strings.HasPrefix(name, prefix) {
+		if strings.HasPrefix(localName, prefix) {
 			atlasSprite = false
-			//name = strings.TrimPrefix(name, prefix)
 			break
 		}
 	}
-	if atlasSprite {
-		addAtlasImage(&img, func(picture pixel.Picture, rect pixel.Rect) {
-			Sprites[name] = &SpriteReference{
-				Source: picture,
-				Bounds: rect,
-				Sprite: pixel.NewSprite(picture, rect),
-			}
-		})
+	if !atlasSprite {
+		picData := pixel.PictureDataFromImage(img)
+		nonAtlasSprites[name] = &SpriteReference{
+			Source: picData,
+			Bounds: picData.Bounds(),
+			Sprite: pixel.NewSprite(picData, picData.Bounds()),
+		}
 		return nil
 	}
-	picData := pixel.PictureDataFromImage(img)
-	NonAtlasSprites[name] = &SpriteReference{
-		Source: picData,
-		Bounds: picData.Bounds(),
-		Sprite: pixel.NewSprite(picData, picData.Bounds()),
+
+	registerFunc := func(picture pixel.Picture, rect pixel.Rect) {
+		sprites[name] = &SpriteReference{
+			Source: picture,
+			Bounds: rect,
+			Sprite: pixel.NewSprite(picture, rect),
+		}
 	}
+
+	for _, tag := range tags {
+		if !strings.HasPrefix(tag, "tilesheet") {
+			continue
+		}
+		_, tileW, tileH := parseTilesheetName(tag)
+		registerFunc = func(picture pixel.Picture, rect pixel.Rect) {
+			sliceTilesheet(picture, rect, name, tileW, tileH)
+		}
+	}
+
+	addAtlasImage(&img, registerFunc)
 	return nil
 }
 

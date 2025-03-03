@@ -38,7 +38,7 @@ func (ds *DialogueSystem) HasPriority() bool {
 }
 
 var dialogueFrameMargin = 4
-var dialogueFrame = resources.Frames["dialogue_frame"]
+var dialogueFrame = resources.GetFrame("dialogue/dialogue_frame")
 var dialogueBox = textbox.NewInstance(
 	textbox.FontLarge,
 	textbox.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding()).

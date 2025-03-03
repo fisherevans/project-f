@@ -7,16 +7,24 @@ import (
 )
 
 var (
-	Frames = map[string]*SpriteFrame{}
+	frames = map[string]*SpriteFrame{}
 
 	resourceFrames = LocalResource{
 		FileRoot:        "sprites",
-		FileSuffix:      "_frame",
+		RequiredTags:    []string{"frame"},
 		FileExtension:   "yaml",
-		FileLoader:      unmarshaler(&Frames, yaml.Unmarshal),
+		FileLoader:      unmarshaler(&frames, yaml.Unmarshal),
 		ResourceEncoder: jsonEncoder,
 	}
 )
+
+func GetFrame(id string) *SpriteFrame {
+	frame, exists := frames[id]
+	if !exists {
+		log.Error().Msgf("missing frame: %s", id)
+	}
+	return frame
+}
 
 type FrameSide string
 
@@ -67,8 +75,8 @@ func fillDefaults[T any](ref *map[FrameSide]T, defaultValue T, sides ...FrameSid
 }
 
 func processFrames() {
-	for spriteId, frame := range Frames {
-		sprite, exists := Sprites[spriteId]
+	for spriteId, frame := range frames {
+		sprite, exists := sprites[spriteId]
 		if !exists {
 			log.Fatal().Msgf("missing sprite for frame: %s", spriteId)
 		}
@@ -86,7 +94,6 @@ func processFrames() {
 				Sprite: pixel.NewSprite(sprite.Source, rect),
 			}
 		})
-		log.Info().Msgf("processed frame: %s", spriteId)
 	}
 
 }

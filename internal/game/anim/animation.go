@@ -25,11 +25,7 @@ func FromSprites(tilesheet string, row, startCol, endCol int, framesPerSecond fl
 		framesPerSecond: framesPerSecond,
 	}
 	for col := startCol; col <= endCol; col++ {
-		ref := resources.TilesheetSprites[resources.TilesheetSpriteId{
-			Tilesheet: tilesheet,
-			Row:       row,
-			Column:    col,
-		}]
+		ref := resources.GetTilesheetSprite(tilesheet, col, row)
 		animated.frames = append(animated.frames, ref.Sprite)
 	}
 	return animated
@@ -39,14 +35,14 @@ func FromTilesheetRow(tilesheet string, row int, framesPerSecond float64) *Anima
 	animated := &AnimatedSprite{
 		framesPerSecond: framesPerSecond,
 	}
-	ts := resources.Tilesheets[tilesheet]
+	ts := resources.GetTilesheet(tilesheet)
 	for col := 1; col <= ts.Columns; col++ {
 		spriteId := resources.TilesheetSpriteId{
 			Tilesheet: tilesheet,
 			Row:       row,
 			Column:    col,
 		}
-		ref := resources.TilesheetSprites[spriteId]
+		ref := resources.GetTilesheetSpriteById(spriteId)
 		if ref == nil {
 			log.Fatal().Str("tilesheet", tilesheet).Int("row", row).Int("col", col).Msg("sprite not found when making animation")
 		}

@@ -7,15 +7,23 @@ import (
 )
 
 var (
-	Maps = map[string]*Map{}
+	maps = map[string]*Map{}
 
 	resourceMaps = LocalResource{
 		FileRoot:        "maps",
 		FileExtension:   "json",
-		FileLoader:      unmarshaler(&Maps, json.Unmarshal),
+		FileLoader:      unmarshaler(&maps, json.Unmarshal),
 		ResourceEncoder: jsonEncoder,
 	}
 )
+
+func GetMap(name string) *Map {
+	m := maps[name]
+	if m == nil {
+		log.Error().Msgf("missing map: %s", name)
+	}
+	return m
+}
 
 type MapLayerName string
 
@@ -99,13 +107,13 @@ func (t Tile) String() string {
 }
 
 func SaveAllMaps() {
-	for name := range Maps {
+	for name := range maps {
 		SaveMap(name)
 	}
 }
 
 func SaveMap(resourceName string) {
-	err := save(&Maps, resourceMaps, resourceName)
+	err := save(&maps, resourceMaps, resourceName)
 	if err != nil {
 		panic(fmt.Sprintf("failed save resource %s: %v", resourceName, err))
 	}

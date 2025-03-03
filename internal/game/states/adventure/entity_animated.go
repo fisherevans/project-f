@@ -4,9 +4,13 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 	"image/color"
+)
+
+var (
+	missingSprite = resources.GetSprite("2x2").Sprite
 )
 
 type AnimatedMoveableEntity struct {
@@ -51,7 +55,7 @@ func (a *AnimatedMoveableEntity) Render(target pixel.Target, matrix pixel.Matrix
 	var sprite *pixel.Sprite
 	animation := a.currentAnimation()
 	if animation == nil {
-		sprite = util.MissingSprite
+		sprite = missingSprite
 	} else {
 		sprite = a.currentAnimation().Sprite()
 	}

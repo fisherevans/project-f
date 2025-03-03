@@ -48,7 +48,7 @@ func initializeMap(a *State, m *resources.Map) {
 			thisRenderLayer.tiles[x] = make([]*resources.SpriteReference, a.mapHeight)
 		}
 		for _, tile := range m.Layers[layerName].Tiles {
-			ref := resources.TilesheetSprites[tile.SpriteId]
+			ref := resources.GetTilesheetSpriteById(tile.SpriteId)
 			thisRenderLayer.tiles[tile.X+dx][tile.Y+dy] = ref
 		}
 		if layerName == resources.LayerOverlay {

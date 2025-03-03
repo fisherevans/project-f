@@ -15,7 +15,7 @@ const (
 	TopRight
 )
 
-var sprite = resources.Sprites["2x2"]
+var sprite = resources.GetSprite("2x2")
 var spriteW = sprite.Sprite.Frame().W()
 var spriteH = sprite.Sprite.Frame().H()
 

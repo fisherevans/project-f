@@ -17,7 +17,7 @@ var (
 	}
 )
 
-func loadTiledMap(path string, resourceName string, _ []byte) error {
+func loadTiledMap(path string, resourceName string, tags []string, _ []byte) error {
 	var tiledMap *tiled.Map
 	var err error
 	tiledMap, err = tiled.LoadFile(path, tiled.WithFileSystem(assets.FS))
@@ -89,9 +89,9 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 		}
 	}
 
-	if _, exists := Maps[resourceName]; exists {
+	if _, exists := maps[resourceName]; exists {
 		log.Fatal().Msgf("Map already exists with name %s", resourceName)
 	}
-	Maps[resourceName] = gameMap
+	maps[resourceName] = gameMap
 	return nil
 }

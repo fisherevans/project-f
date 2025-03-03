@@ -41,8 +41,8 @@ func (c *ChatterSystem) Add(chatter Chatter) {
 	c.chatters = append(c.chatters, chatter)
 }
 
-var chatterArrow = resources.Sprites["chatter_arrow"]
-var chatterFrame = resources.Frames["chatter_frame"]
+var chatterArrow = resources.GetSprite("chatter/chat_bottom_arrow")
+var chatterFrame = resources.GetFrame("chatter/chat_frame")
 var chatterBox = textbox.NewInstance(
 	textbox.FontSmall,
 	textbox.NewConfig(game.GameWidth/3).

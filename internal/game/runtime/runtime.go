@@ -5,7 +5,6 @@ import (
 	"fisherevans.com/project/f/internal/game/states/adventure"
 	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
-	"fisherevans.com/project/f/internal/game/states/tools/map_editor"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
@@ -31,12 +30,6 @@ func initialState(window *opengl.Window) game.State {
 					ctx.Notify("Combat complete!")
 					ctx.SwapActiveState(initialState(window))
 				})
-			},
-		},
-		state_selector.Destination{
-			Name: "Map Editor",
-			State: func(ctx *game.Context) game.State {
-				return map_editor.New(window)
 			},
 		},
 	)

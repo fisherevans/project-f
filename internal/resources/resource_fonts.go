@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	FontRegistry = map[string]*truetype.Font{}
+	fontRegistry = map[string]*truetype.Font{}
 	Fonts        = DefinedFonts{}
 
 	resourceFonts = LocalResource{
@@ -20,13 +20,12 @@ var (
 	}
 )
 
-func loadFont(path string, resourceName string, data []byte) error {
+func loadFont(path string, resourceName string, tags []string, data []byte) error {
 	ttfFont, err := truetype.Parse(data)
 	if err != nil {
 		return fmt.Errorf("failed to parse font from %s: %w", path, err)
 	}
-	FontRegistry[resourceName] = ttfFont
-	log.Info().Msgf("loaded font %s", resourceName)
+	fontRegistry[resourceName] = ttfFont
 	return nil
 }
 
@@ -121,7 +120,7 @@ type DefinedFont struct {
 }
 
 func NewDefinedFont(resourceName string, size int) *DefinedFont {
-	ttf, exists := FontRegistry[resourceName]
+	ttf, exists := fontRegistry[resourceName]
 	if !exists {
 		log.Fatal().Msgf("font not found in registry: %s", resourceName)
 	}

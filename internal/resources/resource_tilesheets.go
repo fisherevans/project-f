@@ -1,11 +1,10 @@
 package resources
 
 import (
-	"bytes"
+	"fisherevans.com/project/f/internal/util"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
-	"image"
 	_ "image/png"
 	"regexp"
 	"strconv"
@@ -29,17 +28,39 @@ const (
 )
 
 var (
-	Tilesheets       = map[string]*TilesheetMetadata{}
-	TilesheetSprites = map[TilesheetSpriteId]*SpriteReference{}
-
-	resourceTilesheets = LocalResource{
-		FileRoot:      "tilesheets",
-		FileExtension: "png",
-		FileLoader:    loadTilesheet,
-	}
+	tilesheets       = map[string]*TilesheetMetadata{}
+	tilesheetSprites = map[TilesheetSpriteId]*SpriteReference{}
 
 	SpriteAtlas pixel.Picture
 )
+
+func GetTilesheetNames() []string {
+	return util.SortedKeys(tilesheets)
+}
+
+func GetTilesheet(name string) *TilesheetMetadata {
+	ts := tilesheets[name]
+	if ts == nil {
+		log.Error().Msgf("missing tilesheet: %s", name)
+	}
+	return ts
+}
+
+func GetTilesheetSprite(tilesheet string, col, row int) *SpriteReference {
+	return GetTilesheetSpriteById(TilesheetSpriteId{
+		Tilesheet: tilesheet,
+		Column:    col,
+		Row:       row,
+	})
+}
+
+func GetTilesheetSpriteById(id TilesheetSpriteId) *SpriteReference {
+	result := tilesheetSprites[id]
+	if result == nil {
+		log.Error().Str("tilesheet", id.Tilesheet).Int("row", id.Row).Int("col", id.Column).Msg("tilesheet sprite not found")
+	}
+	return result
+}
 
 type TilesheetMetadata struct {
 	Name       string
@@ -48,7 +69,6 @@ type TilesheetMetadata struct {
 	Columns    int
 	Rows       int
 	Sprites    map[TilesheetSpriteId]*SpriteReference
-	rawImage   image.Image
 }
 
 type TilesheetSpriteId struct {
@@ -59,21 +79,6 @@ type TilesheetSpriteId struct {
 
 func (s TilesheetSpriteId) String() string {
 	return fmt.Sprintf("ts:%s,c:%d,r:%d", s.Tilesheet, s.Column, s.Row)
-}
-
-func GetTilesheetSprite(tilesheet string, col, row int) *SpriteReference {
-	return TilesheetSprites[TilesheetSpriteId{
-		Tilesheet: tilesheet,
-		Column:    col,
-		Row:       row,
-	}]
-}
-func GetTilesheetSpriteId(tilesheet string, col, row int) TilesheetSpriteId {
-	return TilesheetSpriteId{
-		Tilesheet: tilesheet,
-		Column:    col,
-		Row:       row,
-	}
 }
 
 var tilesheetSizeRegex = regexp.MustCompile(`^(.*)-(\d+)x(\d+)$`)
@@ -89,53 +94,39 @@ func parseTilesheetName(input string) (string, Pixels, Pixels) {
 	return input, DefaultTileSize, DefaultTileSize
 }
 
-func loadTilesheet(path string, resourceName string, data []byte) error {
-	img, _, err := image.Decode(bytes.NewReader(data))
-	if err != nil {
-		log.Error().Msgf("Failed to decode image %s: %v", path, err)
-		return nil // Continue with the next file
+func sliceTilesheet(atlas pixel.Picture, bounds pixel.Rect, resourceName string, tileWidth Pixels, tileHeight Pixels) {
+	sheetWidth := bounds.W()
+	sheetHeight := bounds.H()
+
+	tilesheet := &TilesheetMetadata{
+		Name:       resourceName,
+		TileWidth:  tileWidth,
+		TileHeight: tileHeight,
+		Rows:       int(sheetHeight / float64(tileHeight)),
+		Columns:    int(sheetWidth / float64(tileWidth)),
+		Sprites:    map[TilesheetSpriteId]*SpriteReference{},
+	}
+	tilesheets[resourceName] = tilesheet
+
+	for y := 0; y < tilesheet.Rows; y++ {
+		for x := 0; x < tilesheet.Columns; x++ {
+			spriteId := TilesheetSpriteId{
+				Column:    x + 1,
+				Row:       tilesheet.Rows - y,
+				Tilesheet: tilesheet.Name,
+			}
+			posX := bounds.Min.X + (float64(x) * tilesheet.TileWidth.Float())
+			posY := bounds.Min.Y + (float64(y) * tilesheet.TileHeight.Float())
+			r := pixel.R(posX, posY, posX+tilesheet.TileWidth.Float(), posY+tilesheet.TileHeight.Float())
+			spriteRef := &SpriteReference{
+				Source: atlas,
+				Bounds: r,
+				Sprite: pixel.NewSprite(atlas, r),
+			}
+			tilesheet.Sprites[spriteId] = spriteRef
+			tilesheetSprites[spriteId] = spriteRef
+		}
 	}
 
-	resourceName, tileWidth, tileHeight := parseTilesheetName(resourceName)
-
-	addAtlasImage(&img, func(atlas pixel.Picture, bounds pixel.Rect) {
-		pictureData := pixel.PictureDataFromImage(img)
-
-		sheetWidth := pictureData.Bounds().W()
-		sheetHeight := pictureData.Bounds().H()
-
-		tilesheet := &TilesheetMetadata{
-			Name:       resourceName,
-			TileWidth:  tileWidth,
-			TileHeight: tileHeight,
-			Rows:       int(sheetHeight / float64(tileHeight)),
-			Columns:    int(sheetWidth / float64(tileWidth)),
-			rawImage:   img,
-			Sprites:    map[TilesheetSpriteId]*SpriteReference{},
-		}
-
-		Tilesheets[resourceName] = tilesheet
-		log.Info().Msgf("loaded tilesheet %s (%dx%d) with %d columns and %d rows", resourceName, tilesheet.TileWidth, tilesheet.TileHeight, tilesheet.Columns, tilesheet.Rows)
-
-		for y := 0; y < tilesheet.Rows; y++ {
-			for x := 0; x < tilesheet.Columns; x++ {
-				spriteId := TilesheetSpriteId{
-					Column:    x + 1,
-					Row:       tilesheet.Rows - y,
-					Tilesheet: tilesheet.Name,
-				}
-				posX := bounds.Min.X + (float64(x) * tilesheet.TileWidth.Float())
-				posY := bounds.Min.Y + (float64(y) * tilesheet.TileHeight.Float())
-				r := pixel.R(posX, posY, posX+tilesheet.TileWidth.Float(), posY+tilesheet.TileHeight.Float())
-				spriteRef := &SpriteReference{
-					Source: atlas,
-					Bounds: r,
-					Sprite: pixel.NewSprite(atlas, r),
-				}
-				tilesheet.Sprites[spriteId] = spriteRef
-				TilesheetSprites[spriteId] = spriteRef
-			}
-		}
-	})
-	return nil
+	log.Info().Msgf("sliced tilesheet %s (%dx%d) with %d columns and %d rows", resourceName, tilesheet.TileWidth, tilesheet.TileHeight, tilesheet.Columns, tilesheet.Rows)
 }

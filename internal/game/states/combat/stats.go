@@ -11,8 +11,8 @@ import (
 	"github.com/gopxl/pixel/v2"
 )
 
-var combatStatFrame = resources.Frames["combat_combatant_stats_frame"]
-var statBarFrame = resources.Frames["combat_stat_bar_frame"]
+var combatStatFrame = resources.GetFrame("combat/combatant_stats/box_frame")
+var statBarFrame = resources.GetFrame("combat/combatant_stats/bar_frame")
 
 var combatantNameText = textbox.NewInstance(textbox.FontBoldTitle, textbox.NewConfig(200).RenderFrom(textbox.TopLeft).ExpandMode(textbox.ExpandFit))
 var nameContent = combatantNameText.NewComplexContent("{+o:#cfcfcf,+c:black}Fumalug")
@@ -20,7 +20,7 @@ var namePadding = 3
 
 var combatantStatText = textbox.NewInstance(textbox.FontMicro, textbox.NewConfig(200).RenderFrom(textbox.BottomLeft).ExpandMode(textbox.ExpandFit))
 
-var noneSelectedSprite = resources.Sprites["combat_tick_none_selected"]
+var noneSelectedSprite = resources.GetSprite("combat/tick_bar/skill_none_selected")
 
 type StatBoxOriginLocation int
 

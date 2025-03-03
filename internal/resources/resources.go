@@ -10,15 +10,14 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 )
 
 var (
 	resources = []LocalResource{
-		resourceTilesheets,
 		resourceMaps,
-		resourceSwatches,
 		resourceFonts,
 		resourceSprites,
 		resourceFrames,
@@ -26,14 +25,14 @@ var (
 	}
 )
 
-type fileLoader func(path, resourceName string, data []byte) error
+type fileLoader func(path, resourceName string, tags []string, data []byte) error
 
 type resourceEncoder func(resource any) ([]byte, error)
 
 type LocalResource struct {
 	FileRoot        string
 	FileExtension   string
-	FileSuffix      string
+	RequiredTags    []string
 	FileLoader      fileLoader
 	PostProcessing  func() error
 	ResourceEncoder resourceEncoder
@@ -41,7 +40,7 @@ type LocalResource struct {
 
 func init() {
 	for _, localResource := range resources {
-		handler := fsFileHandler(localResource.FileLoader, localResource.FileExtension, localResource.FileSuffix)
+		handler := fsFileHandler(localResource)
 		err := fs.WalkDir(assets.FS, localResource.FileRoot, handler)
 		if err != nil {
 			panic(fmt.Sprintf("failed load load %s resources: %v", localResource.FileRoot, err))
@@ -57,16 +56,15 @@ func init() {
 	processFrames()
 }
 
-func fsFileHandler(handler fileLoader, extension string, suffix string) func(string, fs.DirEntry, error) error {
+func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error) error {
 	return func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return fmt.Errorf("error accessing file %s: %w", path, err)
 		}
 
-		extensionSuffix := "." + extension
-		fullSuffix := suffix + extensionSuffix
+		extensionSuffix := "." + localResource.FileExtension
 
-		if d.IsDir() || !strings.HasSuffix(d.Name(), fullSuffix) {
+		if d.IsDir() || !strings.HasSuffix(d.Name(), extensionSuffix) {
 			return nil
 		}
 
@@ -75,10 +73,31 @@ func fsFileHandler(handler fileLoader, extension string, suffix string) func(str
 			return fmt.Errorf("failed to read file %s: %w", path, err)
 		}
 
-		filename := filepath.Base(path)
-		resourceName := strings.TrimSuffix(filename, extensionSuffix)
+		resourceName := strings.TrimSuffix(strings.TrimPrefix(path, localResource.FileRoot+string(filepath.Separator)), extensionSuffix)
+		resourceNameParts := strings.Split(resourceName, ".")
+		tags := resourceNameParts[1:]
 
-		return handler(path, resourceName, data)
+		if len(localResource.RequiredTags) > 0 {
+			isTagged := false
+			for _, tag := range localResource.RequiredTags {
+				if slices.Contains(tags, tag) {
+					isTagged = true
+					break
+				}
+			}
+			if !isTagged {
+				return nil
+			}
+		}
+
+		err = localResource.FileLoader(path, resourceNameParts[0], tags, data)
+		if err == nil {
+			log.Info().Msgf("loaded %s resource: %s", localResource.FileRoot, resourceName)
+		} else {
+			log.Error().Msgf("failed to load %s resource: %s: %v", localResource.FileRoot, resourceName, err)
+		}
+
+		return err
 	}
 }
 
@@ -91,7 +110,7 @@ func printLoadSummary[T fmt.Stringer](resourceName string, newResource T) error 
 }
 
 func unmarshaler[T any](dest *map[string]T, unmarshaler func([]byte, any) error, postProcessors ...postProcessor[T]) fileLoader {
-	return func(path, resourceName string, data []byte) error {
+	return func(path, resourceName string, tags []string, data []byte) error {
 		var newResource T
 		err := unmarshaler(data, &newResource)
 		if err != nil {
@@ -103,7 +122,6 @@ func unmarshaler[T any](dest *map[string]T, unmarshaler func([]byte, any) error,
 			}
 		}
 		(*dest)[resourceName] = newResource
-		log.Info().Msgf("loaded file %s", path)
 		return nil
 	}
 }
