@@ -141,11 +141,11 @@ func (t *characterTemplate) parseCommand(commandText string) {
 			switch subCmd[0] {
 			case cmdUnderline:
 				t.underline = &cUnderline{
-					color: requireColorOrDefault(param, defaultColor),
+					color: requireColorOrDefault(param, defaultColor.RGBA),
 				}
 			case cmdShadow:
 				t.shadow = &cShadow{
-					color: requireColorOrDefault(param, defaultColor),
+					color: requireColorOrDefault(param, defaultColor.RGBA),
 				}
 			case cmdColor:
 				if len(commandParts) != 2 {
@@ -156,7 +156,7 @@ func (t *characterTemplate) parseCommand(commandText string) {
 				if strings.HasPrefix(colorString, "#") {
 					color = colors.HexColor(commandParts[1])
 				} else {
-					color = colors.ColorFromName(colorString)
+					color = colors.ColorFromName(colors.ColorName(colorString)).RGBA
 				}
 				t.color = &cColor{color}
 			case cmdWeight:
@@ -174,7 +174,7 @@ func (t *characterTemplate) parseCommand(commandText string) {
 				t.rumble = newRumble(rate, extreme)
 			case cmdOutline:
 				t.outline = &cOutline{
-					color: requireColorOrDefault(param, defaultColor),
+					color: requireColorOrDefault(param, defaultColor.RGBA),
 				}
 			}
 		} else if strings.HasPrefix(command, "-") {
@@ -214,7 +214,7 @@ func requireColorOrDefault(param string, defaultColor pixel.RGBA) pixel.RGBA {
 	if strings.HasPrefix(param, "#") {
 		return colors.HexColor(param)
 	}
-	return colors.ColorFromName(param)
+	return colors.ColorFromName(colors.ColorName(param)).RGBA
 }
 
 func requireFloat(param string, defaultValue float64) float64 {

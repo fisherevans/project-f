@@ -118,6 +118,20 @@ var FontLargeSpaced = Font{
 	tailHeight:  2,
 }
 
+var FontBoldTitle = Font{
+	atlas:       resources.Fonts.AddStandard.Atlas,
+	capHeight:   7,
+	lineSpacing: 0,
+	tailHeight:  2,
+}
+
+var FontMicro = Font{
+	atlas:       resources.Fonts.Pixel3x5.Atlas,
+	capHeight:   5,
+	lineSpacing: 0,
+	tailHeight:  0,
+}
+
 func (f Font) GetAtlas() *text.Atlas {
 	return f.atlas
 }

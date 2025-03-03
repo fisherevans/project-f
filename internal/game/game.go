@@ -43,6 +43,8 @@ type Context struct {
 	MouseInCanvas       bool
 	Controls            *input.Controls
 
+	Toggles *DebugToggles
+
 	GameSave *rpg.GameSave
 }
 
@@ -60,11 +62,13 @@ func NewContext(initialActiveState State, saveId string) *Context {
 		CanvasScale: 1.0,
 		Controls:    input.NewControls(),
 		GameSave:    save,
+		Toggles:     newToggles(),
 	}
 }
 
 func (c *Context) Update(window *opengl.Window) {
 	c.Controls.Update(window)
+	c.Toggles.update(window)
 }
 
 func (c *Context) GetActiveState() State {

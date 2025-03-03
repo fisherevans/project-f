@@ -22,6 +22,7 @@ type PlayerHealth struct {
 type PlayerCombatant interface {
 	Combatant
 	GetFightOption(slot int) *rpg.SkillId
+	GetCurrentShield() HealthState
 	GetCurrentSync() HealthState
 }
 
@@ -94,13 +95,16 @@ func (p *PlayerPrimortal) GetFightOption(slot int) *rpg.SkillId {
 }
 
 func (p *PlayerPrimortal) GetCurrentSync() HealthState {
-	max := p.Base().BaseSync + p.AdditionalSync
-	max += rpg.BaseAnimechShield + p.AdditionalShield
-	max += rpg.BaseAnimechIntegrity + p.AdditionalIntegrity
-	current := p.CurrentShield + p.CurrentSync + p.CurrentIntegrity
 	return HealthState{
-		Max:     max,
-		Current: current,
+		Max:     p.Base().BaseSync + p.AdditionalSync,
+		Current: p.CurrentSync,
+	}
+}
+
+func (p *PlayerPrimortal) GetCurrentShield() HealthState {
+	return HealthState{
+		Max:     rpg.BaseAnimechShield + p.AdditionalShield,
+		Current: p.CurrentShield,
 	}
 }
 

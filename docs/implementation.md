@@ -22,9 +22,6 @@
   - box slide up/down animation
   - pop ups for notifications/system details
   - glossary words are highlighted, pressing select pulls up the glossary entry
-  - text effects
-    - text vs. info
-    - glitch texts (void magic, or computer malfucntioning, etc)
   - voice sounds
   - dialogue record for key events
   - skip scenes with summary

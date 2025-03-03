@@ -85,7 +85,7 @@ func (s *State) ClearColor() color.Color {
 var padding = 5
 var stateText = textbox.NewInstance(textbox.FontLargeSpaced, textbox.
 	NewConfig((game.GameWidth-padding*3)/2).
-	Foreground(colors.White).
+	Foreground(colors.White.RGBA).
 	RenderFrom(textbox.TopLeft))
 
 var backgroundSprite = resources.NonAtlasSprites["background_combat_sample"].Sprite
@@ -113,7 +113,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 		},
 		OpponentNextSkill: func() *rpg.SkillId {
-			return &rpg.Skill_Tackle.Id
+			return &rpg.Skill_Crush.Id
 		},
 	})
 
@@ -137,10 +137,10 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 	s.fx = remainingFx
 
-	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4)
+	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4.RGBA)
 
 	robotAnim.Update(timeDelta)
-	robotAnim.Sprite().Draw(target, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.6667))))
+	robotAnim.Sprite().Draw(target, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))))
 
 	plentAnim.Update(timeDelta)
 	plentAnim.Sprite().Draw(target, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.6667))))
@@ -174,9 +174,72 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 
 	s.renderSkills(ctx, target, pixel.V(float64(3), float64(3)), timeDelta)
-}
 
-var noneSelectedSprite = resources.Sprites["combat_tick_none_selected"]
+	statFrameW, statFrameH := 78, 31
+
+	nameBoxSprite := resources.GetTilesheetSprite("combat_combatant_name_background", 1, 1)
+	rightSprite := resources.GetTilesheetSprite("combat_combatant_name_background", 2, 1)
+	bottomSprite := resources.GetTilesheetSprite("combat_combatant_name_background", 3, 1)
+
+	nameBoxHeight := combatantNameText.GetLetterHeight() + namePadding*2 + statFrameH - int(bottomSprite.Bounds.H())
+	nameBoxWidth := nameContent.Width() + namePadding*2
+	ctx.DebugBR("nameBoxHeight: %d, nameBoxWidth: %d", nameBoxHeight, nameBoxWidth)
+	nameBoxSpriteScaleX := float64(nameBoxWidth) / nameBoxSprite.Bounds.W()
+	nameBoxSpriteScaleY := float64(nameBoxHeight) / nameBoxSprite.Bounds.H()
+	ctx.DebugBR("nameBoxSpriteScaleX: %f, nameBoxSpriteScaleY: %f", nameBoxSpriteScaleX, nameBoxSpriteScaleY)
+	nameBoxSprite.Sprite.Draw(target, pixel.IM.
+		ScaledXY(pixel.ZV, pixel.V(nameBoxSpriteScaleX, nameBoxSpriteScaleY)).
+		Moved(pixel.V(float64(nameBoxWidth/2), float64(game.GameHeight-nameBoxHeight/2))))
+
+	rightSprite.Sprite.Draw(target, pixel.IM.Moved(rightSprite.HalfDimensions()).Moved(pixel.V(float64(nameBoxWidth-1), game.GameHeight-rightSprite.Bounds.H())))
+
+	bottomSprite.Sprite.Draw(target, pixel.IM.Moved(bottomSprite.HalfDimensions()).Moved(pixel.V(0, game.GameHeight-float64(nameBoxHeight)-bottomSprite.Bounds.H())))
+
+	combatantNameText.Render(ctx, target, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-namePadding+combatantNameText.GetTailHeight()))), nameContent)
+
+	statFrameBLX, statFrameBLY := namePadding, game.GameHeight-(namePadding*2+combatantNameText.GetLetterHeight()+statFrameH)
+	frames.Draw(target, combatStatFrame, pixel.R(0, 0, float64(statFrameW), float64(statFrameH)),
+		pixel.IM.Moved(pixel.V(float64(statFrameBLX), float64(statFrameBLY))))
+
+	maxBarWidth := statFrameW - 2*statBarFrame.HorizontalPadding()
+	var syncBarWidth, shldBarWidth int
+	if s.Player.GetCombatant().GetCurrentSync().Max > s.Player.GetCombatant().GetCurrentShield().Max {
+		syncBarWidth = maxBarWidth
+		shldBarWidth = int(float64(maxBarWidth) * float64(s.Player.GetCombatant().GetCurrentShield().Max) / float64(s.Player.GetCombatant().GetCurrentSync().Max))
+	} else {
+		shldBarWidth = maxBarWidth
+		syncBarWidth = int(float64(maxBarWidth) * float64(s.Player.GetCombatant().GetCurrentSync().Max) / float64(s.Player.GetCombatant().GetCurrentShield().Max))
+	}
+
+	syncBar := &StatBar{
+		lines:       []StatBarLine{StatBarVisual, StatBarLabel},
+		labelSprite: resources.GetTilesheetSprite("combat_combatant_name_background", 6, 1),
+		colorDark:   colors.HexColor("772712"),
+		color:       colors.HexColor("d58d7a"),
+		colorBright: colors.HexColor("ebc4bb"),
+		current:     s.Player.GetCombatant().GetCurrentSync().Current,
+		max:         s.Player.GetCombatant().GetCurrentSync().Max,
+		width:       syncBarWidth,
+	}
+
+	shieldBar := &StatBar{
+		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
+		labelSprite: resources.GetTilesheetSprite("combat_combatant_name_background", 5, 1),
+		colorDark:   colors.HexColor("126177"),
+		color:       colors.HexColor("73bed3"),
+		colorBright: colors.HexColor("bbe0eb"),
+		current:     s.Player.GetCombatant().GetCurrentShield().Current,
+		max:         s.Player.GetCombatant().GetCurrentShield().Max,
+		width:       shldBarWidth,
+	}
+
+	statBox := &StatBox{
+		bars:           []*StatBar{shieldBar, syncBar},
+		originLocation: StatBoxOriginTopLeft,
+	}
+	statBox.Draw(ctx, target, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-(namePadding*2+combatantNameText.GetLetterHeight())))))
+
+}
 
 var tickBubbleDisplayNone = resources.TilesheetSprites[resources.TilesheetSpriteId{
 	Tilesheet: "combat_tick_bubbles",
@@ -219,14 +282,14 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 	matrix = matrix.Moved(pixel.V(-currentTickProgress*float64(skillBarTickSpacing), 0))
 	if currentSkill != nil {
 		matrix = matrix.Moved(pixel.V(-(float64(currentSkill.NextTick))*float64(skillBarTickSpacing), 0))
-		mask := typecolors.SkillTypeColor(currentSkill.Skill.Type)
+		mask := typecolors.SkillTypeColor(currentSkill.Skill.Type).RGBA
 		s.drawSkill(ctx, target, matrix, currentSkill.Skill, mask, 1.0)
 		matrix = matrix.Moved(pixel.V(float64((currentSkill.Duration+1)*skillBarTickSpacing), 0))
 		noNextSkillAlpha = math.Min(1.0, (float64(currentSkill.NextTick)+currentTickProgress)/float64(currentSkill.Duration))
 	}
 	if nextSkillId != nil {
 		nextSkill := nextSkillId.Get()
-		mask := typecolors.SkillTypeColor(nextSkill.Type)
+		mask := typecolors.SkillTypeColor(nextSkill.Type).RGBA
 		mask = colors.ScaleColor(mask, 0.5)
 		s.drawSkill(ctx, target, matrix, &nextSkill, mask, 1.0)
 	} else {
@@ -291,14 +354,14 @@ func (s *State) drawCombatantSkillsV(ctx *game.Context, target pixel.Target, mat
 		matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, (float64(currentSkill.NextTick))*float64(skillBarTickSpacing)))
 	}
 	if previousSkill != nil {
-		mask := typecolors.SkillTypeColor(previousSkill.Skill.Type)
+		mask := typecolors.SkillTypeColor(previousSkill.Skill.Type).RGBA
 		matrixPreviousTopMiddle := matrixTopMiddle.Moved(pixel.V(0, float64((previousSkill.Duration+1)*skillBarTickSpacing)))
 		s.drawSkillV(ctx, target, matrixPreviousTopMiddle, previousSkill.Skill, mask, true, 1.0)
 		ctx.DebugBR("printing previous")
 	}
 	if currentSkill != nil {
 		skillProgress := currentTickProgress + float64(currentSkill.NextTick)
-		mask := typecolors.SkillTypeColor(currentSkill.Skill.Type)
+		mask := typecolors.SkillTypeColor(currentSkill.Skill.Type).RGBA
 		alpha := math.Min((skillProgress)/1, 1)*(1-nextSkillMaskScale) + nextSkillMaskScale
 		ctx.DebugBL("alpha: %f", alpha)
 		mask = colors.ScaleColor(mask, alpha)
@@ -308,7 +371,7 @@ func (s *State) drawCombatantSkillsV(ctx *game.Context, target pixel.Target, mat
 	}
 	if nextSkillId != nil {
 		nextSkill := nextSkillId.Get()
-		mask := typecolors.SkillTypeColor(nextSkill.Type)
+		mask := typecolors.SkillTypeColor(nextSkill.Type).RGBA
 		mask = colors.ScaleColor(mask, nextSkillMaskScale)
 		s.drawSkillV(ctx, target, matrixTopMiddle, &nextSkill, mask, false, 1.0)
 	} else {
@@ -391,7 +454,11 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 		return
 	}
 
-	b.PendingProgress += timeDelta * ticksPerSecond
+	tps := ticksPerSecond
+	if ctx.Toggles.F1().ToggleState() {
+		tps *= 4
+	}
+	b.PendingProgress += timeDelta * tps
 	for b.PendingProgress >= 1 {
 		if b.TickPlayerNext {
 			dmg, over := b.PlayerSkill.Tick(ctx, s, s.Player.GetCombatant(), s.Opponent)

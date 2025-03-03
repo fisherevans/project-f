@@ -40,7 +40,7 @@ func (fx *DamageFX) Update(ctx *game.Context, s *State, timeDelta float64) bool 
 }
 
 func (fx *DamageFX) Render(ctx *game.Context, target pixel.Target) {
-	color := typecolors.SkillTypeColor(fx.Damage.DamageType)
+	color := typecolors.SkillTypeColor(fx.Damage.DamageType).RGBA
 	color = colors.WithAlpha(color, 1.0-(fx.Age/damageFxMaxAge))
 
 	str := fmt.Sprintf("%d", fx.Damage.TotalDamage)

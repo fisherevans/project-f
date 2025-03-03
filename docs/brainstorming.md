@@ -47,3 +47,11 @@ I think the body type should be more easily figured out and shown - but the affi
 gamma/radiation debuffs over time
 
 acid deal damage over time
+
+
+aesystematic - bold font for names? 14 pt
+Double Homicide for scrawling notes?
+
+addstandard for combat name
+also conider
+https://www.dafont.com/small-bold-pixel-7.font

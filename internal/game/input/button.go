@@ -54,6 +54,12 @@ type Button struct {
 	sourceKeys []pixel.Button
 }
 
+func NewButton(keys ...pixel.Button) *Button {
+	return &Button{
+		sourceKeys: keys,
+	}
+}
+
 func (b *Button) updateButton(win *opengl.Window) {
 	b.ButtonState.updateState(win, b.sourceKeys...)
 }

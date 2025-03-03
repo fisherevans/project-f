@@ -38,6 +38,8 @@ const (
 	fontNameMunroMicro  = "munro_small"
 	FontNameM5x7        = "m5x7"
 	FontNameM3x6        = "m3x6"
+	FontNameAddStandard = "addstandard"
+	FontName3x5         = "3-by-5-pixel-font"
 
 	fontSizeM5x7 = 16
 	fontSizeM3x6 = 16
@@ -50,6 +52,10 @@ const (
 
 	fontSizeMunroMicroSmall = 10
 	fontSizeMunroMicroLarge = 20
+
+	fontSizeAddStandard = 9
+
+	fontSize3x5 = 8
 )
 
 type DefinedFonts struct {
@@ -73,6 +79,10 @@ type DefinedFonts struct {
 
 	MunroMicroSizeSmall *DefinedFont
 	MunroMicroSizeLarge *DefinedFont
+
+	AddStandard *DefinedFont
+
+	Pixel3x5 *DefinedFont
 }
 
 func loadDefinedFonts() error {
@@ -96,6 +106,10 @@ func loadDefinedFonts() error {
 
 	Fonts.MunroMicroSizeSmall = NewDefinedFont(fontNameMunroMicro, fontSizeMunroMicroSmall)
 	Fonts.MunroMicroSizeLarge = NewDefinedFont(fontNameMunroMicro, fontSizeMunroMicroLarge)
+
+	Fonts.AddStandard = NewDefinedFont(FontNameAddStandard, fontSizeAddStandard)
+
+	Fonts.Pixel3x5 = NewDefinedFont(FontName3x5, fontSize3x5)
 	return nil
 }
 

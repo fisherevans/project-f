@@ -62,3 +62,11 @@ type SpriteReference struct {
 	Bounds pixel.Rect
 	Sprite *pixel.Sprite
 }
+
+func (s *SpriteReference) HalfDimensions() pixel.Vec {
+	return pixel.V(s.Bounds.W()/2.0, s.Bounds.H()/2.0)
+}
+
+func (s *SpriteReference) MoveVecBottomLeft() pixel.Vec {
+	return pixel.V(s.Bounds.W()/2.0, s.Bounds.H()/2.0)
+}

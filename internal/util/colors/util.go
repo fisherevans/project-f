@@ -9,21 +9,32 @@ import (
 	"strings"
 )
 
-type NamedColor pixel.RGBA
+type ColorName string
+type NamedColor struct {
+	RGBA pixel.RGBA
+	Name ColorName
+}
 
-var colorsByName = map[string]NamedColor{}
+var colorsByName = map[ColorName]NamedColor{}
+var colorsByRGBA = map[pixel.RGBA]NamedColor{}
 
-func (c NamedColor) register(name string) pixel.RGBA {
+func registerNamedColor(rgba pixel.RGBA, name ColorName) NamedColor {
+	namedColor := NamedColor{RGBA: rgba, Name: name}
+	// only allow unique names
 	if _, exists := colorsByName[name]; exists {
 		log.Fatal().Msgf("color name already exists: %s", name)
 	}
-	colorsByName[name] = c
-	return pixel.RGBA(c)
+	// only register the first RGBA lookup
+	if _, exists := colorsByRGBA[rgba]; !exists {
+		colorsByRGBA[rgba] = namedColor
+	}
+	colorsByName[name] = namedColor
+	return namedColor
 }
 
-func ColorFromName(name string) pixel.RGBA {
+func ColorFromName(name ColorName) NamedColor {
 	if color, exists := colorsByName[name]; exists {
-		return pixel.RGBA(color)
+		return color
 	}
 	log.Error().Msgf("color name not found: %s", name)
 	return Black
@@ -32,8 +43,8 @@ func ColorFromName(name string) pixel.RGBA {
 const hexErrMsg = "failed to parse color hex value"
 
 // HexColor converts #RGB, #RGBA, #RRGGBB, and #RRGGBBAA hex codes to colors (with or withou leading #)
-func HexColor(hex string) pixel.RGBA {
-	hex = strings.TrimPrefix(hex, "#")
+func HexColor(originalHex string) pixel.RGBA {
+	hex := strings.TrimPrefix(originalHex, "#")
 	var r, g, b, a uint8 = 0, 0, 0, 255 // Default alpha to 255 (fully opaque)
 
 	switch len(hex) {
@@ -56,7 +67,7 @@ func HexColor(hex string) pixel.RGBA {
 		b = parseHexByte(hex[4:6])
 		a = parseHexByte(hex[6:8])
 	default:
-		log.Fatal().Msgf("%s: %s", hexErrMsg, hex)
+		log.Fatal().Msgf("%s: %s", hexErrMsg, originalHex)
 
 	}
 
@@ -83,6 +94,14 @@ func parseHexByte(hexStr string) uint8 {
 		panic("invalid hex byte")
 	}
 	return uint8(val)
+}
+
+func ToHex(c pixel.RGBA) string {
+	return "#" + toHexByte(c.R) + toHexByte(c.G) + toHexByte(c.B) + toHexByte(c.A)
+}
+
+func toHexByte(r float64) string {
+	return strconv.FormatInt(int64(r*255), 16)
 }
 
 func HSLToRGB(h, s, l float64) (float64, float64, float64) {

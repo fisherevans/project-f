@@ -22,7 +22,7 @@ var (
 
 	skillText = textbox.NewInstance(textbox.FontSmall, textbox.
 			NewConfig(skillFrameWidth-skillFrame.HorizontalPadding()).
-			Foreground(colors.Black).
+			Foreground(colors.Black.RGBA).
 			Aligned(textbox.AlignCenter))
 )
 

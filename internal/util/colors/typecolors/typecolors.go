@@ -3,10 +3,9 @@ package typecolors
 import (
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
-	"github.com/gopxl/pixel/v2"
 )
 
-func SkillTypeColor(skillType rpg.SkillType) pixel.RGBA {
+func SkillTypeColor(skillType rpg.SkillType) colors.NamedColor {
 	switch skillType {
 	case rpg.SkillTypeKinetic:
 		return colors.Grey4
