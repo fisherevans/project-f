@@ -3,7 +3,6 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -15,14 +14,10 @@ type DialogueSystem struct {
 
 	toAppend  []Dialogue
 	toPrepend []Dialogue
-
-	frameBatch *pixel.Batch
 }
 
 func NewDialogueSystem() *DialogueSystem {
-	return &DialogueSystem{
-		frameBatch: pixel.NewBatch(&pixel.TrianglesData{}, resources.SpriteAtlas),
-	}
+	return &DialogueSystem{}
 }
 
 func (ds *DialogueSystem) Append(d Dialogue) {
@@ -38,7 +33,7 @@ func (ds *DialogueSystem) HasPriority() bool {
 }
 
 var dialogueFrameMargin = 4
-var dialogueFrame = resources.GetFrame("dialogue/dialogue_frame")
+var dialogueFrame = frames.New("dialogue/dialogue_frame", atlas)
 var dialogueBox = textbox.NewInstance(
 	textbox.FontLarge,
 	textbox.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding()).
@@ -55,14 +50,12 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 
 	dialogue.Content().Update(ctx, timeDelta)
 
-	ds.frameBatch.Clear()
 	frameBounds := pixel.R(
 		float64(dialogueFrameMargin),
 		float64(dialogueFrameMargin),
 		float64(game.GameWidth-dialogueFrameMargin),
 		float64(dialogueFrameMargin+dialogue.Content().Height()+dialogueFrame.VerticalPadding()))
-	frames.Draw(ds.frameBatch, dialogueFrame, frameBounds, pixel.IM)
-	ds.frameBatch.Draw(target)
+	dialogueFrame.Draw(target, frameBounds, pixel.IM)
 
 	bottomLeft := pixel.V(float64(dialogueFrameMargin+dialogueFrame.LeftPadding()), float64(dialogueFrameMargin+dialogueFrame.BottomPadding()))
 	dialogueBox.Render(ctx, target, pixel.IM.Moved(bottomLeft), dialogue.Content())

@@ -8,6 +8,7 @@ import (
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/colors/typecolors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
@@ -88,12 +89,14 @@ var stateText = textbox.NewInstance(textbox.FontLargeSpaced, textbox.
 	Foreground(colors.White.RGBA).
 	RenderFrom(textbox.TopLeft))
 
-var backgroundSprite = resources.GetNonAtlasSprite("combat/background_sample").Sprite
+var atlas = resources.CreateAtlas()
+
+var backgroundSprite = resources.LoadSprite("combat/background_sample")
 
 var imd = imdraw.New(nil)
 
-var robotAnim = anim.IdleRobot()
-var plentAnim = anim.IdlePlent()
+var robotAnim = anim.IdleRobot(atlas)
+var plentAnim = anim.IdlePlent(atlas)
 
 func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 
@@ -177,28 +180,28 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	statFrameW, statFrameH := 78, 31
 
-	nameBoxSprite := resources.GetTilesheetSprite("combat/combatant_stats/background", 1, 1)
-	rightSprite := resources.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)
-	bottomSprite := resources.GetTilesheetSprite("combat/combatant_stats/background", 3, 1)
+	nameBoxSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 1, 1)
+	rightSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)
+	bottomSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 3, 1)
 
-	nameBoxHeight := combatantNameText.GetLetterHeight() + namePadding*2 + statFrameH - int(bottomSprite.Bounds.H())
+	nameBoxHeight := combatantNameText.GetLetterHeight() + namePadding*2 + statFrameH - int(bottomSprite.Bounds().H())
 	nameBoxWidth := nameContent.Width() + namePadding*2
 	ctx.DebugBR("nameBoxHeight: %d, nameBoxWidth: %d", nameBoxHeight, nameBoxWidth)
-	nameBoxSpriteScaleX := float64(nameBoxWidth) / nameBoxSprite.Bounds.W()
-	nameBoxSpriteScaleY := float64(nameBoxHeight) / nameBoxSprite.Bounds.H()
+	nameBoxSpriteScaleX := float64(nameBoxWidth) / nameBoxSprite.Bounds().W()
+	nameBoxSpriteScaleY := float64(nameBoxHeight) / nameBoxSprite.Bounds().H()
 	ctx.DebugBR("nameBoxSpriteScaleX: %f, nameBoxSpriteScaleY: %f", nameBoxSpriteScaleX, nameBoxSpriteScaleY)
-	nameBoxSprite.Sprite.Draw(target, pixel.IM.
+	nameBoxSprite.Draw(target, pixel.IM.
 		ScaledXY(pixel.ZV, pixel.V(nameBoxSpriteScaleX, nameBoxSpriteScaleY)).
 		Moved(pixel.V(float64(nameBoxWidth/2), float64(game.GameHeight-nameBoxHeight/2))))
 
-	rightSprite.Sprite.Draw(target, pixel.IM.Moved(rightSprite.HalfDimensions()).Moved(pixel.V(float64(nameBoxWidth-1), game.GameHeight-rightSprite.Bounds.H())))
+	rightSprite.Draw(target, pixel.IM.Moved(rightSprite.Bounds().Center()).Moved(pixel.V(float64(nameBoxWidth-1), game.GameHeight-rightSprite.Bounds().H())))
 
-	bottomSprite.Sprite.Draw(target, pixel.IM.Moved(bottomSprite.HalfDimensions()).Moved(pixel.V(0, game.GameHeight-float64(nameBoxHeight)-bottomSprite.Bounds.H())))
+	bottomSprite.Draw(target, pixel.IM.Moved(bottomSprite.Bounds().Center()).Moved(pixel.V(0, game.GameHeight-float64(nameBoxHeight)-bottomSprite.Bounds().H())))
 
 	combatantNameText.Render(ctx, target, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-namePadding+combatantNameText.GetTailHeight()))), nameContent)
 
 	statFrameBLX, statFrameBLY := namePadding, game.GameHeight-(namePadding*2+combatantNameText.GetLetterHeight()+statFrameH)
-	frames.Draw(target, combatStatFrame, pixel.R(0, 0, float64(statFrameW), float64(statFrameH)),
+	combatStatFrame.Draw(target, pixel.R(0, 0, float64(statFrameW), float64(statFrameH)),
 		pixel.IM.Moved(pixel.V(float64(statFrameBLX), float64(statFrameBLY))))
 
 	maxBarWidth := statFrameW - 2*statBarFrame.HorizontalPadding()
@@ -213,7 +216,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	syncBar := &StatBar{
 		lines:       []StatBarLine{StatBarVisual, StatBarLabel},
-		labelSprite: resources.GetTilesheetSprite("combat/combatant_stats/background", 6, 1),
+		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 6, 1),
 		colorDark:   colors.HexColor("772712"),
 		color:       colors.HexColor("d58d7a"),
 		colorBright: colors.HexColor("ebc4bb"),
@@ -224,7 +227,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	shieldBar := &StatBar{
 		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
-		labelSprite: resources.GetTilesheetSprite("combat/combatant_stats/background", 5, 1),
+		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 5, 1),
 		colorDark:   colors.HexColor("126177"),
 		color:       colors.HexColor("73bed3"),
 		colorBright: colors.HexColor("bbe0eb"),
@@ -241,15 +244,15 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 }
 
-var tickBubbleDisplayNone = resources.GetTilesheetSprite("combat/tick_bar/bubbles", 1, 1)
-var tickBubbleDisplayNormal = resources.GetTilesheetSprite("combat/tick_bar/bubbles", 2, 1)
-var tickBubbleDisplaySpecial = resources.GetTilesheetSprite("combat/tick_bar/bubbles", 3, 1)
+var tickBubbleDisplayNone = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 1, 1)
+var tickBubbleDisplayNormal = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 2, 1)
+var tickBubbleDisplaySpecial = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 3, 1)
 
 var skillBarWidth = 8
 var skillBarTickSpacing = 10
 var skillBarSpacing = 2
 
-var skillEaterSprite = resources.GetSprite("combat/tick_bar/skill_eater")
+var skillEaterSprite = atlas.GetSprite("combat/tick_bar/skill_eater")
 
 func (s *State) drawActiveSkills(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, matrixTopMiddle pixel.Matrix) {
 	playerProgress := s.Battle.PendingProgress / 2.0
@@ -259,10 +262,10 @@ func (s *State) drawActiveSkills(ctx *game.Context, target pixel.Target, targetB
 	} else {
 		opponentProgress += 0.5
 	}
-	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -skillEaterSprite.Bounds.H()/2))
+	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -skillEaterSprite.Bounds().H()/2))
 	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Battle.PreviousPlayerSkill, s.Battle.PlayerSkill, s.Player.NextSkill)
 	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Battle.PreviousOpponentSkill, s.Battle.OpponentSkill, nil)
-	skillEaterSprite.Sprite.Draw(target, matrixTopMiddle)
+	skillEaterSprite.Draw(target, matrixTopMiddle)
 }
 
 var baseNextSkillMaskScale = 0.8
@@ -298,9 +301,9 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, mask, false, 1.0)
 	} else {
 		ctx.DebugBR("no skill!")
-		y := noneSelectedSprite.Bounds.H() / 2
+		y := noneSelectedSprite.Bounds().H() / 2
 		noNextSkillAlpha *= s.skillFlashAlphaInverse
-		noneSelectedSprite.Sprite.DrawColorMask(target, matrixTopMiddle.Moved(pixel.V(0, -y)), pixel.RGBA{noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha})
+		noneSelectedSprite.DrawColorMask(target, matrixTopMiddle.Moved(pixel.V(0, -y)), pixel.RGBA{noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha})
 	}
 }
 
@@ -317,16 +320,15 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 	if active {
 		frameName = "combat/tick_bar/skill_active_frame"
 	}
-	frame := resources.GetFrame(frameName)
-	frames.Draw(target, frame, rect, matrixBottomLeft, frames.WithColor(mask))
+	frames.New(frameName, atlas).Draw(target, rect, matrixBottomLeft, frames.WithColor(mask))
 
 	for i := 0; i <= skill.Duration(); i++ {
-		var sprite *pixel.Sprite
+		var sprite pixelutil.BoundedDrawable
 		switch skill.Ticks[i].DisplayType {
 		case rpg.TickDisplayNone:
-			sprite = tickBubbleDisplayNone.Sprite
+			sprite = tickBubbleDisplayNone
 		case rpg.TickDisplayNormal:
-			sprite = tickBubbleDisplayNormal.Sprite
+			sprite = tickBubbleDisplayNormal
 		}
 		if sprite == nil {
 			continue

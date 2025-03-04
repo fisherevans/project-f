@@ -15,11 +15,10 @@ const (
 	TopRight
 )
 
-var sprite = resources.GetSprite("2x2")
-var spriteW = sprite.Sprite.Frame().W()
-var spriteH = sprite.Sprite.Frame().H()
-
-func DrawRect(target pixel.Target, origin pixel.Vec, originLocation OriginLocation, width, height int, color pixel.RGBA) {
+func DrawRect(atlas *resources.Atlas, target pixel.Target, origin pixel.Vec, originLocation OriginLocation, width, height int, color pixel.RGBA) {
+	sprite := atlas.GetSprite("2x2")
+	spriteW := sprite.Bounds().H()
+	spriteH := sprite.Bounds().W()
 	fw := float64(width)
 	fh := float64(height)
 	scaleX := fw / spriteW
@@ -37,10 +36,13 @@ func DrawRect(target pixel.Target, origin pixel.Vec, originLocation OriginLocati
 	default:
 		panic(fmt.Sprintf("unknown origin location: %d", originLocation))
 	}
-	sprite.Sprite.DrawColorMask(target, matrix.Moved(origin), color)
+	sprite.DrawColorMask(target, matrix.Moved(origin), color)
 }
 
-func DrawRect2(target pixel.Target, inputMatrix pixel.Matrix, originLocation OriginLocation, width, height int, color pixel.RGBA) {
+func DrawRect2(atlas *resources.Atlas, target pixel.Target, inputMatrix pixel.Matrix, originLocation OriginLocation, width, height int, color pixel.RGBA) {
+	sprite := atlas.GetSprite("2x2")
+	spriteW := sprite.Bounds().H()
+	spriteH := sprite.Bounds().W()
 	fw := float64(width)
 	fh := float64(height)
 	scaleX := fw / spriteW
@@ -58,5 +60,5 @@ func DrawRect2(target pixel.Target, inputMatrix pixel.Matrix, originLocation Ori
 	default:
 		panic(fmt.Sprintf("unknown origin location: %d", originLocation))
 	}
-	sprite.Sprite.DrawColorMask(target, matrix.Chained(inputMatrix), color)
+	sprite.DrawColorMask(target, matrix.Chained(inputMatrix), color)
 }

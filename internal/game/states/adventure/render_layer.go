@@ -2,11 +2,12 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 )
 
 type renderLayer struct {
-	tiles [][]*resources.SpriteReference
+	tiles [][]pixelutil.BoundedDrawable
 }
 
 func (r renderLayer) Render(target pixel.Target, cameraMatrix pixel.Matrix, bounds MapBounds) {
@@ -16,7 +17,7 @@ func (r renderLayer) Render(target pixel.Target, cameraMatrix pixel.Matrix, boun
 			if spriteRef == nil {
 				continue
 			}
-			spriteRef.Sprite.Draw(target, cameraMatrix.Moved(pixel.V(float64(x), float64(y)).Scaled(resources.MapTileSize.Float())))
+			spriteRef.Draw(target, cameraMatrix.Moved(pixel.V(float64(x), float64(y)).Scaled(resources.MapTileSize.Float())))
 		}
 	}
 }

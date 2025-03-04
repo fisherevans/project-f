@@ -11,16 +11,9 @@ import (
 var (
 	fontRegistry = map[string]*truetype.Font{}
 	Fonts        = DefinedFonts{}
-
-	resourceFonts = LocalResource{
-		FileRoot:       "fonts",
-		FileExtension:  "ttf",
-		FileLoader:     loadFont,
-		PostProcessing: loadDefinedFonts,
-	}
 )
 
-func loadFont(path string, resourceName string, tags []string, data []byte) error {
+func loadFont(path string, resourceName string, data []byte) error {
 	ttfFont, err := truetype.Parse(data)
 	if err != nil {
 		return fmt.Errorf("failed to parse font from %s: %w", path, err)

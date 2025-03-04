@@ -4,7 +4,6 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -14,8 +13,8 @@ import (
 )
 
 var (
-	skillFrame                  = resources.GetFrame("combat/menu/skill_frame")
-	skillPendingFrame           = resources.GetFrame("combat/menu/skill_pending_frame")
+	skillFrame                  = frames.New("combat/menu/skill_frame", atlas)
+	skillPendingFrame           = frames.New("combat/menu/skill_pending_frame", atlas)
 	skillFrameWidth             = 84
 	skillFrameHeight            = 13
 	skillFrameHorizontalSpacing = 26
@@ -55,7 +54,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 			frame = skillPendingFrame
 		}
 		frameRect := pixel.R(0, 0, float64(skillFrameWidth), float64(skillFrameHeight))
-		frames.Draw(target, frame, frameRect, matrix)
+		frame.Draw(target, frameRect, matrix)
 		textDy := (skillFrameHeight - skillText.Font.GetFullLineHeight()) / 2
 		matrix = matrix.Moved(pixel.V(0, float64(textDy)))
 		skillText.Render(ctx, target, matrix, content)
@@ -63,7 +62,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 	centerMatrix := pixel.IM.Moved(bottomLeft).Moved(pixel.V(
 		float64(skillFrameWidth+(skillFrameHorizontalSpacing/2)),
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
-	resources.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).Sprite.Draw(target, centerMatrix)
+	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).Draw(target, centerMatrix)
 	s.combatArrowAlpha -= timeDelta * 0.75
 	switch ctx.Controls.DPad().PressedDirection() {
 	case input.Up:
@@ -77,7 +76,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 	}
 	ctx.DebugTR("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
-		resources.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).Sprite.DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
+		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
 	}
 }
 

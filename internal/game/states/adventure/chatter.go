@@ -25,24 +25,19 @@ type Chatter interface {
 }
 
 type ChatterSystem struct {
-	chatters    []Chatter
-	spriteBatch *pixel.Batch
-	textBatch   *pixel.Batch
+	chatters []Chatter
 }
 
 func NewChatterSystem() *ChatterSystem {
-	return &ChatterSystem{
-		spriteBatch: pixel.NewBatch(&pixel.TrianglesData{}, resources.SpriteAtlas),
-		textBatch:   pixel.NewBatch(&pixel.TrianglesData{}, textbox.FontSmall.GetAtlas().Picture()),
-	}
+	return &ChatterSystem{}
 }
 
 func (c *ChatterSystem) Add(chatter Chatter) {
 	c.chatters = append(c.chatters, chatter)
 }
 
-var chatterArrow = resources.GetSprite("chatter/chat_bottom_arrow")
-var chatterFrame = resources.GetFrame("chatter/chat_frame")
+var chatterArrow = atlas.GetSprite("chatter/chatter_box_arrow")
+var chatterFrame = frames.New("chatter/chatter_box", atlas)
 var chatterBox = textbox.NewInstance(
 	textbox.FontSmall,
 	textbox.NewConfig(game.GameWidth/3).
@@ -52,8 +47,6 @@ var chatterBox = textbox.NewInstance(
 func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
 	c.sortChatters()
 	incompleteChatters := c.chatters[:0] // Reuse the same slice memory
-	c.spriteBatch.Clear()
-	c.textBatch.Clear()
 	for _, chatter := range c.chatters {
 		chatter.Update(ctx, s, timeDelta)
 		if chatter.State() == ChatterComplete {
@@ -68,16 +61,14 @@ func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target,
 		frameWidth := chatter.Content().Width() + chatterFrame.HorizontalPadding()
 		frameHeight := chatter.Content().Height() + chatterFrame.VerticalPadding()
 		frameRect := pixel.R(0, 0, float64(frameWidth), float64(frameHeight))
-		frames.Draw(c.spriteBatch, chatterFrame, frameRect, renderMatrix.Moved(pixel.V(float64(-1*frameWidth/2), 0)))
+		chatterFrame.Draw(target, frameRect, renderMatrix.Moved(pixel.V(float64(-1*frameWidth/2), 0)))
 
-		chatterArrow.Sprite.Draw(c.spriteBatch, renderMatrix)
+		chatterArrow.Draw(target, renderMatrix)
 
 		chatter.Content().Update(ctx, timeDelta)
-		chatterBox.Render(ctx, c.textBatch, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content())
+		chatterBox.Render(ctx, target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content())
 	}
 	c.chatters = incompleteChatters
-	c.spriteBatch.Draw(target)
-	c.textBatch.Draw(target)
 }
 
 func (c *ChatterSystem) sortChatters() {

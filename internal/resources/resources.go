@@ -7,32 +7,49 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"io/fs"
-	"os"
 	"path/filepath"
-	"reflect"
-	"slices"
 	"strings"
-	"time"
+)
+
+const (
+	DefaultTileSize Pixels = 16
+	MapTileSize     Pixels = DefaultTileSize
 )
 
 var (
 	resources = []LocalResource{
-		resourceMaps,
-		resourceFonts,
-		resourceSprites,
-		resourceFrames,
-		resourceTiledMaps,
+		{
+			FileRoot:        "maps",
+			FileExtension:   "json",
+			FileLoader:      unmarshaler(&maps, json.Unmarshal),
+			ResourceEncoder: jsonEncoder,
+		},
+		{
+			FileRoot:       "fonts",
+			FileExtension:  "ttf",
+			FileLoader:     loadFont,
+			PostProcessing: loadDefinedFonts,
+		},
+		{
+			FileRoot:      "sprites",
+			FileExtension: "png",
+			FileLoader:    loadSpriteResource,
+		},
+		{
+			FileRoot:      "tiled_maps",
+			FileExtension: "tmx",
+			FileLoader:    loadTiledMap,
+		},
 	}
 )
 
-type fileLoader func(path, resourceName string, tags []string, data []byte) error
+type fileLoader func(path, resourceName string, data []byte) error
 
 type resourceEncoder func(resource any) ([]byte, error)
 
 type LocalResource struct {
 	FileRoot        string
 	FileExtension   string
-	RequiredTags    []string
 	FileLoader      fileLoader
 	PostProcessing  func() error
 	ResourceEncoder resourceEncoder
@@ -52,8 +69,6 @@ func init() {
 			}
 		}
 	}
-	loadAtlas()
-	processFrames()
 }
 
 func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error) error {
@@ -74,23 +89,8 @@ func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error)
 		}
 
 		resourceName := strings.TrimSuffix(strings.TrimPrefix(path, localResource.FileRoot+string(filepath.Separator)), extensionSuffix)
-		resourceNameParts := strings.Split(resourceName, ".")
-		tags := resourceNameParts[1:]
 
-		if len(localResource.RequiredTags) > 0 {
-			isTagged := false
-			for _, tag := range localResource.RequiredTags {
-				if slices.Contains(tags, tag) {
-					isTagged = true
-					break
-				}
-			}
-			if !isTagged {
-				return nil
-			}
-		}
-
-		err = localResource.FileLoader(path, resourceNameParts[0], tags, data)
+		err = localResource.FileLoader(path, resourceName, data)
 		if err == nil {
 			log.Info().Msgf("loaded %s resource: %s", localResource.FileRoot, resourceName)
 		} else {
@@ -103,14 +103,8 @@ func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error)
 
 type postProcessor[T any] func(resourceName string, newResource T) error
 
-func printLoadSummary[T fmt.Stringer](resourceName string, newResource T) error {
-	resourceType := reflect.TypeOf(newResource).Name()
-	log.Info().Msgf("[%s] loaded %s: %s", resourceType, resourceName, newResource.String())
-	return nil
-}
-
 func unmarshaler[T any](dest *map[string]T, unmarshaler func([]byte, any) error, postProcessors ...postProcessor[T]) fileLoader {
-	return func(path, resourceName string, tags []string, data []byte) error {
+	return func(path, resourceName string, data []byte) error {
 		var newResource T
 		err := unmarshaler(data, &newResource)
 		if err != nil {
@@ -130,38 +124,12 @@ func jsonEncoder(resource any) ([]byte, error) {
 	return json.MarshalIndent(resource, "", "  ")
 }
 
-func save[T any](source *map[string]T, localResource LocalResource, resourceName string) error {
-	// Encode the data
-	resource, exists := (*source)[resourceName]
-	if !exists {
-		return fmt.Errorf("resource %s not found", resourceName)
-	}
-	data, err := localResource.ResourceEncoder(resource)
-	if err != nil {
-		return fmt.Errorf("failed to marshal %s/%s: %w", localResource.FileRoot, resourceName, err)
-	}
+type Pixels int
 
-	// Check if the local file exists
-	localPath := filepath.Join(assets.LocalFolderPath(), localResource.FileRoot, resourceName+"."+localResource.FileExtension)
-	if _, err := os.Stat(localPath); err == nil {
-		backupSuffix := time.Now().Format(".backup_2006-01-02_15-04-05")
-		backupPath := localPath + backupSuffix
-		err := os.Rename(localPath, backupPath)
-		if err != nil {
-			return fmt.Errorf("failed to create backup %s: %w", backupPath, err)
-		}
-		err = cleanupBackups(localPath, 3)
-		if err != nil {
-			log.Error().Msgf("failed to cleanup backup %s: %w", resourceName, err)
-		}
-	}
+func (p Pixels) Float() float64 {
+	return float64(p)
+}
 
-	// Write the []byte data to the local file
-	err = os.WriteFile(localPath, data, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write data to file %s: %w", localPath, err)
-	}
-
-	log.Info().Msgf("saved %s:%s to %s", localResource.FileRoot, resourceName, localPath)
-	return nil
+func (p Pixels) Int() int {
+	return int(p)
 }

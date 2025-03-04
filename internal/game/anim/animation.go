@@ -2,12 +2,11 @@ package anim
 
 import (
 	"fisherevans.com/project/f/internal/resources"
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
 type AnimatedSprite struct {
-	frames          []*pixel.Sprite
+	frames          []pixelutil.BoundedDrawable
 	framesPerSecond float64
 	progression     float64
 	currentFrame    int
@@ -20,38 +19,18 @@ func (a *AnimatedSprite) ApplyPingPong() *AnimatedSprite {
 	return a
 }
 
-func FromSprites(tilesheet string, row, startCol, endCol int, framesPerSecond float64) *AnimatedSprite {
-	animated := &AnimatedSprite{
-		framesPerSecond: framesPerSecond,
-	}
-	for col := startCol; col <= endCol; col++ {
-		ref := resources.GetTilesheetSprite(tilesheet, col, row)
-		animated.frames = append(animated.frames, ref.Sprite)
-	}
-	return animated
-}
-
-func FromTilesheetRow(tilesheet string, row int, framesPerSecond float64) *AnimatedSprite {
+func FromTilesheetRow(atlas *resources.Atlas, tilesheet string, row int, framesPerSecond float64) *AnimatedSprite {
 	animated := &AnimatedSprite{
 		framesPerSecond: framesPerSecond,
 	}
 	ts := resources.GetTilesheet(tilesheet)
 	for col := 1; col <= ts.Columns; col++ {
-		spriteId := resources.TilesheetSpriteId{
-			Tilesheet: tilesheet,
-			Row:       row,
-			Column:    col,
-		}
-		ref := resources.GetTilesheetSpriteById(spriteId)
-		if ref == nil {
-			log.Fatal().Str("tilesheet", tilesheet).Int("row", row).Int("col", col).Msg("sprite not found when making animation")
-		}
-		animated.frames = append(animated.frames, ref.Sprite)
+		animated.frames = append(animated.frames, atlas.GetTilesheetSprite(tilesheet, col, row))
 	}
 	return animated
 }
 
-func (a *AnimatedSprite) Sprite() *pixel.Sprite {
+func (a *AnimatedSprite) Sprite() pixelutil.BoundedDrawable {
 	return a.frames[a.currentFrame]
 }
 

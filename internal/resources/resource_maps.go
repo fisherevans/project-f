@@ -8,13 +8,6 @@ import (
 
 var (
 	maps = map[string]*Map{}
-
-	resourceMaps = LocalResource{
-		FileRoot:        "maps",
-		FileExtension:   "json",
-		FileLoader:      unmarshaler(&maps, json.Unmarshal),
-		ResourceEncoder: jsonEncoder,
-	}
 )
 
 func GetMap(name string) *Map {
@@ -104,17 +97,4 @@ func (e *Entity) GetStringMetadata(key, defaultValue string) string {
 
 func (t Tile) String() string {
 	return fmt.Sprintf("Tile{x:%d,y:%d,sprite:[%s]}", t.X, t.Y, t.SpriteId.String())
-}
-
-func SaveAllMaps() {
-	for name := range maps {
-		SaveMap(name)
-	}
-}
-
-func SaveMap(resourceName string) {
-	err := save(&maps, resourceMaps, resourceName)
-	if err != nil {
-		panic(fmt.Sprintf("failed save resource %s: %v", resourceName, err))
-	}
 }

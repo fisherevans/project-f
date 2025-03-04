@@ -1,21 +1,13 @@
 package resources
 
 import (
-	"github.com/gopxl/pixel/v2"
+	"fmt"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
+	"image"
 )
 
 var (
 	frames = map[string]*SpriteFrame{}
-
-	resourceFrames = LocalResource{
-		FileRoot:        "sprites",
-		RequiredTags:    []string{"frame"},
-		FileExtension:   "yaml",
-		FileLoader:      unmarshaler(&frames, yaml.Unmarshal),
-		ResourceEncoder: jsonEncoder,
-	}
 )
 
 func GetFrame(id string) *SpriteFrame {
@@ -40,27 +32,19 @@ const (
 	FrameMiddle      FrameSide = "middle"
 )
 
-type SpriteFrame struct {
-	CutMargin  map[FrameSide]int       `yaml:"cutMargin"`
-	Padding    map[FrameSide]int       `yaml:"padding"`
-	FrameModes map[FrameSide]FrameMode `yaml:"frameModes"`
-	Defaults   SpriteFrameDefaults     `yaml:"defaults"`
-
-	Sprites map[FrameSide]*SpriteReference `yaml:"-"`
-}
-
-type SpriteFrameDefaults struct {
-	CutMargin int       `yaml:"cutMargin"`
-	Padding   int       `yaml:"padding"`
-	FrameMode FrameMode `yaml:"frameMode"`
-}
-
 type FrameMode string
 
 const (
 	FrameModeRepeat  FrameMode = "repeat"
 	FrameModeStretch FrameMode = "stretch"
 )
+
+type SpriteFrame struct {
+	CutMargin  map[FrameSide]int       `yaml:"cutMargin"`
+	Padding    map[FrameSide]int       `yaml:"padding"`
+	FrameModes map[FrameSide]FrameMode `yaml:"frameModes"`
+	Defaults   SpriteFrameDefaults     `yaml:"defaults"`
+}
 
 func fillDefaults[T any](ref *map[FrameSide]T, defaultValue T, sides ...FrameSide) {
 	if *ref == nil {
@@ -74,46 +58,10 @@ func fillDefaults[T any](ref *map[FrameSide]T, defaultValue T, sides ...FrameSid
 	}
 }
 
-func processFrames() {
-	for spriteId, frame := range frames {
-		sprite, exists := sprites[spriteId]
-		if !exists {
-			log.Fatal().Msgf("missing sprite for frame: %s", spriteId)
-		}
-
-		fillDefaults(&frame.CutMargin, frame.Defaults.CutMargin, FrameTop, FrameLeft, FrameBottom, FrameRight)
-
-		fillDefaults(&frame.Padding, frame.Defaults.Padding, FrameTop, FrameLeft, FrameBottom, FrameRight)
-
-		fillDefaults(&frame.FrameModes, frame.Defaults.FrameMode, FrameTop, FrameLeft, FrameBottom, FrameRight, FrameMiddle)
-
-		frame.splitRectUsingMargins(sprite.Bounds, func(rect pixel.Rect) *SpriteReference {
-			return &SpriteReference{
-				Source: sprite.Source,
-				Bounds: rect,
-				Sprite: pixel.NewSprite(sprite.Source, rect),
-			}
-		})
-	}
-
-}
-
-func (sf *SpriteFrame) splitRectUsingMargins(rect pixel.Rect, converter func(pixel.Rect) *SpriteReference) {
-	top := float64(sf.CutMargin[FrameTop])
-	left := float64(sf.CutMargin[FrameLeft])
-	bottom := float64(sf.CutMargin[FrameBottom])
-	right := float64(sf.CutMargin[FrameRight])
-	sf.Sprites = map[FrameSide]*SpriteReference{
-		FrameTopLeft:     converter(pixel.R(rect.Min.X, rect.Max.Y-top, rect.Min.X+left, rect.Max.Y)),
-		FrameTop:         converter(pixel.R(rect.Min.X+left, rect.Max.Y-top, rect.Max.X-right, rect.Max.Y)),
-		FrameTopRight:    converter(pixel.R(rect.Max.X-right, rect.Max.Y-top, rect.Max.X, rect.Max.Y)),
-		FrameLeft:        converter(pixel.R(rect.Min.X, rect.Min.Y+bottom, rect.Min.X+left, rect.Max.Y-top)),
-		FrameMiddle:      converter(pixel.R(rect.Min.X+left, rect.Min.Y+bottom, rect.Max.X-right, rect.Max.Y-top)),
-		FrameRight:       converter(pixel.R(rect.Max.X-right, rect.Min.Y+bottom, rect.Max.X, rect.Max.Y-top)),
-		FrameBottomLeft:  converter(pixel.R(rect.Min.X, rect.Min.Y, rect.Min.X+left, rect.Min.Y+bottom)),
-		FrameBottom:      converter(pixel.R(rect.Min.X+left, rect.Min.Y, rect.Max.X-right, rect.Min.Y+bottom)),
-		FrameBottomRight: converter(pixel.R(rect.Max.X-right, rect.Min.Y, rect.Max.X, rect.Min.Y+bottom)),
-	}
+func (sf *SpriteFrame) init(image.Image) {
+	fillDefaults(&sf.CutMargin, sf.Defaults.CutMargin, FrameTop, FrameLeft, FrameBottom, FrameRight)
+	fillDefaults(&sf.Padding, sf.Defaults.Padding, FrameTop, FrameLeft, FrameBottom, FrameRight)
+	fillDefaults(&sf.FrameModes, sf.Defaults.FrameMode, FrameTop, FrameLeft, FrameBottom, FrameRight, FrameMiddle)
 }
 
 func (sf *SpriteFrame) HorizontalPadding() int {
@@ -138,4 +86,19 @@ func (sf *SpriteFrame) RightPadding() int {
 
 func (sf *SpriteFrame) LeftPadding() int {
 	return sf.Padding[FrameLeft]
+}
+
+type SpriteFrameDefaults struct {
+	CutMargin int       `yaml:"cutMargin"`
+	Padding   int       `yaml:"padding"`
+	FrameMode FrameMode `yaml:"frameMode"`
+}
+
+type FrameSpriteId struct {
+	Frame string    `json:"frame"`
+	Side  FrameSide `json:"side"`
+}
+
+func (s FrameSpriteId) String() string {
+	return fmt.Sprintf("f:%s,s:%s", s.Frame, s.Side)
 }

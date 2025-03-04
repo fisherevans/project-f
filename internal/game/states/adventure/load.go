@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	resources "fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 	"math/rand"
 )
@@ -42,13 +43,13 @@ func initializeMap(a *State, m *resources.Map) {
 	a.mapWidth, a.mapHeight = maxX-minX+1, maxY-minY+1
 	for _, layerName := range []resources.MapLayerName{resources.LayerBase, resources.LayerDecor, resources.LayerOverlay} {
 		thisRenderLayer := renderLayer{
-			tiles: make([][]*resources.SpriteReference, a.mapWidth),
+			tiles: make([][]pixelutil.BoundedDrawable, a.mapWidth),
 		}
 		for x := 0; x < a.mapWidth; x++ {
-			thisRenderLayer.tiles[x] = make([]*resources.SpriteReference, a.mapHeight)
+			thisRenderLayer.tiles[x] = make([]pixelutil.BoundedDrawable, a.mapHeight)
 		}
 		for _, tile := range m.Layers[layerName].Tiles {
-			ref := resources.GetTilesheetSpriteById(tile.SpriteId)
+			ref := atlas.GetTilesheetSpriteById(tile.SpriteId)
 			thisRenderLayer.tiles[tile.X+dx][tile.Y+dy] = ref
 		}
 		if layerName == resources.LayerOverlay {
@@ -88,10 +89,10 @@ func initializeMap(a *State, m *resources.Map) {
 						},
 					},
 					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
-						MoveStateIdle:    anim.AshaIdle(),
-						MoveStateWalking: anim.AshaWalk(),
-						MoveStateRunning: anim.AshaRun(),
-						MoveStateDashing: anim.Dash(),
+						MoveStateIdle:    anim.AshaIdle(atlas),
+						MoveStateWalking: anim.AshaWalk(atlas),
+						MoveStateRunning: anim.AshaRun(atlas),
+						MoveStateDashing: anim.Dash(atlas),
 					},
 				},
 			}
@@ -108,9 +109,9 @@ func initializeMap(a *State, m *resources.Map) {
 						},
 					},
 					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
-						MoveStateIdle:    anim.AshaIdle(),
-						MoveStateWalking: anim.AshaWalk(),
-						MoveStateRunning: anim.AshaRun(),
+						MoveStateIdle:    anim.AshaIdle(atlas),
+						MoveStateWalking: anim.AshaWalk(atlas),
+						MoveStateRunning: anim.AshaRun(atlas),
 					},
 					ColorMask: pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
 				},

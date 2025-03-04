@@ -18,6 +18,7 @@ const (
 var (
 	cameraRenderDistanceX = int(math.Ceil(float64(game.GameWidth) / resources.MapTileSize.Float() / 2.0))
 	cameraRenderDistanceY = int(math.Ceil(float64(game.GameHeight) / resources.MapTileSize.Float() / 2.0))
+	atlas                 = resources.CreateAtlas()
 )
 
 var _ game.State = &State{}
@@ -48,8 +49,6 @@ type State struct {
 	actions   *ActionQueue
 	chatters  *ChatterSystem
 	dialogues *DialogueSystem
-
-	batch *pixel.Batch
 }
 
 func New(mapName string, save *rpg.GameSave) game.State {
@@ -59,7 +58,6 @@ func New(mapName string, save *rpg.GameSave) game.State {
 		entities:             make(map[EntityId]Entity),
 		occupiedLocations:    make(map[MapLocation]EntityId),
 		movementRestrictions: make(map[MapLocation]MovementRestriction),
-		batch:                pixel.NewBatch(&pixel.TrianglesData{}, resources.SpriteAtlas),
 		camera:               NewStaticCamera(pixel.Vec{}),
 		actions:              NewActionQueue(),
 		chatters:             NewChatterSystem(),
@@ -95,20 +93,17 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(ctx, s, targetBounds)
 
 	for _, thisRenderLayer := range s.baseRenderLayers {
-		thisRenderLayer.Render(s.batch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(target, cameraMatrix, renderBounds)
 	}
 
 	for _, entity := range s.locationSortedEntities() {
 		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-		entity.Render(s.batch, cameraMatrix.Moved(renderLocation))
+		entity.Render(target, cameraMatrix.Moved(renderLocation))
 	}
 
 	for _, thisRenderLayer := range s.overlayRenderLayers {
-		thisRenderLayer.Render(s.batch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(target, cameraMatrix, renderBounds)
 	}
-
-	s.batch.Draw(target)
-	s.batch.Clear()
 
 	s.chatters.OnTick(ctx, s, target, cameraMatrix, renderBounds, timeDelta)
 	s.dialogues.OnTick(ctx, s, target, renderBounds, timeDelta)

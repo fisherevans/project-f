@@ -4,13 +4,13 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 	"image/color"
 )
 
 var (
-	missingSprite = resources.GetSprite("2x2").Sprite
+	missingSprite = atlas.GetSprite("2x2")
 )
 
 type AnimatedMoveableEntity struct {
@@ -52,7 +52,7 @@ func (a *AnimatedMoveableEntity) Update(ctx *game.Context, adv *State, timeDelta
 }
 
 func (a *AnimatedMoveableEntity) Render(target pixel.Target, matrix pixel.Matrix) {
-	var sprite *pixel.Sprite
+	var sprite pixelutil.BoundedDrawable
 	animation := a.currentAnimation()
 	if animation == nil {
 		sprite = missingSprite

@@ -9,15 +9,7 @@ import (
 	"slices"
 )
 
-var (
-	resourceTiledMaps = LocalResource{
-		FileRoot:      "tiled_maps",
-		FileExtension: "tmx",
-		FileLoader:    loadTiledMap,
-	}
-)
-
-func loadTiledMap(path string, resourceName string, tags []string, _ []byte) error {
+func loadTiledMap(path string, resourceName string, _ []byte) error {
 	var tiledMap *tiled.Map
 	var err error
 	tiledMap, err = tiled.LoadFile(path, tiled.WithFileSystem(assets.FS))
