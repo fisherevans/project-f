@@ -8,6 +8,7 @@ import (
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/colors/typecolors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fmt"
@@ -16,7 +17,6 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
-	"strings"
 )
 
 var ticksPerSecond = 1.5
@@ -37,6 +37,8 @@ type State struct {
 	skillFlashTimeElapsed  float64
 	skillFlashAlpha        float64
 	skillFlashAlphaInverse float64
+
+	overlay string
 
 	batch *pixel.Batch
 }
@@ -119,36 +121,40 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4.RGBA)
 
-	// pick next skill for player
-	for optionId, direction := range typeOptionKey {
-		if ctx.Controls.DPad().DirectionJustPressed(direction) {
-			option := s.Player.GetCombatant().GetFightOption(optionId)
-			if option != nil {
-				s.Player.NextSkill = option
+	if s.overlay == "" {
+		// pick next skill for player
+		for optionId, direction := range typeOptionKey {
+			if ctx.Controls.DPad().DirectionJustPressed(direction) {
+				option := s.Player.GetCombatant().GetFightOption(optionId)
+				if option != nil {
+					s.Player.NextSkill = option
+				}
 			}
 		}
+
+		s.Battle.Update(ctx, s, timeDelta, BattleUpdateParams{
+			PlayerNextSkill: func() *rpg.SkillId {
+				return s.Player.PopNextSkill()
+
+			},
+			OpponentNextSkill: func() *rpg.SkillId {
+				return &rpg.Skill_Crush.Id
+			},
+		})
 	}
 
-	s.Battle.Update(ctx, s, timeDelta, BattleUpdateParams{
-		PlayerNextSkill: func() *rpg.SkillId {
-			return s.Player.PopNextSkill()
-
-		},
-		OpponentNextSkill: func() *rpg.SkillId {
-			return &rpg.Skill_Crush.Id
-		},
-	})
-
 	if s.Player.GetCombatant().GetCurrentSync().Current <= 0 {
-		ctx.Notify("You died!")
-		s.OnComplete(ctx, s)
-		return
+		s.overlay = "{+c:#e64565,+o}You died!"
+		// todo
+		//s.OnComplete(ctx, s)
+		//return
 	}
 
 	if s.Opponent.GetHealth().Current <= 0 {
-		ctx.Notify("You won!")
-		s.OnComplete(ctx, s)
-		return
+		s.overlay = "{+c:#45e682,+o}You won!"
+		// todo
+		//s.OnComplete(ctx, s)
+		//return
 	}
 
 	var remainingFx []FX
@@ -171,93 +177,19 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	s.drawActiveSkills(ctx, s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
 
-	playerText := []string{
-		"Player",
-		s.Player.GetCombatant().Name(),
-		fmt.Sprintf("Health: %d/%d", s.Player.GetCombatant().GetCurrentSync().Current, s.Player.GetCombatant().GetCurrentSync().Max),
-	}
-	playerContent := stateText.NewComplexContent(strings.Join(playerText, "\n"))
-	playerContent.Update(ctx, timeDelta)
-	stateText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(padding), float64(game.GameHeight-padding))), playerContent)
-
-	opponentText := []string{
-		"Opponent",
-		s.Opponent.Name(),
-		fmt.Sprintf("Health: %d/%d", s.Opponent.GetHealth().Current, s.Opponent.GetHealth().Max),
-	}
-	opponentContent := stateText.NewComplexContent(strings.Join(opponentText, "\n"), textbox.WithAlignment(textbox.AlignRight))
-	opponentContent.Update(ctx, timeDelta)
-	stateText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(padding*2+(game.GameWidth-padding*3)/2), float64(game.GameHeight-padding))), opponentContent)
-
 	for _, fx := range s.fx {
 		fx.Render(ctx, s.batch)
 	}
 
-	s.renderSkills(ctx, s.batch, pixel.V(float64(3), float64(3)), timeDelta)
+	s.renderSkills(ctx, s.batch, pixel.V(float64((game.GameWidth-(skillFrameWidth*2+skillFrameHorizontalSpacing))/2), float64(3)), timeDelta)
 
-	statFrameW, statFrameH := 78, 31
+	s.drawPlayerStats(ctx)
+	s.drawOpponentStats(ctx)
 
-	nameBoxSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 1, 1)
-	rightSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)
-	bottomSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 3, 1)
-
-	nameBoxHeight := combatantNameText.Metadata.GetLetterHeight() + namePadding*2 + statFrameH - int(bottomSprite.Bounds().H())
-	nameBoxWidth := nameContent.Width() + namePadding*2
-	ctx.DebugBR("nameBoxHeight: %d, nameBoxWidth: %d", nameBoxHeight, nameBoxWidth)
-	nameBoxSpriteScaleX := float64(nameBoxWidth) / nameBoxSprite.Bounds().W()
-	nameBoxSpriteScaleY := float64(nameBoxHeight) / nameBoxSprite.Bounds().H()
-	ctx.DebugBR("nameBoxSpriteScaleX: %f, nameBoxSpriteScaleY: %f", nameBoxSpriteScaleX, nameBoxSpriteScaleY)
-	nameBoxSprite.Draw(s.batch, pixel.IM.
-		ScaledXY(pixel.ZV, pixel.V(nameBoxSpriteScaleX, nameBoxSpriteScaleY)).
-		Moved(pixel.V(float64(nameBoxWidth/2), float64(game.GameHeight-nameBoxHeight/2))))
-
-	rightSprite.Draw(s.batch, pixel.IM.Moved(rightSprite.Bounds().Center()).Moved(pixel.V(float64(nameBoxWidth-1), game.GameHeight-rightSprite.Bounds().H())))
-
-	bottomSprite.Draw(s.batch, pixel.IM.Moved(bottomSprite.Bounds().Center()).Moved(pixel.V(0, game.GameHeight-float64(nameBoxHeight)-bottomSprite.Bounds().H())))
-
-	combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-namePadding+combatantNameText.Metadata.GetTailHeight()))), nameContent)
-
-	statFrameBLX, statFrameBLY := namePadding, game.GameHeight-(namePadding*2+combatantNameText.Metadata.GetLetterHeight()+statFrameH)
-	combatStatFrame.Draw(s.batch, pixel.R(0, 0, float64(statFrameW), float64(statFrameH)),
-		pixel.IM.Moved(pixel.V(float64(statFrameBLX), float64(statFrameBLY))))
-
-	maxBarWidth := statFrameW - 2*statBarFrame.HorizontalPadding()
-	var syncBarWidth, shldBarWidth int
-	if s.Player.GetCombatant().GetCurrentSync().Max > s.Player.GetCombatant().GetCurrentShield().Max {
-		syncBarWidth = maxBarWidth
-		shldBarWidth = int(float64(maxBarWidth) * float64(s.Player.GetCombatant().GetCurrentShield().Max) / float64(s.Player.GetCombatant().GetCurrentSync().Max))
-	} else {
-		shldBarWidth = maxBarWidth
-		syncBarWidth = int(float64(maxBarWidth) * float64(s.Player.GetCombatant().GetCurrentSync().Max) / float64(s.Player.GetCombatant().GetCurrentShield().Max))
+	if s.overlay != "" {
+		content := combatantNameText.NewComplexContent(s.overlay)
+		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight*0.75)), content, gfx.Centered)
 	}
-
-	syncBar := &StatBar{
-		lines:       []StatBarLine{StatBarVisual, StatBarLabel},
-		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 6, 1),
-		colorDark:   colors.HexColor("772712"),
-		color:       colors.HexColor("d58d7a"),
-		colorBright: colors.HexColor("ebc4bb"),
-		current:     s.Player.GetCombatant().GetCurrentSync().Current,
-		max:         s.Player.GetCombatant().GetCurrentSync().Max,
-		width:       syncBarWidth,
-	}
-
-	shieldBar := &StatBar{
-		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
-		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 5, 1),
-		colorDark:   colors.HexColor("126177"),
-		color:       colors.HexColor("73bed3"),
-		colorBright: colors.HexColor("bbe0eb"),
-		current:     s.Player.GetCombatant().GetCurrentShield().Current,
-		max:         s.Player.GetCombatant().GetCurrentShield().Max,
-		width:       shldBarWidth,
-	}
-
-	statBox := &StatBox{
-		bars:           []*StatBar{shieldBar, syncBar},
-		originLocation: StatBoxOriginTopLeft,
-	}
-	statBox.Draw(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-(namePadding*2+combatantNameText.Metadata.GetLetterHeight())))))
 
 	s.batch.Draw(target)
 }
@@ -397,8 +329,8 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 	}
 
 	tps := ticksPerSecond
-	if ctx.Toggles.F1().ToggleState() {
-		tps *= 4
+	if ctx.DebugToggles.F1().ToggleState() {
+		tps *= 2
 	}
 	b.PendingProgress += timeDelta * tps
 	for b.PendingProgress >= 1 {

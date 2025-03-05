@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"github.com/gopxl/pixel/v2"
 	"sort"
@@ -66,7 +67,7 @@ func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target,
 		chatterArrow.Draw(target, renderMatrix)
 
 		chatter.Content().Update(ctx, timeDelta)
-		chatterBox.Render(ctx, target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content())
+		chatterBox.Render(ctx, target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content(), gfx.TopLeft)
 	}
 	c.chatters = incompleteChatters
 }

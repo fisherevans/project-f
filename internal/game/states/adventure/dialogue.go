@@ -6,6 +6,7 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"github.com/gopxl/pixel/v2"
 )
@@ -60,7 +61,7 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 	dialogueFrame.Draw(target, frameBounds, pixel.IM)
 
 	bottomLeft := pixel.V(float64(dialogueFrameMargin+dialogueFrame.LeftPadding()), float64(dialogueFrameMargin+dialogueFrame.BottomPadding()))
-	dialogueBox.Render(ctx, target, pixel.IM.Moved(bottomLeft), dialogue.Content())
+	dialogueBox.Render(ctx, target, pixel.IM.Moved(bottomLeft), dialogue.Content(), gfx.TopLeft)
 
 	a := ctx.Controls.ButtonA().JustPressed()
 	bPressed := ctx.Controls.ButtonB().IsPressed()

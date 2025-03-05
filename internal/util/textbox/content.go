@@ -3,6 +3,7 @@ package textbox
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/util"
+	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
 	"math"
 	"strings"
@@ -50,6 +51,10 @@ func (c *Content) Width() int {
 
 func (c *Content) Height() int {
 	return c.height
+}
+
+func (c *Content) Bounds() pixel.Rect {
+	return pixel.R(0, 0, float64(c.width), float64(c.height))
 }
 
 func (c *Content) Update(ctx *game.Context, timeDelta float64) {

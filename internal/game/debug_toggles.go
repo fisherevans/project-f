@@ -47,6 +47,13 @@ func newToggles() *DebugToggles {
 	}
 	keys := []pixel.Button{
 		pixel.KeyF1,
+		pixel.KeyF2,
+		pixel.KeyF3,
+		pixel.KeyF4,
+		pixel.KeyF5,
+		pixel.KeyF6,
+		pixel.KeyF7,
+		pixel.KeyF8,
 	}
 	for _, key := range keys {
 		dt.toggles[key] = &DebugToggle{}
@@ -62,4 +69,25 @@ func (dt *DebugToggles) update(win *opengl.Window) {
 
 func (dt *DebugToggles) F1() *DebugToggle {
 	return dt.toggles[pixel.KeyF1]
+}
+func (dt *DebugToggles) F2() *DebugToggle {
+	return dt.toggles[pixel.KeyF2]
+}
+func (dt *DebugToggles) F3() *DebugToggle {
+	return dt.toggles[pixel.KeyF3]
+}
+func (dt *DebugToggles) F4() *DebugToggle {
+	return dt.toggles[pixel.KeyF4]
+}
+func (dt *DebugToggles) F5() *DebugToggle {
+	return dt.toggles[pixel.KeyF5]
+}
+func (dt *DebugToggles) F6() *DebugToggle {
+	return dt.toggles[pixel.KeyF6]
+}
+func (dt *DebugToggles) F7() *DebugToggle {
+	return dt.toggles[pixel.KeyF7]
+}
+func (dt *DebugToggles) F8() *DebugToggle {
+	return dt.toggles[pixel.KeyF8]
 }

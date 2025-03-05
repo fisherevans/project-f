@@ -43,7 +43,7 @@ type Context struct {
 	MouseInCanvas       bool
 	Controls            *input.Controls
 
-	Toggles *DebugToggles
+	DebugToggles *DebugToggles
 
 	GameSave *rpg.GameSave
 }
@@ -58,17 +58,17 @@ func NewContext(initialActiveState State, saveId string) *Context {
 		panic("Save not found: " + saveId)
 	}
 	return &Context{
-		activeState: initialActiveState,
-		CanvasScale: 1.0,
-		Controls:    input.NewControls(),
-		GameSave:    save,
-		Toggles:     newToggles(),
+		activeState:  initialActiveState,
+		CanvasScale:  1.0,
+		Controls:     input.NewControls(),
+		GameSave:     save,
+		DebugToggles: newToggles(),
 	}
 }
 
 func (c *Context) Update(window *opengl.Window) {
 	c.Controls.Update(window)
-	c.Toggles.update(window)
+	c.DebugToggles.update(window)
 }
 
 func (c *Context) GetActiveState() State {

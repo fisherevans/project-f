@@ -3,6 +3,7 @@ package textbox
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -29,7 +30,7 @@ type characterRenderParams struct {
 	foreground pixel.RGBA
 }
 
-func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, content *Content) {
+func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, content *Content, originLocation gfx.OriginLocation) {
 	tb.text.Clear()
 
 	pageLines := content.pageLines()
@@ -38,7 +39,18 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 		renderLineCount = tb.cfg.linesPerPage
 	}
 
-	//matrix = matrix.Moved(pixel.V(float64(0), float64(tb.Metadata.TailHeight)).Floor())
+	switch originLocation {
+	case gfx.BottomLeft:
+		matrix = matrix.Moved(gfx.IVec(0, -content.height))
+	case gfx.TopLeft:
+		// default
+	case gfx.BottomRight:
+		matrix = matrix.Moved(gfx.IVec(-content.width, -content.height))
+	case gfx.TopRight:
+		matrix = matrix.Moved(gfx.IVec(-content.width, 0))
+	case gfx.Centered:
+		matrix = matrix.Moved(gfx.IVec(-content.width/2, -content.height/2))
+	}
 
 	tb.imd.Clear()
 

@@ -7,6 +7,7 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
@@ -58,7 +59,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 		frame.Draw(target, frameRect, matrix)
 		textDy := (skillFrameHeight - skillText.Metadata.GetFullLineHeight()) / 2
 		matrix = matrix.Moved(pixel.V(0, float64(textDy)))
-		skillText.Render(ctx, target, matrix, content)
+		skillText.Render(ctx, target, matrix, content, gfx.TopLeft)
 	}
 	centerMatrix := pixel.IM.Moved(bottomLeft).Moved(pixel.V(
 		float64(skillFrameWidth+(skillFrameHorizontalSpacing/2)),
