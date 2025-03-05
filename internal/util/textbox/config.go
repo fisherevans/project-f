@@ -1,9 +1,7 @@
 package textbox
 
 import (
-	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/text"
 )
 
 type Config struct {
@@ -15,6 +13,8 @@ type Config struct {
 
 	linesPerPage int
 	lineByLine   bool
+
+	extraLineSpacing int
 
 	origin Origin
 
@@ -59,6 +59,11 @@ func (c Config) RenderFrom(origin Origin) Config {
 	return c
 }
 
+func (c Config) ExtraLineSpacing(amount int) Config {
+	c.extraLineSpacing = amount
+	return c
+}
+
 type Alignment int
 
 const (
@@ -73,68 +78,6 @@ const (
 	ExpandFull ExpandMode = iota
 	ExpandFit
 )
-
-type Font struct {
-	atlas       *text.Atlas
-	capHeight   int
-	lineSpacing int
-	tailHeight  int
-}
-
-func (f Font) GetLetterHeight() int {
-	return f.capHeight
-}
-
-func (f Font) GetTailHeight() int {
-	return f.tailHeight
-}
-
-func (f Font) GetLineSpacing() int {
-	return f.lineSpacing
-}
-
-func (f Font) GetFullLineHeight() int {
-	return f.capHeight + f.tailHeight
-}
-
-var FontSmall = Font{
-	atlas:       resources.Fonts.M6.Atlas,
-	capHeight:   6,
-	lineSpacing: 3,
-	tailHeight:  2,
-}
-
-var FontLarge = Font{
-	atlas:       resources.Fonts.M7.Atlas,
-	capHeight:   7,
-	lineSpacing: 3,
-	tailHeight:  2,
-}
-
-var FontLargeSpaced = Font{
-	atlas:       resources.Fonts.M7.Atlas,
-	capHeight:   10,
-	lineSpacing: 3,
-	tailHeight:  2,
-}
-
-var FontBoldTitle = Font{
-	atlas:       resources.Fonts.AddStandard.Atlas,
-	capHeight:   7,
-	lineSpacing: 0,
-	tailHeight:  2,
-}
-
-var FontMicro = Font{
-	atlas:       resources.Fonts.Pixel3x5.Atlas,
-	capHeight:   5,
-	lineSpacing: 0,
-	tailHeight:  0,
-}
-
-func (f Font) GetAtlas() *text.Atlas {
-	return f.atlas
-}
 
 type Origin int
 

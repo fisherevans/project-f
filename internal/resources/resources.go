@@ -25,10 +25,9 @@ var (
 			ResourceEncoder: jsonEncoder,
 		},
 		{
-			FileRoot:       "fonts",
-			FileExtension:  "ttf",
-			FileLoader:     loadFont,
-			PostProcessing: loadDefinedFonts,
+			FileRoot:      "fonts",
+			FileExtension: "ttf",
+			FileLoader:    loadFont,
 		},
 		{
 			FileRoot:      "sprites",

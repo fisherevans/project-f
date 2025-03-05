@@ -15,11 +15,11 @@ import (
 var combatStatFrame = frames.New("combat/combatant_stats/box", atlas)
 var statBarFrame = frames.New("combat/combatant_stats/bar", atlas)
 
-var combatantNameText = textbox.NewInstance(textbox.FontBoldTitle, textbox.NewConfig(200).RenderFrom(textbox.TopLeft).ExpandMode(textbox.ExpandFit))
+var combatantNameText = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), textbox.NewConfig(200).RenderFrom(textbox.TopLeft).ExpandMode(textbox.ExpandFit))
 var nameContent = combatantNameText.NewComplexContent("{+o:#cfcfcf,+c:black}Fumalug")
 var namePadding = 3
 
-var combatantStatText = textbox.NewInstance(textbox.FontMicro, textbox.NewConfig(200).RenderFrom(textbox.BottomLeft).ExpandMode(textbox.ExpandFit))
+var combatantStatText = textbox.NewInstance(atlas.GetFont(resources.FontName3x5), textbox.NewConfig(200).RenderFrom(textbox.BottomLeft).ExpandMode(textbox.ExpandFit))
 
 var noneSelectedSprite = atlas.GetSprite("combat/tick_bar/skill_none_selected")
 

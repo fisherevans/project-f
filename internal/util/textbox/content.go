@@ -217,7 +217,7 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	if lineCount == 0 {
 		lineCount = len(content.lines)
 	}
-	content.height = (lineCount * tb.capHeight) + ((lineCount - 1) * tb.lineSpacing) + tb.tailHeight*2
+	content.height = (lineCount * tb.Metadata.LetterHeight) + ((lineCount - 1) * tb.effectiveLineSpacing()) + tb.Metadata.TailHeight*2
 
 	if content.typingController == nil {
 		for _, line := range content.lines {

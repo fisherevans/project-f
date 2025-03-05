@@ -37,6 +37,8 @@ type State struct {
 	skillFlashTimeElapsed  float64
 	skillFlashAlpha        float64
 	skillFlashAlphaInverse float64
+
+	batch *pixel.Batch
 }
 
 func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
@@ -52,6 +54,8 @@ func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
 		Battle:     &Battle{},
 
 		cachedContents: map[string]*textbox.Content{},
+
+		batch: atlas.NewBatch(),
 	}
 }
 
@@ -84,12 +88,24 @@ func (s *State) ClearColor() color.Color {
 }
 
 var padding = 5
-var stateText = textbox.NewInstance(textbox.FontLargeSpaced, textbox.
+var stateText = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7), textbox.
 	NewConfig((game.GameWidth-padding*3)/2).
 	Foreground(colors.White.RGBA).
-	RenderFrom(textbox.TopLeft))
+	RenderFrom(textbox.TopLeft).
+	ExtraLineSpacing(2))
 
-var atlas = resources.CreateAtlas()
+var atlas = resources.CreateAtlas(resources.AtlasFilter{
+	FontNames: []string{
+		resources.FontNameM5x7,
+		resources.FontNameM3x6,
+		resources.FontNameAddStandard,
+		resources.FontName3x5,
+	},
+})
+
+func init() {
+	atlas.Dump("temp", "combat")
+}
 
 var backgroundSprite = resources.LoadSprite("combat/background_sample")
 
@@ -99,6 +115,9 @@ var robotAnim = anim.IdleRobot(atlas)
 var plentAnim = anim.IdlePlent(atlas)
 
 func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+	s.batch.Clear()
+
+	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4.RGBA)
 
 	// pick next skill for player
 	for optionId, direction := range typeOptionKey {
@@ -140,19 +159,17 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 	s.fx = remainingFx
 
-	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4.RGBA)
-
 	robotAnim.Update(timeDelta)
-	robotAnim.Sprite().Draw(target, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))))
+	robotAnim.Sprite().Draw(s.batch, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))))
 
 	plentAnim.Update(timeDelta)
-	plentAnim.Sprite().Draw(target, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.6667))))
+	plentAnim.Sprite().Draw(s.batch, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.6667))))
 
 	// while time left
 	//  - progress time
 	//  - if skill ends, pop next
 
-	s.drawActiveSkills(ctx, target, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
+	s.drawActiveSkills(ctx, s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
 
 	playerText := []string{
 		"Player",
@@ -161,7 +178,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 	playerContent := stateText.NewComplexContent(strings.Join(playerText, "\n"))
 	playerContent.Update(ctx, timeDelta)
-	stateText.Render(ctx, target, pixel.IM.Moved(pixel.V(float64(padding), float64(game.GameHeight-padding))), playerContent)
+	stateText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(padding), float64(game.GameHeight-padding))), playerContent)
 
 	opponentText := []string{
 		"Opponent",
@@ -170,13 +187,13 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 	opponentContent := stateText.NewComplexContent(strings.Join(opponentText, "\n"), textbox.WithAlignment(textbox.AlignRight))
 	opponentContent.Update(ctx, timeDelta)
-	stateText.Render(ctx, target, pixel.IM.Moved(pixel.V(float64(padding*2+(game.GameWidth-padding*3)/2), float64(game.GameHeight-padding))), opponentContent)
+	stateText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(padding*2+(game.GameWidth-padding*3)/2), float64(game.GameHeight-padding))), opponentContent)
 
 	for _, fx := range s.fx {
-		fx.Render(ctx, target)
+		fx.Render(ctx, s.batch)
 	}
 
-	s.renderSkills(ctx, target, pixel.V(float64(3), float64(3)), timeDelta)
+	s.renderSkills(ctx, s.batch, pixel.V(float64(3), float64(3)), timeDelta)
 
 	statFrameW, statFrameH := 78, 31
 
@@ -184,24 +201,24 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	rightSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)
 	bottomSprite := atlas.GetTilesheetSprite("combat/combatant_stats/background", 3, 1)
 
-	nameBoxHeight := combatantNameText.GetLetterHeight() + namePadding*2 + statFrameH - int(bottomSprite.Bounds().H())
+	nameBoxHeight := combatantNameText.Metadata.GetLetterHeight() + namePadding*2 + statFrameH - int(bottomSprite.Bounds().H())
 	nameBoxWidth := nameContent.Width() + namePadding*2
 	ctx.DebugBR("nameBoxHeight: %d, nameBoxWidth: %d", nameBoxHeight, nameBoxWidth)
 	nameBoxSpriteScaleX := float64(nameBoxWidth) / nameBoxSprite.Bounds().W()
 	nameBoxSpriteScaleY := float64(nameBoxHeight) / nameBoxSprite.Bounds().H()
 	ctx.DebugBR("nameBoxSpriteScaleX: %f, nameBoxSpriteScaleY: %f", nameBoxSpriteScaleX, nameBoxSpriteScaleY)
-	nameBoxSprite.Draw(target, pixel.IM.
+	nameBoxSprite.Draw(s.batch, pixel.IM.
 		ScaledXY(pixel.ZV, pixel.V(nameBoxSpriteScaleX, nameBoxSpriteScaleY)).
 		Moved(pixel.V(float64(nameBoxWidth/2), float64(game.GameHeight-nameBoxHeight/2))))
 
-	rightSprite.Draw(target, pixel.IM.Moved(rightSprite.Bounds().Center()).Moved(pixel.V(float64(nameBoxWidth-1), game.GameHeight-rightSprite.Bounds().H())))
+	rightSprite.Draw(s.batch, pixel.IM.Moved(rightSprite.Bounds().Center()).Moved(pixel.V(float64(nameBoxWidth-1), game.GameHeight-rightSprite.Bounds().H())))
 
-	bottomSprite.Draw(target, pixel.IM.Moved(bottomSprite.Bounds().Center()).Moved(pixel.V(0, game.GameHeight-float64(nameBoxHeight)-bottomSprite.Bounds().H())))
+	bottomSprite.Draw(s.batch, pixel.IM.Moved(bottomSprite.Bounds().Center()).Moved(pixel.V(0, game.GameHeight-float64(nameBoxHeight)-bottomSprite.Bounds().H())))
 
-	combatantNameText.Render(ctx, target, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-namePadding+combatantNameText.GetTailHeight()))), nameContent)
+	combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-namePadding+combatantNameText.Metadata.GetTailHeight()))), nameContent)
 
-	statFrameBLX, statFrameBLY := namePadding, game.GameHeight-(namePadding*2+combatantNameText.GetLetterHeight()+statFrameH)
-	combatStatFrame.Draw(target, pixel.R(0, 0, float64(statFrameW), float64(statFrameH)),
+	statFrameBLX, statFrameBLY := namePadding, game.GameHeight-(namePadding*2+combatantNameText.Metadata.GetLetterHeight()+statFrameH)
+	combatStatFrame.Draw(s.batch, pixel.R(0, 0, float64(statFrameW), float64(statFrameH)),
 		pixel.IM.Moved(pixel.V(float64(statFrameBLX), float64(statFrameBLY))))
 
 	maxBarWidth := statFrameW - 2*statBarFrame.HorizontalPadding()
@@ -240,8 +257,9 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 		bars:           []*StatBar{shieldBar, syncBar},
 		originLocation: StatBoxOriginTopLeft,
 	}
-	statBox.Draw(ctx, target, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-(namePadding*2+combatantNameText.GetLetterHeight())))))
+	statBox.Draw(ctx, s.batch, pixel.IM.Moved(pixel.V(float64(namePadding), float64(game.GameHeight-(namePadding*2+combatantNameText.Metadata.GetLetterHeight())))))
 
+	s.batch.Draw(target)
 }
 
 var tickBubbleDisplayNone = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 1, 1)

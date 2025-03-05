@@ -18,8 +18,17 @@ const (
 var (
 	cameraRenderDistanceX = int(math.Ceil(float64(game.GameWidth) / resources.MapTileSize.Float() / 2.0))
 	cameraRenderDistanceY = int(math.Ceil(float64(game.GameHeight) / resources.MapTileSize.Float() / 2.0))
-	atlas                 = resources.CreateAtlas()
+	atlas                 = resources.CreateAtlas(resources.AtlasFilter{
+		FontNames: []string{
+			resources.FontNameM5x7,
+			resources.FontNameM3x6,
+		},
+	})
 )
+
+func init() {
+	atlas.Dump("temp", "adventure")
+}
 
 var _ game.State = &State{}
 
@@ -49,12 +58,13 @@ type State struct {
 	actions   *ActionQueue
 	chatters  *ChatterSystem
 	dialogues *DialogueSystem
+
+	batch *pixel.Batch
 }
 
 func New(mapName string, save *rpg.GameSave) game.State {
 	m := resources.GetMap(mapName)
 	a := &State{
-
 		entities:             make(map[EntityId]Entity),
 		occupiedLocations:    make(map[MapLocation]EntityId),
 		movementRestrictions: make(map[MapLocation]MovementRestriction),
@@ -62,6 +72,8 @@ func New(mapName string, save *rpg.GameSave) game.State {
 		actions:              NewActionQueue(),
 		chatters:             NewChatterSystem(),
 		dialogues:            NewDialogueSystem(),
+
+		batch: atlas.NewBatch(),
 	}
 	initializeMap(a, m)
 	a.animech = save.NewDeployment()
@@ -75,6 +87,8 @@ func (s *State) ClearColor() color.Color {
 }
 
 func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+	s.batch.Clear()
+
 	ctx.DebugTL("delta: %.3f", timeDelta)
 
 	for _, entity := range s.entities {
@@ -93,22 +107,24 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(ctx, s, targetBounds)
 
 	for _, thisRenderLayer := range s.baseRenderLayers {
-		thisRenderLayer.Render(target, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.batch, cameraMatrix, renderBounds)
 	}
 
 	for _, entity := range s.locationSortedEntities() {
 		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-		entity.Render(target, cameraMatrix.Moved(renderLocation))
+		entity.Render(s.batch, cameraMatrix.Moved(renderLocation))
 	}
 
 	for _, thisRenderLayer := range s.overlayRenderLayers {
-		thisRenderLayer.Render(target, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.batch, cameraMatrix, renderBounds)
 	}
 
-	s.chatters.OnTick(ctx, s, target, cameraMatrix, renderBounds, timeDelta)
-	s.dialogues.OnTick(ctx, s, target, renderBounds, timeDelta)
+	s.chatters.OnTick(ctx, s, s.batch, cameraMatrix, renderBounds, timeDelta)
+	s.dialogues.OnTick(ctx, s, s.batch, renderBounds, timeDelta)
 
 	ctx.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
+
+	s.batch.Draw(target)
 }
 
 func (s *State) locationSortedEntities() []Entity {

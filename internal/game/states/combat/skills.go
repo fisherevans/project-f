@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -19,7 +20,7 @@ var (
 	skillFrameHeight            = 13
 	skillFrameHorizontalSpacing = 26
 
-	skillText = textbox.NewInstance(textbox.FontSmall, textbox.
+	skillText = textbox.NewInstance(atlas.GetFont(resources.FontNameM3x6), textbox.
 			NewConfig(skillFrameWidth-skillFrame.HorizontalPadding()).
 			Foreground(colors.Black.RGBA).
 			Aligned(textbox.AlignCenter))
@@ -55,7 +56,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 		}
 		frameRect := pixel.R(0, 0, float64(skillFrameWidth), float64(skillFrameHeight))
 		frame.Draw(target, frameRect, matrix)
-		textDy := (skillFrameHeight - skillText.Font.GetFullLineHeight()) / 2
+		textDy := (skillFrameHeight - skillText.Metadata.GetFullLineHeight()) / 2
 		matrix = matrix.Moved(pixel.V(0, float64(textDy)))
 		skillText.Render(ctx, target, matrix, content)
 	}

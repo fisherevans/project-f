@@ -26,7 +26,7 @@ type DamageFX struct {
 }
 
 var damageFxMaxAge = 4.0
-var damageFxText = text.New(pixel.ZV, resources.Fonts.M6.Atlas)
+var damageFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas)
 var damageFxGravity = -100.0
 
 func (fx *DamageFX) Update(ctx *game.Context, s *State, timeDelta float64) bool {

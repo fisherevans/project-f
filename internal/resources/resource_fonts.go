@@ -10,7 +10,6 @@ import (
 
 var (
 	fontRegistry = map[string]*truetype.Font{}
-	Fonts        = DefinedFonts{}
 )
 
 func loadFont(path string, resourceName string, data []byte) error {
@@ -23,111 +22,111 @@ func loadFont(path string, resourceName string, data []byte) error {
 }
 
 const (
-	fontNameDogica      = "dogica"
-	fontNameDogicaBold  = "dogica_bold"
-	fontNameMunro       = "munro"
-	fontNameMunroNarrow = "munro_narrow"
-	fontNameMunroMicro  = "munro_small"
+	FontNameDogica      = "dogica"
+	FontNameDogicaBold  = "dogica_bold"
+	FontNameMunro       = "munro"
+	FontNameMunroNarrow = "munro_narrow"
+	FontNameMunroMicro  = "munro_small"
 	FontNameM5x7        = "m5x7"
 	FontNameM3x6        = "m3x6"
 	FontNameAddStandard = "addstandard"
 	FontName3x5         = "3-by-5-pixel-font"
-
-	fontSizeM5x7 = 16
-	fontSizeM3x6 = 16
-
-	fontSizeDogicaSmall = 8
-	fontSizeDogicaLarge = 16
-
-	fontSizeMunroRegularSmall = 10
-	fontSizeMunroRegularLarge = 20
-
-	fontSizeMunroMicroSmall = 10
-	fontSizeMunroMicroLarge = 20
-
-	fontSizeAddStandard = 9
-
-	fontSize3x5 = 8
 )
 
-type DefinedFonts struct {
-	M6   *DefinedFont
-	M6x2 *DefinedFont
-
-	M7   *DefinedFont
-	M7x2 *DefinedFont
-
-	DogicaRegularSizeSmall *DefinedFont
-	DogicaRegularSizeLarge *DefinedFont
-
-	DogicaBoldSizeSmall *DefinedFont
-	DogicaBoldSizeLarge *DefinedFont
-
-	MunroRegularSizeSmall *DefinedFont
-	MunroRegularSizeLarge *DefinedFont
-
-	MunroNarrowSizeSmall *DefinedFont
-	MunroNarrowSizeLarge *DefinedFont
-
-	MunroMicroSizeSmall *DefinedFont
-	MunroMicroSizeLarge *DefinedFont
-
-	AddStandard *DefinedFont
-
-	Pixel3x5 *DefinedFont
+type FontMetadata struct {
+	RenderSize   int
+	LetterHeight int
+	LineSpacing  int
+	TailHeight   int
 }
 
-func loadDefinedFonts() error {
-	Fonts.M6 = NewDefinedFont(FontNameM3x6, fontSizeM3x6)
-	Fonts.M6x2 = NewDefinedFont(FontNameM3x6, fontSizeM3x6*2)
-
-	Fonts.M7 = NewDefinedFont(FontNameM5x7, fontSizeM5x7)
-	Fonts.M7x2 = NewDefinedFont(FontNameM5x7, fontSizeM5x7*2)
-
-	Fonts.DogicaRegularSizeSmall = NewDefinedFont(fontNameDogica, fontSizeDogicaSmall)
-	Fonts.DogicaRegularSizeLarge = NewDefinedFont(fontNameDogica, fontSizeDogicaSmall)
-
-	Fonts.DogicaBoldSizeSmall = NewDefinedFont(fontNameDogicaBold, fontSizeDogicaLarge)
-	Fonts.DogicaBoldSizeLarge = NewDefinedFont(fontNameDogicaBold, fontSizeDogicaLarge)
-
-	Fonts.MunroRegularSizeSmall = NewDefinedFont(fontNameMunro, fontSizeMunroRegularSmall)
-	Fonts.MunroRegularSizeLarge = NewDefinedFont(fontNameMunro, fontSizeMunroRegularLarge)
-
-	Fonts.MunroNarrowSizeSmall = NewDefinedFont(fontNameMunroNarrow, fontSizeMunroRegularSmall)
-	Fonts.MunroNarrowSizeLarge = NewDefinedFont(fontNameMunroNarrow, fontSizeMunroRegularLarge)
-
-	Fonts.MunroMicroSizeSmall = NewDefinedFont(fontNameMunroMicro, fontSizeMunroMicroSmall)
-	Fonts.MunroMicroSizeLarge = NewDefinedFont(fontNameMunroMicro, fontSizeMunroMicroLarge)
-
-	Fonts.AddStandard = NewDefinedFont(FontNameAddStandard, fontSizeAddStandard)
-
-	Fonts.Pixel3x5 = NewDefinedFont(FontName3x5, fontSize3x5)
-	return nil
+func (f FontMetadata) GetLetterHeight() int {
+	return f.LetterHeight
 }
 
-type DefinedFont struct {
-	TTF   *truetype.Font
-	Face  font.Face
-	Atlas *text.Atlas
-	Size  int
+func (f FontMetadata) GetTailHeight() int {
+	return f.TailHeight
 }
 
-func NewDefinedFont(resourceName string, size int) *DefinedFont {
-	ttf, exists := fontRegistry[resourceName]
+func (f FontMetadata) GetLineSpacing() int {
+	return f.LineSpacing
+}
+
+func (f FontMetadata) GetFullLineHeight() int {
+	return f.LetterHeight + f.TailHeight
+}
+
+var fontMetadata = map[string]FontMetadata{
+	FontNameDogica: {
+		RenderSize: 8,
+		// TODO
+	},
+	FontNameDogicaBold: {
+		RenderSize: 8,
+		// TODO
+	},
+	FontNameMunro: {
+		RenderSize: 10,
+		// TODO
+	},
+	FontNameMunroNarrow: {
+		RenderSize: 10,
+		// TODO
+	},
+	FontNameMunroMicro: {
+		RenderSize: 10,
+		// TODO
+	},
+	FontNameM5x7: {
+		RenderSize:   16,
+		LetterHeight: 7,
+		LineSpacing:  3,
+		TailHeight:   2,
+	},
+	FontNameM3x6: {
+		RenderSize:   16,
+		LetterHeight: 6,
+		LineSpacing:  3,
+		TailHeight:   2,
+	},
+	FontNameAddStandard: {
+		RenderSize:   9,
+		LetterHeight: 7,
+		LineSpacing:  0,
+		TailHeight:   2,
+	},
+	FontName3x5: {
+		RenderSize:   8,
+		LetterHeight: 5,
+		LineSpacing:  0,
+		TailHeight:   0,
+	},
+}
+
+type FontInstance struct {
+	Name     string
+	Metadata FontMetadata
+	Atlas    *text.Atlas
+}
+
+func CreateFont(fontName string) FontInstance {
+	ttf, exists := fontRegistry[fontName]
 	if !exists {
-		log.Fatal().Msgf("font not found in registry: %s", resourceName)
+		log.Fatal().Msgf("font not found in registry: %s", fontName)
+	}
+	meta, exist := fontMetadata[fontName]
+	if !exist {
+		log.Fatal().Msgf("font metadata not found in registry: %s", fontName)
 	}
 	face := truetype.NewFace(ttf, &truetype.Options{
-		Size:              float64(size),
+		Size:              float64(meta.RenderSize),
 		DPI:               72,
 		Hinting:           font.HintingFull,
 		GlyphCacheEntries: 1,
 	})
-	atlas := text.NewAtlas(face, text.ASCII)
-	return &DefinedFont{
-		TTF:   ttf,
-		Face:  face,
-		Atlas: atlas,
-		Size:  size,
+	return FontInstance{
+		Name:     fontName,
+		Metadata: meta,
+		Atlas:    text.NewAtlas(face, text.ASCII),
 	}
 }

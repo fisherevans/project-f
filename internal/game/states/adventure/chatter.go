@@ -39,7 +39,7 @@ func (c *ChatterSystem) Add(chatter Chatter) {
 var chatterArrow = atlas.GetSprite("chatter/chatter_box_arrow")
 var chatterFrame = frames.New("chatter/chatter_box", atlas)
 var chatterBox = textbox.NewInstance(
-	textbox.FontSmall,
+	atlas.GetFont(resources.FontNameM3x6),
 	textbox.NewConfig(game.GameWidth/3).
 		Aligned(textbox.AlignCenter).
 		ExpandMode(textbox.ExpandFit))

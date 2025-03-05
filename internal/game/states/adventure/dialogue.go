@@ -3,6 +3,7 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -35,10 +36,11 @@ func (ds *DialogueSystem) HasPriority() bool {
 var dialogueFrameMargin = 4
 var dialogueFrame = frames.New("dialogue/dialogue_frame", atlas)
 var dialogueBox = textbox.NewInstance(
-	textbox.FontLarge,
+	atlas.GetFont(resources.FontNameM5x7),
 	textbox.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding()).
 		Paging(2, true).
-		Foreground(colors.HexColor("#00164e")))
+		Foreground(colors.HexColor("#00164e")).
+		ExtraLineSpacing(4))
 
 func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()

@@ -2,24 +2,25 @@ package textbox
 
 import (
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"github.com/gopxl/pixel/v2/ext/text"
 )
 
 type Instance struct {
-	Font
+	resources.FontInstance
 	text *text.Text
 	imd  *imdraw.IMDraw
 	cfg  *Config
 }
 
-func NewInstance(font Font, cfg Config) *Instance {
+func NewInstance(font resources.FontInstance, cfg Config) *Instance {
 	return &Instance{
-		Font: font,
-		text: text.New(pixel.ZV, font.atlas),
-		imd:  imdraw.New(nil),
-		cfg:  &cfg,
+		FontInstance: font,
+		text:         text.New(pixel.ZV, font.Atlas),
+		imd:          imdraw.New(nil),
+		cfg:          &cfg,
 	}
 }
 
@@ -37,15 +38,15 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 		renderLineCount = tb.cfg.linesPerPage
 	}
 
-	//matrix = matrix.Moved(pixel.V(float64(0), float64(tb.tailHeight)).Floor())
+	//matrix = matrix.Moved(pixel.V(float64(0), float64(tb.Metadata.TailHeight)).Floor())
 
 	tb.imd.Clear()
 
-	scrollDy := int((content.scrollPosition - float64(content.startLine)) * float64(tb.capHeight+tb.lineSpacing))
+	scrollDy := int((content.scrollPosition - float64(content.startLine)) * float64(tb.Metadata.LetterHeight+tb.effectiveLineSpacing()))
 
 	for lineId, line := range pageLines {
 		lineTypingProgress := 0
-		y := float64(((renderLineCount - 1 - lineId) * (tb.capHeight + tb.lineSpacing)) + tb.tailHeight + scrollDy)
+		y := float64(((renderLineCount - 1 - lineId) * (tb.Metadata.LetterHeight + tb.effectiveLineSpacing())) + tb.Metadata.TailHeight + scrollDy)
 		if tb.cfg.origin == TopLeft {
 			y -= float64(content.height)
 		}
@@ -162,4 +163,8 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 
 	tb.imd.Draw(target)
 	tb.text.Draw(target, matrix)
+}
+
+func (tb *Instance) effectiveLineSpacing() int {
+	return tb.Metadata.LineSpacing + tb.cfg.extraLineSpacing
 }

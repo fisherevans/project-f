@@ -2,10 +2,14 @@ package resources
 
 import (
 	"fisherevans.com/project/f/internal/util/pixelutil"
+	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 	"image"
 	"image/draw"
+	"image/png"
+	"os"
+	"path"
 	"sort"
 	"strings"
 )
@@ -15,10 +19,11 @@ var (
 )
 
 type Atlas struct {
-	source           pixel.Picture
+	source           *pixel.PictureData
 	sprites          map[string]pixelutil.BoundedDrawable
 	tilesheetSprites map[TilesheetSpriteId]pixelutil.BoundedDrawable
 	frameSprites     map[FrameSpriteId]pixelutil.BoundedDrawable
+	fonts            map[string]FontInstance
 }
 
 func (a *Atlas) GetSprite(name string) pixelutil.BoundedDrawable {
@@ -60,16 +65,26 @@ func (a *Atlas) GetFrameSpriteById(id FrameSpriteId) pixelutil.BoundedDrawable {
 	return result
 }
 
-func CreateAtlas(spritePrefixes ...string) *Atlas {
-	type spriteToAtlas struct {
-		name     string
-		resource spriteResource
+func (a *Atlas) GetFont(name string) FontInstance {
+	font, exists := a.fonts[name]
+	if !exists {
+		log.Error().Str("font", name).Msg("font not found")
 	}
-	var sprites []spriteToAtlas
+	return font
+}
+
+type AtlasFilter struct {
+	SpritePrefixes []string
+	FontNames      []string
+}
+
+func CreateAtlas(filter AtlasFilter) *Atlas {
+	var atlasedListeners []func(*Atlas, pixel.Rect)
 	var images []image.Image
-	for spriteName, spriteResource := range spriteResources {
-		include := len(spritePrefixes) == 0
-		for _, prefix := range spritePrefixes {
+
+	for spriteName, sprite := range spriteResources {
+		include := len(filter.SpritePrefixes) == 0
+		for _, prefix := range filter.SpritePrefixes {
 			if strings.HasPrefix(spriteName, prefix) {
 				include = true
 				break
@@ -78,8 +93,61 @@ func CreateAtlas(spritePrefixes ...string) *Atlas {
 		if !include {
 			continue
 		}
-		sprites = append(sprites, spriteToAtlas{spriteName, spriteResource})
-		images = append(images, spriteResource.data)
+		atlasedListeners = append(atlasedListeners, func(atlas *Atlas, placement pixel.Rect) {
+			if sprite.metadata.Tilesheet != nil {
+				tilesheet := sprite.metadata.Tilesheet
+				for y := 0; y < tilesheet.Rows; y++ {
+					for x := 0; x < tilesheet.Columns; x++ {
+						spriteId := TilesheetSpriteId{
+							Tilesheet: spriteName,
+							Column:    x + 1,
+							Row:       tilesheet.Rows - y,
+						}
+						posX := placement.Min.X + (float64(x) * tilesheet.TileWidth.Float())
+						posY := placement.Min.Y + (float64(y) * tilesheet.TileHeight.Float())
+						r := pixel.R(posX, posY, posX+tilesheet.TileWidth.Float(), posY+tilesheet.TileHeight.Float())
+						atlas.tilesheetSprites[spriteId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, r))
+					}
+				}
+				return
+			}
+			if sprite.metadata.Frame != nil {
+				sf := sprite.metadata.Frame
+				registerSide := func(side FrameSide, rect pixel.Rect) {
+					frameId := FrameSpriteId{
+						Frame: spriteName,
+						Side:  side,
+					}
+					atlas.frameSprites[frameId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, rect))
+				}
+				top := float64(sf.CutMargin[FrameTop])
+				left := float64(sf.CutMargin[FrameLeft])
+				bottom := float64(sf.CutMargin[FrameBottom])
+				right := float64(sf.CutMargin[FrameRight])
+				registerSide(FrameTopLeft, pixel.R(placement.Min.X, placement.Max.Y-top, placement.Min.X+left, placement.Max.Y))
+				registerSide(FrameTop, pixel.R(placement.Min.X+left, placement.Max.Y-top, placement.Max.X-right, placement.Max.Y))
+				registerSide(FrameTopRight, pixel.R(placement.Max.X-right, placement.Max.Y-top, placement.Max.X, placement.Max.Y))
+				registerSide(FrameLeft, pixel.R(placement.Min.X, placement.Min.Y+bottom, placement.Min.X+left, placement.Max.Y-top))
+				registerSide(FrameMiddle, pixel.R(placement.Min.X+left, placement.Min.Y+bottom, placement.Max.X-right, placement.Max.Y-top))
+				registerSide(FrameRight, pixel.R(placement.Max.X-right, placement.Min.Y+bottom, placement.Max.X, placement.Max.Y-top))
+				registerSide(FrameBottomLeft, pixel.R(placement.Min.X, placement.Min.Y, placement.Min.X+left, placement.Min.Y+bottom))
+				registerSide(FrameBottom, pixel.R(placement.Min.X+left, placement.Min.Y, placement.Max.X-right, placement.Min.Y+bottom))
+				registerSide(FrameBottomRight, pixel.R(placement.Max.X-right, placement.Min.Y, placement.Max.X, placement.Min.Y+bottom))
+				return
+			}
+			atlas.sprites[spriteName] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, placement))
+
+		})
+		images = append(images, sprite.data)
+	}
+
+	for _, fontName := range filter.FontNames {
+		instance := CreateFont(fontName)
+		images = append(images, instance.Atlas.PictureDataCopy().Image())
+		atlasedListeners = append(atlasedListeners, func(atlas *Atlas, placement pixel.Rect) {
+			instance.Atlas = instance.Atlas.CloneWithPictureData(atlas.source, placement)
+			atlas.fonts[fontName] = instance
+		})
 	}
 
 	atlasImage, placements := createAtlasGuillotine(images, maxSpriteAtlasSize, maxSpriteAtlasSize)
@@ -89,54 +157,31 @@ func CreateAtlas(spritePrefixes ...string) *Atlas {
 		sprites:          map[string]pixelutil.BoundedDrawable{},
 		tilesheetSprites: map[TilesheetSpriteId]pixelutil.BoundedDrawable{},
 		frameSprites:     map[FrameSpriteId]pixelutil.BoundedDrawable{},
+		fonts:            map[string]FontInstance{},
 	}
 
-	for id, sprite := range sprites {
-		placement := placements[id]
-		if sprite.resource.metadata.Tilesheet != nil {
-			tilesheet := sprite.resource.metadata.Tilesheet
-			for y := 0; y < tilesheet.Rows; y++ {
-				for x := 0; x < tilesheet.Columns; x++ {
-					spriteId := TilesheetSpriteId{
-						Tilesheet: sprite.name,
-						Column:    x + 1,
-						Row:       tilesheet.Rows - y,
-					}
-					posX := placement.Min.X + (float64(x) * tilesheet.TileWidth.Float())
-					posY := placement.Min.Y + (float64(y) * tilesheet.TileHeight.Float())
-					r := pixel.R(posX, posY, posX+tilesheet.TileWidth.Float(), posY+tilesheet.TileHeight.Float())
-					atlas.tilesheetSprites[spriteId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, r))
-				}
-			}
-			continue
-		}
-		if sprite.resource.metadata.Frame != nil {
-			sf := sprite.resource.metadata.Frame
-			registerSide := func(side FrameSide, rect pixel.Rect) {
-				frameId := FrameSpriteId{
-					Frame: sprite.name,
-					Side:  side,
-				}
-				atlas.frameSprites[frameId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, rect))
-			}
-			top := float64(sf.CutMargin[FrameTop])
-			left := float64(sf.CutMargin[FrameLeft])
-			bottom := float64(sf.CutMargin[FrameBottom])
-			right := float64(sf.CutMargin[FrameRight])
-			registerSide(FrameTopLeft, pixel.R(placement.Min.X, placement.Max.Y-top, placement.Min.X+left, placement.Max.Y))
-			registerSide(FrameTop, pixel.R(placement.Min.X+left, placement.Max.Y-top, placement.Max.X-right, placement.Max.Y))
-			registerSide(FrameTopRight, pixel.R(placement.Max.X-right, placement.Max.Y-top, placement.Max.X, placement.Max.Y))
-			registerSide(FrameLeft, pixel.R(placement.Min.X, placement.Min.Y+bottom, placement.Min.X+left, placement.Max.Y-top))
-			registerSide(FrameMiddle, pixel.R(placement.Min.X+left, placement.Min.Y+bottom, placement.Max.X-right, placement.Max.Y-top))
-			registerSide(FrameRight, pixel.R(placement.Max.X-right, placement.Min.Y+bottom, placement.Max.X, placement.Max.Y-top))
-			registerSide(FrameBottomLeft, pixel.R(placement.Min.X, placement.Min.Y, placement.Min.X+left, placement.Min.Y+bottom))
-			registerSide(FrameBottom, pixel.R(placement.Min.X+left, placement.Min.Y, placement.Max.X-right, placement.Min.Y+bottom))
-			registerSide(FrameBottomRight, pixel.R(placement.Max.X-right, placement.Min.Y, placement.Max.X, placement.Min.Y+bottom))
-		}
-		atlas.sprites[sprite.name] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, placement))
+	for id, listener := range atlasedListeners {
+		listener(atlas, placements[id])
 	}
 
 	return atlas
+}
+
+func (a *Atlas) NewBatch() *pixel.Batch {
+	return pixel.NewBatch(&pixel.TrianglesData{}, a.source)
+}
+
+func (a *Atlas) Dump(dir, name string) {
+	f, err := os.Create(path.Join(dir, fmt.Sprintf("%s.png", name)))
+	if err != nil {
+		log.Error().Msgf("Failed to create atlas file %s: %v", name, err)
+		return
+	}
+	defer f.Close()
+
+	if err := png.Encode(f, a.source.Image()); err != nil {
+		log.Error().Msgf("Failed to encode atlas file %s: %v", name, err)
+	}
 }
 
 // createAtlasGuillotine tries to pack images into an atlas using a guillotine-like approach.
@@ -197,7 +242,7 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		// Place the image in that free rectangle
 		fr := availableRects[fi]
 		// Draw onto atlasImage (top-left origin for the image package)
-		draw.Draw(atlasImage, image.Rect(fr.x, fr.y, fr.x+w, fr.y+h), img, image.Point{}, draw.Over)
+		draw.Draw(atlasImage, image.Rect(fr.x, fr.y, fr.x+w, fr.y+h), img, b.Min, draw.Over)
 
 		// Convert to Pixel's bottom-left origin
 		// Bottom-left in pixel space: (fr.x, atlasHeight - (fr.y + h))
