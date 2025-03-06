@@ -13,5 +13,7 @@ var Skill_Crush = Skill{
 	Name:        "Crush",
 	Description: "Slam down with immense force, dealing heavy kinetic damage.",
 	Type:        SkillTypeKinetic,
-	Ticks:       simpleDamageSkillTicks(10, DamageMediumPhysical, 2),
+	Ticks: skillTicks().
+		tick(normalTick().damage(6, 4, DamageMediumPhysical)).
+		tick(nothingTick().repeat(2)...),
 }.register()

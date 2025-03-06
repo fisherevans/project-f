@@ -18,7 +18,7 @@ var (
 	combatantNameText          = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), textbox.NewConfig(200).RenderFrom(textbox.TopLeft).ExpandMode(textbox.ExpandFit))
 	statBorderPadding          = 3
 	statBorderPaddingNameExtra = 6
-	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontName3x5), textbox.NewConfig(200).RenderFrom(textbox.BottomLeft).ExpandMode(textbox.ExpandFit))
+	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), textbox.NewConfig(200).RenderFrom(textbox.BottomLeft).ExpandMode(textbox.ExpandFit))
 	noneSelectedSprite         = atlas.GetSprite("combat/tick_bar/skill_none_selected")
 	statNameBoxSprite          = atlas.GetTilesheetSprite("combat/combatant_stats/background", 1, 1)
 	statRightSprite            = atlas.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)
@@ -30,7 +30,7 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 	syncBar := &StatBar{
 		lines:       []StatBarLine{StatBarVisual, StatBarLabel},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 6, 1),
-		label:       "SYNC",
+		label:       "sync",
 		colorDark:   colors.HexColor("772712"),
 		color:       colors.HexColor("d58d7a"),
 		colorBright: colors.HexColor("ebc4bb"),
@@ -41,7 +41,7 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 	shieldBar := &StatBar{
 		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 5, 1),
-		label:       "SHIELD",
+		label:       "shield",
 		colorDark:   colors.HexColor("126177"),
 		color:       colors.HexColor("73bed3"),
 		colorBright: colors.HexColor("bbe0eb"),
@@ -61,7 +61,7 @@ func (s *State) drawOpponentStats(ctx *game.Context) {
 	healthBar := &StatBar{
 		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 7, 1),
-		label:       "HEALTH",
+		label:       "health",
 		colorDark:   colors.HexColor("127839"),
 		color:       colors.HexColor("73d398"),
 		colorBright: colors.HexColor("bcebce"),

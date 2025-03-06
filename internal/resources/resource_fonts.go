@@ -31,6 +31,7 @@ const (
 	FontNameM3x6        = "m3x6"
 	FontNameAddStandard = "addstandard"
 	FontName3x5         = "3-by-5-pixel-font"
+	FontNameFF          = "ffont"
 )
 
 type FontMetadata struct {
@@ -99,6 +100,12 @@ var fontMetadata = map[string]FontMetadata{
 		RenderSize:   8,
 		LetterHeight: 5,
 		LineSpacing:  0,
+		TailHeight:   0,
+	},
+	FontNameFF: {
+		RenderSize:   6,
+		LetterHeight: 5,
+		LineSpacing:  2,
 		TailHeight:   0,
 	},
 }

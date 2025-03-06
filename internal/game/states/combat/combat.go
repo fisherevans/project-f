@@ -101,6 +101,7 @@ var atlas = resources.CreateAtlas(resources.AtlasFilter{
 		resources.FontNameM5x7,
 		resources.FontNameM3x6,
 		resources.FontNameAddStandard,
+		resources.FontNameFF,
 		resources.FontName3x5,
 	},
 })

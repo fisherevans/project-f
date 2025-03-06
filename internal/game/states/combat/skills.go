@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"math"
+	"math/rand"
 )
 
 var (
@@ -117,11 +118,15 @@ func newInstance(skillId rpg.SkillId) *SkillInstance {
 			targetStats := target.GetStats()
 			var allDamage []rpg.DamageResult
 			for _, effect := range tick.Effects {
-				if effect.StaticDamage != nil {
+				if effect.Damage != nil {
+					damage := effect.Damage.Amount
+					if effect.Damage.RandomVariance > 0 {
+						damage += rand.Intn(effect.Damage.RandomVariance*2+1) - effect.Damage.RandomVariance
+					}
 					result := rpg.ComputeDamage(rpg.DamageSource{
-						BaseDamage:     effect.StaticDamage.Amount,
+						BaseDamage:     damage,
 						Affinities:     sourceStats.Affinities,
-						DamageMedium:   effect.StaticDamage.Medium,
+						DamageMedium:   effect.Damage.Medium,
 						SkillType:      skill.Type,
 						PhysicalAttack: sourceStats.PhysicalAttack,
 						AetherAttack:   sourceStats.AetherAttack,
