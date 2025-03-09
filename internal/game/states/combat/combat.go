@@ -11,6 +11,7 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
@@ -18,6 +19,38 @@ import (
 	"math"
 	"math/rand"
 )
+
+// Things to add
+// - tempo counter
+//   - impact damage for tempo
+// - enhance damage FX for various conditions (i.e. effective, immune, etc.)
+// - better highlight active vs. pending skill vs. arrow key skill
+// - require arrow + a to select skill
+//   - add (a) icon
+// - add skill log
+//   - add data structure to hold it
+//   - add rendering
+// - add arrow + select popup to view skill details
+// - add health delay (interp to target) - allow temp death
+// - state stuff
+//   - add transition state into combat (i.e. fade)
+//   - add battle intro that has creature enter
+//   - add initiative roll (maybe add ticks of confusion when starting)
+//   - add battle menu (fight, run, item, etc.)
+//   - add battle end (win, lose)
+// - generate experience at battle end (include in end summary)
+// - combat abilities
+//   - blocking mechanism
+//   - slow down tempo (make it smooth)
+// - add simple skill animations for effects to make it easier to understand what's happening
+//   - make sprite hop, like pokemon
+//   - add some sprite for fire, etc.
+// - add damage animations (i.e. red flash)
+// - sound
+//   - add damage noise (FIRST ONE)
+//   - add background music
+//   - add win vs lose chime
+// - add more interesting AI (more skills, show next skill after time)
 
 var ticksPerSecond = 1.5
 
@@ -90,11 +123,10 @@ func (s *State) ClearColor() color.Color {
 }
 
 var padding = 5
-var stateText = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7), textbox.
-	NewConfig((game.GameWidth-padding*3)/2).
-	Foreground(colors.White.RGBA).
-	RenderFrom(textbox.TopLeft).
-	ExtraLineSpacing(2))
+var stateText = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7), tbcfg.NewConfig((game.GameWidth-padding*3)/2,
+	tbcfg.Foreground(colors.White.RGBA),
+	tbcfg.RenderFrom(gfx.TopLeft),
+	tbcfg.ExtraLineSpacing(2)))
 
 var atlas = resources.CreateAtlas(resources.AtlasFilter{
 	FontNames: []string{
@@ -189,7 +221,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	if s.overlay != "" {
 		content := combatantNameText.NewComplexContent(s.overlay)
-		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight*0.75)), content, gfx.Centered)
+		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight*0.75)), content, tbcfg.RenderFrom(gfx.Centered))
 	}
 
 	s.batch.Draw(target)

@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -13,15 +14,15 @@ type Instance struct {
 	resources.FontInstance
 	text *text.Text
 	imd  *imdraw.IMDraw
-	cfg  *Config
+	cfg  tbcfg.Config
 }
 
-func NewInstance(font resources.FontInstance, cfg Config) *Instance {
+func NewInstance(font resources.FontInstance, cfg tbcfg.Config) *Instance {
 	return &Instance{
 		FontInstance: font,
 		text:         text.New(pixel.ZV, font.Atlas),
 		imd:          imdraw.New(nil),
-		cfg:          &cfg,
+		cfg:          cfg,
 	}
 }
 
@@ -30,26 +31,37 @@ type characterRenderParams struct {
 	foreground pixel.RGBA
 }
 
-func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, content *Content, originLocation gfx.OriginLocation) {
+func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, content *Content, opts ...tbcfg.ConfigOpt) {
 	tb.text.Clear()
+
+	// per render cfg overrides
+	originalConfig := tb.cfg
+	defer func() {
+		tb.cfg = originalConfig
+	}()
+	for _, opt := range opts {
+		opt(&tb.cfg)
+	}
 
 	pageLines := content.pageLines()
 	renderLineCount := len(pageLines)
-	if tb.cfg.linesPerPage != 0 {
-		renderLineCount = tb.cfg.linesPerPage
+	if tb.cfg.LinesPerPage != 0 {
+		renderLineCount = tb.cfg.LinesPerPage
 	}
 
-	switch originLocation {
+	switch tb.cfg.Origin {
 	case gfx.BottomLeft:
-		matrix = matrix.Moved(gfx.IVec(0, -content.height))
-	case gfx.TopLeft:
-		// default
+		matrix = matrix.Moved(gfx.IVec(0, 0))
 	case gfx.BottomRight:
-		matrix = matrix.Moved(gfx.IVec(-content.width, -content.height))
-	case gfx.TopRight:
 		matrix = matrix.Moved(gfx.IVec(-content.width, 0))
+	case gfx.TopRight:
+		matrix = matrix.Moved(gfx.IVec(-content.width, -content.height))
 	case gfx.Centered:
 		matrix = matrix.Moved(gfx.IVec(-content.width/2, -content.height/2))
+	case gfx.TopLeft:
+		matrix = matrix.Moved(gfx.IVec(0, -content.height))
+	default:
+		panic("invalid origin")
 	}
 
 	tb.imd.Clear()
@@ -59,20 +71,17 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 	for lineId, line := range pageLines {
 		lineTypingProgress := 0
 		y := float64(((renderLineCount - 1 - lineId) * (tb.Metadata.LetterHeight + tb.effectiveLineSpacing())) + tb.Metadata.TailHeight + scrollDy)
-		if tb.cfg.origin == TopLeft {
-			y -= float64(content.height)
-		}
 		var x int
-		alignment := tb.cfg.alignment
+		alignment := tb.cfg.Alignment
 		if content.alignmentOverride != nil {
 			alignment = *content.alignmentOverride
 		}
 		switch alignment {
-		case AlignLeft:
+		case tbcfg.AlignLeft:
 			x = 0
-		case AlignCenter:
+		case tbcfg.AlignCenter:
 			x = (content.width - line.width) / 2
-		case AlignRight:
+		case tbcfg.AlignRight:
 			x = content.width - line.width
 		}
 		tb.text.Dot = pixel.V(float64(x), y)
@@ -85,7 +94,6 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			tb.imd.Color = underlineColor
 			tb.imd.Push(*underlineStart, *underlineEnd)
 			tb.imd.Line(1)
-
 		}
 		for _, c := range line.characters {
 			if lineTypingProgress >= line.typingDone {
@@ -93,7 +101,7 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			}
 			// effect
 			renderParams := &characterRenderParams{
-				foreground: tb.cfg.foreground,
+				foreground: tb.cfg.Foreground,
 			}
 			if c.style.color != nil {
 				renderParams.foreground = c.style.color.foreground
@@ -106,15 +114,15 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			if c.style.underline != nil {
 				// todo if outline, add 1px left and right to underline
 				listCharStart := matrix.Project(tb.text.Dot).Add(pixel.V(-1, -1))
+				if underlineStart == nil {
+					underlineStart = &listCharStart
+					underlineColor = c.style.underline.color
+				}
 				extraLength := 0.0
 				if c.style.shadow != nil {
 					extraLength = 1
 				}
 				listCharEnd := listCharStart.Add(pixel.V(float64(c.width)+2+extraLength, 0))
-				if underlineStart == nil {
-					underlineStart = &listCharStart
-					underlineColor = c.style.underline.color
-				}
 				underlineEnd = &listCharEnd
 			} else if underlineStart != nil {
 				drawUnderline()
@@ -164,7 +172,6 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 				tb.text.Color = r.color
 				tb.text.WriteByte(c.c)
 			}
-			// todo do we need to reset the dot, or does adding the actual text at the end result in the desired result?
 			// undo effect delta
 			tb.text.Dot = tb.text.Dot.Sub(renderParams.drawDelta)
 			x += c.width
@@ -178,5 +185,5 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 }
 
 func (tb *Instance) effectiveLineSpacing() int {
-	return tb.Metadata.LineSpacing + tb.cfg.extraLineSpacing
+	return tb.Metadata.LineSpacing + tb.cfg.ExtraLineSpacing
 }

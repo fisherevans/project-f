@@ -17,14 +17,14 @@
                 6
             ],
             "scale": 3.29,
-            "selectedLayer": 2,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 559.1185410334347,
-                "y": 737.2340425531914
+                "x": 596.352583586626,
+                "y": 810.4863221884498
             }
         },
         "snowhex_base.tsx": {
-            "scaleInDock": 3,
+            "scaleInDock": 1.8063,
             "scaleInEditor": 1
         },
         "testing.tmx": {

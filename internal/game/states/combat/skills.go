@@ -7,8 +7,8 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
-	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"math"
@@ -22,10 +22,9 @@ var (
 	skillFrameHeight            = 13
 	skillFrameHorizontalSpacing = 26
 
-	skillText = textbox.NewInstance(atlas.GetFont(resources.FontNameM3x6), textbox.
-			NewConfig(skillFrameWidth-skillFrame.HorizontalPadding()).
-			Foreground(colors.Black.RGBA).
-			Aligned(textbox.AlignCenter))
+	skillText = textbox.NewInstance(atlas.GetFont(resources.FontNameM3x6), tbcfg.NewConfig(skillFrameWidth-skillFrame.HorizontalPadding(),
+		tbcfg.Foreground(colors.Black.RGBA),
+		tbcfg.Aligned(tbcfg.AlignCenter)))
 )
 
 func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft pixel.Vec, timeDelta float64) {
@@ -60,7 +59,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 		frame.Draw(target, frameRect, matrix)
 		textDy := (skillFrameHeight - skillText.Metadata.GetFullLineHeight()) / 2
 		matrix = matrix.Moved(pixel.V(0, float64(textDy)))
-		skillText.Render(ctx, target, matrix, content, gfx.TopLeft)
+		skillText.Render(ctx, target, matrix, content)
 	}
 	centerMatrix := pixel.IM.Moved(bottomLeft).Moved(pixel.V(
 		float64(skillFrameWidth+(skillFrameHorizontalSpacing/2)),

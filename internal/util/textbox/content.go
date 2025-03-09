@@ -3,6 +3,7 @@ package textbox
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
 	"math"
@@ -21,7 +22,7 @@ type Content struct {
 
 	progressFaster bool
 
-	alignmentOverride *Alignment
+	alignmentOverride *tbcfg.Alignment
 
 	// pre-computed
 	width  int
@@ -39,7 +40,7 @@ func WithTyping(timePerCharacter float64) ContentOpt {
 	}
 }
 
-func WithAlignment(a Alignment) ContentOpt {
+func WithAlignment(a tbcfg.Alignment) ContentOpt {
 	return func(c *Content) {
 		c.alignmentOverride = &a
 	}
@@ -63,7 +64,7 @@ func (c *Content) Update(ctx *game.Context, timeDelta float64) {
 		e.Update(ctx, timeDelta)
 	}
 	if c.scrollPosition != float64(c.startLine) {
-		toScroll := timeDelta / c.tb.cfg.scrollTimePerLine
+		toScroll := timeDelta / c.tb.cfg.ScrollTimePerLine
 		if c.progressFaster {
 			toScroll *= 2
 		}
@@ -118,31 +119,31 @@ func (c *Content) IsPageFullyDisplayed() bool {
 }
 
 func (c *Content) NextPage() {
-	advance := c.tb.cfg.linesPerPage
-	if c.tb.cfg.lineByLine {
+	advance := c.tb.cfg.LinesPerPage
+	if c.tb.cfg.LineByLine {
 		advance = 1
 	}
 	c.setPage(c.startLine + advance)
 }
 
 func (c *Content) PreviousPage() {
-	regress := c.tb.cfg.linesPerPage
-	if c.tb.cfg.lineByLine {
+	regress := c.tb.cfg.LinesPerPage
+	if c.tb.cfg.LineByLine {
 		regress = 1
 	}
 	c.setPage(c.startLine - regress)
 }
 
 func (c *Content) onLastPage() bool {
-	return c.tb.cfg.linesPerPage == 0 || c.startLine == c.lastStartLine()
+	return c.tb.cfg.LinesPerPage == 0 || c.startLine == c.lastStartLine()
 }
 
 func (c *Content) lastStartLine() int {
-	return util.MaxInt(len(c.lines)-c.tb.cfg.linesPerPage, 0)
+	return util.MaxInt(len(c.lines)-c.tb.cfg.LinesPerPage, 0)
 }
 
 func (c *Content) setPage(newStartLine int) {
-	if c.tb.cfg.linesPerPage == 0 {
+	if c.tb.cfg.LinesPerPage == 0 {
 		newStartLine = 0
 	}
 	newStartLine = util.Clamp(0, newStartLine, c.lastStartLine())
@@ -151,7 +152,7 @@ func (c *Content) setPage(newStartLine int) {
 }
 
 func (c *Content) pageLines() []*line {
-	if c.tb.cfg.linesPerPage == 0 {
+	if c.tb.cfg.LinesPerPage == 0 {
 		return c.lines
 	}
 	scrollDelta := c.scrollPosition - float64(c.startLine)
@@ -161,7 +162,7 @@ func (c *Content) pageLines() []*line {
 	if scrollDelta > 0 {
 		return []*line{&line{}, c.lines[c.startLine+1]}
 	}
-	return c.lines[c.startLine:util.MinInt(c.startLine+c.tb.cfg.linesPerPage, len(c.lines))]
+	return c.lines[c.startLine:util.MinInt(c.startLine+c.tb.cfg.LinesPerPage, len(c.lines))]
 }
 
 func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *Content {
@@ -175,7 +176,7 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	flushPendingText := func() {
 		if len(pendingText) > 0 {
 			potentialLineText := currentLine.text + asString(pendingWhitespace) + asString(pendingText)
-			if int(tb.text.BoundsOf(potentialLineText).W()) > tb.cfg.maxWidth {
+			if int(tb.text.BoundsOf(potentialLineText).W()) > tb.cfg.MaxWidth {
 				content.appendLine(currentLine, tb.text)
 				currentLine = newLine()
 				pendingWhitespace = nil // drop pending space on new lines
@@ -212,13 +213,13 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	}
 
 	// pre compute details
-	if tb.cfg.expandMode == ExpandFull {
-		content.width = tb.cfg.maxWidth
+	if tb.cfg.ExpandMode == tbcfg.ExpandFull {
+		content.width = tb.cfg.MaxWidth
 	} else {
 		content.width = content.maxLineWidth
 	}
 
-	lineCount := tb.cfg.linesPerPage
+	lineCount := tb.cfg.LinesPerPage
 	if lineCount == 0 {
 		lineCount = len(content.lines)
 	}

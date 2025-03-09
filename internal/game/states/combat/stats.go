@@ -8,6 +8,7 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 )
@@ -15,10 +16,10 @@ import (
 var (
 	combatStatFrame            = frames.New("combat/combatant_stats/box", atlas)
 	statBarFrame               = frames.New("combat/combatant_stats/bar", atlas)
-	combatantNameText          = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), textbox.NewConfig(200).RenderFrom(textbox.TopLeft).ExpandMode(textbox.ExpandFit))
+	combatantNameText          = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), tbcfg.NewConfig(200, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 	statBorderPadding          = 3
 	statBorderPaddingNameExtra = 6
-	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), textbox.NewConfig(200).RenderFrom(textbox.BottomLeft).ExpandMode(textbox.ExpandFit))
+	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(200, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 	noneSelectedSprite         = atlas.GetSprite("combat/tick_bar/skill_none_selected")
 	statNameBoxSprite          = atlas.GetTilesheetSprite("combat/combatant_stats/background", 1, 1)
 	statRightSprite            = atlas.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)
@@ -81,7 +82,7 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 	renderScale := pixel.V(1, 1)
 	var nameContentOpts []textbox.ContentOpt
 	if originLocation == gfx.TopRight {
-		nameContentOpts = append(nameContentOpts, textbox.WithAlignment(textbox.AlignRight))
+		nameContentOpts = append(nameContentOpts, textbox.WithAlignment(tbcfg.AlignRight))
 		renderScale = pixel.V(-1, 1)
 	}
 	nameContent := combatantNameText.NewComplexContent("{+o:#cfcfcf,+c:black}"+name, nameContentOpts...)
@@ -106,8 +107,10 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 		Moved(originLocation.Align(statBottomSprite)).
 		Moved(gfx.IVec(0, -nameBoxHeight).ScaledXY(renderScale)))
 
-	combatantNameText.Render(ctx, s.batch, matrix.
-		Moved(gfx.IVec(statBorderPadding+statBorderPaddingNameExtra, -statBorderPadding+combatantNameText.Metadata.GetTailHeight()).ScaledXY(renderScale)), nameContent, originLocation)
+	combatantNameText.Render(ctx, s.batch,
+		matrix.Moved(gfx.IVec(statBorderPadding+statBorderPaddingNameExtra, -statBorderPadding).ScaledXY(renderScale)),
+		nameContent,
+		tbcfg.RenderFrom(originLocation))
 
 	statBox.Draw(ctx, s.batch, matrix.Moved(gfx.IVec(statBorderPadding, -paddedNameHeight).ScaledXY(renderScale)), statBoxWidth)
 }
@@ -225,11 +228,11 @@ func (sb *StatBar) Draw(ctx *game.Context, target pixel.Target, matrix pixel.Mat
 		case StatBarLabel:
 			//moveVec := sb.labelSprite.Bounds().Center()
 			labelContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%s", colors.ToHex(sb.color), sb.label)) // TODO don't compute hex
-			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(float64(2), 0)), labelContent, gfx.TopLeft)
+			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(float64(2), 0)), labelContent)
 			//sb.labelSprite.DrawColorMask(target, matrix.Moved(pixel.V(float64(2), float64(5)-sb.labelSprite.Bounds().H())).Moved(moveVec), sb.color)
 
 			valueContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%d{+c:%s}/%d", colors.ToHex(sb.colorBright), sb.current, colors.ToHex(sb.color), sb.max)) // TODO don't compute hex
-			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(float64((width-valueContent.Width())-2), 0)), valueContent, gfx.TopLeft)
+			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(float64((width-valueContent.Width())-2), 0)), valueContent)
 		case StatBarVisual:
 			maxRectWidth := width - 2
 			currentRectWidth := int(float64(maxRectWidth) * float64(sb.current) / float64(sb.max))
