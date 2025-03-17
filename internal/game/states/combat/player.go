@@ -14,9 +14,8 @@ var typeOptionKey = map[int]input.Direction{
 }
 
 type PlayerHealth struct {
-	Integrity HealthState
-	Sync      HealthState
-	Shield    HealthState
+	Sync   HealthState
+	Shield HealthState
 }
 
 type PlayerCombatant interface {
@@ -80,9 +79,8 @@ func (p *PlayerPrimortal) ApplyDamage(damage rpg.DamageResult) DamageOutcome {
 	remainingDamge := damage.TotalDamage
 	p.CurrentShield, remainingDamge = applyDamage(p.CurrentShield, remainingDamge)
 	p.CurrentSync, remainingDamge = applyDamage(p.CurrentSync, remainingDamge)
-	p.CurrentIntegrity, remainingDamge = applyDamage(p.CurrentIntegrity, remainingDamge)
 	return DamageOutcome{
-		Perished: p.CurrentIntegrity <= 0,
+		Perished: p.CurrentSync <= 0,
 	}
 }
 
@@ -96,14 +94,14 @@ func (p *PlayerPrimortal) GetFightOption(slot int) *rpg.SkillId {
 
 func (p *PlayerPrimortal) GetCurrentSync() HealthState {
 	return HealthState{
-		Max:     p.Base().BaseSync + p.AdditionalSync,
+		Max:     p.GetMaxSync(),
 		Current: p.CurrentSync,
 	}
 }
 
 func (p *PlayerPrimortal) GetCurrentShield() HealthState {
 	return HealthState{
-		Max:     rpg.BaseAnimechShield + p.AdditionalShield,
+		Max:     p.GetMaxShield(),
 		Current: p.CurrentShield,
 	}
 }

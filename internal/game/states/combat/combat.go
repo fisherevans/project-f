@@ -3,10 +3,10 @@ package combat
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
-	"fisherevans.com/project/f/internal/util/colors/typecolors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
@@ -14,15 +14,13 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"image/color"
 	"math"
 	"math/rand"
 )
 
 // Things to add
-// - tempo counter
-//   - impact damage for tempo
+// - tempo counter -  impact damage for tempo
 // - enhance damage FX for various conditions (i.e. effective, immune, etc.)
 // - better highlight active vs. pending skill vs. arrow key skill
 // - require arrow + a to select skill
@@ -61,6 +59,7 @@ type State struct {
 	Opponent   Opponent
 	OnComplete OnComplete
 	Battle     *Battle
+	Tempo      *Tempo
 
 	fx []FX
 
@@ -70,8 +69,10 @@ type State struct {
 	skillFlashTimeElapsed  float64
 	skillFlashAlpha        float64
 	skillFlashAlphaInverse float64
+	skillDirection         input.Direction
 
-	overlay string
+	overlay        string
+	overlayElapsed float64
 
 	batch *pixel.Batch
 }
@@ -87,6 +88,7 @@ func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
 		},
 		OnComplete: onComplete,
 		Battle:     &Battle{},
+		Tempo:      &Tempo{},
 
 		cachedContents: map[string]*textbox.Content{},
 
@@ -122,12 +124,6 @@ func (s *State) ClearColor() color.Color {
 	return color.Black
 }
 
-var padding = 5
-var stateText = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7), tbcfg.NewConfig((game.GameWidth-padding*3)/2,
-	tbcfg.Foreground(colors.White.RGBA),
-	tbcfg.RenderFrom(gfx.TopLeft),
-	tbcfg.ExtraLineSpacing(2)))
-
 var atlas = resources.CreateAtlas(resources.AtlasFilter{
 	FontNames: []string{
 		resources.FontNameM5x7,
@@ -144,8 +140,6 @@ func init() {
 
 var backgroundSprite = resources.LoadSprite("combat/background_sample")
 
-var imd = imdraw.New(nil)
-
 var robotAnim = anim.IdleRobot(atlas)
 var plentAnim = anim.IdlePlent(atlas)
 
@@ -156,14 +150,6 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	if s.overlay == "" {
 		// pick next skill for player
-		for optionId, direction := range typeOptionKey {
-			if ctx.Controls.DPad().DirectionJustPressed(direction) {
-				option := s.Player.GetCombatant().GetFightOption(optionId)
-				if option != nil {
-					s.Player.NextSkill = option
-				}
-			}
-		}
 
 		s.Battle.Update(ctx, s, timeDelta, BattleUpdateParams{
 			PlayerNextSkill: func() *rpg.SkillId {
@@ -178,16 +164,20 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	if s.Player.GetCombatant().GetCurrentSync().Current <= 0 {
 		s.overlay = "{+c:#e64565,+o}You died!"
-		// todo
-		//s.OnComplete(ctx, s)
-		//return
+		if s.overlayElapsed > 5 {
+			// todo
+			s.OnComplete(ctx, s)
+			return
+		}
 	}
 
 	if s.Opponent.GetHealth().Current <= 0 {
 		s.overlay = "{+c:#45e682,+o}You won!"
-		// todo
-		//s.OnComplete(ctx, s)
-		//return
+		if s.overlayElapsed > 5 {
+			// todo
+			s.OnComplete(ctx, s)
+			return
+		}
 	}
 
 	var remainingFx []FX
@@ -219,7 +209,10 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	s.drawPlayerStats(ctx)
 	s.drawOpponentStats(ctx)
 
+	s.Tempo.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.675)))
+
 	if s.overlay != "" {
+		s.overlayElapsed += timeDelta
 		content := combatantNameText.NewComplexContent(s.overlay)
 		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight*0.75)), content, tbcfg.RenderFrom(gfx.Centered))
 	}
@@ -262,14 +255,14 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 		matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, (float64(currentSkill.NextTick))*float64(skillBarTickSpacing)))
 	}
 	if previousSkill != nil {
-		mask := typecolors.SkillTypeColor(previousSkill.Skill.Type).RGBA
+		mask := colors.OfSkillType(previousSkill.Skill.Type).RGBA
 		matrixPreviousTopMiddle := matrixTopMiddle.Moved(pixel.V(0, float64((previousSkill.Duration+1)*skillBarTickSpacing)))
 		s.drawSkill(ctx, target, matrixPreviousTopMiddle, previousSkill.Skill, mask, true, 1.0)
 		ctx.DebugBR("printing previous")
 	}
 	if currentSkill != nil {
 		skillProgress := currentTickProgress + float64(currentSkill.NextTick)
-		mask := typecolors.SkillTypeColor(currentSkill.Skill.Type).RGBA
+		mask := colors.OfSkillType(currentSkill.Skill.Type).RGBA
 		alpha := math.Min((skillProgress)/1, 1)*(1-nextSkillMaskScale) + nextSkillMaskScale
 		ctx.DebugBL("alpha: %f", alpha)
 		mask = colors.ScaleColor(mask, alpha)
@@ -279,7 +272,7 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 	}
 	if nextSkillId != nil {
 		nextSkill := nextSkillId.Get()
-		mask := typecolors.SkillTypeColor(nextSkill.Type).RGBA
+		mask := colors.OfSkillType(nextSkill.Type).RGBA
 		mask = colors.ScaleColor(mask, nextSkillMaskScale)
 		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, mask, false, 1.0)
 	} else {
@@ -339,6 +332,9 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 	if b.PlayerSkill == nil || (b.PlayerSkill.NextTick == 0 && !b.TickPlayerNext) {
 		nextSkill := params.PlayerNextSkill()
 		if nextSkill != nil {
+			if b.PlayerSkill == nil {
+				s.Tempo.Increment()
+			}
 			b.PlayerSkill = newInstance(*nextSkill)
 		}
 	}
@@ -355,6 +351,7 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 	ctx.DebugBR(fmt.Sprintf("OpponentSkill: %s", b.OpponentSkill))
 
 	if b.TickPlayerNext && b.PlayerSkill == nil {
+		s.Tempo.Reset()
 		return
 	}
 	if !b.TickPlayerNext && b.OpponentSkill == nil {

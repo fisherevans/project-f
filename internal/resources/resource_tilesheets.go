@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"image"
@@ -41,4 +42,8 @@ type TilesheetSpriteId struct {
 
 func (s TilesheetSpriteId) String() string {
 	return fmt.Sprintf("ts:%s,c:%d,r:%d", s.Tilesheet, s.Column, s.Row)
+}
+
+func (s TilesheetSpriteId) From(a *Atlas) pixelutil.BoundedDrawable {
+	return a.GetTilesheetSpriteById(s)
 }

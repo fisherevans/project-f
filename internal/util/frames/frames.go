@@ -2,6 +2,7 @@ package frames
 
 import (
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 )
@@ -28,10 +29,24 @@ func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matri
 	right := float64(i.CutMargin[resources.FrameRight])
 
 	options := &frameOptions{
-		color: pixel.RGBA{1, 1, 1, 1},
+		color:        pixel.RGBA{1, 1, 1, 1},
+		renderOrigin: gfx.BottomLeft,
 	}
 	for _, opt := range opts {
 		opt(options)
+	}
+
+	switch options.renderOrigin {
+	case gfx.TopLeft:
+		matrix = matrix.Moved(gfx.IVec(0, int(-rect.H())))
+	case gfx.TopRight:
+		matrix = matrix.Moved(gfx.IVec(int(-rect.W()), int(-rect.H())))
+	case gfx.BottomLeft:
+		matrix = matrix.Moved(gfx.IVec(0, 0))
+	case gfx.BottomRight:
+		matrix = matrix.Moved(gfx.IVec(int(-rect.W()), 0))
+	case gfx.Centered:
+		matrix = matrix.Moved(gfx.IVec(int(-rect.W()/2), int(-rect.H()/2)))
 	}
 
 	subRects := map[resources.FrameSide]pixel.Rect{
@@ -77,7 +92,8 @@ func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matri
 }
 
 type frameOptions struct {
-	color pixel.RGBA
+	color        pixel.RGBA
+	renderOrigin gfx.OriginLocation
 }
 
 type Opt func(*frameOptions)
@@ -85,6 +101,12 @@ type Opt func(*frameOptions)
 func WithColor(color pixel.RGBA) Opt {
 	return func(o *frameOptions) {
 		o.color = color
+	}
+}
+
+func WithRenderOrigin(origin gfx.OriginLocation) Opt {
+	return func(o *frameOptions) {
+		o.renderOrigin = origin
 	}
 }
 

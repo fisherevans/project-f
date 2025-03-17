@@ -26,6 +26,10 @@ func NewInstance(font resources.FontInstance, cfg tbcfg.Config) *Instance {
 	}
 }
 
+func (tb *Instance) GetConfig() tbcfg.Config {
+	return tb.cfg
+}
+
 type characterRenderParams struct {
 	drawDelta  pixel.Vec
 	foreground pixel.RGBA
@@ -49,19 +53,39 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 		renderLineCount = tb.cfg.LinesPerPage
 	}
 
+	var width, height int
+	switch tb.cfg.ExpandMode {
+	case tbcfg.ExpandFull:
+		width = tb.cfg.BoxWidth
+		height = tb.cfg.BoxHeight
+	case tbcfg.ExpandFit:
+		width = content.width
+		height = content.height
+	}
+
 	switch tb.cfg.Origin {
 	case gfx.BottomLeft:
-		matrix = matrix.Moved(gfx.IVec(0, 0))
+		// do nothing
 	case gfx.BottomRight:
-		matrix = matrix.Moved(gfx.IVec(-content.width, 0))
+		matrix = matrix.Moved(gfx.IVec(-width, 0))
 	case gfx.TopRight:
-		matrix = matrix.Moved(gfx.IVec(-content.width, -content.height))
+		matrix = matrix.Moved(gfx.IVec(-width, -height))
 	case gfx.Centered:
-		matrix = matrix.Moved(gfx.IVec(-content.width/2, -content.height/2))
+		matrix = matrix.Moved(gfx.IVec(-width/2, -height/2))
 	case gfx.TopLeft:
-		matrix = matrix.Moved(gfx.IVec(0, -content.height))
+		matrix = matrix.Moved(gfx.IVec(0, -height))
 	default:
 		panic("invalid origin")
+	}
+
+	switch tb.cfg.VAlignment {
+	case tbcfg.AlignTop:
+		matrix = matrix.Moved(gfx.IVec(0, height-content.height))
+	case tbcfg.AlignMiddle:
+		matrix = matrix.Moved(gfx.IVec(0, (height-content.height)/2))
+	case tbcfg.AlignBottom:
+		// do nothing
+		//matrix = matrix.Moved(gfx.IVec(0, -height))
 	}
 
 	tb.imd.Clear()
@@ -72,7 +96,7 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 		lineTypingProgress := 0
 		y := float64(((renderLineCount - 1 - lineId) * (tb.Metadata.LetterHeight + tb.effectiveLineSpacing())) + tb.Metadata.TailHeight + scrollDy)
 		var x int
-		alignment := tb.cfg.Alignment
+		alignment := tb.cfg.HAlignment
 		if content.alignmentOverride != nil {
 			alignment = *content.alignmentOverride
 		}
@@ -80,9 +104,9 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 		case tbcfg.AlignLeft:
 			x = 0
 		case tbcfg.AlignCenter:
-			x = (content.width - line.width) / 2
+			x = (width - line.width) / 2
 		case tbcfg.AlignRight:
-			x = content.width - line.width
+			x = width - line.width
 		}
 		tb.text.Dot = pixel.V(float64(x), y)
 		var underlineColor pixel.RGBA

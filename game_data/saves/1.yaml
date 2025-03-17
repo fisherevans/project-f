@@ -1,7 +1,6 @@
 save_id: "1"
 character_name: Isaac
 animech:
-    additional_integrity: 10
     additional_shield: 30
     upgrade_points: 3
 captured_primortals:

@@ -5,7 +5,7 @@ var Skill_Tackle = Skill{
 	Name:        "Tackle",
 	Description: "Tackle an enemy, dealing kinetic damage.",
 	Type:        SkillTypeKinetic,
-	Ticks:       simpleDamageSkillTicks(5, DamageMediumPhysical, 3),
+	Ticks:       simpleDamageSkillTicks(3, DamageMediumPhysical, 3),
 }.register()
 
 var Skill_Crush = Skill{

@@ -25,7 +25,6 @@ func (g *GameSave) NewDeployment() *DeployedAnimech {
 		Animech:             g.Animech,
 		AnimechExperience:   0,
 		PrimortalExperience: nil,
-		CurrentIntegrity:    BaseAnimechIntegrity + g.Animech.AdditionalIntegrity,
 		CurrentShield:       BaseAnimechShield + g.Animech.AdditionalShield,
 		DeployedPrimortals:  nil,
 	}

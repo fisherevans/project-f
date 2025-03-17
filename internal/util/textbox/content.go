@@ -14,7 +14,6 @@ type Content struct {
 	tb               *Instance
 	lines            []*line
 	effects          []RenderEffect
-	maxLineWidth     int
 	typingController TypingController
 
 	scrollPosition float64
@@ -22,7 +21,7 @@ type Content struct {
 
 	progressFaster bool
 
-	alignmentOverride *tbcfg.Alignment
+	alignmentOverride *tbcfg.HAlignment
 
 	// pre-computed
 	width  int
@@ -40,7 +39,7 @@ func WithTyping(timePerCharacter float64) ContentOpt {
 	}
 }
 
-func WithAlignment(a tbcfg.Alignment) ContentOpt {
+func WithAlignment(a tbcfg.HAlignment) ContentOpt {
 	return func(c *Content) {
 		c.alignmentOverride = &a
 	}
@@ -176,7 +175,7 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	flushPendingText := func() {
 		if len(pendingText) > 0 {
 			potentialLineText := currentLine.text + asString(pendingWhitespace) + asString(pendingText)
-			if int(tb.text.BoundsOf(potentialLineText).W()) > tb.cfg.MaxWidth {
+			if tb.cfg.BoxWidth > 0 && int(tb.text.BoundsOf(potentialLineText).W()) > tb.cfg.BoxWidth {
 				content.appendLine(currentLine, tb.text)
 				currentLine = newLine()
 				pendingWhitespace = nil // drop pending space on new lines
@@ -213,12 +212,6 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	}
 
 	// pre compute details
-	if tb.cfg.ExpandMode == tbcfg.ExpandFull {
-		content.width = tb.cfg.MaxWidth
-	} else {
-		content.width = content.maxLineWidth
-	}
-
 	lineCount := tb.cfg.LinesPerPage
 	if lineCount == 0 {
 		lineCount = len(content.lines)
@@ -242,8 +235,8 @@ func (c *Content) appendLine(l *line, text *text.Text) {
 		}
 	}
 	l.commit(text)
-	if l.width > c.maxLineWidth {
-		c.maxLineWidth = l.width
+	if l.width > c.width {
+		c.width = l.width
 	}
 }
 

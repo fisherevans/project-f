@@ -7,6 +7,7 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"fmt"
@@ -22,9 +23,11 @@ var (
 	skillFrameHeight            = 13
 	skillFrameHorizontalSpacing = 26
 
-	skillText = textbox.NewInstance(atlas.GetFont(resources.FontNameM3x6), tbcfg.NewConfig(skillFrameWidth-skillFrame.HorizontalPadding(),
+	skillText = textbox.NewInstance(atlas.GetFont(resources.FontNameM3x6), tbcfg.NewConfig(skillFrameWidth, skillFrameHeight,
 		tbcfg.Foreground(colors.Black.RGBA),
-		tbcfg.Aligned(tbcfg.AlignCenter)))
+		tbcfg.HAligned(tbcfg.AlignCenter),
+		tbcfg.VAligned(tbcfg.AlignMiddle),
+	))
 )
 
 func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft pixel.Vec, timeDelta float64) {
@@ -32,6 +35,21 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 	sin := (math.Sin(s.skillFlashTimeElapsed*10) + 1.0) / 2.0 // [0-1]
 	s.skillFlashAlpha = 0.5 + sin*0.5                         // [0.5-1]
 	s.skillFlashAlphaInverse = 0.5 + (1.0-sin)*0.5
+
+	if ctx.Controls.DPad().IsPressed() {
+		s.skillDirection = ctx.Controls.DPad().PressedDirection()
+		switch s.skillDirection {
+		case input.Up:
+			s.combatArrowAlpha, s.combatArrowColumn = 1, 2
+		case input.Right:
+			s.combatArrowAlpha, s.combatArrowColumn = 1, 3
+		case input.Down:
+			s.combatArrowAlpha, s.combatArrowColumn = 1, 4
+		case input.Left:
+			s.combatArrowAlpha, s.combatArrowColumn = 1, 5
+		}
+	}
+
 	for optionId := 0; optionId < 4; optionId++ {
 		text := ""
 		option := s.Player.GetCombatant().GetFightOption(optionId)
@@ -39,6 +57,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 			text = option.Get().Name
 		}
 		content := s.simpleSkillContent(text)
+		selected := typeOptionKey[optionId] == s.skillDirection
 		matrix := pixel.IM.Moved(bottomLeft)
 		rightDx := skillFrameWidth + skillFrameHorizontalSpacing
 		switch typeOptionKey[optionId] {
@@ -52,30 +71,38 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 			matrix = matrix.Moved(pixel.V(0, float64(skillFrameHeight-1)))
 		}
 		frame := skillFrame
-		if s.Player.NextSkill != nil && option != nil && option.Get().Id == *s.Player.NextSkill {
+		if selected {
 			frame = skillPendingFrame
 		}
 		frameRect := pixel.R(0, 0, float64(skillFrameWidth), float64(skillFrameHeight))
 		frame.Draw(target, frameRect, matrix)
-		textDy := (skillFrameHeight - skillText.Metadata.GetFullLineHeight()) / 2
-		matrix = matrix.Moved(pixel.V(0, float64(textDy)))
 		skillText.Render(ctx, target, matrix, content)
+		//if option != nil {
+		//	b := badges.Using(atlas).OfSkillType(option.Get().Type, true)
+		//	padding := (float64(skillFrameHeight) - b.Bounds().H()) / 2
+		//	b.Render(ctx, target, matrix.Moved(pixel.V(padding, padding)), gfx.BottomLeft)
+		//}
+		if selected {
+			spriteId := resources.SpriteButtonA
+			if ctx.Controls.ButtonA().IsPressed() {
+				spriteId = resources.SpriteButtonAHighlighted
+				// trigger next skill selection
+				s.Player.NextSkill = option
+
+			}
+			sprite := spriteId.From(atlas)
+			padding := (float64(skillFrameHeight) - sprite.Bounds().H()) / 2
+			sprite.Draw(target, matrix.
+				Moved(gfx.IVec(skillFrameWidth, 0)).
+				Moved(pixel.V(-padding, padding)).
+				Moved(gfx.BottomRight.Align(sprite)))
+		}
 	}
 	centerMatrix := pixel.IM.Moved(bottomLeft).Moved(pixel.V(
 		float64(skillFrameWidth+(skillFrameHorizontalSpacing/2)),
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
 	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).Draw(target, centerMatrix)
 	s.combatArrowAlpha -= timeDelta * 0.75
-	switch ctx.Controls.DPad().PressedDirection() {
-	case input.Up:
-		s.combatArrowAlpha, s.combatArrowColumn = 1, 2
-	case input.Right:
-		s.combatArrowAlpha, s.combatArrowColumn = 1, 3
-	case input.Down:
-		s.combatArrowAlpha, s.combatArrowColumn = 1, 4
-	case input.Left:
-		s.combatArrowAlpha, s.combatArrowColumn = 1, 5
-	}
 	ctx.DebugTR("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
 		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))

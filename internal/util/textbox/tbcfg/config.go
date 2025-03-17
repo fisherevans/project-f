@@ -6,9 +6,11 @@ import (
 )
 
 type Config struct {
-	MaxWidth   int
+	BoxWidth   int
+	BoxHeight  int
 	ExpandMode ExpandMode
-	Alignment  Alignment
+	HAlignment HAlignment
+	VAlignment VAlignment
 
 	Foreground pixel.RGBA
 
@@ -22,12 +24,14 @@ type Config struct {
 	ScrollTimePerLine float64
 }
 
-func NewConfig(maxWidth int, opts ...ConfigOpt) Config {
+func NewConfig(boxWidth, boxHeight int, opts ...ConfigOpt) Config {
 	c := Config{
-		MaxWidth:          maxWidth,
-		Alignment:         AlignLeft,
-		ExpandMode:        ExpandFull,
+		BoxWidth:          boxWidth,
+		BoxHeight:         boxHeight,
+		HAlignment:        AlignLeft,
+		VAlignment:        AlignBottom,
 		Origin:            gfx.BottomLeft,
+		ExpandMode:        ExpandFull,
 		Foreground:        pixel.RGB(0, 0, 0),
 		LinesPerPage:      0,
 		ScrollTimePerLine: 0.2,
@@ -40,9 +44,15 @@ func NewConfig(maxWidth int, opts ...ConfigOpt) Config {
 
 type ConfigOpt func(c *Config)
 
-func Aligned(alignment Alignment) func(c *Config) {
+func HAligned(alignment HAlignment) func(c *Config) {
 	return func(c *Config) {
-		c.Alignment = alignment
+		c.HAlignment = alignment
+	}
+}
+
+func VAligned(alignment VAlignment) func(c *Config) {
+	return func(c *Config) {
+		c.VAlignment = alignment
 	}
 }
 
@@ -77,9 +87,9 @@ func ExtraLineSpacing(amount int) func(c *Config) {
 	}
 }
 
-type Alignment int
+type HAlignment int
 
-func (a Alignment) Name() string {
+func (a HAlignment) Name() string {
 	switch a {
 	case AlignLeft:
 		return "AlignLeft"
@@ -93,9 +103,30 @@ func (a Alignment) Name() string {
 }
 
 const (
-	AlignLeft Alignment = iota
+	AlignLeft HAlignment = iota
 	AlignCenter
 	AlignRight
+)
+
+type VAlignment int
+
+func (a VAlignment) Name() string {
+	switch a {
+	case AlignTop:
+		return "AlignTop"
+	case AlignMiddle:
+		return "AlignMiddle"
+	case AlignBottom:
+		return "AlignBottom"
+	default:
+		panic("unknown alignment")
+	}
+}
+
+const (
+	AlignTop VAlignment = iota
+	AlignMiddle
+	AlignBottom
 )
 
 type ExpandMode int

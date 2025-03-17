@@ -4,7 +4,6 @@ type DeployedAnimech struct {
 	*Animech
 	AnimechExperience   int
 	PrimortalExperience map[PrimortalType]int
-	CurrentIntegrity    int
 	CurrentShield       int
 	DeployedPrimortals  []*DeployedPrimortal
 }

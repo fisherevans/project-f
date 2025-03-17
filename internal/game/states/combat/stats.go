@@ -16,10 +16,10 @@ import (
 var (
 	combatStatFrame            = frames.New("combat/combatant_stats/box", atlas)
 	statBarFrame               = frames.New("combat/combatant_stats/bar", atlas)
-	combatantNameText          = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), tbcfg.NewConfig(200, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+	combatantNameText          = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), tbcfg.NewConfig(200, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 	statBorderPadding          = 3
 	statBorderPaddingNameExtra = 6
-	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(200, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(200, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 	noneSelectedSprite         = atlas.GetSprite("combat/tick_bar/skill_none_selected")
 	statNameBoxSprite          = atlas.GetTilesheetSprite("combat/combatant_stats/background", 1, 1)
 	statRightSprite            = atlas.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)

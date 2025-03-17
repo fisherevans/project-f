@@ -18,6 +18,33 @@ func (id SkillId) Get() Skill {
 
 type SkillType string
 
+func (t SkillType) Name() string {
+	return string(t)
+}
+
+func (t SkillType) ShortName() string {
+	switch t {
+	case SkillTypeKinetic:
+		return "kntc"
+	case SkillTypeVoltaic:
+		return "volt"
+	case SkillTypeThermal:
+		return "thml"
+	case SkillTypeSonic:
+		return "sonic"
+	case SkillTypeMagnetic:
+		return "mgnt"
+	case SkillTypeAcidic:
+		return "acid"
+	case SkillTypeGamma:
+		return "gma"
+	case SkillTypeAbyssal:
+		return "abys"
+	default:
+		panic("unknown skill type: " + t)
+	}
+}
+
 const (
 	SkillTypeKinetic  SkillType = "kinetic"
 	SkillTypeVoltaic  SkillType = "voltaic"
@@ -27,6 +54,19 @@ const (
 	SkillTypeAcidic   SkillType = "acidic"
 	SkillTypeGamma    SkillType = "gamma"
 	SkillTypeAbyssal  SkillType = "abyssal"
+)
+
+var (
+	AllSkillTypes = []SkillType{
+		SkillTypeKinetic,
+		SkillTypeVoltaic,
+		SkillTypeThermal,
+		SkillTypeSonic,
+		SkillTypeMagnetic,
+		SkillTypeAcidic,
+		SkillTypeGamma,
+		SkillTypeAbyssal,
+	}
 )
 
 type DamageMedium string

@@ -37,13 +37,13 @@ func (l OriginLocation) AlignF64(w, h float64) pixel.Vec {
 	case Centered:
 		return pixel.ZV
 	case TopLeft:
-		return half.ScaledXY(pixel.V(1, -1))
+		return half.ScaledXY(pixel.V(1, -1)).Floor()
 	case BottomLeft:
-		return half
+		return half.Floor()
 	case TopRight:
-		return half.ScaledXY(pixel.V(-1, -1))
+		return half.ScaledXY(pixel.V(-1, -1)).Floor()
 	case BottomRight:
-		return half.ScaledXY(pixel.V(-1, 1))
+		return half.ScaledXY(pixel.V(-1, 1)).Floor()
 	}
 	panic(fmt.Sprintf("invalid origin location %d", l))
 }

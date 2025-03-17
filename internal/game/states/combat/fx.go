@@ -5,7 +5,6 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
-	"fisherevans.com/project/f/internal/util/colors/typecolors"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -40,7 +39,7 @@ func (fx *DamageFX) Update(ctx *game.Context, s *State, timeDelta float64) bool 
 }
 
 func (fx *DamageFX) Render(ctx *game.Context, target pixel.Target) {
-	color := typecolors.SkillTypeColor(fx.Damage.DamageType).RGBA
+	color := colors.OfSkillType(fx.Damage.DamageType).RGBA
 	color = colors.WithAlpha(color, 1.0-(fx.Age/damageFxMaxAge))
 
 	str := fmt.Sprintf("%d", fx.Damage.TotalDamage)

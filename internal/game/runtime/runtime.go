@@ -6,6 +6,7 @@ import (
 	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
 	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/badges/btest"
 	"fisherevans.com/project/f/internal/util/textbox/tbtest"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
@@ -34,9 +35,15 @@ func initialState(window *opengl.Window) game.State {
 			},
 		},
 		state_selector.Destination{
-			Name: "Textbox Text",
+			Name: "Textbox Test",
 			State: func(ctx *game.Context) game.State {
 				return tbtest.New()
+			},
+		},
+		state_selector.Destination{
+			Name: "Badges Test",
+			State: func(ctx *game.Context) game.State {
+				return btest.New()
 			},
 		},
 	)

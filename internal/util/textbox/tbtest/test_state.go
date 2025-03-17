@@ -13,10 +13,16 @@ import (
 )
 
 var (
-	alignments = []tbcfg.Alignment{
+	halignments = []tbcfg.HAlignment{
 		tbcfg.AlignLeft,
 		tbcfg.AlignCenter,
 		tbcfg.AlignRight,
+	}
+
+	valignments = []tbcfg.VAlignment{
+		tbcfg.AlignTop,
+		tbcfg.AlignMiddle,
+		tbcfg.AlignBottom,
 	}
 
 	expands = []tbcfg.ExpandMode{
@@ -26,8 +32,9 @@ var (
 )
 
 type State struct {
-	aligned int
-	expand  int
+	haligned int
+	valigned int
+	expand   int
 }
 
 func New() *State {
@@ -42,7 +49,7 @@ var (
 	atlas = resources.CreateAtlas(resources.AtlasFilter{
 		FontNames: []string{resources.FontNameFF},
 	})
-	tb      = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(100, tbcfg.Foreground(colors.White.RGBA)))
+	tb      = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(100, 50, tbcfg.Foreground(colors.SkillTypeKinetic.RGBA)))
 	content = tb.NewComplexContent("Hello, world! How are you doing today?")
 )
 
@@ -56,17 +63,26 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 	ctx.DebugBR("Up: toggle expand (%s)", expands[s.expand].Name())
 
-	if ctx.Controls.DPad().DirectionJustPressed(input.Down) {
-		s.aligned++
-		if s.aligned >= len(alignments) {
-			s.aligned = 0
+	if ctx.Controls.DPad().DirectionJustPressed(input.Right) {
+		s.haligned++
+		if s.haligned >= len(halignments) {
+			s.haligned = 0
 		}
 	}
-	ctx.DebugBR("Down: toggle alignment (%s)", alignments[s.aligned].Name())
+	ctx.DebugBR("Right: toggle h alignment (%s)", halignments[s.haligned].Name())
+
+	if ctx.Controls.DPad().DirectionJustPressed(input.Left) {
+		s.valigned++
+		if s.valigned >= len(valignments) {
+			s.valigned = 0
+		}
+	}
+	ctx.DebugBR("Left: toggle v alignment (%s)", valignments[s.valigned].Name())
 
 	opts := []tbcfg.ConfigOpt{
 		tbcfg.WithExpandMode(expands[s.expand]),
-		tbcfg.Aligned(alignments[s.aligned]),
+		tbcfg.HAligned(halignments[s.haligned]),
+		tbcfg.VAligned(valignments[s.valigned]),
 	}
 
 	left := 0.0
@@ -79,10 +95,16 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 
 	ctx.DebugBR("left %.1f, right %.1f, top %.1f, bottom %.1f", left, right, top, bottom)
 
-	tb.Render(ctx, target, pixel.IM.Moved(pixel.V(left, top)), content, append(opts, tbcfg.RenderFrom(gfx.TopLeft))...)
-	tb.Render(ctx, target, pixel.IM.Moved(pixel.V(right, top)), content, append(opts, tbcfg.RenderFrom(gfx.TopRight))...)
-	tb.Render(ctx, target, pixel.IM.Moved(pixel.V(right, bottom)), content, append(opts, tbcfg.RenderFrom(gfx.BottomRight))...)
-	tb.Render(ctx, target, pixel.IM.Moved(pixel.V(left, bottom)), content, append(opts, tbcfg.RenderFrom(gfx.BottomLeft))...)
-	tb.Render(ctx, target, pixel.IM.Moved(pixel.V(right/2.0, top/2.0)), content, append(opts, tbcfg.RenderFrom(gfx.Centered))...)
+	render := func(vec pixel.Vec, origin gfx.OriginLocation) {
+		gfx.DrawRect(atlas, target, pixel.IM.Moved(vec), origin, tb.GetConfig().BoxWidth, tb.GetConfig().BoxHeight, colors.HexColor("#111"))
+		tb.Render(ctx, target, pixel.IM.Moved(vec), content, append(opts, tbcfg.RenderFrom(origin))...)
+
+	}
+	
+	render(pixel.V(left, top), gfx.TopLeft)
+	render(pixel.V(right, top), gfx.TopRight)
+	render(pixel.V(right, bottom), gfx.BottomRight)
+	render(pixel.V(left, bottom), gfx.BottomLeft)
+	render(pixel.V(right/2.0, top/2.0), gfx.Centered)
 
 }

@@ -6,6 +6,7 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
@@ -38,7 +39,7 @@ var dialogueFrameMargin = 4
 var dialogueFrame = frames.New("dialogue/dialogue_frame", atlas)
 var dialogueBox = textbox.NewInstance(
 	atlas.GetFont(resources.FontNameM5x7),
-	tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding(),
+	tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding(), 0,
 		tbcfg.Paging(2, true),
 		tbcfg.Foreground(colors.HexColor("#00164e")),
 		tbcfg.ExtraLineSpacing(4)))
@@ -60,7 +61,8 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 		float64(dialogueFrameMargin+dialogue.Content().Height()+dialogueFrame.VerticalPadding()))
 	dialogueFrame.Draw(target, frameBounds, pixel.IM)
 
-	bottomLeft := pixel.V(float64(dialogueFrameMargin+dialogueFrame.LeftPadding()), float64(dialogueFrameMargin+dialogueFrame.BottomPadding()))
+	bottomLeft := gfx.IVec(dialogueFrameMargin+dialogueFrame.LeftPadding(), dialogueFrameMargin+dialogueFrame.BottomPadding())
+
 	dialogueBox.Render(ctx, target, pixel.IM.Moved(bottomLeft), dialogue.Content())
 
 	a := ctx.Controls.ButtonA().JustPressed()

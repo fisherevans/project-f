@@ -16,6 +16,10 @@ type CapturedPrimortal struct {
 	AvailableSkills []SkillId `yaml:"available_skills"`
 }
 
+func (p CapturedPrimortal) GetMaxSync() int {
+	return p.Base().BaseSync + p.AdditionalSync
+}
+
 func (p CapturedPrimortal) Base() Primortal {
 	return Primortals[p.PrimortalType]
 }

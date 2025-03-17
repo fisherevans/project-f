@@ -1,5 +1,7 @@
 package colors
 
+import "fisherevans.com/project/f/internal/game/rpg"
+
 var (
 	Warm9 = registerNamedColor(HexColor("#fcef8d"), "warm_9")
 	Warm8 = registerNamedColor(HexColor("#ffb879"), "warm_8")
@@ -41,4 +43,38 @@ var (
 
 	Black = registerNamedColor(HexColor("#1f102a"), "black")
 	White = registerNamedColor(HexColor("#ffffff"), "white")
+
+	SkillTypeKinetic  = registerNamedColor(HexColor("#c5ccdb"), "kinetic")
+	SkillTypeVoltaic  = registerNamedColor(HexColor("#d1db42"), "voltaic")
+	SkillTypeThermal  = registerNamedColor(HexColor("#db4f42"), "thermal")
+	SkillTypeSonic    = registerNamedColor(HexColor("#42dba3"), "sonic")
+	SkillTypeMagnetic = registerNamedColor(HexColor("#db4278"), "magnetic")
+	SkillTypeAcidic   = registerNamedColor(HexColor("#63db42"), "acidic")
+	SkillTypeGamma    = registerNamedColor(HexColor("#9942db"), "gamma")
+	SkillTypeAbyssal  = registerNamedColor(HexColor("#5942db"), "abyssal")
+
+	ButtonHighlight = registerNamedColor(HexColor("#ecd539"), "button_highlight")
 )
+
+func OfSkillType(skillType rpg.SkillType) NamedColor {
+	switch skillType {
+	case rpg.SkillTypeKinetic:
+		return SkillTypeKinetic
+	case rpg.SkillTypeVoltaic:
+		return SkillTypeVoltaic
+	case rpg.SkillTypeThermal:
+		return SkillTypeThermal
+	case rpg.SkillTypeSonic:
+		return SkillTypeSonic
+	case rpg.SkillTypeMagnetic:
+		return SkillTypeMagnetic
+	case rpg.SkillTypeAcidic:
+		return SkillTypeAcidic
+	case rpg.SkillTypeGamma:
+		return SkillTypeGamma
+	case rpg.SkillTypeAbyssal:
+		return SkillTypeAbyssal
+	default:
+		return White
+	}
+}

@@ -41,8 +41,8 @@ var chatterArrow = atlas.GetSprite("chatter/chatter_box_arrow")
 var chatterFrame = frames.New("chatter/chatter_box", atlas)
 var chatterBox = textbox.NewInstance(
 	atlas.GetFont(resources.FontNameM3x6),
-	tbcfg.NewConfig(game.GameWidth/3,
-		tbcfg.Aligned(tbcfg.AlignCenter),
+	tbcfg.NewConfig(game.GameWidth/3, 0,
+		tbcfg.HAligned(tbcfg.AlignCenter),
 		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 
 func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {

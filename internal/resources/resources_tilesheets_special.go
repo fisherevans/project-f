@@ -17,8 +17,8 @@ var (
 	TileCollisionStairsUp       = newTilesheetSpriteId("snowhex_base", 70, 49)
 	TileCollisionDoor           = newTilesheetSpriteId("snowhex_base", 71, 49)
 
-	SpriteButtonA            = newTilesheetSpriteId("ab_button_icons", 1, 1)
-	SpriteButtonB            = newTilesheetSpriteId("ab_button_icons", 2, 1)
-	SpriteButtonAHighlighted = newTilesheetSpriteId("ab_button_icons", 3, 1)
-	SpriteButtonBHighlighted = newTilesheetSpriteId("ab_button_icons", 4, 1)
+	SpriteButtonA            = newTilesheetSpriteId("ui/ab_button_icons", 1, 1)
+	SpriteButtonB            = newTilesheetSpriteId("ui/ab_button_icons", 2, 1)
+	SpriteButtonAHighlighted = newTilesheetSpriteId("ui/ab_button_icons", 3, 1)
+	SpriteButtonBHighlighted = newTilesheetSpriteId("ui/ab_button_icons", 4, 1)
 )
