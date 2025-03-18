@@ -1,9 +1,7 @@
 package gfx
 
 import (
-	"fmt"
 	"github.com/gopxl/pixel/v2"
-	"math"
 )
 
 type OriginLocation int
@@ -33,18 +31,37 @@ func (l OriginLocation) AlignInt(w, h int) pixel.Vec {
 }
 
 func (l OriginLocation) AlignF64(w, h float64) pixel.Vec {
+	return l.AlignFrom(Centered, w, h)
+}
+
+func (l OriginLocation) AlignFrom(original OriginLocation, w, h float64) pixel.Vec {
 	halfW, halfH := w/2, h/2
+	var delta pixel.Vec
+	// move from original to bottom left
+	switch original {
+	case Centered:
+		delta = pixel.V(halfW, halfH)
+	case TopLeft:
+		delta = pixel.V(0, h)
+	case BottomLeft:
+		// already bottom left
+	case TopRight:
+		delta = pixel.V(-w, h)
+	case BottomRight:
+		delta = pixel.V(-w, 0)
+	}
+	// now move from bottom left to target (l)
 	switch l {
 	case Centered:
-		return pixel.ZV
+		delta = delta.Add(pixel.V(-halfW, -halfH))
 	case TopLeft:
-		return pixel.V(math.Floor(halfW), -math.Floor(halfH))
+		delta = delta.Add(pixel.V(0, -h))
 	case BottomLeft:
-		return pixel.V(math.Floor(halfW), math.Ceil(halfH))
+		// already bottom left
 	case TopRight:
-		return pixel.V(-math.Floor(halfW), -math.Floor(halfH))
+		delta = delta.Add(pixel.V(-w, -h))
 	case BottomRight:
-		return pixel.V(-math.Floor(halfW), math.Ceil(halfH))
+		delta = delta.Add(pixel.V(-w, 0))
 	}
-	panic(fmt.Sprintf("invalid origin location %d", l))
+	return delta
 }

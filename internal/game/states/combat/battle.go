@@ -5,16 +5,18 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
+	"math/rand"
 )
 
 type Battle struct {
 	PendingProgress float64
 	TickPlayerNext  bool
-	PlayerSkill     *SkillInstance
-	OpponentSkill   *SkillInstance
 
-	PreviousPlayerSkill   *SkillInstance
-	PreviousOpponentSkill *SkillInstance
+	PlayerSkill       *SkillInstance
+	PlayerSkillEnding bool
+
+	OpponentSkill       *SkillInstance
+	OpponentSkillEnding bool
 }
 
 type BattleUpdateParams struct {
@@ -23,33 +25,29 @@ type BattleUpdateParams struct {
 }
 
 func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params BattleUpdateParams) {
-	if b.PlayerSkill == nil || (b.PlayerSkill.NextTick == 0 && !b.TickPlayerNext) {
-		nextSkill := params.PlayerNextSkill()
-		if nextSkill != nil {
-			if b.PlayerSkill == nil {
-				s.Tempo.Increment()
-			}
-			b.PlayerSkill = newInstance(*nextSkill)
-		}
-	}
-	if b.OpponentSkill == nil {
-		nextSkill := params.OpponentNextSkill()
-		if nextSkill != nil {
-			b.OpponentSkill = newInstance(*nextSkill)
-		}
-	}
-
 	ctx.DebugBR(fmt.Sprintf("PendingProgress: %f", b.PendingProgress))
 	ctx.DebugBR(fmt.Sprintf("TickPlayerNext: %t", b.TickPlayerNext))
 	ctx.DebugBR(fmt.Sprintf("PlayerSkill: %s", b.PlayerSkill))
 	ctx.DebugBR(fmt.Sprintf("OpponentSkill: %s", b.OpponentSkill))
 
 	if b.TickPlayerNext && b.PlayerSkill == nil {
-		s.Tempo.Reset()
-		return
+		nextSkill := params.PlayerNextSkill()
+		if nextSkill != nil {
+			b.PlayerSkill = newInstance(*nextSkill)
+			s.Tempo.Increment()
+		} else {
+			s.Tempo.Reset()
+			return
+		}
 	}
+
 	if !b.TickPlayerNext && b.OpponentSkill == nil {
-		return
+		nextSkill := params.OpponentNextSkill()
+		if nextSkill != nil {
+			b.OpponentSkill = newInstance(*nextSkill)
+		} else {
+			return
+		}
 	}
 
 	tps := ticksPerSecond
@@ -59,17 +57,23 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 	b.PendingProgress += timeDelta * tps
 	for b.PendingProgress >= 1 {
 		if b.TickPlayerNext {
+			if b.OpponentSkillEnding {
+				b.OpponentSkill = nil
+				b.OpponentSkillEnding = false
+			}
 			dmg, over := b.PlayerSkill.Tick(ctx, s, s.Player.GetCombatant(), s.Opponent)
 			if over {
-				b.PreviousPlayerSkill = b.PlayerSkill
-				b.PlayerSkill = nil
+				b.PlayerSkillEnding = true
 			}
 			s.emitDamageFx(dmg, false)
 		} else {
+			if b.PlayerSkillEnding {
+				b.PlayerSkill = nil
+				b.PlayerSkillEnding = false
+			}
 			dmg, over := b.OpponentSkill.Tick(ctx, s, s.Opponent, s.Player.GetCombatant())
 			if over {
-				b.PreviousOpponentSkill = b.OpponentSkill
-				b.OpponentSkill = nil
+				b.OpponentSkillEnding = true
 			}
 			s.emitDamageFx(dmg, true)
 		}

@@ -21,8 +21,3 @@ func Using(atlas *resources.Atlas) *Builder {
 		atlas: atlas,
 	}
 }
-
-func alignFromBottomLeft(matrix pixel.Matrix, origin gfx.OriginLocation, width, height int) pixel.Matrix {
-	matrix = matrix.Moved(gfx.IVec(-width/2, -height/2)) // move from bottom left to center first
-	return matrix.Moved(origin.AlignInt(width, height))
-}

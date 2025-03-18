@@ -31,7 +31,7 @@ func (s *skillType) Bounds() pixel.Rect {
 }
 
 func (s *skillType) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation) {
-	matrix = alignFromBottomLeft(matrix, origin, s.textbox.GetConfig().BoxWidth, skillTypeHeight)
+	matrix = matrix.Moved(origin.AlignFrom(gfx.BottomLeft, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight)))
 	s.frame.Draw(target, pixel.R(0, 0, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight)), matrix,
 		frames.WithRenderOrigin(gfx.BottomLeft),
 		frames.WithColor(s.color))

@@ -34,7 +34,7 @@ func (s *ButtonAction) Render(ctx *game.Context, target pixel.Target, matrix pix
 	actionContentW := s.actionContent.Width()
 	buttonFrameW := buttonBadgeSpacing + buttonTextPadding + buttonContentW + buttonTextPadding + buttonBadgeSpacing
 	fullFrameW := buttonFrameW + buttonBadgeSpacing + actionContentW + buttonTextPadding + buttonBadgeSpacing
-	matrix = alignFromBottomLeft(matrix, origin, fullFrameW, buttonBadgeHeight)
+	matrix = matrix.Moved(origin.AlignFrom(gfx.BottomLeft, float64(fullFrameW), float64(buttonBadgeHeight)))
 	s.frame.Draw(target, pixel.R(0, 0, float64(fullFrameW), float64(buttonBadgeHeight-2)),
 		matrix.Moved(gfx.IVec(0, 1)),
 		frames.WithRenderOrigin(gfx.BottomLeft),

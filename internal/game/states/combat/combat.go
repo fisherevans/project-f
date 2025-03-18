@@ -11,19 +11,14 @@ import (
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"image/color"
 	"math"
-	"math/rand"
 )
 
 // Things to add
 // - tempo counter -  impact damage for tempo
 // - enhance damage FX for various conditions (i.e. effective, immune, etc.)
-// - better highlight active vs. pending skill vs. arrow key skill
-// - require arrow + a to select skill
-//   - add (a) icon
 // - add skill log
 //   - add data structure to hold it
 //   - add rendering
@@ -202,7 +197,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 		fx.Render(ctx, s.batch)
 	}
 
-	s.renderSkills(ctx, s.batch, pixel.V(float64((game.GameWidth-(skillFrameWidth*2+skillFrameHorizontalSpacing))/2), float64(3)), timeDelta)
+	s.renderSkills(ctx, s.batch, targetBounds, timeDelta)
 
 	s.drawPlayerStats(ctx)
 	s.drawOpponentStats(ctx)
@@ -237,26 +232,20 @@ func (s *State) drawActiveSkills(ctx *game.Context, target pixel.Target, targetB
 		opponentProgress += 0.5
 	}
 	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -skillEaterSprite.Bounds().H()/2))
-	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Battle.PreviousPlayerSkill, s.Battle.PlayerSkill, s.Player.NextSkill)
-	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Battle.PreviousOpponentSkill, s.Battle.OpponentSkill, nil)
+	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Battle.PlayerSkill, s.Player.NextSkill)
+	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Battle.OpponentSkill, nil)
 	skillEaterSprite.Draw(target, matrixTopMiddle)
 }
 
 var baseNextSkillMaskScale = 0.8
 var nextSkillFlashRation = 0.2
 
-func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, previousSkill *SkillInstance, currentSkill *SkillInstance, nextSkillId *rpg.SkillId) {
+func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, currentSkill *SkillInstance, nextSkillId *rpg.SkillId) {
 	nextSkillMaskScale := baseNextSkillMaskScale*(1-nextSkillFlashRation) + baseNextSkillMaskScale*nextSkillFlashRation*s.skillFlashAlpha
 	noNextSkillAlpha := 1.0
 	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, (currentTickProgress-0.5)*float64(skillBarTickSpacing)))
 	if currentSkill != nil {
 		matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, (float64(currentSkill.NextTick))*float64(skillBarTickSpacing)))
-	}
-	if previousSkill != nil {
-		mask := colors.OfSkillType(previousSkill.Skill.Type).RGBA
-		matrixPreviousTopMiddle := matrixTopMiddle.Moved(pixel.V(0, float64((previousSkill.Duration+1)*skillBarTickSpacing)))
-		s.drawSkill(ctx, target, matrixPreviousTopMiddle, previousSkill.Skill, mask, true, 1.0)
-		ctx.DebugBR("printing previous")
 	}
 	if currentSkill != nil {
 		skillProgress := currentTickProgress + float64(currentSkill.NextTick)

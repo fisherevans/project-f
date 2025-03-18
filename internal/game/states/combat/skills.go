@@ -47,11 +47,14 @@ var (
 
 	skillPendingProgress = anim.SkillPendingProgress(atlas)
 
+	skillStatsBadge         = badges.Using(atlas).ButtonAction("select", "stats")
 	skillPendingCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel")
+	skillMenuBadge          = badges.Using(atlas).ButtonAction("start", "menu")
 )
 
-func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft pixel.Vec, timeDelta float64) {
-	bottomRight := bottomLeft.Add(pixel.V(float64(skillFrameWidth*2+skillFrameHorizontalSpacing), 0))
+func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+	bottomLeft := pixel.V(float64((game.GameWidth-(skillFrameWidth*2+skillFrameHorizontalSpacing))/2), 3)
+
 	s.skillFlashTimeElapsed += timeDelta
 	sin := (math.Sin(s.skillFlashTimeElapsed*10) + 1.0) / 2.0 // [0-1]
 	s.skillFlashAlpha = 0.5 + sin*0.5                         // [0.5-1]
@@ -132,11 +135,28 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
 	}
 
+	badgeBottomLeft := pixel.V(3, 3)
+	badgeBottomRight := pixel.V(targetBounds.W()-3, 3)
+	skillStatsBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomLeft), gfx.BottomLeft)
 	if s.Player.NextSkill != nil {
-		skillPendingCancelBadge.Render(ctx, target, pixel.IM.Moved(bottomRight), gfx.BottomRight)
+		skillPendingCancelBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
 		if ctx.Controls.ButtonB().JustPressed() {
 			s.Player.NextSkill = nil
 		}
+	} else {
+		skillMenuBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+	}
+
+	if s.Player.NextSkill != nil && ctx.Controls.ButtonB().JustPressed() {
+		s.Player.NextSkill = nil
+	}
+
+	if ctx.Controls.ButtonSelect().JustPressed() {
+		ctx.Notify("TODO - add stats menu")
+	}
+
+	if ctx.Controls.ButtonStart().JustPressed() {
+		ctx.Notify("TODO - add combat menu")
 	}
 }
 
