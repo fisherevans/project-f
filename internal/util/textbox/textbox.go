@@ -8,6 +8,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"github.com/gopxl/pixel/v2/ext/text"
+	"math"
 )
 
 type Instance struct {
@@ -82,7 +83,7 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 	case tbcfg.AlignTop:
 		matrix = matrix.Moved(gfx.IVec(0, height-content.height))
 	case tbcfg.AlignMiddle:
-		matrix = matrix.Moved(gfx.IVec(0, (height-content.height)/2))
+		matrix = matrix.Moved(pixel.V(0, math.Ceil(float64(height-content.height)/2.0)))
 	case tbcfg.AlignBottom:
 		// do nothing
 		//matrix = matrix.Moved(gfx.IVec(0, -height))

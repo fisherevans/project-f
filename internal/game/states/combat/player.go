@@ -2,16 +2,8 @@ package combat
 
 import (
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 )
-
-var typeOptionKey = map[int]input.Direction{
-	0: input.Up,
-	1: input.Right,
-	2: input.Down,
-	3: input.Left,
-}
 
 type PlayerHealth struct {
 	Sync   HealthState

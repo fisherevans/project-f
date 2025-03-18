@@ -3,6 +3,7 @@ package state_selector
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/resources"
 	"fmt"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -25,7 +26,8 @@ func New(destinations ...Destination) game.State {
 	}
 }
 
-var textDrawer = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
+var titleDrawer = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
+var optionDrawer = text.New(pixel.ZV, resources.CreateFont(resources.FontNameM5x7).Atlas)
 
 func (s *Selector) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 	switch ctx.Controls.DPad().JustPressedDirection() {
@@ -47,16 +49,21 @@ func (s *Selector) OnTick(ctx *game.Context, target pixel.Target, targetBounds p
 		return
 	}
 
-	textDrawer.Clear()
-	textDrawer.WriteString("Select a State:\n")
+	titleDrawer.Clear()
+	titleDrawer.WriteString("Select a State:")
+	titleDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)))
+
+	optionDrawer.Clear()
 	for index, option := range s.states {
 		str := fmt.Sprintf("%s", option.Name)
 		if index == s.selected {
 			str = "> " + str
+		} else {
+			str = "   " + str
 		}
-		textDrawer.WriteString(fmt.Sprintf("%s\n", str))
+		optionDrawer.WriteString(fmt.Sprintf("%s\n", str))
 	}
-	textDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-10)))
+	optionDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-35)))
 
 	ctx.DebugBR("enter: select")
 	ctx.DebugBR("w/s/up/down: change")

@@ -2,9 +2,11 @@ package combat
 
 import (
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
@@ -28,17 +30,36 @@ var (
 		tbcfg.HAligned(tbcfg.AlignCenter),
 		tbcfg.VAligned(tbcfg.AlignMiddle),
 	))
+
+	typeOptionKey = map[int]input.Direction{
+		0: input.Up,
+		1: input.Right,
+		2: input.Down,
+		3: input.Left,
+	}
+
+	typeOptionKeyReverse = map[input.Direction]int{
+		input.Up:    0,
+		input.Right: 1,
+		input.Down:  2,
+		input.Left:  3,
+	}
+
+	skillPendingProgress = anim.SkillPendingProgress(atlas)
+
+	skillPendingCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel")
 )
 
 func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft pixel.Vec, timeDelta float64) {
+	bottomRight := bottomLeft.Add(pixel.V(float64(skillFrameWidth*2+skillFrameHorizontalSpacing), 0))
 	s.skillFlashTimeElapsed += timeDelta
 	sin := (math.Sin(s.skillFlashTimeElapsed*10) + 1.0) / 2.0 // [0-1]
 	s.skillFlashAlpha = 0.5 + sin*0.5                         // [0.5-1]
 	s.skillFlashAlphaInverse = 0.5 + (1.0-sin)*0.5
 
 	if ctx.Controls.DPad().IsPressed() {
-		s.skillDirection = ctx.Controls.DPad().PressedDirection()
-		switch s.skillDirection {
+		dir := ctx.Controls.DPad().PressedDirection()
+		switch dir {
 		case input.Up:
 			s.combatArrowAlpha, s.combatArrowColumn = 1, 2
 		case input.Right:
@@ -48,16 +69,31 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 		case input.Left:
 			s.combatArrowAlpha, s.combatArrowColumn = 1, 5
 		}
+		if ctx.Controls.DPad().JustPressed() {
+			s.Player.NextSkill = s.Player.GetCombatant().GetFightOption(typeOptionKeyReverse[dir])
+		}
 	}
 
 	for optionId := 0; optionId < 4; optionId++ {
-		text := ""
 		option := s.Player.GetCombatant().GetFightOption(optionId)
+
+		text := ""
+		optionActive, optionPending := false, false
 		if option != nil {
-			text = option.Get().Name
+			opt := option.Get()
+			text = opt.Name
+			if s.Battle.PlayerSkill != nil && s.Battle.PlayerSkill.Skill.Id == opt.Id {
+				optionActive = true
+			}
+			if s.Player.NextSkill != nil && *s.Player.NextSkill == opt.Id {
+				optionPending = true
+			}
+		}
+		if optionActive {
+			text = "{+u}" + text
 		}
 		content := s.simpleSkillContent(text)
-		selected := typeOptionKey[optionId] == s.skillDirection
+
 		matrix := pixel.IM.Moved(bottomLeft)
 		rightDx := skillFrameWidth + skillFrameHorizontalSpacing
 		switch typeOptionKey[optionId] {
@@ -71,31 +107,19 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 			matrix = matrix.Moved(pixel.V(0, float64(skillFrameHeight-1)))
 		}
 		frame := skillFrame
-		if selected {
+		if optionActive {
 			frame = skillPendingFrame
 		}
 		frameRect := pixel.R(0, 0, float64(skillFrameWidth), float64(skillFrameHeight))
 		frame.Draw(target, frameRect, matrix)
 		skillText.Render(ctx, target, matrix, content)
-		//if option != nil {
-		//	b := badges.Using(atlas).OfSkillType(option.Get().Type, true)
-		//	padding := (float64(skillFrameHeight) - b.Bounds().H()) / 2
-		//	b.Render(ctx, target, matrix.Moved(pixel.V(padding, padding)), gfx.BottomLeft)
-		//}
-		if selected {
-			spriteId := resources.SpriteButtonA
-			if ctx.Controls.ButtonA().IsPressed() {
-				spriteId = resources.SpriteButtonAHighlighted
-				// trigger next skill selection
-				s.Player.NextSkill = option
-
-			}
-			sprite := spriteId.From(atlas)
-			padding := (float64(skillFrameHeight) - sprite.Bounds().H()) / 2
-			sprite.Draw(target, matrix.
-				Moved(gfx.IVec(skillFrameWidth, 0)).
-				Moved(pixel.V(-padding, padding)).
-				Moved(gfx.BottomRight.Align(sprite)))
+		if optionPending {
+			skillPendingProgress.Update(timeDelta)
+			s := skillPendingProgress.Sprite()
+			padding := (skillFrameHeight - int(s.Bounds().H())) / 2
+			s.Draw(target, matrix.
+				Moved(gfx.IVec(skillFrameWidth-padding, padding)).
+				Moved(gfx.BottomRight.Align(s)))
 		}
 	}
 	centerMatrix := pixel.IM.Moved(bottomLeft).Moved(pixel.V(
@@ -106,6 +130,13 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, bottomLeft 
 	ctx.DebugTR("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
 		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
+	}
+
+	if s.Player.NextSkill != nil {
+		skillPendingCancelBadge.Render(ctx, target, pixel.IM.Moved(bottomRight), gfx.BottomRight)
+		if ctx.Controls.ButtonB().JustPressed() {
+			s.Player.NextSkill = nil
+		}
 	}
 }
 

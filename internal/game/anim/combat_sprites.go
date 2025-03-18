@@ -9,3 +9,7 @@ func IdleRobot(atlas *resources.Atlas) *AnimatedSprite {
 func IdlePlent(atlas *resources.Atlas) *AnimatedSprite {
 	return FromTilesheetRow(atlas, "combat/combatants/plent_idle", 1, 5)
 }
+
+func SkillPendingProgress(atlas *resources.Atlas) *AnimatedSprite {
+	return FromTilesheetRow(atlas, "combat/menu/skill_pending_progress", 1, 20).ApplyPingPong()
+}

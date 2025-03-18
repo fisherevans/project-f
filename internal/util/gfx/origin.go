@@ -3,6 +3,7 @@ package gfx
 import (
 	"fmt"
 	"github.com/gopxl/pixel/v2"
+	"math"
 )
 
 type OriginLocation int
@@ -32,18 +33,18 @@ func (l OriginLocation) AlignInt(w, h int) pixel.Vec {
 }
 
 func (l OriginLocation) AlignF64(w, h float64) pixel.Vec {
-	half := pixel.V(w/2, h/2)
+	halfW, halfH := w/2, h/2
 	switch l {
 	case Centered:
 		return pixel.ZV
 	case TopLeft:
-		return half.ScaledXY(pixel.V(1, -1)).Floor()
+		return pixel.V(math.Floor(halfW), -math.Floor(halfH))
 	case BottomLeft:
-		return half.Floor()
+		return pixel.V(math.Floor(halfW), math.Ceil(halfH))
 	case TopRight:
-		return half.ScaledXY(pixel.V(-1, -1)).Floor()
+		return pixel.V(-math.Floor(halfW), -math.Floor(halfH))
 	case BottomRight:
-		return half.ScaledXY(pixel.V(-1, 1)).Floor()
+		return pixel.V(-math.Floor(halfW), math.Ceil(halfH))
 	}
 	panic(fmt.Sprintf("invalid origin location %d", l))
 }
