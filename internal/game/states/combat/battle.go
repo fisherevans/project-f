@@ -34,9 +34,9 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 		nextSkill := params.PlayerNextSkill()
 		if nextSkill != nil {
 			b.PlayerSkill = newInstance(*nextSkill)
-			s.Tempo.Increment()
+			s.Player.Tempo.Increment()
 		} else {
-			s.Tempo.Reset()
+			s.Player.Tempo.Reset()
 			return
 		}
 	}
@@ -61,7 +61,7 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 				b.OpponentSkill = nil
 				b.OpponentSkillEnding = false
 			}
-			dmg, over := b.PlayerSkill.Tick(ctx, s, s.Player.GetCombatant(), s.Opponent)
+			dmg, over := b.PlayerSkill.Tick(ctx, s, s.Player, s.Opponent)
 			if over {
 				b.PlayerSkillEnding = true
 			}
@@ -71,7 +71,7 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 				b.PlayerSkill = nil
 				b.PlayerSkillEnding = false
 			}
-			dmg, over := b.OpponentSkill.Tick(ctx, s, s.Opponent, s.Player.GetCombatant())
+			dmg, over := b.OpponentSkill.Tick(ctx, s, s.Opponent, s.Player)
 			if over {
 				b.OpponentSkillEnding = true
 			}

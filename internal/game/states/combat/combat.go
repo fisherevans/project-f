@@ -17,13 +17,13 @@ import (
 )
 
 // Things to add
-// - tempo counter -  impact damage for tempo
 // - enhance damage FX for various conditions (i.e. effective, immune, etc.)
 // - add skill log
 //   - add data structure to hold it
 //   - add rendering
 // - add arrow + select popup to view skill details
 // - add health delay (interp to target) - allow temp death
+//   - render target in bar
 // - state stuff
 //   - add transition state into combat (i.e. fade)
 //   - add battle intro that has creature enter
@@ -53,7 +53,6 @@ type State struct {
 	Opponent   Opponent
 	OnComplete OnComplete
 	Battle     *Battle
-	Tempo      *Tempo
 
 	fx []FX
 
@@ -72,16 +71,13 @@ type State struct {
 
 func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
 	return &State{
-		Player: &Player{
-			DeployedAnimech: animech,
-		},
+		Player: NewPlayer(animech),
 		Opponent: &Wall{
-			MaxHealth:     100,
-			CurrentHealth: 100,
+			Health: NewHealthState(100),
+			Tempo:  &Tempo{},
 		},
 		OnComplete: onComplete,
 		Battle:     &Battle{},
-		Tempo:      &Tempo{},
 
 		cachedContents: map[string]*textbox.Content{},
 
@@ -90,8 +86,52 @@ func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
 }
 
 type HealthState struct {
-	Max     int
-	Current int
+	Max        int
+	Target     int
+	Current    float64
+	AdjustRate float64
+}
+
+func NewHealthState(max int) *HealthState {
+	return &HealthState{
+		Max:        max,
+		Current:    float64(max),
+		Target:     max,
+		AdjustRate: 0.1,
+	}
+}
+
+func (h *HealthState) GetCurrentInt() int {
+	return int(math.Round(h.Current))
+}
+
+func (h *HealthState) AdjustTarget(amount int) int {
+	h.Target += amount
+	if h.Target < 0 {
+		remainder := h.Target
+		h.Target = 0
+		return remainder
+	}
+	if h.Target > h.Max {
+		remainder := h.Target - h.Max
+		h.Target = h.Max
+		return remainder
+	}
+	return 0
+}
+
+func (h *HealthState) Update(timeDelta float64) {
+	if math.Round(h.Current) == float64(h.Target) {
+		return
+	}
+	sign := 1.0
+	if h.Current > float64(h.Target) {
+		sign = -1
+	}
+	diff := h.AdjustRate * timeDelta * float64(h.Max)
+	maxDiff := math.Abs(float64(h.Target) - h.Current)
+	diff = math.Min(diff, maxDiff)
+	h.Current += sign * diff
 }
 
 type CombatantStats struct {
@@ -103,14 +143,11 @@ type CombatantStats struct {
 	AetherDefense   int
 }
 
-type DamageOutcome struct {
-	Perished bool
-}
-
 type Combatant interface {
 	Name() string
-	ApplyDamage(damage rpg.DamageResult) DamageOutcome
+	ApplyDamage(damage rpg.DamageResult)
 	GetStats() CombatantStats
+	GetTempo() *Tempo
 }
 
 func (s *State) ClearColor() color.Color {
@@ -142,7 +179,9 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4.RGBA)
 
 	if s.overlay == "" {
-		// pick next skill for player
+		s.Opponent.GetHealth().Update(timeDelta)
+		s.Player.GetCurrentShield().Update(timeDelta)
+		s.Player.GetCurrentSync().Update(timeDelta)
 
 		s.Battle.Update(ctx, s, timeDelta, BattleUpdateParams{
 			PlayerNextSkill: func() *rpg.SkillId {
@@ -155,7 +194,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 		})
 	}
 
-	if s.Player.GetCombatant().GetCurrentSync().Current <= 0 {
+	if s.Player.GetCurrentSync().GetCurrentInt() <= 0 {
 		s.overlay = "{+c:#e64565,+o}You died!"
 		if s.overlayElapsed > 5 {
 			// todo
@@ -164,7 +203,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 		}
 	}
 
-	if s.Opponent.GetHealth().Current <= 0 {
+	if s.Opponent.GetHealth().GetCurrentInt() <= 0 {
 		s.overlay = "{+c:#45e682,+o}You won!"
 		if s.overlayElapsed > 5 {
 			// todo
@@ -202,7 +241,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	s.drawPlayerStats(ctx)
 	s.drawOpponentStats(ctx)
 
-	s.Tempo.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.675)))
+	s.Player.Tempo.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.675)))
 
 	if s.overlay != "" {
 		s.overlayElapsed += timeDelta

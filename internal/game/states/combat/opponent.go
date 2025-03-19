@@ -2,17 +2,16 @@ package combat
 
 import (
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/util"
 )
 
 type Opponent interface {
 	Combatant
-	GetHealth() HealthState
+	GetHealth() *HealthState
 }
 
 type Wall struct {
-	MaxHealth     int
-	CurrentHealth int
+	Health *HealthState
+	Tempo  *Tempo
 }
 
 func (w *Wall) GetStats() CombatantStats {
@@ -26,23 +25,20 @@ func (w *Wall) GetStats() CombatantStats {
 }
 
 var _ Opponent = &Wall{}
+var _ Combatant = &Wall{}
 
-func (w *Wall) ApplyDamage(result rpg.DamageResult) DamageOutcome {
-	w.CurrentHealth = util.MaxInt(0, w.CurrentHealth-result.TotalDamage)
-	return DamageOutcome{
-		Perished: w.CurrentHealth == 0,
-	}
+func (w *Wall) ApplyDamage(result rpg.DamageResult) {
+	w.Health.AdjustTarget(-result.TotalDamage)
 }
-
-var _ Opponent = &Wall{}
 
 func (w *Wall) Name() string {
 	return "Squishy Wall"
 }
 
-func (w *Wall) GetHealth() HealthState {
-	return HealthState{
-		Max:     w.MaxHealth,
-		Current: w.CurrentHealth,
-	}
+func (w *Wall) GetHealth() *HealthState {
+	return w.Health
+}
+
+func (w *Wall) GetTempo() *Tempo {
+	return w.Tempo
 }

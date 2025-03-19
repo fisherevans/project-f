@@ -35,8 +35,8 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 		colorDark:   colors.HexColor("772712"),
 		color:       colors.HexColor("d58d7a"),
 		colorBright: colors.HexColor("ebc4bb"),
-		current:     s.Player.GetCombatant().GetCurrentSync().Current,
-		max:         s.Player.GetCombatant().GetCurrentSync().Max,
+		current:     s.Player.GetCurrentSync().GetCurrentInt(),
+		max:         s.Player.GetCurrentSync().Max,
 	}
 
 	shieldBar := &StatBar{
@@ -46,8 +46,8 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 		colorDark:   colors.HexColor("126177"),
 		color:       colors.HexColor("73bed3"),
 		colorBright: colors.HexColor("bbe0eb"),
-		current:     s.Player.GetCombatant().GetCurrentShield().Current,
-		max:         s.Player.GetCombatant().GetCurrentShield().Max,
+		current:     s.Player.GetCurrentShield().GetCurrentInt(),
+		max:         s.Player.GetCurrentShield().Max,
 	}
 
 	statBox := &StatBox{
@@ -66,8 +66,9 @@ func (s *State) drawOpponentStats(ctx *game.Context) {
 		colorDark:   colors.HexColor("127839"),
 		color:       colors.HexColor("73d398"),
 		colorBright: colors.HexColor("bcebce"),
-		current:     s.Opponent.GetHealth().Current,
-		max:         s.Opponent.GetHealth().Max,
+		// TODO render target
+		current: s.Opponent.GetHealth().GetCurrentInt(),
+		max:     s.Opponent.GetHealth().Max,
 	}
 
 	statBox := &StatBox{

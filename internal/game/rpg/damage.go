@@ -101,6 +101,7 @@ type DamageSource struct {
 	SkillType      SkillType
 	PhysicalAttack int
 	AetherAttack   int
+	Tempo          int
 }
 
 type DamageTarget struct {
@@ -140,6 +141,9 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 	} else if sourceHasAffinity {
 		damage *= affinityMultiplier
 	}
+
+	tempoMultiplier := 1.0 + float64(source.Tempo)/20 // x2 @ 20
+	damage *= tempoMultiplier
 
 	return DamageResult{
 		TotalDamage:       int(math.Ceil(damage)), // short of immune, always deal at least 1 damage

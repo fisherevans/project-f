@@ -73,12 +73,12 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 			s.combatArrowAlpha, s.combatArrowColumn = 1, 5
 		}
 		if ctx.Controls.DPad().JustPressed() {
-			s.Player.NextSkill = s.Player.GetCombatant().GetFightOption(typeOptionKeyReverse[dir])
+			s.Player.NextSkill = s.Player.GetFightOption(typeOptionKeyReverse[dir])
 		}
 	}
 
 	for optionId := 0; optionId < 4; optionId++ {
-		option := s.Player.GetCombatant().GetFightOption(optionId)
+		option := s.Player.GetFightOption(optionId)
 
 		text := ""
 		optionActive, optionPending := false, false
@@ -207,6 +207,7 @@ func newInstance(skillId rpg.SkillId) *SkillInstance {
 						SkillType:      skill.Type,
 						PhysicalAttack: sourceStats.PhysicalAttack,
 						AetherAttack:   sourceStats.AetherAttack,
+						Tempo:          source.GetTempo().GetCurrent(),
 					}, rpg.DamageTarget{
 						TargetType:      targetStats.BodyType,
 						Affinities:      targetStats.Affinities,
@@ -214,10 +215,7 @@ func newInstance(skillId rpg.SkillId) *SkillInstance {
 						AetherDefence:   targetStats.AetherDefense,
 					})
 					allDamage = append(allDamage, result)
-					outcome := target.ApplyDamage(result)
-					if outcome.Perished {
-						ctx.Notify("%s DIED!", target.Name())
-					}
+					target.ApplyDamage(result)
 				}
 			}
 			return allDamage

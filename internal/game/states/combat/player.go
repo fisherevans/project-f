@@ -13,14 +13,27 @@ type PlayerHealth struct {
 type PlayerCombatant interface {
 	Combatant
 	GetFightOption(slot int) *rpg.SkillId
-	GetCurrentShield() HealthState
-	GetCurrentSync() HealthState
+	GetCurrentShield() *HealthState
+	GetCurrentSync() *HealthState
 }
 
 type Player struct {
 	*rpg.DeployedAnimech
 	CurrentPrimortal int
 	NextSkill        *rpg.SkillId
+	Tempo            *Tempo
+
+	Shield *HealthState
+	Syncs  map[int]*HealthState
+}
+
+func NewPlayer(deployed *rpg.DeployedAnimech) *Player {
+	return &Player{
+		DeployedAnimech: deployed,
+		Tempo:           &Tempo{},
+		Shield:          NewHealthState(deployed.GetMaxShield()),
+		Syncs:           make(map[int]*HealthState),
+	}
 }
 
 func (p *Player) PopNextSkill() *rpg.SkillId {
@@ -32,77 +45,65 @@ func (p *Player) PopNextSkill() *rpg.SkillId {
 	return next
 }
 
-func (p *Player) GetCombatant() PlayerCombatant {
-	if p.CurrentPrimortal == -1 {
-		return nil // TODO void mode
-	}
-	return &PlayerPrimortal{
-		Player:            p,
-		DeployedPrimortal: p.DeployedPrimortals[p.CurrentPrimortal],
-	}
+func (p *Player) GetTempo() *Tempo {
+	return p.Tempo
 }
 
-type PlayerPrimortal struct {
-	*rpg.DeployedPrimortal
-	*Player
+func (p *Player) getDeployedPrimortal() *rpg.DeployedPrimortal {
+	return p.DeployedPrimortals[p.CurrentPrimortal]
 }
 
-var _ PlayerCombatant = &PlayerPrimortal{}
+var _ PlayerCombatant = &Player{}
 
-func (p *PlayerPrimortal) GetStats() CombatantStats {
+func (p *Player) GetStats() CombatantStats {
+	dp := p.getDeployedPrimortal()
 	return CombatantStats{
-		BodyType:        p.Base().BodyType,
-		Affinities:      []rpg.SkillType{p.Base().Affinity},
-		PhysicalAttack:  p.Base().BasePhysicalAttack + p.AdditionalPhysicalAttack,
-		PhysicalDefense: p.Base().BasePhysicalDefense + p.AdditionalPhysicalDefense,
-		AetherAttack:    p.Base().BaseAetherAttack + p.AdditionalAetherAttack,
-		AetherDefense:   p.Base().BaseAetherDefense + p.AdditionalAetherDefense,
+		BodyType:        dp.Base().BodyType,
+		Affinities:      []rpg.SkillType{dp.Base().Affinity},
+		PhysicalAttack:  dp.Base().BasePhysicalAttack + dp.AdditionalPhysicalAttack,
+		PhysicalDefense: dp.Base().BasePhysicalDefense + dp.AdditionalPhysicalDefense,
+		AetherAttack:    dp.Base().BaseAetherAttack + dp.AdditionalAetherAttack,
+		AetherDefense:   dp.Base().BaseAetherDefense + dp.AdditionalAetherDefense,
 	}
 }
 
-func (p *PlayerPrimortal) ApplyDamage(damage rpg.DamageResult) DamageOutcome {
-	applyDamage := func(current, dmg int) (int, int) {
-		current -= dmg
-		if current >= 0 {
-			return current, 0
-		}
-		return 0, -current
-	}
-	remainingDamge := damage.TotalDamage
-	p.CurrentShield, remainingDamge = applyDamage(p.CurrentShield, remainingDamge)
-	p.CurrentSync, remainingDamge = applyDamage(p.CurrentSync, remainingDamge)
-	return DamageOutcome{
-		Perished: p.CurrentSync <= 0,
+func (p *Player) ApplyDamage(damage rpg.DamageResult) {
+	adjustment := -damage.TotalDamage
+	adjustment = p.Shield.AdjustTarget(adjustment)
+	if adjustment != 0 {
+		p.GetCurrentSync().AdjustTarget(adjustment)
 	}
 }
 
-func (p *PlayerPrimortal) GetFightOption(slot int) *rpg.SkillId {
-	if slot >= len(p.SelectedSkills) {
+func (p *Player) GetFightOption(slot int) *rpg.SkillId {
+	dp := p.getDeployedPrimortal()
+	if slot >= len(dp.SelectedSkills) {
 		return nil
 	}
-	skill := p.SelectedSkills[slot]
+	skill := dp.SelectedSkills[slot]
 	return &skill
 }
 
-func (p *PlayerPrimortal) GetCurrentSync() HealthState {
-	return HealthState{
-		Max:     p.GetMaxSync(),
-		Current: p.CurrentSync,
+func (p *Player) GetCurrentSync() *HealthState {
+	sync, exists := p.Syncs[p.CurrentPrimortal]
+	if !exists {
+		dp := p.getDeployedPrimortal()
+		sync = NewHealthState(dp.GetMaxSync())
+		p.Syncs[p.CurrentPrimortal] = sync
 	}
+	return sync
 }
 
-func (p *PlayerPrimortal) GetCurrentShield() HealthState {
-	return HealthState{
-		Max:     p.GetMaxShield(),
-		Current: p.CurrentShield,
-	}
+func (p *Player) GetCurrentShield() *HealthState {
+	return p.Shield
 }
 
-func (p *PlayerPrimortal) Name() string {
-	if p.Nickname != "" {
-		return p.Nickname
+func (p *Player) Name() string {
+	dp := p.getDeployedPrimortal()
+	if dp.Nickname != "" {
+		return dp.Nickname
 	}
-	return p.Base().Name
+	return dp.Base().Name
 }
 
 type SkillFightOption rpg.Skill
