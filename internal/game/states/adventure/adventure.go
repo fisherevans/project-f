@@ -1,14 +1,17 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/colors"
-	"github.com/gopxl/pixel/v2"
 	"image/color"
 	"math"
 	"sort"
+
+	"github.com/gopxl/pixel/v2"
+
+	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/states/menu"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
 )
 
 const (
@@ -35,7 +38,8 @@ var _ game.State = &State{}
 type inputMode int
 
 const (
-	inputModePlayerMovement inputMode = iota
+	inputModeBlocked inputMode = iota
+	inputModePlayerMovement
 	inputModeDialogue
 )
 
@@ -54,10 +58,14 @@ type State struct {
 	entities             map[EntityId]Entity
 	occupiedLocations    map[MapLocation]EntityId
 	movementRestrictions map[MapLocation]MovementRestriction
+	teleports            map[TeleportReference]Teleport
 
 	actions   *ActionQueue
 	chatters  *ChatterSystem
 	dialogues *DialogueSystem
+	overlays  *OverlaySystem
+
+	blockInput bool
 
 	batch *pixel.Batch
 }
@@ -68,10 +76,12 @@ func New(mapName string, save *rpg.GameSave) game.State {
 		entities:             make(map[EntityId]Entity),
 		occupiedLocations:    make(map[MapLocation]EntityId),
 		movementRestrictions: make(map[MapLocation]MovementRestriction),
+		teleports:            make(map[TeleportReference]Teleport),
 		camera:               NewStaticCamera(pixel.Vec{}),
 		actions:              NewActionQueue(),
 		chatters:             NewChatterSystem(),
 		dialogues:            NewDialogueSystem(),
+		overlays:             NewOverlaySystem(),
 
 		batch: atlas.NewBatch(),
 	}
@@ -120,11 +130,16 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	}
 
 	s.chatters.OnTick(ctx, s, s.batch, cameraMatrix, renderBounds, timeDelta)
+	s.overlays.OnTick(ctx, s, s.batch, timeDelta)
 	s.dialogues.OnTick(ctx, s, s.batch, renderBounds, timeDelta)
 
 	ctx.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
 
 	s.batch.Draw(target)
+
+	if ctx.Controls.ButtonStart().JustPressed() {
+		ctx.SwapActiveState(menu.New(s))
+	}
 }
 
 func (s *State) locationSortedEntities() []Entity {
@@ -143,6 +158,9 @@ func (s *State) locationSortedEntities() []Entity {
 }
 
 func (s *State) inputMode() inputMode {
+	if s.blockInput {
+		return inputModeBlocked
+	}
 	if s.dialogues.HasPriority() {
 		return inputModeDialogue
 	}

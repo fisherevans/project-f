@@ -1,6 +1,8 @@
 package badges
 
 import (
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -8,7 +10,6 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"github.com/gopxl/pixel/v2"
 )
 
 var (
@@ -56,8 +57,8 @@ func (b *Builder) ButtonAction(button, action string) *ButtonAction {
 	tb := textbox.NewInstance(
 		b.atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(0, buttonBadgeHeight,
-			tbcfg.HAligned(tbcfg.AlignLeft),
-			tbcfg.VAligned(tbcfg.AlignBottom),
+			tbcfg.HAligned(tbcfg.HAlignLeft),
+			tbcfg.VAligned(tbcfg.VAlignBottom),
 			tbcfg.RenderFrom(gfx.BottomLeft),
 		))
 	return &ButtonAction{

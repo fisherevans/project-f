@@ -1,14 +1,16 @@
 package textbox
 
 import (
+	"math"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/ext/imdraw"
+	"github.com/gopxl/pixel/v2/ext/text"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/imdraw"
-	"github.com/gopxl/pixel/v2/ext/text"
-	"math"
 )
 
 type Instance struct {
@@ -80,11 +82,11 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 	}
 
 	switch tb.cfg.VAlignment {
-	case tbcfg.AlignTop:
+	case tbcfg.VAlignTop:
 		matrix = matrix.Moved(gfx.IVec(0, height-content.height))
-	case tbcfg.AlignMiddle:
+	case tbcfg.VAlignMiddle:
 		matrix = matrix.Moved(pixel.V(0, math.Ceil(float64(height-content.height)/2.0)))
-	case tbcfg.AlignBottom:
+	case tbcfg.VAlignBottom:
 		// do nothing
 		//matrix = matrix.Moved(gfx.IVec(0, -height))
 	}
@@ -102,11 +104,11 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 			alignment = *content.alignmentOverride
 		}
 		switch alignment {
-		case tbcfg.AlignLeft:
+		case tbcfg.HAlignLeft:
 			x = 0
-		case tbcfg.AlignCenter:
+		case tbcfg.HAlignCenter:
 			x = (width - line.width) / 2
-		case tbcfg.AlignRight:
+		case tbcfg.HAlignRight:
 			x = width - line.width
 		}
 		tb.text.Dot = pixel.V(float64(x), y)

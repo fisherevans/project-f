@@ -1,13 +1,15 @@
 package adventure
 
 import (
+	"sort"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"github.com/gopxl/pixel/v2"
-	"sort"
 )
 
 type ChatterState int
@@ -42,7 +44,7 @@ var chatterFrame = frames.New("chatter/chatter_box", atlas)
 var chatterBox = textbox.NewInstance(
 	atlas.GetFont(resources.FontNameM3x6),
 	tbcfg.NewConfig(game.GameWidth/3, 0,
-		tbcfg.HAligned(tbcfg.AlignCenter),
+		tbcfg.HAligned(tbcfg.HAlignCenter),
 		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 
 func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {

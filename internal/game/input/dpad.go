@@ -1,9 +1,11 @@
 package input
 
 import (
+	"strings"
+	"time"
+
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
-	"time"
 )
 
 type Direction int
@@ -36,6 +38,20 @@ func (d Direction) String() string {
 	default:
 		return "NotPressed"
 	}
+}
+
+func DirectionFromString(s string) Direction {
+	switch strings.ToLower(s) {
+	case "up":
+		return Up
+	case "right":
+		return Right
+	case "down":
+		return Down
+	case "left":
+		return Left
+	}
+	return NotPressed
 }
 
 func (d Direction) GetVector() (int, int) {

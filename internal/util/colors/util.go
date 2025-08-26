@@ -1,12 +1,13 @@
 package colors
 
 import (
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
 	"hash/fnv"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type ColorName string
@@ -166,5 +167,66 @@ func Alpha(alpha float64) pixel.RGBA {
 		G: alpha,
 		B: alpha,
 		A: alpha,
+	}
+}
+func Lerp(from, to pixel.RGBA, t float64) pixel.RGBA {
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+	return pixel.RGBA{
+		R: from.R*(1-t) + to.R*t,
+		G: from.G*(1-t) + to.G*t,
+		B: from.B*(1-t) + to.B*t,
+		A: from.A*(1-t) + to.A*t,
+	}
+}
+
+func GammaLerp(from, to pixel.RGBA, t float64) pixel.RGBA {
+	// Clamp progress to [0,1]
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+
+	// sRGB <-> linear helpers
+	srgbToLinear := func(c float64) float64 {
+		if c <= 0.04045 {
+			return c / 12.92
+		}
+		return math.Pow((c+0.055)/1.055, 2.4)
+	}
+	linearToSrgb := func(c float64) float64 {
+		if c <= 0.0031308 {
+			return 12.92 * c
+		}
+		return 1.055*math.Pow(c, 1.0/2.4) - 0.055
+	}
+	lerp := func(a, b, tt float64) float64 {
+		return a*(1-tt) + b*tt
+	}
+	clamp01 := func(c float64) float64 {
+		if c < 0 {
+			return 0
+		}
+		if c > 1 {
+			return 1
+		}
+		return c
+	}
+
+	// Convert to linear, interpolate RGB in linear space
+	rLin := lerp(srgbToLinear(from.R), srgbToLinear(to.R), t)
+	gLin := lerp(srgbToLinear(from.G), srgbToLinear(to.G), t)
+	bLin := lerp(srgbToLinear(from.B), srgbToLinear(to.B), t)
+
+	// Convert back to sRGB and lerp alpha linearly
+	return pixel.RGBA{
+		R: clamp01(linearToSrgb(rLin)),
+		G: clamp01(linearToSrgb(gLin)),
+		B: clamp01(linearToSrgb(bLin)),
+		A: clamp01(lerp(from.A, to.A, t)),
 	}
 }

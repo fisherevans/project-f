@@ -50,7 +50,6 @@ func initialState(window *opengl.Window) game.State {
 }
 
 func Run() {
-
 	cfg := opengl.WindowConfig{
 		Title:     "Project F",
 		Bounds:    pixel.R(0, 0, game.GameWidth*3.5, game.GameHeight*5),

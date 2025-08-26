@@ -1,12 +1,15 @@
 package adventure
 
 import (
+	"math/rand"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
+
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	resources "fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"github.com/gopxl/pixel/v2"
-	"math/rand"
 )
 
 var npcRandomSpriteId = resources.TilesheetSpriteId{
@@ -96,7 +99,7 @@ func initializeMap(a *State, m *resources.Map) {
 					},
 				},
 			}
-			a.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedMedium)
+			a.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
 			a.AddEntity(a.player)
 		case "blob":
 			npc := &NPC{
@@ -148,12 +151,41 @@ func initializeMap(a *State, m *resources.Map) {
 				topic: entity.GetStringMetadata("topic", ""),
 			})
 		case "combat":
-			a.AddEntity(&EntityCombat{
+			a.AddEntity(&EntityCombatTest{
 				InnateEntity: InnateEntity{
 					EntityId:    entityId,
 					MapLocation: location,
 				},
 			})
+		case "menu_test":
+			a.AddEntity(&EntityMenuTest{
+				InnateEntity: InnateEntity{
+					EntityId:    entityId,
+					MapLocation: location,
+				},
+			})
+		case "stairs":
+			ref := TeleportReference(entity.GetStringMetadata("ref", ""))
+			if _, exists := a.teleports[ref]; exists {
+				log.Fatal().Msgf("stairs reference %s already exists", ref)
+				break
+			}
+			dest := TeleportReference(entity.GetStringMetadata("destination", ""))
+			a.teleports[ref] = Teleport{
+				Destination:   dest,
+				Location:      location,
+				ExitDirection: input.DirectionFromString(entity.GetStringMetadata("exit_direction", "")),
+			}
+			if _, exists := a.movementRestrictions[location]; exists {
+				log.Fatal().Msgf("stairs location at %s is already occupied", location)
+				break
+			}
+			a.movementRestrictions[location] = TeleportTile{
+				Reference: ref,
+			}
+			log.Info().Msgf("stairs added: %s (%s) -> %s", ref, location, dest)
+		default:
+			log.Warn().Msgf("Unknown entity type: %s", entity.Type)
 		}
 	}
 }

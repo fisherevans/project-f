@@ -1,6 +1,10 @@
 package tbtest
 
 import (
+	"image/color"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
@@ -8,21 +12,19 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"github.com/gopxl/pixel/v2"
-	"image/color"
 )
 
 var (
 	halignments = []tbcfg.HAlignment{
-		tbcfg.AlignLeft,
-		tbcfg.AlignCenter,
-		tbcfg.AlignRight,
+		tbcfg.HAlignLeft,
+		tbcfg.HAlignCenter,
+		tbcfg.HAlignRight,
 	}
 
 	valignments = []tbcfg.VAlignment{
-		tbcfg.AlignTop,
-		tbcfg.AlignMiddle,
-		tbcfg.AlignBottom,
+		tbcfg.VAlignTop,
+		tbcfg.VAlignMiddle,
+		tbcfg.VAlignBottom,
 	}
 
 	expands = []tbcfg.ExpandMode{
@@ -100,7 +102,7 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 		tb.Render(ctx, target, pixel.IM.Moved(vec), content, append(opts, tbcfg.RenderFrom(origin))...)
 
 	}
-	
+
 	render(pixel.V(left, top), gfx.TopLeft)
 	render(pixel.V(right, top), gfx.TopRight)
 	render(pixel.V(right, bottom), gfx.BottomRight)

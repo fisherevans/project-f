@@ -1,6 +1,10 @@
 package badges
 
 import (
+	"strings"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
@@ -9,8 +13,6 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"github.com/gopxl/pixel/v2"
-	"strings"
 )
 
 var (
@@ -52,8 +54,8 @@ func (b *Builder) OfSkillType(st rpg.SkillType, shortName bool) Instance {
 	tb := textbox.NewInstance(
 		b.atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(width, skillTypeHeight,
-			tbcfg.HAligned(tbcfg.AlignCenter),
-			tbcfg.VAligned(tbcfg.AlignMiddle),
+			tbcfg.HAligned(tbcfg.HAlignCenter),
+			tbcfg.VAligned(tbcfg.VAlignMiddle),
 			tbcfg.Foreground(colors.ScaleColor(c, 0.25)),
 			tbcfg.RenderFrom(gfx.BottomLeft),
 		))

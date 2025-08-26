@@ -1,6 +1,10 @@
 package combat
 
 import (
+	"fmt"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -9,8 +13,6 @@ import (
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"fmt"
-	"github.com/gopxl/pixel/v2"
 )
 
 var (
@@ -83,7 +85,7 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 	renderScale := pixel.V(1, 1)
 	var nameContentOpts []textbox.ContentOpt
 	if originLocation == gfx.TopRight {
-		nameContentOpts = append(nameContentOpts, textbox.WithAlignment(tbcfg.AlignRight))
+		nameContentOpts = append(nameContentOpts, textbox.WithAlignment(tbcfg.HAlignRight))
 		renderScale = pixel.V(-1, 1)
 	}
 	nameContent := combatantNameText.NewComplexContent("{+o:#cfcfcf,+c:black}"+name, nameContentOpts...)

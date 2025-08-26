@@ -1,11 +1,13 @@
 package game
 
 import (
-	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
+	"image/color"
+
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
-	"image/color"
+
+	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
 )
 
 const (
@@ -79,4 +81,10 @@ func (c *Context) SwapActiveState(newState State) State {
 	oldState := c.activeState
 	c.activeState = newState
 	return oldState
+}
+
+func (c *Context) WithNoControls() *Context {
+	without := *c
+	without.Controls = input.NewControls()
+	return &without
 }

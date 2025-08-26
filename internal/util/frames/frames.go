@@ -1,23 +1,26 @@
 package frames
 
 import (
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"github.com/gopxl/pixel/v2"
 )
 
 type Instance struct {
 	*resources.SpriteFrame
 	name  string
 	atlas *resources.Atlas
+	opts  []Opt
 }
 
-func New(name string, atlas *resources.Atlas) *Instance {
+func New(name string, atlas *resources.Atlas, opts ...Opt) *Instance {
 	return &Instance{
 		SpriteFrame: resources.GetFrame(name),
 		name:        name,
 		atlas:       atlas,
+		opts:        opts,
 	}
 }
 
@@ -32,7 +35,7 @@ func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matri
 		color:        pixel.RGBA{1, 1, 1, 1},
 		renderOrigin: gfx.BottomLeft,
 	}
-	for _, opt := range opts {
+	for _, opt := range append(i.opts, opts...) {
 		opt(options)
 	}
 

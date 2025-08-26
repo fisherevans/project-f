@@ -1,8 +1,9 @@
 package tbcfg
 
 import (
-	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
+
+	"fisherevans.com/project/f/internal/util/gfx"
 )
 
 type Config struct {
@@ -28,8 +29,8 @@ func NewConfig(boxWidth, boxHeight int, opts ...ConfigOpt) Config {
 	c := Config{
 		BoxWidth:          boxWidth,
 		BoxHeight:         boxHeight,
-		HAlignment:        AlignLeft,
-		VAlignment:        AlignBottom,
+		HAlignment:        HAlignLeft,
+		VAlignment:        VAlignBottom,
 		Origin:            gfx.BottomLeft,
 		ExpandMode:        ExpandFull,
 		Foreground:        pixel.RGB(0, 0, 0),
@@ -91,42 +92,42 @@ type HAlignment int
 
 func (a HAlignment) Name() string {
 	switch a {
-	case AlignLeft:
-		return "AlignLeft"
-	case AlignCenter:
-		return "AlignCenter"
-	case AlignRight:
-		return "AlignRight"
+	case HAlignLeft:
+		return "HAlignLeft"
+	case HAlignCenter:
+		return "HAlignCenter"
+	case HAlignRight:
+		return "HAlignRight"
 	default:
 		panic("unknown alignment")
 	}
 }
 
 const (
-	AlignLeft HAlignment = iota
-	AlignCenter
-	AlignRight
+	HAlignLeft HAlignment = iota
+	HAlignCenter
+	HAlignRight
 )
 
 type VAlignment int
 
 func (a VAlignment) Name() string {
 	switch a {
-	case AlignTop:
-		return "AlignTop"
-	case AlignMiddle:
-		return "AlignMiddle"
-	case AlignBottom:
-		return "AlignBottom"
+	case VAlignTop:
+		return "VAlignTop"
+	case VAlignMiddle:
+		return "VAlignMiddle"
+	case VAlignBottom:
+		return "VAlignBottom"
 	default:
 		panic("unknown alignment")
 	}
 }
 
 const (
-	AlignTop VAlignment = iota
-	AlignMiddle
-	AlignBottom
+	VAlignTop VAlignment = iota
+	VAlignMiddle
+	VAlignBottom
 )
 
 type ExpandMode int

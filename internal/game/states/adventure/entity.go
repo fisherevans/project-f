@@ -1,9 +1,10 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
+
+	"fisherevans.com/project/f/internal/game"
 )
 
 type EntityId string
@@ -55,7 +56,7 @@ func (s *State) attemptToOccupy(location MapLocation, entityId EntityId) bool {
 	}
 	restriction, hasRestriction := s.movementRestrictions[location]
 	if hasRestriction {
-		if !restriction.EntryAllowed() {
+		if !restriction.EntryAllowed(s, entityId) {
 			return false
 		}
 	}
@@ -74,4 +75,13 @@ func (s *State) unoccupy(location MapLocation, entityId EntityId) bool {
 		return false
 	}
 	return false
+}
+
+func (s *State) requirePlayerEntity(id EntityId) (*Player, bool) {
+	e, isE := s.entities[id]
+	if !isE {
+		return nil, false
+	}
+	player, isPlayer := e.(*Player)
+	return player, isPlayer
 }

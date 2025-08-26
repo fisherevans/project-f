@@ -1,10 +1,13 @@
 package adventure
 
 import (
+	"slices"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
-	"github.com/gopxl/pixel/v2"
-	"slices"
 )
 
 type MoveState int
@@ -45,7 +48,10 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 		m.MoveState = MoveStateIdle
 		remaining := m.MoveProgression - 1.0
 		m.MoveProgression = 0
-		return remaining / moveSpeed // todo this is weird
+		if newTile, newTileExists := adv.movementRestrictions[m.CurrentLocation]; newTileExists {
+			newTile.OnEntryComplete(adv, m.EntityId)
+		}
+		return remaining / moveSpeed // movement is complete, but there is more time in the tick to move
 	}
 	return 0
 }
@@ -75,6 +81,9 @@ func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, de
 	}
 	m.TargetLocation = newLocation
 	m.MoveState = desiredMoveState
+	if newTile, newTileExists := adv.movementRestrictions[newLocation]; newTileExists {
+		newTile.OnEntryBegin(adv, m.EntityId)
+	}
 	return true
 }
 
@@ -127,4 +136,18 @@ func (m *MoveableEntity) GetCurrentSpeed() float64 {
 		speed = 0
 	}
 	return speed
+}
+
+func (m *MoveableEntity) TeleportTo(s *State, location MapLocation) {
+	if m.MoveState != MoveStateIdle {
+		log.Warn().Msgf("cannot teleport '%s' while moving '%d'", m.EntityId, m.MoveState)
+		return
+	}
+	currentLocation := m.CurrentLocation
+	if !s.attemptToOccupy(location, m.EntityId) {
+		log.Warn().Msgf("cannot teleport '%s' to '%s' because it is occupied", m.EntityId, location)
+		return
+	}
+	m.CurrentLocation = location
+	s.unoccupy(currentLocation, m.EntityId)
 }

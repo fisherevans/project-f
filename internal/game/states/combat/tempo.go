@@ -1,14 +1,16 @@
 package combat
 
 import (
+	"fmt"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"fmt"
-	"github.com/gopxl/pixel/v2"
 )
 
 type Tempo struct {
@@ -36,7 +38,7 @@ func newComboText(fontName string) *textbox.Instance {
 		atlas.GetFont(fontName),
 		tbcfg.NewConfig(0, 0,
 			tbcfg.RenderFrom(gfx.TopLeft),
-			tbcfg.VAligned(tbcfg.AlignTop),
+			tbcfg.VAligned(tbcfg.VAlignTop),
 		))
 }
 

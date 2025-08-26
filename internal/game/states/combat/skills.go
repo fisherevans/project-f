@@ -1,6 +1,12 @@
 package combat
 
 import (
+	"fmt"
+	"math"
+	"math/rand"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
@@ -12,10 +18,6 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"fmt"
-	"github.com/gopxl/pixel/v2"
-	"math"
-	"math/rand"
 )
 
 var (
@@ -27,8 +29,8 @@ var (
 
 	skillText = textbox.NewInstance(atlas.GetFont(resources.FontNameM3x6), tbcfg.NewConfig(skillFrameWidth, skillFrameHeight,
 		tbcfg.Foreground(colors.Black.RGBA),
-		tbcfg.HAligned(tbcfg.AlignCenter),
-		tbcfg.VAligned(tbcfg.AlignMiddle),
+		tbcfg.HAligned(tbcfg.HAlignCenter),
+		tbcfg.VAligned(tbcfg.VAlignMiddle),
 	))
 
 	typeOptionKey = map[int]input.Direction{

@@ -61,6 +61,17 @@ func NewSimpleAction(action func(*game.Context, *State)) *baseAction {
 	}
 }
 
+func NewWaitForAction(f func() bool) *baseAction {
+	return &baseAction{
+		action: func(ctx *game.Context, s *State, _ float64) ActionState {
+			if f() {
+				return ActionComplete
+			}
+			return ActionIncomplete
+		},
+	}
+}
+
 func NewAction(fn ActionFunction) Action {
 	return &baseAction{fn}
 }
@@ -96,27 +107,68 @@ func NewDelayAction(action Action, delaySeconds float64) Action {
 	}
 }
 
-type chainedActions struct {
+type sleepAction struct {
+	sleepSeconds   float64
+	elapsedSeconds float64
+}
+
+func (d *sleepAction) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
+	d.elapsedSeconds += timeDelta
+	if d.elapsedSeconds < d.sleepSeconds {
+		return ActionIncomplete
+	}
+	return ActionComplete
+}
+
+func NewSleepAction(sleepSeconds float64) Action {
+	return &sleepAction{
+		sleepSeconds: sleepSeconds,
+	}
+}
+
+type serialActions struct {
 	actions []Action
 }
 
-func (c *chainedActions) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
+func (c *serialActions) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
+	for len(c.actions) > 0 {
+		if c.actions[0].Execute(ctx, s, timeDelta) == ActionIncomplete {
+			return ActionIncomplete
+		}
+		c.actions = c.actions[1:]
+	}
+	return ActionIncomplete
+}
+
+func NewSerialActions(actions ...Action) Action {
+	return &serialActions{
+		actions: actions,
+	}
+}
+
+type parallelActions struct {
+	actions []Action
+}
+
+func (c *parallelActions) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
 	if len(c.actions) == 0 {
 		return ActionComplete
 	}
-	state := c.actions[0].Execute(ctx, s, timeDelta)
-	if state == ActionIncomplete {
-		return ActionIncomplete
+	var remaining []Action
+	for _, action := range c.actions {
+		if action.Execute(ctx, s, timeDelta) == ActionIncomplete {
+			remaining = append(remaining, action)
+		}
 	}
-	c.actions = c.actions[1:]
+	c.actions = remaining
 	if len(c.actions) == 0 {
 		return ActionComplete
 	}
 	return ActionIncomplete
 }
 
-func NewChainedActions(actions ...Action) Action {
-	return &chainedActions{
+func NewParallelActions(actions ...Action) Action {
+	return &parallelActions{
 		actions: actions,
 	}
 }

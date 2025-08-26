@@ -1,12 +1,18 @@
 package adventure
 
 import (
+	"math"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
-	"github.com/gopxl/pixel/v2"
-	"math"
 )
+
+type TransitionController interface {
+	Update(ctx *game.Context, s *State, timeDelta float64) (isComplete bool)
+}
 
 type Camera interface {
 	SetLocation(location pixel.Vec)
@@ -19,15 +25,15 @@ type cameraLocation struct {
 	location pixel.Vec
 }
 
-func (c cameraLocation) CurrentLocation() pixel.Vec {
+func (c *cameraLocation) CurrentLocation() pixel.Vec {
 	return c.location
 }
 
-func (c cameraLocation) SetLocation(location pixel.Vec) {
+func (c *cameraLocation) SetLocation(location pixel.Vec) {
 	c.location = location
 }
 
-func (c cameraLocation) ComputeRenderDetails(ctx *game.Context, s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix) {
+func (c *cameraLocation) ComputeRenderDetails(ctx *game.Context, s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix) {
 	cameraMapX := int(math.Round(c.location.X))
 	cameraMapY := int(math.Round(c.location.Y))
 	bounds := MapBounds{
@@ -57,6 +63,8 @@ const EntityCameraSpeedNoLag float64 = 0
 const EntityCameraSpeedSlow float64 = 3
 const EntityCameraSpeedMedium float64 = 5
 const EntityCameraSpeedFast float64 = 7
+
+const EntityCameraSpeedPlayerDefault = EntityCameraSpeedMedium
 
 type EntityCamera struct {
 	cameraLocation
