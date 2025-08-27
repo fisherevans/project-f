@@ -78,7 +78,8 @@ func initializeMap(a *State, m *resources.Map) {
 	for stringEntityId, entity := range m.Entities {
 		entityId := EntityId(stringEntityId)
 		location := adjustedLocation(entity.X, entity.Y)
-		switch entity.Type {
+		entityType := entity.Type
+		switch entityType {
 		case "player":
 			a.player = &Player{
 				AnimatedMoveableEntity: AnimatedMoveableEntity{
@@ -184,8 +185,13 @@ func initializeMap(a *State, m *resources.Map) {
 				Reference: ref,
 			}
 			log.Info().Msgf("stairs added: %s (%s) -> %s", ref, location, dest)
+		case "torch":
+			a.lights.Add(&Light{
+				MapLocation: location,
+			})
+			log.Info().Msgf("torch added: %s", location)
 		default:
-			log.Warn().Msgf("Unknown entity type: %s", entity.Type)
+			log.Warn().Msgf("Unknown entity type: %s", entityType)
 		}
 	}
 }

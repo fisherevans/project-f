@@ -20,11 +20,15 @@ func (a *AnimatedSprite) ApplyPingPong() *AnimatedSprite {
 }
 
 func FromTilesheetRow(atlas *resources.Atlas, tilesheet string, row int, framesPerSecond float64) *AnimatedSprite {
+	ts := resources.GetTilesheet(tilesheet)
+	return FromTilesheetRowPartial(atlas, tilesheet, row, 1, ts.Columns, framesPerSecond)
+}
+
+func FromTilesheetRowPartial(atlas *resources.Atlas, tilesheet string, row, colFrom, colTo int, framesPerSecond float64) *AnimatedSprite {
 	animated := &AnimatedSprite{
 		framesPerSecond: framesPerSecond,
 	}
-	ts := resources.GetTilesheet(tilesheet)
-	for col := 1; col <= ts.Columns; col++ {
+	for col := colFrom; col <= colTo; col++ {
 		animated.frames = append(animated.frames, atlas.GetTilesheetSprite(tilesheet, col, row))
 	}
 	return animated

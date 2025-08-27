@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -59,15 +60,19 @@ type State struct {
 	occupiedLocations    map[MapLocation]EntityId
 	movementRestrictions map[MapLocation]MovementRestriction
 	teleports            map[TeleportReference]Teleport
-
-	actions   *ActionQueue
-	chatters  *ChatterSystem
-	dialogues *DialogueSystem
-	overlays  *OverlaySystem
+	lights               *LightSystem
+	actions              *ActionQueue
+	chatters             *ChatterSystem
+	dialogues            *DialogueSystem
+	overlays             *OverlaySystem
 
 	blockInput bool
 
-	batch *pixel.Batch
+	underBatch *pixel.Batch
+	overBatch  *pixel.Batch
+
+	lightBatch  *pixel.Batch
+	lightCanvas *opengl.Canvas
 }
 
 func New(mapName string, save *rpg.GameSave) game.State {
@@ -81,10 +86,17 @@ func New(mapName string, save *rpg.GameSave) game.State {
 		actions:              NewActionQueue(),
 		chatters:             NewChatterSystem(),
 		dialogues:            NewDialogueSystem(),
+		lights:               NewLightSystem(),
 		overlays:             NewOverlaySystem(),
 
-		batch: atlas.NewBatch(),
+		underBatch: atlas.NewBatch(),
+		lightBatch: atlas.NewBatch(),
+		overBatch:  atlas.NewBatch(),
 	}
+
+	a.lightCanvas = opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight))
+	//a.lightCanvas.SetFragmentShader(lightShader)
+
 	initializeMap(a, m)
 	a.animech = save.NewDeployment()
 	return a
@@ -96,8 +108,10 @@ func (s *State) ClearColor() color.Color {
 	return clearColor
 }
 
-func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
-	s.batch.Clear()
+func (s *State) OnTick(ctx *game.Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+	s.underBatch.Clear()
+	s.lightBatch.Clear()
+	s.overBatch.Clear()
 
 	ctx.DebugTL("delta: %.3f", timeDelta)
 
@@ -117,25 +131,36 @@ func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixe
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(ctx, s, targetBounds)
 
 	for _, thisRenderLayer := range s.baseRenderLayers {
-		thisRenderLayer.Render(s.batch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.underBatch, cameraMatrix, renderBounds)
 	}
 
 	for _, entity := range s.locationSortedEntities() {
 		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-		entity.Render(s.batch, cameraMatrix.Moved(renderLocation))
+		entity.Render(s.underBatch, cameraMatrix.Moved(renderLocation))
 	}
 
 	for _, thisRenderLayer := range s.overlayRenderLayers {
-		thisRenderLayer.Render(s.batch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.underBatch, cameraMatrix, renderBounds)
 	}
 
-	s.chatters.OnTick(ctx, s, s.batch, cameraMatrix, renderBounds, timeDelta)
-	s.overlays.OnTick(ctx, s, s.batch, timeDelta)
-	s.dialogues.OnTick(ctx, s, s.batch, renderBounds, timeDelta)
+	s.underBatch.Draw(target)
+
+	s.lightCanvas.Clear(colors.Blurple3.RGBA)
+	s.lights.Render(s.lightBatch, cameraMatrix)
+	s.lightBatch.Draw(s.lightCanvas)
+	if !ctx.DebugToggles.F1().Pressed() {
+		target.SetComposeMethod(pixel.ComposeMultiply)
+	}
+	s.lightCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	target.SetComposeMethod(pixel.ComposeOver)
+
+	s.chatters.OnTick(ctx, s, s.overBatch, cameraMatrix, renderBounds, timeDelta)
+	s.overlays.OnTick(ctx, s, s.overBatch, timeDelta)
+	s.dialogues.OnTick(ctx, s, s.overBatch, renderBounds, timeDelta)
+
+	s.overBatch.Draw(target)
 
 	ctx.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
-
-	s.batch.Draw(target)
 
 	if ctx.Controls.ButtonStart().JustPressed() {
 		ctx.SwapActiveState(menu.New(s))

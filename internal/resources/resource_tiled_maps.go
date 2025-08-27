@@ -1,12 +1,14 @@
 package resources
 
 import (
-	"fisherevans.com/project/f/assets"
 	"fmt"
-	"github.com/lafriks/go-tiled"
-	"github.com/rs/zerolog/log"
 	"os"
 	"slices"
+
+	"github.com/lafriks/go-tiled"
+	"github.com/rs/zerolog/log"
+
+	"fisherevans.com/project/f/assets"
 )
 
 func loadTiledMap(path string, resourceName string, _ []byte) error {
@@ -73,6 +75,7 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 				continue
 			}
 			gameMap.Entities[fmt.Sprintf("tiled-%d", object.ID)] = &Entity{
+				ID:       int(object.ID),
 				X:        int((object.X + float64(tiledMap.TileWidth)/2) / float64(tiledMap.TileWidth)),
 				Y:        tiledMap.Height - int((object.Y-float64(tiledMap.TileHeight)/2)/float64(tiledMap.TileHeight)),
 				Type:     entityType,

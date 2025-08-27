@@ -59,7 +59,7 @@ func (t TeleportTile) CanDashOver() bool {
 	return true
 }
 
-const teleportFadeTime = 0.5
+const teleportFadeTime = 0.33
 
 func (t TeleportTile) OnEntryBegin(s *State, id EntityId) {
 	player, isPlayer := s.requirePlayerEntity(id)
@@ -81,7 +81,7 @@ func (t TeleportTile) OnEntryBegin(s *State, id EntityId) {
 		colors.WithAlpha(black, 0),
 		colors.WithAlpha(black, 1),
 		teleportFadeTime,
-		false,
+		true,
 		nil,
 	)
 	fadeIn := NewFadeOverlay(
@@ -98,25 +98,22 @@ func (t TeleportTile) OnEntryBegin(s *State, id EntityId) {
 		}),
 		NewSleepAction(teleportFadeTime),
 		NewWaitForAction(func() bool {
-			return !player.IsMoving()
+			return fadeOut.IsComplete && !player.IsMoving()
 		}),
 		NewSimpleAction(func(ctx *game.Context, s *State) {
-			fadeOut.IsComplete = true
 			s.overlays.Add(fadeIn)
 			player.TeleportTo(s, destination.Location)
 			if destination.ExitDirection != input.NotPressed {
 				player.FacingDirection = destination.ExitDirection
 				player.TriggerMovement(s, player.GetFacingLocation(), MoveStateWalking)
 			}
+			s.blockInput = false
 		}),
 		NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
 			return NewFollowCamera(player.EntityId, player.RenderMapLocation(), EntityCameraSpeedPlayerDefault)
 		}),
 		NewWaitForAction(func() bool {
 			return fadeIn.IsComplete
-		}),
-		NewSimpleAction(func(ctx *game.Context, s *State) {
-			s.blockInput = false
 		}),
 	))
 }

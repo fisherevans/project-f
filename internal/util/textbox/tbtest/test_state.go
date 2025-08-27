@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
@@ -55,7 +56,7 @@ var (
 	content = tb.NewComplexContent("Hello, world! How are you doing today?")
 )
 
-func (s *State) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(ctx *game.Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 
 	if ctx.Controls.DPad().DirectionJustPressed(input.Up) {
 		s.expand++

@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -61,6 +62,7 @@ type Tile struct {
 }
 
 type Entity struct {
+	ID       int            `json:"id"`
 	X        int            `json:"x"`
 	Y        int            `json:"y"`
 	Type     string         `json:"type"`

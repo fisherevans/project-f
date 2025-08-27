@@ -1,13 +1,16 @@
 package state_selector
 
 import (
+	"fmt"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/gopxl/pixel/v2/ext/text"
+	"golang.org/x/image/font/basicfont"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
-	"fmt"
-	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/text"
-	"golang.org/x/image/font/basicfont"
 )
 
 type Destination struct {
@@ -29,7 +32,7 @@ func New(destinations ...Destination) game.State {
 var titleDrawer = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
 var optionDrawer = text.New(pixel.ZV, resources.CreateFont(resources.FontNameM5x7).Atlas)
 
-func (s *Selector) OnTick(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+func (s *Selector) OnTick(ctx *game.Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	switch ctx.Controls.DPad().JustPressedDirection() {
 	case input.Up:
 		s.selected--

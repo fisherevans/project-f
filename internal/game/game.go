@@ -26,7 +26,7 @@ const (
 
 type State interface {
 	ClearColor() color.Color
-	OnTick(ctx *Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64)
+	OnTick(ctx *Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64)
 }
 
 type BaseState struct{}
