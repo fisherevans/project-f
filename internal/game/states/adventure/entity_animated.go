@@ -1,12 +1,14 @@
 package adventure
 
 import (
+	"image/color"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"github.com/gopxl/pixel/v2"
-	"image/color"
 )
 
 var (
@@ -16,6 +18,7 @@ var (
 type AnimatedMoveableEntity struct {
 	MoveableEntity
 	Animations map[MoveState]map[input.Direction]*anim.AnimatedSprite
+	Lights     map[MoveState]*Light
 	ColorMask  color.Color
 
 	lastUpdateDirection input.Direction
@@ -34,6 +37,14 @@ func (a *AnimatedMoveableEntity) currentAnimation() *anim.AnimatedSprite {
 	return animation
 }
 
+func (a *AnimatedMoveableEntity) currentLight() *Light {
+	if a.Lights == nil {
+		return nil
+	}
+	l, _ := a.Lights[a.MoveState]
+	return l
+}
+
 func (a *AnimatedMoveableEntity) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	animation := a.currentAnimation()
 	if animation == nil {
@@ -49,9 +60,13 @@ func (a *AnimatedMoveableEntity) Update(ctx *game.Context, adv *State, timeDelta
 	} else {
 		animation.Update(timeDelta)
 	}
+	light := a.currentLight()
+	if light != nil {
+		light.Update(timeDelta)
+	}
 }
 
-func (a *AnimatedMoveableEntity) Render(target pixel.Target, matrix pixel.Matrix) {
+func (a *AnimatedMoveableEntity) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 	var sprite pixelutil.BoundedDrawable
 	animation := a.currentAnimation()
 	if animation == nil {
@@ -60,6 +75,14 @@ func (a *AnimatedMoveableEntity) Render(target pixel.Target, matrix pixel.Matrix
 		sprite = a.currentAnimation().Sprite()
 	}
 	sprite.DrawColorMask(target, matrix, a.ColorMask)
+}
+
+func (a *AnimatedMoveableEntity) RenderLight(target pixel.Target, matrix pixel.Matrix) {
+	l := a.currentLight()
+	if l == nil {
+		return
+	}
+	l.Render(target, matrix)
 }
 
 func (a *AnimatedMoveableEntity) RenderMapLocation() pixel.Vec {

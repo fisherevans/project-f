@@ -1,58 +1,106 @@
 package adventure
 
 import (
-	"github.com/gopxl/pixel/v2"
+	"math"
+	"math/rand"
 
-	"fisherevans.com/project/f/internal/resources"
+	"github.com/gopxl/pixel/v2"
 )
 
 var light = atlas.GetSprite("lights/amber_linear")
 
-var lightShader = `
-#version 330 core
-uniform sampler2D u_texture; // Pixel injects the canvas' own texture (lights)
-uniform sampler2D u_scene;   // we'll bind scene.Texture() here
-
-in vec2  vTexCoords;
-out vec4 fragColor;
-
-void main() {
-    vec4 L = texture(u_texture, vTexCoords);  // lights canvas
-    vec4 S = texture(u_scene,   vTexCoords);  // scene canvas
-
-    // If your lights are colored with alpha as intensity:
-    vec3 lit = S.rgb * mix(vec3(1.0), L.rgb, L.a);  // darken by color; no light => 1.0
-    fragColor = vec4(lit, S.a);
-}
-`
-
-type LightSystem struct {
-	lights []*Light
+type LightRenderDetails struct {
+	SizeScale     float64
+	ColorMask     pixel.RGBA
+	PositionDelta pixel.Vec
 }
 
-func NewLightSystem() *LightSystem {
-	return &LightSystem{}
+type LightModifier interface {
+	Update(timeDelta float64)
+	Apply(*LightRenderDetails)
 }
 
-func (s *LightSystem) Add(light *Light) {
-	s.lights = append(s.lights, light)
+type LightModifierJitterUpdate struct {
+	FrequencySeconds   float64
+	FrequencyVariation float64
+
+	secondsLeft float64
 }
 
-func (s *LightSystem) Render(target pixel.Target, matrix pixel.Matrix) {
-	for _, l := range s.lights {
-		renderLocation := l.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-		l.Render(target, matrix.Moved(renderLocation))
+func (f *LightModifierJitterUpdate) Update(timeDelta float64) bool {
+	f.secondsLeft -= timeDelta
+	if f.secondsLeft <= 0 {
+		f.secondsLeft = f.FrequencyVariation/0.5 - rand.Float64()*f.FrequencyVariation + f.FrequencySeconds
+		return true
+	}
+	return false
+}
+
+type LightModifierFlicker struct {
+	Jitter              *LightModifierJitterUpdate
+	SizeVariation       float64
+	BrightnessVariation float64
+
+	// todo parameterize
+	sizeMultiplier       float64
+	brightnessMultiplier float64
+}
+
+func (l *LightModifierFlicker) Update(timeDelta float64) {
+	if l.Jitter.Update(timeDelta) {
+		l.sizeMultiplier = 1.0 - rand.Float64()*l.SizeVariation
+		l.brightnessMultiplier = 1.0 - rand.Float64()*l.BrightnessVariation
 	}
 }
 
+func (l *LightModifierFlicker) Apply(details *LightRenderDetails) {
+	details.SizeScale *= l.sizeMultiplier
+	details.ColorMask = details.ColorMask.Scaled(l.brightnessMultiplier)
+}
+
+type LightModifierPulse struct {
+	PeriodSeconds       float64
+	SizeIntensity       float64
+	BrightnessIntensity float64
+
+	elapsedSeconds       float64
+	sizeMultiplier       float64
+	brightnessMultiplier float64
+}
+
+func (l *LightModifierPulse) Update(timeDelta float64) {
+	l.elapsedSeconds = math.Remainder(l.elapsedSeconds+timeDelta, math.Pi)
+	scale := (math.Sin(l.elapsedSeconds*l.PeriodSeconds*math.Pi*2) + 1.0) / 2.0
+	l.sizeMultiplier = 1.0 - scale*l.SizeIntensity
+	l.brightnessMultiplier = 1.0 - scale*l.BrightnessIntensity
+}
+
+func (l *LightModifierPulse) Apply(details *LightRenderDetails) {
+	details.SizeScale *= l.sizeMultiplier
+	details.ColorMask = details.ColorMask.Scaled(l.brightnessMultiplier)
+}
+
 type Light struct {
-	MapLocation
+	RenderDetails LightRenderDetails
+	Modifiers     []LightModifier
+}
+
+func (l *Light) Update(timeDelta float64) {
+	for _, m := range l.Modifiers {
+		m.Update(timeDelta)
+	}
 }
 
 func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
-	light.Draw(target, pixel.IM.Scaled(pixel.ZV, 2).Chained(matrix))
-}
-
-func (l *Light) RenderMapLocation() pixel.Vec {
-	return pixel.V(float64(l.X), float64(l.Y))
+	renderDetails := l.RenderDetails
+	for _, m := range l.Modifiers {
+		m.Apply(&renderDetails)
+	}
+	light.DrawColorMask(
+		target,
+		pixel.IM.
+			Moved(renderDetails.PositionDelta).
+			Scaled(pixel.ZV, renderDetails.SizeScale).
+			Chained(matrix),
+		renderDetails.ColorMask)
 }

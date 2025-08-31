@@ -1,10 +1,12 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/input"
 	"fmt"
-	"github.com/gopxl/pixel/v2"
 	"math"
+
+	"github.com/gopxl/pixel/v2"
+
+	"fisherevans.com/project/f/internal/game/input"
 )
 
 type MapLocation struct {

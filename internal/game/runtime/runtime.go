@@ -1,20 +1,23 @@
 package runtime
 
 import (
-	game "fisherevans.com/project/f/internal/game"
+	"image/color"
+	"math"
+	"os"
+	"runtime"
+	"time"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
+
+	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/states/adventure"
 	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/badges/btest"
 	"fisherevans.com/project/f/internal/util/textbox/tbtest"
-	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/backends/opengl"
-	"image/color"
-	"math"
-	"os"
-	"runtime"
-	"time"
 )
 
 func initialState(window *opengl.Window) game.State {
@@ -64,7 +67,7 @@ func Run() {
 	ctx := game.NewContext(initialState(window), "1")
 
 	// Create the fixed-size canvas
-	canvas := opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight))
+	canvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)
 	canvas.SetSmooth(false)
 
 	last := time.Now()
@@ -86,6 +89,12 @@ func Run() {
 
 		window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
 		canvas.Clear(ctx.GetActiveState().ClearColor())
+
+		if s := ctx.GetCustomShader(); s != nil {
+			s.Apply(canvas, deltaTime)
+		} else {
+			canvas.Reset()
+		}
 
 		// Calculate scale and offset for whole-number scaling
 		windowWidth, windowHeight := window.Bounds().Size().XY()

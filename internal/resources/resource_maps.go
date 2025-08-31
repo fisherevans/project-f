@@ -62,11 +62,11 @@ type Tile struct {
 }
 
 type Entity struct {
-	ID       int            `json:"id"`
-	X        int            `json:"x"`
-	Y        int            `json:"y"`
-	Type     string         `json:"type"`
-	Metadata map[string]any `json:"metadata"`
+	ID         int            `json:"id"`
+	X          int            `json:"x"`
+	Y          int            `json:"y"`
+	Properties map[string]any `json:"properties"`
+	SpriteId   TilesheetSpriteId
 }
 
 func (e *Entity) Copy() *Entity {
@@ -83,10 +83,10 @@ func (e *Entity) Copy() *Entity {
 }
 
 func (e *Entity) GetStringMetadata(key, defaultValue string) string {
-	if e.Metadata == nil {
+	if e.Properties == nil {
 		return defaultValue
 	}
-	value, ok := e.Metadata[key]
+	value, ok := e.Properties[key]
 	if !ok {
 		return defaultValue
 	}

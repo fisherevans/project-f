@@ -2,12 +2,15 @@ package game
 
 import (
 	"image/color"
+	"math"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/shaders"
 )
 
 const (
@@ -26,7 +29,7 @@ const (
 
 type State interface {
 	ClearColor() color.Color
-	OnTick(ctx *Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64)
+	OnTick(ctx *Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64)
 }
 
 type BaseState struct{}
@@ -38,7 +41,8 @@ func (s *BaseState) ClearColor() color.Color {
 type Context struct {
 	DebugInfo
 
-	activeState State
+	activeState  State
+	customShader AppliedShader
 
 	CanvasScale         float64
 	CanvasMousePosition pixel.Vec
@@ -87,4 +91,42 @@ func (c *Context) WithNoControls() *Context {
 	without := *c
 	without.Controls = input.NewControls()
 	return &without
+}
+
+func (c *Context) SetCustomShader(shader AppliedShader) {
+	c.customShader = shader
+}
+
+func (c *Context) GetCustomShader() AppliedShader {
+	return c.customShader
+}
+
+func (c *Context) RemoveCustomShader() {
+	c.customShader = nil
+}
+
+type AppliedShader interface {
+	Apply(shaderOptions shaders.Options, timeDelta float64)
+}
+
+type SwirlShader struct {
+	durationSeconds float64
+	elapsedSeconds  float64
+}
+
+func NewSwirlShader(durationSeconds float64) *SwirlShader {
+	return &SwirlShader{
+		durationSeconds: durationSeconds,
+	}
+}
+
+func (s *SwirlShader) Apply(shader shaders.Options, timeDelta float64) {
+	s.elapsedSeconds += timeDelta
+	shader.SetSwirlShader(
+		mgl32.Vec2{0.5, 0.5}, // center
+		30,                   // radius (full safe radius)
+		20,                   // swirl radians
+		0.6,                  // falloff
+		float32(math.Min(1, s.elapsedSeconds/s.durationSeconds)), // progress
+	)
 }

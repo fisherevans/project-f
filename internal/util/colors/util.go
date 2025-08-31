@@ -1,7 +1,6 @@
 package colors
 
 import (
-	"hash/fnv"
 	"math"
 	"strconv"
 	"strings"
@@ -105,7 +104,7 @@ func toHexByte(r float64) string {
 	return strconv.FormatInt(int64(r*255), 16)
 }
 
-func HSLToRGB(h, s, l float64) (float64, float64, float64) {
+func HSLToRGBA(h, s, l float64) pixel.RGBA {
 	c := (1 - math.Abs(2*l-1)) * s
 	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
 	m := l - c/2
@@ -128,19 +127,7 @@ func HSLToRGB(h, s, l float64) (float64, float64, float64) {
 		r, g, b = 0, 0, 0 // Fallback for unexpected input
 	}
 
-	return r + m, g + m, b + m
-}
-
-// StringToColor generates a stable color from a string with a fixed saturation and brightness.
-func StringToColor(input string, saturation, lightness float64) pixel.RGBA {
-	hasher := fnv.New32a()
-	hasher.Write([]byte(input))
-	hash := hasher.Sum32()
-
-	// Map the hash to a hue value (0-360 degrees)
-	hue := float64(hash % 360)
-	r, g, b := HSLToRGB(hue, saturation, lightness)
-	return pixel.RGB(r, g, b)
+	return pixel.RGB(r+m, g+m, b+m)
 }
 
 func ScaleColor(c pixel.RGBA, v float64) pixel.RGBA {

@@ -6,7 +6,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/util/colors"
 )
 
 type MovementRestriction interface {
@@ -76,20 +75,17 @@ func (t TeleportTile) OnEntryBegin(s *State, id EntityId) {
 		log.Warn().Msgf("teleport destination not found: %s", source.Destination)
 		return
 	}
-	black := pixel.RGBA{}
 	fadeOut := NewFadeOverlay(
-		colors.WithAlpha(black, 0),
-		colors.WithAlpha(black, 1),
-		teleportFadeTime,
-		true,
-		nil,
+		pixel.RGBA{A: 0},
+		pixel.RGBA{A: 1},
+		1,
+		NewBaseOverlay(teleportFadeTime, false, nil),
 	)
 	fadeIn := NewFadeOverlay(
-		colors.WithAlpha(black, 1),
-		colors.WithAlpha(black, 0),
-		teleportFadeTime,
-		true,
-		nil,
+		pixel.RGBA{A: 1},
+		pixel.RGBA{A: 0},
+		1,
+		NewBaseOverlay(teleportFadeTime, false, nil),
 	)
 	s.actions.Add(NewSerialActions(
 		NewSimpleAction(func(ctx *game.Context, s *State) {
@@ -98,19 +94,21 @@ func (t TeleportTile) OnEntryBegin(s *State, id EntityId) {
 		}),
 		NewSleepAction(teleportFadeTime),
 		NewWaitForAction(func() bool {
-			return fadeOut.IsComplete && !player.IsMoving()
+			return !player.IsMoving()
 		}),
 		NewSimpleAction(func(ctx *game.Context, s *State) {
+			fadeOut.IsComplete = true
 			s.overlays.Add(fadeIn)
 			player.TeleportTo(s, destination.Location)
 			if destination.ExitDirection != input.NotPressed {
 				player.FacingDirection = destination.ExitDirection
+				player.intentDirection = destination.ExitDirection
 				player.TriggerMovement(s, player.GetFacingLocation(), MoveStateWalking)
 			}
 			s.blockInput = false
 		}),
 		NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
-			return NewFollowCamera(player.EntityId, player.RenderMapLocation(), EntityCameraSpeedPlayerDefault)
+			return NewFollowCamera(player.Id, player.RenderMapLocation(), EntityCameraSpeedPlayerDefault)
 		}),
 		NewWaitForAction(func() bool {
 			return fadeIn.IsComplete

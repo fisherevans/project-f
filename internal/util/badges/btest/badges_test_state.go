@@ -2,10 +2,10 @@ package btest
 
 import (
 	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -29,7 +29,7 @@ func (s state) ClearColor() color.Color {
 	return color.Black
 }
 
-func (s state) OnTick(ctx *game.Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s state) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 	m := pixel.IM.Moved(gfx.IVec(game.GameWidth*0.75, game.GameHeight-10))
 	for id, st := range rpg.AllSkillTypes {

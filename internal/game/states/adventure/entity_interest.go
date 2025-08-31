@@ -1,8 +1,9 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
+
+	"fisherevans.com/project/f/internal/game"
 )
 
 type EntityInterest struct {
@@ -10,7 +11,7 @@ type EntityInterest struct {
 	topic string
 }
 
-func (e *EntityInterest) Render(target pixel.Target, matrix pixel.Matrix) {
+func (e *EntityInterest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 
 }
 

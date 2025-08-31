@@ -17,10 +17,31 @@ type Entity interface {
 	Move(adv *State, timeDelta float64) float64
 	Update(ctx *game.Context, adv *State, timeDelta float64)
 	RenderMapLocation() pixel.Vec
+	IsPassable() bool
 	Location() MapLocation
-	Render(target pixel.Target, matrix pixel.Matrix)
+	RenderScene(target pixel.Target, matrix pixel.Matrix)
+	RenderLight(target pixel.Target, matrix pixel.Matrix)
 	GetEntityId() EntityId
 	Interact(ctx *game.Context, adv *State, source Entity)
+	GetRenderZPriority() int
+}
+
+type BaseEntity struct {
+	Id              EntityId
+	Passable        bool
+	RenderZPriority int
+}
+
+func (b *BaseEntity) IsPassable() bool {
+	return b.Passable
+}
+
+func (b *BaseEntity) GetEntityId() EntityId {
+	return b.Id
+}
+
+func (b *BaseEntity) GetRenderZPriority() int {
+	return b.RenderZPriority
 }
 
 func (s *State) AddEntity(e Entity) bool {
@@ -29,8 +50,7 @@ func (s *State) AddEntity(e Entity) bool {
 		log.Fatal().Str("entityId", string(e.GetEntityId())).Msg("failed to add entity due to duplicate id")
 		return false
 	}
-	worked := s.attemptToOccupy(e.Location(), e.GetEntityId())
-	if !worked {
+	if !e.IsPassable() && !s.attemptToOccupy(e.Location(), e.GetEntityId()) {
 		log.Fatal().Str("entityId", string(e.GetEntityId())).Str("location", e.Location().String()).Msg("failed to add entity due to location conflict")
 		return false
 	}

@@ -70,7 +70,7 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		doDash := false
 		for {
 			movementTile, movementExists := adv.movementRestrictions[interactLocation.Location]
-			if !movementExists || movementTile.EntryAllowed(adv, p.EntityId) {
+			if !movementExists || movementTile.EntryAllowed(adv, p.Id) {
 				if doDash {
 					p.TriggerMovement(adv, interactLocation.Location, MoveStateDashing)
 				}

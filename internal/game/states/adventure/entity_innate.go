@@ -1,12 +1,13 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
+
+	"fisherevans.com/project/f/internal/game"
 )
 
 type InnateEntity struct {
-	EntityId
+	BaseEntity
 	MapLocation
 }
 
@@ -25,10 +26,10 @@ func (i *InnateEntity) RenderMapLocation() pixel.Vec {
 	return pixel.V(float64(i.X), float64(i.Y))
 }
 
-func (i *InnateEntity) Sprite() *pixel.Sprite {
-	return nil
+func (i *InnateEntity) Interact(ctx *game.Context, adv *State, source Entity) {
+
 }
 
-func (i *InnateEntity) Interact(ctx *game.Context, adv *State, source Entity) {
+func (i *InnateEntity) RenderLight(target pixel.Target, matrix pixel.Matrix) {
 
 }

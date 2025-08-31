@@ -5,9 +5,9 @@ import (
 	"math"
 
 	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
@@ -51,7 +51,7 @@ func (s *State) ClearColor() color.Color {
 	return colors.Black.RGBA
 }
 
-func (s *State) OnTick(ctx *game.Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	if s.background != nil {
 		s.background.OnTick(ctx.WithNoControls(), target, targetBounds, 0)
 	}

@@ -1,9 +1,10 @@
 package adventure
 
 import (
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/util"
-	"github.com/gopxl/pixel/v2"
 )
 
 type EntityChest struct {
@@ -12,7 +13,7 @@ type EntityChest struct {
 	item    string
 }
 
-func (e *EntityChest) Render(target pixel.Target, matrix pixel.Matrix) {
+func (e *EntityChest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 
 }
 

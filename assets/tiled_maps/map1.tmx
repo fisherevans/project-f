@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="41">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="76">
  <tileset firstgid="1" source="snowhex_base.tsx"/>
  <layer id="1" name="base" width="100" height="100">
   <data encoding="csv">
@@ -389,12 +389,6 @@
     <property name="type" value="combat"/>
    </properties>
   </object>
-  <object id="18" gid="2414" x="560.997" y="736.377" width="16" height="16">
-   <properties>
-    <property name="topic" value="knight"/>
-    <property name="type" value="interest"/>
-   </properties>
-  </object>
   <object id="20" gid="5495" x="128.334" y="208.03" width="16" height="16">
    <properties>
     <property name="destination" value="x_out"/>
@@ -459,33 +453,37 @@
     <property name="type" value="stairs"/>
    </properties>
   </object>
-  <object id="36" gid="4051" x="688.5" y="783.25" width="16" height="16">
-   <properties>
-    <property name="type" value="torch"/>
-   </properties>
-  </object>
-  <object id="37" gid="4051" x="496.25" y="752" width="16" height="16">
-   <properties>
-    <property name="type" value="torch"/>
-   </properties>
-  </object>
-  <object id="38" gid="4511" x="592.25" y="767.75" width="16" height="16">
-   <properties>
-    <property name="type" value="torch"/>
-   </properties>
-  </object>
-  <object id="39" gid="4051" x="702.5" y="977.25" width="16" height="16">
-   <properties>
-    <property name="type" value="torch"/>
-   </properties>
-  </object>
-  <object id="40" gid="4051" x="736.5" y="976.75" width="16" height="16">
-   <properties>
-    <property name="type" value="torch"/>
-   </properties>
-  </object>
+  <object id="41" gid="5357" x="575.698" y="896.321" width="16" height="16"/>
+  <object id="42" gid="5357" x="576.189" y="895.338" width="16" height="16"/>
+  <object id="46" gid="4503" x="562.432" y="766.119" width="16" height="16"/>
+  <object id="47" gid="4503" x="561.449" y="877.159" width="16" height="16"/>
+  <object id="49" gid="4503" x="594.86" y="1021.12" width="16" height="16"/>
+  <object id="50" gid="4511" x="784.021" y="1022.1" width="16" height="16"/>
+  <object id="51" gid="4059" x="768.298" y="658.027" width="16" height="16"/>
+  <object id="52" gid="4059" x="817.431" y="656.062" width="16" height="16"/>
+  <object id="53" gid="4503" x="755.032" y="526.351" width="16" height="16"/>
+  <object id="54" gid="4511" x="831.68" y="525.86" width="16" height="16"/>
+  <object id="55" gid="4059" x="862.633" y="830.975" width="16" height="16"/>
+  <object id="56" gid="4059" x="913.24" y="832.94" width="16" height="16"/>
+  <object id="57" gid="4059" x="896.044" y="766.611" width="16" height="16"/>
+  <object id="58" gid="4059" x="863.125" y="896.812" width="16" height="16"/>
+  <object id="59" gid="4059" x="927.98" y="899.76" width="16" height="16"/>
+  <object id="60" gid="4059" x="1007.58" y="897.795" width="16" height="16"/>
+  <object id="61" gid="4511" x="1056.71" y="925.801" width="16" height="16"/>
+  <object id="62" gid="4511" x="287.779" y="142.133" width="16" height="16"/>
+  <object id="63" gid="4503" x="95.1789" y="142.133" width="16" height="16"/>
+  <object id="64" gid="5357" x="142.346" y="143.115" width="16" height="16"/>
+  <object id="65" gid="4059" x="639.61" y="785.885" width="16" height="16"/>
+  <object id="66" gid="4059" x="735.432" y="784.809" width="16" height="16"/>
+  <object id="69" gid="4059" x="432.891" y="750.894" width="16" height="16"/>
+  <object id="70" gid="4059" x="496.953" y="751.432" width="16" height="16"/>
+  <object id="71" gid="2411" x="559.399" y="735.821" width="16" height="16"/>
+  <object id="72" gid="2411" x="723.589" y="881.17" width="16" height="16"/>
+  <object id="73" gid="4059" x="705.286" y="976.065" width="16" height="16"/>
+  <object id="74" gid="4059" x="737.047" y="977.68" width="16" height="16"/>
+  <object id="75" gid="4511" x="592.237" y="768.809" width="16" height="16"/>
  </objectgroup>
- <layer id="4" name="collision" width="100" height="100">
+ <layer id="4" name="collision" width="100" height="100" visible="0">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

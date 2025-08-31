@@ -5,11 +5,14 @@ import (
 	"math"
 	"sort"
 
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"golang.org/x/image/colornames"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/states/menu"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -60,7 +63,6 @@ type State struct {
 	occupiedLocations    map[MapLocation]EntityId
 	movementRestrictions map[MapLocation]MovementRestriction
 	teleports            map[TeleportReference]Teleport
-	lights               *LightSystem
 	actions              *ActionQueue
 	chatters             *ChatterSystem
 	dialogues            *DialogueSystem
@@ -68,11 +70,15 @@ type State struct {
 
 	blockInput bool
 
-	underBatch *pixel.Batch
-	overBatch  *pixel.Batch
+	sceneBatch  *pixel.Batch
+	sceneCanvas *opengl.Canvas
 
-	lightBatch  *pixel.Batch
-	lightCanvas *opengl.Canvas
+	lightMapBatch  *pixel.Batch
+	lightMapCanvas *opengl.Canvas
+
+	litSceneCanvas *opengl.Canvas
+
+	hudBatch *pixel.Batch
 }
 
 func New(mapName string, save *rpg.GameSave) game.State {
@@ -86,16 +92,18 @@ func New(mapName string, save *rpg.GameSave) game.State {
 		actions:              NewActionQueue(),
 		chatters:             NewChatterSystem(),
 		dialogues:            NewDialogueSystem(),
-		lights:               NewLightSystem(),
 		overlays:             NewOverlaySystem(),
 
-		underBatch: atlas.NewBatch(),
-		lightBatch: atlas.NewBatch(),
-		overBatch:  atlas.NewBatch(),
-	}
+		sceneBatch:  atlas.NewBatch(),
+		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
 
-	a.lightCanvas = opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight))
-	//a.lightCanvas.SetFragmentShader(lightShader)
+		lightMapBatch:  atlas.NewBatch(),
+		lightMapCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
+
+		litSceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
+
+		hudBatch: atlas.NewBatch(),
+	}
 
 	initializeMap(a, m)
 	a.animech = save.NewDeployment()
@@ -108,10 +116,21 @@ func (s *State) ClearColor() color.Color {
 	return clearColor
 }
 
-func (s *State) OnTick(ctx *game.Context, target *opengl.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	s.underBatch.Clear()
-	s.lightBatch.Clear()
-	s.overBatch.Clear()
+var (
+	f1 = mgl32.Vec2{8, 11}
+	f2 = mgl32.Vec2{15, 9}
+)
+
+func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+	s.sceneBatch.Clear()
+	s.sceneCanvas.Clear(colornames.Black)
+
+	s.lightMapBatch.Clear()
+	s.lightMapCanvas.Clear(colors.HSLToRGBA(260, 0.35, 0.25))
+
+	s.litSceneCanvas.Clear(colornames.Black)
+
+	s.hudBatch.Clear()
 
 	ctx.DebugTL("delta: %.3f", timeDelta)
 
@@ -131,34 +150,42 @@ func (s *State) OnTick(ctx *game.Context, target *opengl.Canvas, targetBounds pi
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(ctx, s, targetBounds)
 
 	for _, thisRenderLayer := range s.baseRenderLayers {
-		thisRenderLayer.Render(s.underBatch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
 	}
 
 	for _, entity := range s.locationSortedEntities() {
 		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-		entity.Render(s.underBatch, cameraMatrix.Moved(renderLocation))
+		entity.RenderScene(s.sceneBatch, cameraMatrix.Moved(renderLocation))
 	}
 
 	for _, thisRenderLayer := range s.overlayRenderLayers {
-		thisRenderLayer.Render(s.underBatch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
 	}
 
-	s.underBatch.Draw(target)
+	s.sceneBatch.Draw(s.sceneCanvas)
 
-	s.lightCanvas.Clear(colors.Blurple3.RGBA)
-	s.lights.Render(s.lightBatch, cameraMatrix)
-	s.lightBatch.Draw(s.lightCanvas)
-	if !ctx.DebugToggles.F1().Pressed() {
-		target.SetComposeMethod(pixel.ComposeMultiply)
+	for _, entity := range s.locationSortedEntities() {
+		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
+		entity.RenderLight(s.lightMapBatch, cameraMatrix.Moved(renderLocation))
 	}
-	s.lightCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-	target.SetComposeMethod(pixel.ComposeOver)
+	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
+	s.lightMapBatch.Draw(s.lightMapCanvas)
 
-	s.chatters.OnTick(ctx, s, s.overBatch, cameraMatrix, renderBounds, timeDelta)
-	s.overlays.OnTick(ctx, s, s.overBatch, timeDelta)
-	s.dialogues.OnTick(ctx, s, s.overBatch, renderBounds, timeDelta)
+	s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
+	s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+	s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
+	s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
 
-	s.overBatch.Draw(target)
+	s.litSceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+
+	if ctx.DebugToggles.F1().ToggleState() {
+		s.lightMapCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	}
+
+	s.chatters.OnTick(ctx, s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
+	s.overlays.OnTick(ctx, s, target, s.hudBatch, timeDelta)
+	s.dialogues.OnTick(ctx, s, s.hudBatch, renderBounds, timeDelta)
+	s.hudBatch.Draw(target)
 
 	ctx.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
 
@@ -173,11 +200,22 @@ func (s *State) locationSortedEntities() []Entity {
 		sortedEntities = append(sortedEntities, ent)
 	}
 	sort.Slice(sortedEntities, func(i, j int) bool {
-		iL, jL := sortedEntities[i].Location(), sortedEntities[j].Location()
-		if iL.Y != jL.Y {
-			return iL.Y < jL.Y
+		iZ, jZ := sortedEntities[i].GetRenderZPriority(), sortedEntities[j].GetRenderZPriority()
+		if iZ != jZ {
+			return iZ < jZ
 		}
-		return iL.X < jL.X
+		iL, jL := sortedEntities[i].RenderMapLocation(), sortedEntities[j].RenderMapLocation()
+		if iL.Y != jL.Y {
+			return iL.Y > jL.Y
+		}
+		iP, jP := sortedEntities[i].IsPassable(), sortedEntities[j].IsPassable()
+		if iP != jP {
+			return jP
+		}
+		if iL.X != jL.X {
+			return iL.X < jL.X
+		}
+		return i < j
 	})
 	return sortedEntities
 }

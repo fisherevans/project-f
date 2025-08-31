@@ -9,7 +9,9 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/pixelutil"
+	"fisherevans.com/project/f/internal/util/tiles"
 )
 
 var npcRandomSpriteId = resources.TilesheetSpriteId{
@@ -78,13 +80,33 @@ func initializeMap(a *State, m *resources.Map) {
 	for stringEntityId, entity := range m.Entities {
 		entityId := EntityId(stringEntityId)
 		location := adjustedLocation(entity.X, entity.Y)
-		entityType := entity.Type
+		entityType := entity.GetStringMetadata("type", "")
+		switch entity.SpriteId {
+		case tiles.Torch, tiles.TorchRight, tiles.TorchLeft:
+			entityType = "torch"
+		case tiles.RedCoin:
+			entityType = "red_coin"
+		}
 		switch entityType {
 		case "player":
+			normalPlayerLight := &Light{
+				RenderDetails: LightRenderDetails{
+					SizeScale: 1.5,
+					ColorMask: colors.HexColor("#888"),
+				},
+			}
+			dashPlayerLight := &Light{
+				RenderDetails: LightRenderDetails{
+					SizeScale: 1.5,
+					ColorMask: colors.HexColor("#88f"),
+				},
+			}
 			a.player = &Player{
 				AnimatedMoveableEntity: AnimatedMoveableEntity{
 					MoveableEntity: MoveableEntity{
-						EntityId:        entityId,
+						BaseEntity: BaseEntity{
+							Id: entityId,
+						},
 						CurrentLocation: location,
 						MoveSpeeds: map[MoveState]float64{
 							MoveStateWalking: characterSpeed,
@@ -98,6 +120,12 @@ func initializeMap(a *State, m *resources.Map) {
 						MoveStateRunning: anim.AshaRun(atlas),
 						MoveStateDashing: anim.Dash(atlas),
 					},
+					Lights: map[MoveState]*Light{
+						MoveStateIdle:    normalPlayerLight,
+						MoveStateWalking: normalPlayerLight,
+						MoveStateRunning: normalPlayerLight,
+						MoveStateDashing: dashPlayerLight,
+					},
 				},
 			}
 			a.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
@@ -106,7 +134,9 @@ func initializeMap(a *State, m *resources.Map) {
 			npc := &NPC{
 				AnimatedMoveableEntity: AnimatedMoveableEntity{
 					MoveableEntity: MoveableEntity{
-						EntityId:        entityId,
+						BaseEntity: BaseEntity{
+							Id: entityId,
+						},
 						CurrentLocation: location,
 						MoveSpeeds: map[MoveState]float64{
 							MoveStateWalking: 2,
@@ -137,7 +167,9 @@ func initializeMap(a *State, m *resources.Map) {
 		case "chest":
 			a.AddEntity(&EntityChest{
 				InnateEntity: InnateEntity{
-					EntityId:    entityId,
+					BaseEntity: BaseEntity{
+						Id: entityId,
+					},
 					MapLocation: location,
 				},
 				hasItem: true,
@@ -146,7 +178,9 @@ func initializeMap(a *State, m *resources.Map) {
 		case "interest":
 			a.AddEntity(&EntityInterest{
 				InnateEntity: InnateEntity{
-					EntityId:    entityId,
+					BaseEntity: BaseEntity{
+						Id: entityId,
+					},
 					MapLocation: location,
 				},
 				topic: entity.GetStringMetadata("topic", ""),
@@ -154,14 +188,18 @@ func initializeMap(a *State, m *resources.Map) {
 		case "combat":
 			a.AddEntity(&EntityCombatTest{
 				InnateEntity: InnateEntity{
-					EntityId:    entityId,
+					BaseEntity: BaseEntity{
+						Id: entityId,
+					},
 					MapLocation: location,
 				},
 			})
 		case "menu_test":
 			a.AddEntity(&EntityMenuTest{
 				InnateEntity: InnateEntity{
-					EntityId:    entityId,
+					BaseEntity: BaseEntity{
+						Id: entityId,
+					},
 					MapLocation: location,
 				},
 			})
@@ -186,12 +224,72 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			log.Info().Msgf("stairs added: %s (%s) -> %s", ref, location, dest)
 		case "torch":
-			a.lights.Add(&Light{
-				MapLocation: location,
-			})
+			t := &LightEntity{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id:              entityId,
+						RenderZPriority: 10,
+						Passable:        true,
+					},
+					MapLocation: location,
+				},
+				Light: Light{
+					RenderDetails: LightRenderDetails{
+						SizeScale: 2,
+						ColorMask: colors.HexColor("#db9a3d"),
+					},
+					Modifiers: []LightModifier{
+						&LightModifierFlicker{
+							Jitter: &LightModifierJitterUpdate{
+								FrequencySeconds:   0.15,
+								FrequencyVariation: 0.05,
+							},
+							SizeVariation:       0.1,
+							BrightnessVariation: 0.1,
+						},
+					},
+				},
+			}
+			switch entity.SpriteId {
+			case tiles.Torch:
+				t.Animation = anim.Torch(atlas)
+			case tiles.TorchRight:
+				t.Animation = anim.TorchRight(atlas)
+				t.Light.RenderDetails.PositionDelta = pixel.V(float64(resources.MapTileSize/2), 0)
+			case tiles.TorchLeft:
+				t.Animation = anim.TorchLeft(atlas)
+				t.Light.RenderDetails.PositionDelta = pixel.V(-float64(resources.MapTileSize/2), 0)
+			}
+			a.AddEntity(t)
 			log.Info().Msgf("torch added: %s", location)
+		case "red_coin":
+			t := &LightEntity{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id:       entityId,
+						Passable: true,
+					},
+					MapLocation: location,
+				},
+				Light: Light{
+					RenderDetails: LightRenderDetails{
+						SizeScale: 0.5,
+						ColorMask: colors.HexColor("#f00"),
+					},
+					Modifiers: []LightModifier{
+						&LightModifierPulse{
+							PeriodSeconds:       2,
+							SizeIntensity:       0.1,
+							BrightnessIntensity: 0.4,
+						},
+					},
+				},
+				Animation: anim.RedCoin(atlas),
+			}
+			a.AddEntity(t)
+			log.Info().Msgf("red coin added: %s", location)
 		default:
-			log.Warn().Msgf("Unknown entity type: %s", entityType)
+			log.Warn().Msgf("Unknown entity type: %s (sprite:%#v)", entityType, entity.SpriteId)
 		}
 	}
 }

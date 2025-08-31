@@ -16,11 +16,11 @@
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 3.29,
-            "selectedLayer": 1,
+            "scale": 4,
+            "selectedLayer": 3,
             "viewCenter": {
                 "x": 800,
-                "y": 798.1762917933131
+                "y": 798.5
             }
         },
         "snowhex_base.tsx": {

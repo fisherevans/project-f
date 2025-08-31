@@ -27,6 +27,23 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 		Entities: map[string]*Entity{},
 	}
 
+	loggedTiles := map[string]bool{}
+	tileToSpriteId := func(tileId uint32, tileset *tiled.Tileset) TilesheetSpriteId {
+		tileSetX := int(tileId) % tileset.Columns
+		tileSetY := int(tileId) / tileset.Columns
+		id := TilesheetSpriteId{
+			Tilesheet: tileset.Name,
+			Column:    tileSetX + 1,
+			Row:       tileSetY + 1,
+		}
+		tiledName := fmt.Sprintf("%s/%d", tileset.Name, tileId)
+		if !loggedTiles[tiledName] {
+			loggedTiles[tiledName] = true
+			log.Debug().Msgf("Tiled %#v // GID: %d", id, tileId)
+		}
+		return id
+	}
+
 	for _, tiledLayer := range tiledMap.Layers {
 		if !slices.Contains(MapLayerOrder, MapLayerName(tiledLayer.Name)) {
 			log.Warn().Msgf("Skipping unknown layer %s", tiledLayer.Name)
@@ -38,16 +55,10 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 			if tiledTile == nil || tiledTile.IsNil() || tiledTile.Tileset == nil {
 				continue
 			}
-			tileSetX := int(tiledTile.ID) % tiledTile.Tileset.Columns
-			tileSetY := int(tiledTile.ID) / tiledTile.Tileset.Columns
 			gameTile := &Tile{
-				X: tileId % tiledMap.Width,
-				Y: tiledMap.Height - (tileId / tiledMap.Width),
-				SpriteId: TilesheetSpriteId{
-					Tilesheet: tiledTile.Tileset.Name,
-					Column:    tileSetX + 1,
-					Row:       tileSetY + 1,
-				},
+				X:        tileId % tiledMap.Width,
+				Y:        tiledMap.Height - (tileId / tiledMap.Width),
+				SpriteId: tileToSpriteId(tiledTile.ID, tiledTile.Tileset),
 			}
 			gameLayer.Tiles = append(gameLayer.Tiles, gameTile)
 		}
@@ -61,26 +72,22 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 		}
 		for _, object := range objectGroup.Objects {
 			metadata := map[string]any{}
-			var entityType string
 			for _, property := range object.Properties {
-				if property.Name == "type" {
-					entityType = property.Value
-				} else {
-					metadata[property.Name] = property.Value // TODO non string types?
-				}
+				metadata[property.Name] = property.Value // TODO non string types?
 			}
 
-			if entityType == "" {
-				log.Warn().Msgf("Skipping entity with no type: %d", object.ID)
-				continue
+			e := &Entity{
+				ID:         int(object.ID),
+				X:          int((object.X + float64(tiledMap.TileWidth)/2) / float64(tiledMap.TileWidth)),
+				Y:          tiledMap.Height - int((object.Y-float64(tiledMap.TileHeight)/2)/float64(tiledMap.TileHeight)),
+				Properties: metadata,
 			}
-			gameMap.Entities[fmt.Sprintf("tiled-%d", object.ID)] = &Entity{
-				ID:       int(object.ID),
-				X:        int((object.X + float64(tiledMap.TileWidth)/2) / float64(tiledMap.TileWidth)),
-				Y:        tiledMap.Height - int((object.Y-float64(tiledMap.TileHeight)/2)/float64(tiledMap.TileHeight)),
-				Type:     entityType,
-				Metadata: metadata,
+
+			if tiledTile, err := tiledMap.TileGIDToTile(object.GID); err == nil {
+				e.SpriteId = tileToSpriteId(tiledTile.ID, tiledTile.Tileset)
 			}
+
+			gameMap.Entities[fmt.Sprintf("tiled-%d", object.ID)] = e
 		}
 	}
 

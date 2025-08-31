@@ -1,10 +1,11 @@
 package adventure
 
 import (
+	"math/rand"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util"
-	"math/rand"
 )
 
 type NPC struct {
@@ -67,9 +68,9 @@ func (n *NPC) Interact(ctx *game.Context, adv *State, source Entity) {
 	n.Talking = true
 	n.TalkingTowards = source.GetEntityId()
 	duration := 5.
-	adv.chatters.Add(newBasicEntityChatter(n.EntityId, duration, util.OneOffDialogues.Random()))
+	adv.chatters.Add(newBasicEntityChatter(n.Id, duration, util.OneOffDialogues.Random()))
 	adv.actions.Add(NewDelayAction(NewSimpleAction(func(ctx *game.Context, _ *State) {
-		ctx.Notify("npc %s is no longer talking", n.EntityId)
+		ctx.Notify("npc %s is no longer talking", n.Id)
 		n.Talking = false
 	}), duration))
 }

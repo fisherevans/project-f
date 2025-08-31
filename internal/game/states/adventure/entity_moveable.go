@@ -20,13 +20,14 @@ const (
 )
 
 type MoveableEntity struct {
-	EntityId
+	BaseEntity
 	CurrentLocation MapLocation
 	TargetLocation  MapLocation
 	MoveState       MoveState
 	MoveSpeeds      map[MoveState]float64
 	MoveProgression float64
 	FacingDirection input.Direction
+	NoClip          bool
 }
 
 func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
@@ -40,7 +41,7 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	moveDelta := timeDelta * moveSpeed
 	m.MoveProgression += moveDelta
 	if m.MoveProgression >= 0.5 {
-		adv.unoccupy(m.CurrentLocation, m.EntityId)
+		adv.unoccupy(m.CurrentLocation, m.Id)
 	}
 	if m.MoveProgression >= 1.0 {
 		m.CurrentLocation = m.TargetLocation
@@ -49,7 +50,7 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 		remaining := m.MoveProgression - 1.0
 		m.MoveProgression = 0
 		if newTile, newTileExists := adv.movementRestrictions[m.CurrentLocation]; newTileExists {
-			newTile.OnEntryComplete(adv, m.EntityId)
+			newTile.OnEntryComplete(adv, m.Id)
 		}
 		return remaining / moveSpeed // movement is complete, but there is more time in the tick to move
 	}
@@ -76,13 +77,13 @@ func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, de
 	if m.IsMoving() {
 		return false
 	}
-	if !adv.attemptToOccupy(newLocation, m.EntityId) {
+	if !adv.attemptToOccupy(newLocation, m.Id) {
 		return false
 	}
 	m.TargetLocation = newLocation
 	m.MoveState = desiredMoveState
 	if newTile, newTileExists := adv.movementRestrictions[newLocation]; newTileExists {
-		newTile.OnEntryBegin(adv, m.EntityId)
+		newTile.OnEntryBegin(adv, m.Id)
 	}
 	return true
 }
@@ -140,14 +141,14 @@ func (m *MoveableEntity) GetCurrentSpeed() float64 {
 
 func (m *MoveableEntity) TeleportTo(s *State, location MapLocation) {
 	if m.MoveState != MoveStateIdle {
-		log.Warn().Msgf("cannot teleport '%s' while moving '%d'", m.EntityId, m.MoveState)
+		log.Warn().Msgf("cannot teleport '%s' while moving '%d'", m.Id, m.MoveState)
 		return
 	}
 	currentLocation := m.CurrentLocation
-	if !s.attemptToOccupy(location, m.EntityId) {
-		log.Warn().Msgf("cannot teleport '%s' to '%s' because it is occupied", m.EntityId, location)
+	if !s.attemptToOccupy(location, m.Id) {
+		log.Warn().Msgf("cannot teleport '%s' to '%s' because it is occupied", m.Id, location)
 		return
 	}
 	m.CurrentLocation = location
-	s.unoccupy(currentLocation, m.EntityId)
+	s.unoccupy(currentLocation, m.Id)
 }
