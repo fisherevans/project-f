@@ -16,15 +16,15 @@
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 4,
+            "scale": 1.8576,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 800,
-                "y": 798.5
+                "x": 705.2110249784669,
+                "y": 844.0999138673558
             }
         },
         "snowhex_base.tsx": {
-            "scaleInDock": 1.8063,
+            "scaleInDock": 1.2411,
             "scaleInEditor": 1
         },
         "testing.tmx": {

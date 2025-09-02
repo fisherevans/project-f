@@ -70,11 +70,15 @@ func Run() {
 	canvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)
 	canvas.SetSmooth(false)
 
+	var screen *shaders.Canvas
+
 	last := time.Now()
 	frameStats := util.NewFrameStats(600)
 	gameLogicStats := util.NewFrameStats(600)
 
 	var m runtime.MemStats
+
+	lastCanvasScale := -1.0
 
 	for !window.Closed() {
 		if window.JustPressed(pixel.KeyF4) {
@@ -108,7 +112,22 @@ func Run() {
 		ctx.Update(window)
 		ctx.GetActiveState().OnTick(ctx, canvas, canvas.Bounds(), deltaTime)
 
-		canvas.Draw(window, canvasMatrix)
+		if lastCanvasScale != ctx.CanvasScale {
+			lastCanvasScale = ctx.CanvasScale
+			screen = shaders.NewCanvas(int(game.GameWidth*ctx.CanvasScale), int(game.GameHeight*ctx.CanvasScale))
+			// now, extreme, to really show what's happening'
+			screen.SetPixelGridOverlayShader(
+				float32(ctx.CanvasScale),
+				0.0125,
+				0.0375,
+				0.0375,
+				0.05,
+			)
+		}
+		screen.Clear(pixel.RGBA{A: 1})
+
+		canvas.Draw(screen, pixel.IM.Scaled(pixel.ZV, ctx.CanvasScale).Moved(screen.Bounds().Center()))
+		screen.Draw(window, pixel.IM.Moved(window.Bounds().Center()))
 
 		runtime.ReadMemStats(&m)
 		ctx.DebugTL("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
