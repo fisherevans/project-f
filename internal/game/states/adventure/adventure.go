@@ -5,7 +5,6 @@ import (
 	"math"
 	"sort"
 
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"golang.org/x/image/colornames"
@@ -13,6 +12,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/game/shaders/bloom"
 	"fisherevans.com/project/f/internal/game/states/menu"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -73,6 +73,8 @@ type State struct {
 	sceneBatch  *pixel.Batch
 	sceneCanvas *opengl.Canvas
 
+	bloom *bloom.Helper
+
 	lightMapBatch  *pixel.Batch
 	lightMapCanvas *opengl.Canvas
 
@@ -97,6 +99,13 @@ func New(mapName string, save *rpg.GameSave) game.State {
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
 
+		bloom: bloom.NewHelper(
+			game.GameWidth,
+			game.GameHeight,
+			bloom.DefaultBrightnessConfig(),
+			bloom.DefaultBlurConfig(),
+			bloom.DefaultBlendConfig()),
+
 		lightMapBatch:  atlas.NewBatch(),
 		lightMapCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
 
@@ -104,6 +113,13 @@ func New(mapName string, save *rpg.GameSave) game.State {
 
 		hudBatch: atlas.NewBatch(),
 	}
+
+	a.bloom.HighlightColors = shaders.RGBAtoVec3(
+		colors.HexColor("#f5555d"), // red coin
+		colors.HexColor("#feae34"), // torch yellow
+		colors.HexColor("#f77622"), // torch orange
+		colors.HexColor("#0069aa"), // water
+	)
 
 	initializeMap(a, m)
 	a.animech = save.NewDeployment()
@@ -116,22 +132,7 @@ func (s *State) ClearColor() color.Color {
 	return clearColor
 }
 
-var (
-	f1 = mgl32.Vec2{8, 11}
-	f2 = mgl32.Vec2{15, 9}
-)
-
 func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	s.sceneBatch.Clear()
-	s.sceneCanvas.Clear(colornames.Black)
-
-	s.lightMapBatch.Clear()
-	s.lightMapCanvas.Clear(colors.HSLToRGBA(260, 0.35, 0.25))
-
-	s.litSceneCanvas.Clear(colornames.Black)
-
-	s.hudBatch.Clear()
-
 	ctx.DebugTL("delta: %.3f", timeDelta)
 
 	for _, entity := range s.entities {
@@ -149,6 +150,11 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.camera.Update(ctx, s, timeDelta)
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(ctx, s, targetBounds)
 
+	// SCENE
+
+	s.sceneBatch.Clear()
+	s.sceneCanvas.Clear(s.ClearColor())
+
 	for _, thisRenderLayer := range s.baseRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
 	}
@@ -164,6 +170,12 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 
 	s.sceneBatch.Draw(s.sceneCanvas)
 
+	// LIGHTING
+
+	s.lightMapBatch.Clear()
+	lightMapClear := colors.HSLToRGBA(260, 0.35, 0.25)
+	s.lightMapCanvas.Clear(lightMapClear)
+	s.litSceneCanvas.Clear(colornames.Black)
 	for _, entity := range s.locationSortedEntities() {
 		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
 		entity.RenderLight(s.lightMapBatch, cameraMatrix.Moved(renderLocation))
@@ -171,17 +183,86 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 
-	s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
-	s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
-	s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
-	s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
-
-	s.litSceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-
-	if ctx.DebugToggles.F1().ToggleState() {
+	switch ctx.DebugToggles.F2().Presses() % 4 {
+	case 0, 1:
+		s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
+		s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+		s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
+		if ctx.DebugToggles.F2().Presses()%4 == 1 {
+			s.lightMapCanvas.Clear(lightMapClear)
+			ctx.DebugBL("lighting mode: on (ambient only)")
+		} else {
+			ctx.DebugBL("lighting mode: on")
+		}
+		s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+		s.litSceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	case 2:
+		s.sceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+		ctx.DebugBL("lighting mode: off")
+	case 3:
 		s.lightMapCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+		ctx.DebugBL("lighting mode: debug")
 	}
 
+	// BLOOM
+
+	switch ctx.DebugToggles.F1().Presses() % 4 {
+	case 0:
+		bloomed := s.bloom.ApplyBloom(s.sceneCanvas)
+		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+		ctx.DebugBL("bloom mode: on")
+	case 1:
+		ctx.DebugBL("bloom mode: off")
+	case 2, 3:
+		oldPasses := s.bloom.Passes
+		if ctx.DebugToggles.F1().Presses()%4 == 3 {
+			s.bloom.Passes = 0
+			ctx.DebugBL("bloom mode: debug - no blur")
+		} else {
+			ctx.DebugBL("bloom mode: debug")
+		}
+		bloomed := s.bloom.GenerateBloomCanvas(s.sceneCanvas)
+		s.bloom.Passes = oldPasses
+		target.Clear(pixel.RGBA{})
+		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	}
+
+	if ctx.Window.Pressed(pixel.KeyI) {
+		s.bloom.Intensity -= 0.01
+	}
+	if ctx.Window.Pressed(pixel.KeyO) {
+		s.bloom.Intensity += 0.01
+	}
+	if s.bloom.Intensity < 0 {
+		s.bloom.Intensity = 0
+	}
+
+	if ctx.Window.Pressed(pixel.KeyK) {
+		s.bloom.BloomBias -= 0.01
+	}
+	if ctx.Window.Pressed(pixel.KeyL) {
+		s.bloom.BloomBias += 0.01
+	}
+	if s.bloom.BloomBias < 0 {
+		s.bloom.BloomBias = 0
+	}
+
+	if ctx.Window.Pressed(pixel.KeyComma) {
+		s.bloom.SceneBias -= 0.01
+	}
+	if ctx.Window.Pressed(pixel.KeyPeriod) {
+		s.bloom.SceneBias += 0.01
+	}
+	if s.bloom.SceneBias < 0 {
+		s.bloom.SceneBias = 0
+	}
+	ctx.DebugBL("blend intensity: %.2f", s.bloom.Intensity)
+	ctx.DebugBL("blend bloom bias: %.2f", s.bloom.BloomBias)
+	ctx.DebugBL("blend scene bias: %.2f", s.bloom.SceneBias)
+
+	// HUD + CHAT
+
+	s.hudBatch.Clear()
 	s.chatters.OnTick(ctx, s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
 	s.overlays.OnTick(ctx, s, target, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(ctx, s, s.hudBatch, renderBounds, timeDelta)

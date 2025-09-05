@@ -342,7 +342,7 @@
     <property name="type" value="blob"/>
    </properties>
   </object>
-  <object id="7" gid="5150" x="576.005" y="752.185" width="16" height="16">
+  <object id="7" gid="5150" x="792.005" y="728.852" width="16" height="16">
    <properties>
     <property name="type" value="player"/>
    </properties>
@@ -478,12 +478,11 @@
   <object id="69" gid="4059" x="432.891" y="750.894" width="16" height="16"/>
   <object id="70" gid="4059" x="496.953" y="751.432" width="16" height="16"/>
   <object id="71" gid="2411" x="559.399" y="735.821" width="16" height="16"/>
-  <object id="72" gid="2411" x="723.589" y="881.17" width="16" height="16"/>
   <object id="73" gid="4059" x="705.286" y="976.065" width="16" height="16"/>
   <object id="74" gid="4059" x="737.047" y="977.68" width="16" height="16"/>
   <object id="75" gid="4511" x="592.237" y="768.809" width="16" height="16"/>
  </objectgroup>
- <layer id="4" name="collision" width="100" height="100">
+ <layer id="4" name="collision" width="100" height="100" visible="0">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

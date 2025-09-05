@@ -64,21 +64,32 @@ func Run() {
 		panic(err)
 	}
 
-	ctx := game.NewContext(initialState(window), "1")
+	ctx := game.NewContext(window, initialState(window), "1")
 
 	// Create the fixed-size canvas
-	canvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)
-	canvas.SetSmooth(false)
+	sceneCanvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)
+	sceneCanvas.SetSmooth(false)
 
-	var screen *shaders.Canvas
+	lastSceneCanvasScale := ctx.CanvasScale
+
+	createPixelGridCanvas := func() *shaders.Canvas {
+		c := shaders.NewCanvas(int(game.GameWidth*ctx.CanvasScale), int(game.GameHeight*ctx.CanvasScale))
+		c.SetPixelGridOverlayShader(
+			float32(ctx.CanvasScale),
+			0.0125,
+			0.05, //0.0375,
+			0.05, //0.0375,
+			0.05,
+		)
+		return c
+	}
+	pixelGridCanvas := createPixelGridCanvas()
 
 	last := time.Now()
 	frameStats := util.NewFrameStats(600)
 	gameLogicStats := util.NewFrameStats(600)
 
 	var m runtime.MemStats
-
-	lastCanvasScale := -1.0
 
 	for !window.Closed() {
 		if window.JustPressed(pixel.KeyF4) {
@@ -92,12 +103,12 @@ func Run() {
 		last = now
 
 		window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
-		canvas.Clear(ctx.GetActiveState().ClearColor())
+		sceneCanvas.Clear(ctx.GetActiveState().ClearColor())
 
 		if s := ctx.GetCustomShader(); s != nil {
-			s.Apply(canvas, deltaTime)
+			s.Apply(sceneCanvas, deltaTime)
 		} else {
-			canvas.Reset()
+			sceneCanvas.Reset()
 		}
 
 		// Calculate scale and offset for whole-number scaling
@@ -107,27 +118,22 @@ func Run() {
 		ctx.CanvasScale = math.Min(scaleX, scaleY) // Use the smaller scale
 		canvasMatrix := pixel.IM.Scaled(pixel.ZV, ctx.CanvasScale).Moved(window.Bounds().Center())
 		windowMousePosition := window.MousePosition()
-		ctx.CanvasMousePosition = canvasMatrix.Unproject(windowMousePosition).Add(canvas.Bounds().Center())
+		ctx.CanvasMousePosition = canvasMatrix.Unproject(windowMousePosition).Add(sceneCanvas.Bounds().Center())
 
 		ctx.Update(window)
-		ctx.GetActiveState().OnTick(ctx, canvas, canvas.Bounds(), deltaTime)
+		ctx.GetActiveState().OnTick(ctx, sceneCanvas, sceneCanvas.Bounds(), deltaTime)
 
-		if lastCanvasScale != ctx.CanvasScale {
-			lastCanvasScale = ctx.CanvasScale
-			screen = shaders.NewCanvas(int(game.GameWidth*ctx.CanvasScale), int(game.GameHeight*ctx.CanvasScale))
-			// now, extreme, to really show what's happening'
-			screen.SetPixelGridOverlayShader(
-				float32(ctx.CanvasScale),
-				0.0125,
-				0.0375,
-				0.0375,
-				0.05,
-			)
+		if ctx.DebugToggles.F6().JustPressed() || lastSceneCanvasScale != ctx.CanvasScale {
+			lastSceneCanvasScale = ctx.CanvasScale
+			pixelGridCanvas = createPixelGridCanvas()
+			if ctx.DebugToggles.F6().ToggleState() {
+				pixelGridCanvas.Reset()
+			}
 		}
-		screen.Clear(pixel.RGBA{A: 1})
+		pixelGridCanvas.Clear(pixel.RGBA{A: 1})
 
-		canvas.Draw(screen, pixel.IM.Scaled(pixel.ZV, ctx.CanvasScale).Moved(screen.Bounds().Center()))
-		screen.Draw(window, pixel.IM.Moved(window.Bounds().Center()))
+		sceneCanvas.Draw(pixelGridCanvas, pixel.IM.Scaled(pixel.ZV, ctx.CanvasScale).Moved(pixelGridCanvas.Bounds().Center()))
+		pixelGridCanvas.Draw(window, pixel.IM.Moved(window.Bounds().Center()))
 
 		runtime.ReadMemStats(&m)
 		ctx.DebugTL("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)

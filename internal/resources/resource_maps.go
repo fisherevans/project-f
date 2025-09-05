@@ -61,6 +61,10 @@ type Tile struct {
 	SpriteId TilesheetSpriteId `json:"sprite_id"`
 }
 
+func (t Tile) String() string {
+	return fmt.Sprintf("Tile{x:%d,y:%d,sprite:[%s]}", t.X, t.Y, t.SpriteId.String())
+}
+
 type Entity struct {
 	ID         int            `json:"id"`
 	X          int            `json:"x"`
@@ -97,6 +101,6 @@ func (e *Entity) GetStringMetadata(key, defaultValue string) string {
 	return str
 }
 
-func (t Tile) String() string {
-	return fmt.Sprintf("Tile{x:%d,y:%d,sprite:[%s]}", t.X, t.Y, t.SpriteId.String())
+func (e *Entity) String() string {
+	return fmt.Sprintf("Entity{id:%d,x:%d,y:%d,sprite:[%s],props:%v}", e.ID, e.X, e.Y, e.SpriteId.String(), e.Properties)
 }

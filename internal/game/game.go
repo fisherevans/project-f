@@ -48,13 +48,14 @@ type Context struct {
 	CanvasMousePosition pixel.Vec
 	MouseInCanvas       bool
 	Controls            *input.Controls
+	Window              *opengl.Window
 
 	DebugToggles *DebugToggles
 
 	GameSave *rpg.GameSave
 }
 
-func NewContext(initialActiveState State, saveId string) *Context {
+func NewContext(window *opengl.Window, initialActiveState State, saveId string) *Context {
 	saves, err := rpg.LoadGameSaves()
 	if err != nil {
 		panic(err)
@@ -67,6 +68,7 @@ func NewContext(initialActiveState State, saveId string) *Context {
 		activeState:  initialActiveState,
 		CanvasScale:  1.0,
 		Controls:     input.NewControls(),
+		Window:       window,
 		GameSave:     save,
 		DebugToggles: newToggles(),
 	}

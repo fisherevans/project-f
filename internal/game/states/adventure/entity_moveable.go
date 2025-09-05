@@ -8,6 +8,7 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/util/interp"
 )
 
 type MoveState int
@@ -91,7 +92,11 @@ func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, de
 func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
 	location := m.CurrentLocation.ToVec()
 	if m.IsMoving() {
-		delta := m.TargetLocation.ToVec().Sub(m.CurrentLocation.ToVec()).Scaled(m.MoveProgression)
+		p := m.MoveProgression
+		if m.MoveState == MoveStateDashing {
+			p = interp.Smootherstep(p)
+		}
+		delta := m.TargetLocation.ToVec().Sub(m.CurrentLocation.ToVec()).Scaled(p)
 		location = location.Add(delta)
 	}
 	return location

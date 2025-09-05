@@ -86,6 +86,8 @@ func initializeMap(a *State, m *resources.Map) {
 			entityType = "torch"
 		case tiles.RedCoin:
 			entityType = "red_coin"
+		case tiles.Knight:
+			entityType = "interest"
 		}
 		switch entityType {
 		case "player":
@@ -222,14 +224,12 @@ func initializeMap(a *State, m *resources.Map) {
 			a.movementRestrictions[location] = TeleportTile{
 				Reference: ref,
 			}
-			log.Info().Msgf("stairs added: %s (%s) -> %s", ref, location, dest)
 		case "torch":
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id:              entityId,
-						RenderZPriority: 10,
-						Passable:        true,
+						Id:       entityId,
+						Passable: true,
 					},
 					MapLocation: location,
 				},
@@ -255,13 +255,14 @@ func initializeMap(a *State, m *resources.Map) {
 				t.Animation = anim.Torch(atlas)
 			case tiles.TorchRight:
 				t.Animation = anim.TorchRight(atlas)
+				t.RenderZPriority = 10
 				t.Light.RenderDetails.PositionDelta = pixel.V(float64(resources.MapTileSize/2), 0)
 			case tiles.TorchLeft:
 				t.Animation = anim.TorchLeft(atlas)
+				t.RenderZPriority = 10
 				t.Light.RenderDetails.PositionDelta = pixel.V(-float64(resources.MapTileSize/2), 0)
 			}
 			a.AddEntity(t)
-			log.Info().Msgf("torch added: %s", location)
 		case "red_coin":
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
@@ -287,9 +288,8 @@ func initializeMap(a *State, m *resources.Map) {
 				Animation: anim.RedCoin(atlas),
 			}
 			a.AddEntity(t)
-			log.Info().Msgf("red coin added: %s", location)
 		default:
-			log.Warn().Msgf("Unknown entity type: %s (sprite:%#v)", entityType, entity.SpriteId)
+			log.Warn().Msgf("Unknown entity type: %s", entity)
 		}
 	}
 }

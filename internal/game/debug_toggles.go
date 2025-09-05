@@ -13,6 +13,7 @@ type DebugToggle struct {
 	toggleState bool
 	pressed     bool
 	justPressed bool
+	presses     int
 }
 
 func (dt *DebugToggle) ToggleState() bool {
@@ -27,9 +28,14 @@ func (dt *DebugToggle) JustPressed() bool {
 	return dt.justPressed
 }
 
+func (dt *DebugToggle) Presses() int {
+	return dt.presses
+}
+
 func (dt *DebugToggle) update(key pixel.Button, win *opengl.Window) {
 	if win.JustPressed(key) {
 		dt.justPressed = true
+		dt.presses++
 		dt.toggleState = !dt.toggleState
 	} else {
 		dt.justPressed = false

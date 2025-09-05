@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -78,7 +79,7 @@ var debugPadding = 10.0
 var showDebug = false
 
 func RenderDebugLines(win *opengl.Window, areaLines map[DebugArea][]string) {
-	if win.JustPressed(pixel.KeyPeriod) {
+	if win.JustPressed(pixel.KeyBackslash) {
 		showDebug = !showDebug
 	}
 	if !showDebug {
