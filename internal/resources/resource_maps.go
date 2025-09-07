@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog/log"
+
+	"fisherevans.com/project/f/internal/util"
 )
 
 var (
@@ -22,18 +24,38 @@ func GetMap(name string) *Map {
 type MapLayerName string
 
 const (
-	LayerBase      MapLayerName = "base"
-	LayerDecor                  = "decor"
-	LayerOverlay                = "overlay"
-	LayerCollision              = "collision"
+	LayerUnder1 MapLayerName = "under_1"
+	LayerUnder2 MapLayerName = "under_2"
+	LayerUnder3 MapLayerName = "under_3"
+
+	LayerOver1 MapLayerName = "over_1"
+	LayerOver2 MapLayerName = "over_2"
+	LayerOver3 MapLayerName = "over_3"
+
+	LayerCollision = "collision"
 )
 
-var MapLayerOrder = []MapLayerName{
-	LayerBase,
-	LayerDecor,
-	LayerOverlay,
+var MapLayersUnder = []MapLayerName{
+	LayerUnder1,
+	LayerUnder2,
+	LayerUnder3,
+}
+
+var MapLayersOver = []MapLayerName{
+	LayerOver1,
+	LayerOver2,
+	LayerOver3,
+}
+
+var MapLayersUtility = []MapLayerName{
 	LayerCollision,
 }
+
+var MapLayers = util.Concat(
+	MapLayersUnder,
+	MapLayersOver,
+	MapLayersUtility,
+)
 
 type Map struct {
 	Layers   map[MapLayerName]*Layer `json:"layers"`
@@ -71,6 +93,7 @@ type Entity struct {
 	Y          int            `json:"y"`
 	Properties map[string]any `json:"properties"`
 	SpriteId   TilesheetSpriteId
+	SpriteGID  int `json:"sprite_gid,omitempty"`
 }
 
 func (e *Entity) Copy() *Entity {
@@ -102,5 +125,5 @@ func (e *Entity) GetStringMetadata(key, defaultValue string) string {
 }
 
 func (e *Entity) String() string {
-	return fmt.Sprintf("Entity{id:%d,x:%d,y:%d,sprite:[%s],props:%v}", e.ID, e.X, e.Y, e.SpriteId.String(), e.Properties)
+	return fmt.Sprintf("Entity{id:%d,x:%d,y:%d,sprite_gid:%x,sprite:[%s],props:%v}", e.ID, e.X, e.Y, e.SpriteGID, e.SpriteId.String(), e.Properties)
 }

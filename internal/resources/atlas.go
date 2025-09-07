@@ -1,10 +1,7 @@
 package resources
 
 import (
-	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fmt"
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
 	"image"
 	"image/draw"
 	"image/png"
@@ -12,10 +9,15 @@ import (
 	"path"
 	"sort"
 	"strings"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
+
+	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
 var (
-	maxSpriteAtlasSize Pixels = 2048
+	maxSpriteAtlasSize Pixels = 4096
 )
 
 type Atlas struct {
@@ -235,7 +237,7 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		// Find a free rectangle that can fit this image
 		fi := findRect(w, h)
 		if fi == -1 {
-			log.Fatal().Msgf("atlast is too small (%dx%d) for %d images. Was able to fit %d images before failing", atlasWidth, atlasHeight, len(sourceImages), id)
+			log.Fatal().Msgf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing", atlasWidth, atlasHeight, len(sourceImages), id)
 			return nil, nil
 		}
 

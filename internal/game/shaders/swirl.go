@@ -15,5 +15,5 @@ func (c *Canvas) SetSwirlShader(center mgl32.Vec2, radius, swirl, falloff, progr
 	c.SetUniform("uSwirl", swirl)
 	c.SetUniform("uFalloff", falloff)
 	c.SetUniform("uProgress", progress)
-	c.setFragmentShaderIfNeeded("swirl", pixelGridOverlayFrag)
+	c.setFragmentShaderIfNeeded("swirl", swirlFragShader)
 }

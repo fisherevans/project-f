@@ -45,7 +45,7 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 	}
 
 	for _, tiledLayer := range tiledMap.Layers {
-		if !slices.Contains(MapLayerOrder, MapLayerName(tiledLayer.Name)) {
+		if !slices.Contains(MapLayers, MapLayerName(tiledLayer.Name)) {
 			log.Warn().Msgf("Skipping unknown layer %s", tiledLayer.Name)
 			continue
 		}
@@ -81,6 +81,7 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 				X:          int((object.X + float64(tiledMap.TileWidth)/2) / float64(tiledMap.TileWidth)),
 				Y:          tiledMap.Height - int((object.Y-float64(tiledMap.TileHeight)/2)/float64(tiledMap.TileHeight)),
 				Properties: metadata,
+				SpriteGID:  int(object.GID),
 			}
 
 			if tiledTile, err := tiledMap.TileGIDToTile(object.GID); err == nil {

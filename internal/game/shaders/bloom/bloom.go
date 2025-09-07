@@ -16,7 +16,7 @@ type BlendConfig struct {
 
 func DefaultBlendConfig() BlendConfig {
 	return BlendConfig{
-		Intensity: 2,
+		Intensity: 4,
 		BloomBias: 1.75,
 		SceneBias: 1.0,
 	}
@@ -51,9 +51,9 @@ type BlurConfig struct {
 
 func DefaultBlurConfig() BlurConfig {
 	return BlurConfig{
-		Passes:      2,
-		Radius:      5,
-		SigmaFactor: 0.7,
+		Passes:      5,
+		Radius:      7,
+		SigmaFactor: 0.1,
 	}
 }
 

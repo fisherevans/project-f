@@ -19,8 +19,8 @@
             "scale": 3,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 799.8333333333333,
-                "y": 798
+                "x": 755.5,
+                "y": 708
             }
         },
         "snowhex_base.tsx": {
@@ -39,13 +39,13 @@
             }
         }
     },
-    "last.imagePath": "/Users/fisher/dev/project-f/assets/tilesheets",
+    "last.imagePath": "/Users/fisher/dev/project-f/assets/sprites",
     "map.fixedSize": true,
-    "map.height": 8,
+    "map.height": 500,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 8,
+    "map.width": 500,
     "openFiles": [
         "map1.tmx",
         "testing.tmx",
@@ -60,7 +60,7 @@
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
-        "height": 32,
-        "width": 32
+        "height": 16,
+        "width": 16
     }
 }

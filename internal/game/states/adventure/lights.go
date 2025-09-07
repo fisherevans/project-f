@@ -7,7 +7,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 )
 
-var light = atlas.GetSprite("lights/amber_linear")
+var light = atlas.GetSprite("lights/white_5x5")
 
 type LightRenderDetails struct {
 	SizeScale     float64

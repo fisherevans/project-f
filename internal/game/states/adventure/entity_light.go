@@ -15,11 +15,15 @@ type LightEntity struct {
 
 func (i *LightEntity) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	i.Light.Update(timeDelta)
-	i.Animation.Update(timeDelta)
+	if i.Animation != nil {
+		i.Animation.Update(timeDelta)
+	}
 }
 
 func (i *LightEntity) RenderScene(target pixel.Target, matrix pixel.Matrix) {
-	i.Animation.Sprite().Draw(target, matrix)
+	if i.Animation != nil {
+		i.Animation.Sprite().Draw(target, matrix)
+	}
 }
 
 func (i *LightEntity) RenderLight(target pixel.Target, matrix pixel.Matrix) {

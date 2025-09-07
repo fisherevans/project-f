@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"math/rand"
+	"slices"
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
@@ -9,6 +10,7 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/tiles"
@@ -46,7 +48,7 @@ func initializeMap(a *State, m *resources.Map) {
 		}
 	}
 	a.mapWidth, a.mapHeight = maxX-minX+1, maxY-minY+1
-	for _, layerName := range []resources.MapLayerName{resources.LayerBase, resources.LayerDecor, resources.LayerOverlay} {
+	for _, layerName := range util.Concat(resources.MapLayersUnder, resources.MapLayersOver) {
 		thisRenderLayer := renderLayer{
 			tiles: make([][]pixelutil.BoundedDrawable, a.mapWidth),
 		}
@@ -57,9 +59,9 @@ func initializeMap(a *State, m *resources.Map) {
 			ref := atlas.GetTilesheetSpriteById(tile.SpriteId)
 			thisRenderLayer.tiles[tile.X+dx][tile.Y+dy] = ref
 		}
-		if layerName == resources.LayerOverlay {
+		if slices.Contains(resources.MapLayersOver, layerName) {
 			a.overlayRenderLayers = append(a.overlayRenderLayers, thisRenderLayer)
-		} else {
+		} else if slices.Contains(resources.MapLayersUnder, layerName) {
 			a.baseRenderLayers = append(a.baseRenderLayers, thisRenderLayer)
 		}
 	}
@@ -84,6 +86,15 @@ func initializeMap(a *State, m *resources.Map) {
 		switch entity.SpriteId {
 		case tiles.Torch, tiles.TorchRight, tiles.TorchLeft:
 			entityType = "torch"
+		case tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR:
+			entityType = "light"
+		case tiles.GlowRed,
+			tiles.GlowOrange,
+			tiles.GlowAqua,
+			tiles.GlowPurple,
+			tiles.GlowPink,
+			tiles.GlowTBD:
+			entityType = "glow"
 		case tiles.RedCoin:
 			entityType = "red_coin"
 		case tiles.Knight:
@@ -286,6 +297,61 @@ func initializeMap(a *State, m *resources.Map) {
 					},
 				},
 				Animation: anim.RedCoin(atlas),
+			}
+			a.AddEntity(t)
+		case "light":
+			t := &LightEntity{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id:       entityId,
+						Passable: true,
+					},
+					MapLocation: location,
+				},
+				Light: Light{
+					RenderDetails: LightRenderDetails{
+						SizeScale: 1,
+						ColorMask: colors.HexColor("#fff"),
+					},
+				},
+				Animation: anim.NewStaticAnimation(entity.SpriteId.From(atlas)),
+			}
+			if entity.SpriteId == tiles.LightFork {
+				t.RenderZPriority = 10
+			}
+			a.AddEntity(t)
+		case "glow":
+			colorMask := colors.HexColor("#fff")
+			switch entity.SpriteId {
+			case tiles.GlowRed:
+				colorMask = colors.HexColor("#e05050")
+
+			case tiles.GlowOrange:
+				colorMask = colors.HexColor("#e09b50")
+			case tiles.GlowAqua:
+				colorMask = colors.HexColor("#50d5e0")
+			case tiles.GlowPurple:
+				colorMask = colors.HexColor("#50d5e0")
+			case tiles.GlowPink:
+				colorMask = colors.HexColor("#e050cb")
+			}
+			t := &LightEntity{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id:       entityId,
+						Passable: true,
+					},
+					MapLocation: location,
+				},
+				Light: Light{
+					RenderDetails: LightRenderDetails{
+						SizeScale: 2,
+						ColorMask: colorMask,
+					},
+				},
+			}
+			if entity.SpriteId == tiles.LightFork {
+				t.RenderZPriority = 10
 			}
 			a.AddEntity(t)
 		default:

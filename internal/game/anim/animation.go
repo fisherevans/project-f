@@ -12,6 +12,13 @@ type AnimatedSprite struct {
 	currentFrame    int
 }
 
+func NewStaticAnimation(frame pixelutil.BoundedDrawable) *AnimatedSprite {
+	return &AnimatedSprite{
+		frames:          []pixelutil.BoundedDrawable{frame},
+		framesPerSecond: 1,
+	}
+}
+
 func (a *AnimatedSprite) ApplyPingPong() *AnimatedSprite {
 	for i := len(a.frames) - 2; i > 0; i-- {
 		a.frames = append(a.frames, a.frames[i])
