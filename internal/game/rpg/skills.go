@@ -1,8 +1,9 @@
 package rpg
 
 import (
-	"gopkg.in/yaml.v3"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 var Skills = map[SkillId]Skill{}
@@ -107,8 +108,22 @@ func (s Skill) validate() {
 	if len(s.Ticks) == 0 {
 		errors = append(errors, "missing ticks")
 	}
+	lastStance := TickStanceNone
+	stanceDuration := 0
 	for _, tick := range s.Ticks {
 		errors = append(errors, tick.validate()...)
+		if tick.StanceType != lastStance {
+			if stanceDuration <= 1 && lastStance != TickStanceNone {
+				errors = append(errors, "skill stance duration must be greater than 1 tick")
+			}
+			stanceDuration = 0
+			lastStance = tick.StanceType
+		}
+		stanceDuration++
+		lastStance = tick.StanceType
+	}
+	if stanceDuration <= 1 && lastStance != TickStanceNone {
+		errors = append(errors, "skill stance duration must be greater than 1 tick")
 	}
 	if len(errors) > 0 {
 		panic("invalid skill definition: " + strings.Join(errors, ", ") + "\n" + s.String())

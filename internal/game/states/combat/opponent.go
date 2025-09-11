@@ -1,6 +1,8 @@
 package combat
 
 import (
+	"math/rand"
+
 	"fisherevans.com/project/f/internal/game/rpg"
 )
 
@@ -10,8 +12,9 @@ type Opponent interface {
 }
 
 type Wall struct {
-	Health *HealthState
-	Tempo  *Tempo
+	Health    *HealthState
+	Tempo     *Tempo
+	NextSkill *rpg.SkillId
 }
 
 func (w *Wall) GetStats() CombatantStats {
@@ -25,7 +28,6 @@ func (w *Wall) GetStats() CombatantStats {
 }
 
 var _ Opponent = &Wall{}
-var _ Combatant = &Wall{}
 
 func (w *Wall) ApplyDamage(result rpg.DamageResult) {
 	w.Health.AdjustTarget(-result.TotalDamage)
@@ -41,4 +43,31 @@ func (w *Wall) GetHealth() *HealthState {
 
 func (w *Wall) GetTempo() *Tempo {
 	return w.Tempo
+}
+
+func (w *Wall) PeekNextSkill() *rpg.SkillId {
+	if w.NextSkill == nil {
+		w.NextSkill = randomSkill()
+	}
+	return w.NextSkill
+}
+
+func (w *Wall) PopNextSkill() *rpg.SkillId {
+	if w.NextSkill == nil {
+		w.NextSkill = randomSkill()
+	}
+	popped := w.NextSkill
+	w.NextSkill = randomSkill()
+	return popped
+}
+
+func randomSkill() *rpg.SkillId {
+	switch rand.Intn(3) {
+	case 0:
+		return &rpg.Skill_Block.Id
+	case 1:
+		return &rpg.Skill_Shunt.Id
+	default:
+		return &rpg.Skill_Crush.Id
+	}
 }

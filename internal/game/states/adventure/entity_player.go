@@ -47,7 +47,7 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 			p.intentDuration = 0
 		}
 		p.intentDuration += timeDelta
-		if p.intentDuration > 0.05 {
+		if p.intentDuration > 0.075 {
 			speed := MoveStateWalking
 			if ctx.Controls.ButtonB().IsPressed() {
 				speed = MoveStateRunning

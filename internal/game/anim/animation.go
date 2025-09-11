@@ -19,6 +19,10 @@ func NewStaticAnimation(frame pixelutil.BoundedDrawable) *AnimatedSprite {
 	}
 }
 
+func NewStaticAnimationFromId(atlas *resources.Atlas, tileId resources.TilesheetSpriteId) *AnimatedSprite {
+	return NewStaticAnimation(atlas.GetTilesheetSpriteById(tileId))
+}
+
 func (a *AnimatedSprite) ApplyPingPong() *AnimatedSprite {
 	for i := len(a.frames) - 2; i > 0; i-- {
 		a.frames = append(a.frames, a.frames[i])

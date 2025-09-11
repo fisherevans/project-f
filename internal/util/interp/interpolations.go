@@ -90,6 +90,20 @@ func Smootherstep(t float64) float64 {
 	return t * t * t * (t*(6*t-15) + 10)
 }
 
+// EaseInToLinear starts with zero slope and ends with unit slope.
+// Cubic Hermite with m0=0, m1=1, plus a tunable center "bump" that
+// preserves endpoints and endpoint slopes.
+// Maps 0->0, 1->1, f'(0)=0, f'(1)=1.
+// k > 0 raises the middle (stronger ease-in); k < 0 lowers it (stronger ease-out).
+func EaseInToLinear(t, k float64) float64 {
+	t = clamp(t)
+	t2 := t * t
+	t3 := t2 * t
+	// Base cubic: 2 t^2 - t^3. Bump term: k * t^2 * (1 - t)^2.
+	b := (1 - t)
+	return 2*t2 - t3 + k*t2*b*b
+}
+
 // SmootherstepParam provides a tunable path from linear to classic smootherstep (C2).
 // s in [0,1]:
 //

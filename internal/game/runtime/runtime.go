@@ -23,18 +23,18 @@ import (
 func initialState(window *opengl.Window) game.State {
 	return state_selector.New(
 		state_selector.Destination{
-			Name: "Adventure",
-			State: func(ctx *game.Context) game.State {
-				return adventure.New("map1", ctx.GameSave)
-			},
-		},
-		state_selector.Destination{
 			Name: "Combat",
 			State: func(ctx *game.Context) game.State {
 				return combat.New(ctx.GameSave.NewDeployment(), func(ctx *game.Context, s *combat.State) {
 					ctx.Notify("Combat complete!")
 					ctx.SwapActiveState(initialState(window))
 				})
+			},
+		},
+		state_selector.Destination{
+			Name: "Adventure",
+			State: func(ctx *game.Context) game.State {
+				return adventure.New("map1", ctx.GameSave)
 			},
 		},
 		state_selector.Destination{

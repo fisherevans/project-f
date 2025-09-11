@@ -13,9 +13,9 @@ captured_primortals:
         research_points: 13
         selected_skills:
             - flame_surge
-            - tackle
-            - crush
-            - corrode
+            - shunt
+            - drawn_blow
+            - block
         available_skills:
             - tackle
             - crush

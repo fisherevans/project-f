@@ -1,6 +1,8 @@
 package adventure
 
 import (
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
@@ -9,7 +11,6 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"github.com/gopxl/pixel/v2"
 )
 
 type DialogueSystem struct {
@@ -104,15 +105,17 @@ type Dialogue interface {
 }
 
 type basicDialogue struct {
-	message string
-	content *textbox.Content
+	message   string
+	content   *textbox.Content
+	onDismiss func(*game.Context, *State)
 }
 
-func NewBasicDialogue(message string) Dialogue {
+func NewBasicDialogue(message string, onDismiss func(ctx *game.Context, state *State)) Dialogue {
 	content := dialogueBox.NewComplexContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
-		message: message,
-		content: content,
+		message:   message,
+		content:   content,
+		onDismiss: onDismiss,
 	}
 }
 
@@ -125,4 +128,7 @@ func (b basicDialogue) Content() *textbox.Content {
 }
 
 func (b basicDialogue) OnDismiss(context *game.Context, state *State) {
+	if b.onDismiss != nil {
+		b.onDismiss(context, state)
+	}
 }

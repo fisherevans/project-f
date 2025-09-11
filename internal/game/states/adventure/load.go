@@ -99,6 +99,8 @@ func initializeMap(a *State, m *resources.Map) {
 			entityType = "red_coin"
 		case tiles.Knight:
 			entityType = "interest"
+		case tiles.PDAEnabled:
+			entityType = "pda"
 		}
 		switch entityType {
 		case "player":
@@ -354,6 +356,21 @@ func initializeMap(a *State, m *resources.Map) {
 				t.RenderZPriority = 10
 			}
 			a.AddEntity(t)
+		case "pda":
+			a.AddEntity(&EntityAnimatedInterest{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id: entityId,
+					},
+					MapLocation: location,
+				},
+				OnAnimation:  anim.PDA(atlas),
+				OffAnimation: anim.PDADisabled(atlas),
+				OnMessage:    "You've got mail!",
+				OffMessage:   "There's nothing new here...",
+				toggled:      true,
+			})
+
 		default:
 			log.Warn().Msgf("Unknown entity type: %s", entity)
 		}

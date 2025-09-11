@@ -6,12 +6,12 @@ var Skill_FlameSurge = Skill{
 	Description: "Unleash a wave of intense heat, scorching foes.",
 	Type:        SkillTypeThermal,
 	Ticks: skillTicks().
-		tick(normalTick().damage(1, 0, DamageMediumAether)).
-		tick(normalTick().damage(2, 0, DamageMediumAether)).
-		tick(normalTick().damage(3, 0, DamageMediumAether)).
-		tick(normalTick().damage(5, 0, DamageMediumAether)).
-		tick(normalTick().damage(8, 0, DamageMediumAether)).
-		tick(normalTick().damage(13, 0, DamageMediumAether)),
+		tick(damageTick().damage(1, 0, DamageMediumAether)).
+		tick(damageTick().damage(2, 0, DamageMediumAether)).
+		tick(damageTick().damage(3, 0, DamageMediumAether)).
+		tick(damageTick().damage(5, 0, DamageMediumAether)).
+		tick(damageTick().damage(8, 0, DamageMediumAether)).
+		tick(damageTick().damage(13, 0, DamageMediumAether)),
 }.register()
 
 var Skill_HeatCrash = Skill{

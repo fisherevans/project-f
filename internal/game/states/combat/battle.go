@@ -1,11 +1,13 @@
 package combat
 
 import (
+	"fmt"
+	"math/rand"
+
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fmt"
-	"github.com/gopxl/pixel/v2"
-	"math/rand"
 )
 
 type Battle struct {

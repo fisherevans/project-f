@@ -157,6 +157,8 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 
 	// SCENE
 
+	ctx.DebugBR("player moving: %.1f", s.player.ConstantMovement)
+
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
 

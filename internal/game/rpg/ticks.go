@@ -4,7 +4,18 @@ type TickDisplayType int
 
 const (
 	TickDisplayNone TickDisplayType = iota
-	TickDisplayNormal
+	TickDisplayDamage
+)
+
+type TickStanceType int
+
+const (
+	TickStanceNone       TickStanceType = iota
+	TickStanceDefending                 // reduce damage
+	TickStanceReflecting                // reflect some damage back
+	TickStanceReposing                  // redirect incoming damage (maybe within threshold)
+	TickStanceVulnerable                // take extra damage
+	TickStanceExposed                   // stunned if hit
 )
 
 type SkillTickDamage struct {
@@ -20,6 +31,7 @@ type SkillTickEffect struct {
 type SkillTick struct {
 	Effects     []SkillTickEffect
 	DisplayType TickDisplayType
+	StanceType  TickStanceType
 }
 
 type SkillTicks []SkillTick
@@ -33,15 +45,21 @@ func (sts SkillTicks) tick(ts ...SkillTick) SkillTicks {
 	return sts
 }
 
-func normalTick() SkillTick {
+func damageTick() SkillTick {
 	return SkillTick{
-		DisplayType: TickDisplayNormal,
+		DisplayType: TickDisplayDamage,
 	}
 }
 
 func nothingTick() SkillTick {
 	return SkillTick{
 		DisplayType: TickDisplayNone,
+	}
+}
+
+func stanceTick(stance TickStanceType) SkillTick {
+	return SkillTick{
+		StanceType: stance,
 	}
 }
 
@@ -70,6 +88,6 @@ func (t SkillTick) validate() []string {
 
 func simpleDamageSkillTicks(damage int, medium DamageMedium, duration int) []SkillTick {
 	return skillTicks().
-		tick(normalTick().damage(damage, 0, medium)).
+		tick(damageTick().damage(damage, 0, medium)).
 		tick(nothingTick().repeat(duration - 1)...)
 }

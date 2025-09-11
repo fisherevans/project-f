@@ -4,6 +4,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/anim"
 )
 
 type EntityInterest struct {
@@ -26,5 +27,47 @@ func (e *EntityInterest) Interact(ctx *game.Context, adv *State, source Entity) 
 	if msg == "" {
 		return
 	}
-	adv.dialogues.Append(NewBasicDialogue(msg))
+	adv.dialogues.Append(NewBasicDialogue(msg, nil))
+}
+
+type EntityAnimatedInterest struct {
+	InnateEntity
+	OnAnimation  *anim.AnimatedSprite
+	OffAnimation *anim.AnimatedSprite
+	OnMessage    string
+	OffMessage   string
+
+	toggled bool
+}
+
+func (e *EntityAnimatedInterest) Update(ctx *game.Context, adv *State, timeDelta float64) {
+	if e.toggled && e.OnAnimation != nil {
+		e.OnAnimation.Update(timeDelta)
+	}
+	if !e.toggled && e.OffAnimation != nil {
+		e.OffAnimation.Update(timeDelta)
+	}
+}
+
+func (e *EntityAnimatedInterest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
+	if e.toggled && e.OnAnimation != nil {
+		e.OnAnimation.Sprite().Draw(target, matrix)
+	}
+	if !e.toggled && e.OffAnimation != nil {
+		e.OffAnimation.Sprite().Draw(target, matrix)
+	}
+}
+
+func (e *EntityAnimatedInterest) Interact(ctx *game.Context, adv *State, source Entity) {
+	msg := e.OffMessage
+	if e.toggled {
+		msg = e.OnMessage
+	}
+	if msg == "" {
+		return
+	}
+	e.toggled = true
+	adv.dialogues.Append(NewBasicDialogue(msg, func(ctx *game.Context, s *State) {
+		e.toggled = false
+	}))
 }

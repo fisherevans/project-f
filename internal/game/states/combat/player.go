@@ -36,6 +36,10 @@ func NewPlayer(deployed *rpg.DeployedAnimech) *Player {
 	}
 }
 
+func (p *Player) PeekNextSkill() *rpg.SkillId {
+	return p.NextSkill
+}
+
 func (p *Player) PopNextSkill() *rpg.SkillId {
 	if p.NextSkill == nil {
 		return nil

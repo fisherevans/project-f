@@ -22,13 +22,14 @@ const (
 
 type MoveableEntity struct {
 	BaseEntity
-	CurrentLocation MapLocation
-	TargetLocation  MapLocation
-	MoveState       MoveState
-	MoveSpeeds      map[MoveState]float64
-	MoveProgression float64
-	FacingDirection input.Direction
-	NoClip          bool
+	CurrentLocation  MapLocation
+	TargetLocation   MapLocation
+	MoveState        MoveState
+	MoveSpeeds       map[MoveState]float64
+	MoveProgression  float64
+	FacingDirection  input.Direction
+	NoClip           bool
+	ConstantMovement float64
 }
 
 func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
@@ -36,10 +37,12 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 		return 0
 	}
 	if !m.IsMoving() {
+		m.ConstantMovement = 0
 		return 0
 	}
 	moveSpeed := m.GetCurrentSpeed()
 	moveDelta := timeDelta * moveSpeed
+	m.ConstantMovement += moveDelta
 	m.MoveProgression += moveDelta
 	if m.MoveProgression >= 0.5 {
 		adv.unoccupy(m.CurrentLocation, m.Id)
@@ -53,7 +56,8 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 		if newTile, newTileExists := adv.movementRestrictions[m.CurrentLocation]; newTileExists {
 			newTile.OnEntryComplete(adv, m.Id)
 		}
-		return remaining / moveSpeed // movement is complete, but there is more time in the tick to move
+		remainingTime := remaining / moveSpeed // movement is complete, but there is more time in the tick to move
+		return remainingTime
 	}
 	return 0
 }
@@ -95,6 +99,8 @@ func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
 		p := m.MoveProgression
 		if m.MoveState == MoveStateDashing {
 			p = interp.Smootherstep(p)
+		} else if m.ConstantMovement < 1 {
+			p = interp.EaseInToLinear(p, 2)
 		}
 		delta := m.TargetLocation.ToVec().Sub(m.CurrentLocation.ToVec()).Scaled(p)
 		location = location.Add(delta)
