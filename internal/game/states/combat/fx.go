@@ -7,7 +7,6 @@ import (
 	"github.com/gopxl/pixel/v2/ext/text"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 )
@@ -18,7 +17,7 @@ type FX interface {
 }
 
 type DamageFX struct {
-	Damage rpg.DamageResult
+	Damage int
 
 	Position   pixel.Vec
 	Velocity   pixel.Vec
@@ -44,7 +43,7 @@ func (fx *DamageFX) Render(ctx *game.Context, target pixel.Target) {
 	color := colors.HexColor("#c88")
 	color = colors.WithAlpha(color, 1.0-(fx.Age/damageFxMaxAge))
 
-	str := fmt.Sprintf("%d", fx.Damage.TotalDamage)
+	str := fmt.Sprintf("%d", fx.Damage)
 
 	damageFxText.Clear()
 	damageFxText.Dot = pixel.ZV
@@ -57,5 +56,5 @@ func (fx *DamageFX) Render(ctx *game.Context, target pixel.Target) {
 	damageFxText.WriteString(str)
 	damageFxText.Draw(target, pixel.IM.Moved(fx.Position))
 
-	ctx.DebugTR("damage: %d, pod: %.0f, %.0f", fx.Damage.TotalDamage, fx.Position.X, fx.Position.Y)
+	ctx.DebugTR("damage: %d, pod: %.0f, %.0f", fx.Damage, fx.Position.X, fx.Position.Y)
 }

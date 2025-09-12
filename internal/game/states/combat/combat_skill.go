@@ -58,8 +58,9 @@ func newInstance(skillId rpg.SkillId) *SkillInstance {
 						Stance: targetStats.Stance,
 					})
 					allDamage = append(allDamage, result)
-					ctx.Notify("damage from %d to %d", damage, result.TotalDamage)
-					target.ApplyDamage(result)
+					ctx.Notify("damage from %d to %d", damage, result.TargetDamage)
+					target.ApplyDamage(result.TargetDamage)
+					source.ApplyDamage(result.SourceDamage)
 				}
 			}
 			return allDamage

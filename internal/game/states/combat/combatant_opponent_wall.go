@@ -41,8 +41,8 @@ func (w *Wall) GetColorMask() pixel.RGBA {
 	return w.DamageFlashMask.getMask()
 }
 
-func (w *Wall) ApplyDamage(result rpg.DamageResult) {
-	w.Health.AdjustTarget(-result.TotalDamage)
+func (w *Wall) ApplyDamage(damage int) {
+	w.Health.AdjustTarget(-damage)
 	w.DamageFlashMask.damaged()
 }
 

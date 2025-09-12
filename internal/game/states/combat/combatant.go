@@ -11,7 +11,7 @@ import (
 
 type Combatant interface {
 	Name() string
-	ApplyDamage(damage rpg.DamageResult)
+	ApplyDamage(damage int)
 	GetStats() CombatantStats
 	GetTempo() *Tempo
 	Update(timeDelta float64)

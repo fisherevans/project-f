@@ -86,8 +86,8 @@ func (p *Player) GetStats() CombatantStats {
 	}
 }
 
-func (p *Player) ApplyDamage(damage rpg.DamageResult) {
-	adjustment := -damage.TotalDamage
+func (p *Player) ApplyDamage(damage int) {
+	adjustment := -damage
 	adjustment = p.Shield.AdjustTarget(adjustment)
 	if adjustment != 0 {
 		p.GetCurrentSync().AdjustTarget(adjustment)

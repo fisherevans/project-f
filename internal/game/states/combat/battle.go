@@ -91,23 +91,50 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
 }
 
 func (s *State) emitDamageFx(dmgs []rpg.DamageResult, damagingPlayer bool) {
-	if len(dmgs) == 0 {
+	for _, dmg := range dmgs {
+		if dmg.TargetDamage > 0 {
+			if damagingPlayer {
+				s.emitPlayerDamageFx(dmg.TargetDamage)
+			} else {
+				s.emitOpponentDamageFx(dmg.TargetDamage)
+			}
+		}
+		if dmg.SourceDamage > 0 {
+			if damagingPlayer {
+				s.emitOpponentDamageFx(dmg.SourceDamage)
+			} else {
+				s.emitPlayerDamageFx(dmg.SourceDamage)
+			}
+		}
+	}
+}
+
+func (s *State) emitPlayerDamageFx(damage int) {
+	if damage == 0 {
 		return
 	}
-	pos := pixel.V(game.GameWidth*0.85, game.GameHeight*0.5)
-	velocity := pixel.V(-20, rand.Float64()*50+50)
-	if damagingPlayer {
-		pos.X = game.GameWidth * 0.15
-		velocity.X = velocity.X * -1
+	playerPosition := pixel.V(game.GameWidth*0.15, game.GameHeight*0.5)
+	playerVelocity := pixel.V(20, rand.Float64()*50+50)
+	s.fx = append(s.fx, &DamageFX{
+		Damage:     damage,
+		Position:   playerPosition,
+		Velocity:   playerVelocity,
+		SpeedScale: 2,
+	})
+}
+
+func (s *State) emitOpponentDamageFx(damage int) {
+	if damage == 0 {
+		return
 	}
-	for _, dmg := range dmgs {
-		s.fx = append(s.fx, &DamageFX{
-			Damage:     dmg,
-			Position:   pos,
-			Velocity:   velocity,
-			SpeedScale: 2,
-		})
-	}
+	opponentPosition := pixel.V(game.GameWidth*0.85, game.GameHeight*0.5)
+	opponentVelocity := pixel.V(-20, rand.Float64()*50+50)
+	s.fx = append(s.fx, &DamageFX{
+		Damage:     damage,
+		Position:   opponentPosition,
+		Velocity:   opponentVelocity,
+		SpeedScale: 2,
+	})
 }
 
 func (i *SkillInstance) Tick(ctx *game.Context, s *State, source Combatant, target Combatant) ([]rpg.DamageResult, bool) {
