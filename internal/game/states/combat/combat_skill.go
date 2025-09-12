@@ -51,20 +51,11 @@ func newInstance(skillId rpg.SkillId) *SkillInstance {
 						damage += rand.Intn(effect.Damage.RandomVariance*2+1) - effect.Damage.RandomVariance
 					}
 					result := rpg.ComputeDamage(rpg.DamageSource{
-						BaseDamage:     damage,
-						Affinities:     sourceStats.Affinities,
-						DamageMedium:   effect.Damage.Medium,
-						SkillType:      skill.Type,
-						PhysicalAttack: sourceStats.PhysicalAttack,
-						AetherAttack:   sourceStats.AetherAttack,
-						Tempo:          source.GetTempo().GetCurrent(),
-						Stance:         sourceStats.Stance,
+						BaseDamage: damage,
+						Tempo:      source.GetTempo().GetCurrent(),
+						Stance:     sourceStats.Stance,
 					}, rpg.DamageTarget{
-						TargetType:      targetStats.BodyType,
-						Affinities:      targetStats.Affinities,
-						PhysicalDefence: targetStats.PhysicalDefense,
-						AetherDefence:   targetStats.AetherDefense,
-						Stance:          sourceStats.Stance,
+						Stance: targetStats.Stance,
 					})
 					allDamage = append(allDamage, result)
 					ctx.Notify("damage from %d to %d", damage, result.TotalDamage)

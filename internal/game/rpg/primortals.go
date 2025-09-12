@@ -11,31 +11,11 @@ func (pt PrimortalType) Primortal() Primortal {
 	panic("unknown primortal type: " + pt)
 }
 
-type BodyType string
-
-const (
-	BodyTypeOrganic   BodyType = "organic"
-	BodyTypeMetal     BodyType = "metal"
-	BodyTypeRock      BodyType = "rock"
-	BodyTypeCrystal   BodyType = "crystal"
-	BodyTypeSynthetic BodyType = "synthetic"
-	BodyTypeLiquid    BodyType = "liquid"
-	BodyTypeGas       BodyType = "gas"
-	BodyTypeAbyssal   BodyType = "abyssal"
-)
-
 type Primortal struct {
 	Type PrimortalType
 	Name string
 
-	BaseSync            int
-	BasePhysicalAttack  int
-	BasePhysicalDefense int
-	BaseAetherAttack    int
-	BaseAetherDefense   int
-
-	BodyType BodyType
-	Affinity SkillType
+	BaseSync int
 }
 
 func (p Primortal) register() Primortal {
@@ -45,3 +25,9 @@ func (p Primortal) register() Primortal {
 	Primortals[p.Type] = p
 	return p
 }
+
+var Primortal_Blob = Primortal{
+	Type:     "blob",
+	Name:     "blob",
+	BaseSync: 10,
+}.register()

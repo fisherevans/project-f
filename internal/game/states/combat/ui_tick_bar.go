@@ -66,7 +66,7 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 		if skillProgressRemaining < 0.5 {
 			nextSkillProgress = 0.5 - skillProgressRemaining
 		}
-		mask := colors.OfSkillType(currentSkill.Skill.Type).RGBA
+		mask := pixel.RGBA{1, 1, 1, 1}
 		alpha := math.Min((skillProgress)/1, 1)*(1-nextSkillMaskScale) + nextSkillMaskScale
 		mask = colors.ScaleColor(mask, alpha)
 		s.drawSkill(ctx, target, matrixTopMiddle, currentSkill.Skill, mask, skillProgress > 0.5, 1.0, skillProgress, flip)
@@ -75,7 +75,10 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 	}
 	if nextSkillId != nil {
 		nextSkill := nextSkillId.Get()
-		mask := colors.OfSkillType(nextSkill.Type).RGBA
+		mask := pixel.RGBA{1, 1, 1, 1}
+		if !combatant.IsNextSkillCommitted() {
+			mask = colors.ScaleColor(mask, 0.5)
+		}
 		mask = colors.ScaleColor(mask, nextSkillMaskScale)
 		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, mask, false, 1.0, nextSkillProgress, flip)
 	} else {
@@ -133,7 +136,7 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 			}
 
 			stanceDelta := pixel.ZV
-			artificialSkillProgress := skillProgress + 0.5 // artificial progress to preempt overlay sprites above
+			artificialSkillProgress := skillProgress + 0.25 // artificial progress to preempt overlay sprites above
 			if artificialSkillProgress > float64(i) {
 				stanceProgress := math.Min(artificialSkillProgress-float64(i), float64(stanceDuration))
 				dy := float64(skillBarTickSpacing) * math.Max(0, stanceProgress-1)

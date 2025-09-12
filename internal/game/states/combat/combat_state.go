@@ -122,14 +122,7 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 		s.Player.GetCurrentShield().Update(timeDelta)
 		s.Player.GetCurrentSync().Update(timeDelta)
 
-		s.Battle.Update(ctx, s, timeDelta, BattleUpdateParams{
-			PlayerNextSkill: func() *rpg.SkillId {
-				return s.Player.PopNextSkill()
-			},
-			OpponentNextSkill: func() *rpg.SkillId {
-				return s.Opponent.PopNextSkill()
-			},
-		})
+		s.Battle.Update(ctx, s, timeDelta)
 
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 || s.Opponent.GetHealth().GetCurrentInt() <= 0 {
 			s.phase = PhaseComplete

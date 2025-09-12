@@ -1,7 +1,5 @@
 package colors
 
-import "fisherevans.com/project/f/internal/game/rpg"
-
 var (
 	Warm9 = registerNamedColor(HexColor("#fcef8d"), "warm_9")
 	Warm8 = registerNamedColor(HexColor("#ffb879"), "warm_8")
@@ -55,26 +53,3 @@ var (
 
 	ButtonHighlight = registerNamedColor(HexColor("#ecd539"), "button_highlight")
 )
-
-func OfSkillType(skillType rpg.SkillType) NamedColor {
-	switch skillType {
-	case rpg.SkillTypeKinetic:
-		return SkillTypeKinetic
-	case rpg.SkillTypeVoltaic:
-		return SkillTypeVoltaic
-	case rpg.SkillTypeThermal:
-		return SkillTypeThermal
-	case rpg.SkillTypeSonic:
-		return SkillTypeSonic
-	case rpg.SkillTypeMagnetic:
-		return SkillTypeMagnetic
-	case rpg.SkillTypeAcidic:
-		return SkillTypeAcidic
-	case rpg.SkillTypeGamma:
-		return SkillTypeGamma
-	case rpg.SkillTypeAbyssal:
-		return SkillTypeAbyssal
-	default:
-		return White
-	}
-}

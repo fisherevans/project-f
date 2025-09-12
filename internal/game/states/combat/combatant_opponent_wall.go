@@ -27,12 +27,7 @@ func NewWall() *Wall {
 
 func (w *Wall) GetStats() CombatantStats {
 	return CombatantStats{
-		BodyType:        rpg.BodyTypeRock,
-		PhysicalAttack:  10,
-		PhysicalDefense: 10,
-		AetherAttack:    10,
-		AetherDefense:   10,
-		Stance:          w.GetCurrentSkill().GetCurrentStance(),
+		Stance: w.GetCurrentSkill().GetCurrentStance(),
 	}
 }
 
@@ -79,7 +74,12 @@ func (w *Wall) PopNextSkill() *rpg.SkillId {
 	return popped
 }
 
+func (w *Wall) IsNextSkillCommitted() bool {
+	return true
+}
+
 func randomSkill() *rpg.SkillId {
+	return &rpg.Skill_Shunt.Id
 	switch rand.Intn(3) {
 	case 0:
 		return &rpg.Skill_Block.Id

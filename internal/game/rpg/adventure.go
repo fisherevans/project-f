@@ -15,7 +15,4 @@ type DeployedPrimortal struct {
 
 	PhysicalAttackModifier  int
 	PhysicalDefenceModifier int
-
-	AetherAttackModifier  int
-	AetherDefenceModifier int
 }

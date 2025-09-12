@@ -1,28 +1,17 @@
 save_id: "1"
 character_name: Isaac
 animech:
-    additional_shield: 30
-    upgrade_points: 3
+    additional_shield: 55
 captured_primortals:
     fire_slug:
-        primortal_type: fire_slug
+        primortal_type: blob
         nickname: Slug'em
         additional_sync: 40
-        additional_physical_attack: 0
-        additional_aether_attack: 5
-        research_points: 13
         selected_skills:
             - riposte
             - shunt
             - drawn_blow
             - block
-        available_skills:
-            - tackle
-            - crush
-            - flame_surge
-            - heat_crash
-            - arc_blast
-            - corrode
 inventory:
     items:
         - type: towel

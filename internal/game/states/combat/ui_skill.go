@@ -46,9 +46,10 @@ var (
 
 	skillPendingProgress = anim.SkillPendingProgress(atlas)
 
-	skillStatsBadge         = badges.Using(atlas).ButtonAction("select", "stats")
-	skillPendingCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel")
-	skillMenuBadge          = badges.Using(atlas).ButtonAction("start", "menu")
+	skillStatsBadge           = badges.Using(atlas).ButtonAction("select", "stats")
+	skillPendingCancelBadge   = badges.Using(atlas).ButtonAction("a", "commit")
+	skillCommittedCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel")
+	skillMenuBadge            = badges.Using(atlas).ButtonAction("start", "menu")
 )
 
 func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
@@ -72,7 +73,11 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 			s.combatArrowAlpha, s.combatArrowColumn = 1, 5
 		}
 		if ctx.Controls.DPad().JustPressed() {
-			s.Player.NextSkill = s.Player.GetFightOption(typeOptionKeyReverse[dir])
+			selectSkill := s.Player.GetFightOption(typeOptionKeyReverse[dir])
+			if selectSkill != s.Player.NextSkill {
+				s.Player.NextSkill = s.Player.GetFightOption(typeOptionKeyReverse[dir])
+				s.Player.NextSkillCommitted = false
+			}
 		}
 	}
 
@@ -138,9 +143,16 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 	badgeBottomRight := pixel.V(targetBounds.W()-3, 3)
 	skillStatsBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomLeft), gfx.BottomLeft)
 	if s.Player.NextSkill != nil {
-		skillPendingCancelBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
-		if ctx.Controls.ButtonB().JustPressed() {
+		if s.Player.IsNextSkillCommitted() {
+			skillCommittedCancelBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+		} else {
+			skillPendingCancelBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+		}
+		if ctx.Controls.ButtonA().JustPressed() {
+			s.Player.NextSkillCommitted = true
+		} else if ctx.Controls.ButtonB().JustPressed() {
 			s.Player.NextSkill = nil
+			s.Player.NextSkillCommitted = false
 		}
 	} else {
 		skillMenuBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)

@@ -17,71 +17,10 @@ func (id SkillId) Get() Skill {
 	panic("unknown skill ID: " + id)
 }
 
-type SkillType string
-
-func (t SkillType) Name() string {
-	return string(t)
-}
-
-func (t SkillType) ShortName() string {
-	switch t {
-	case SkillTypeKinetic:
-		return "kntc"
-	case SkillTypeVoltaic:
-		return "volt"
-	case SkillTypeThermal:
-		return "thml"
-	case SkillTypeSonic:
-		return "sonic"
-	case SkillTypeMagnetic:
-		return "mgnt"
-	case SkillTypeAcidic:
-		return "acid"
-	case SkillTypeGamma:
-		return "gma"
-	case SkillTypeAbyssal:
-		return "abys"
-	default:
-		panic("unknown skill type: " + t)
-	}
-}
-
-const (
-	SkillTypeKinetic  SkillType = "kinetic"
-	SkillTypeVoltaic  SkillType = "voltaic"
-	SkillTypeThermal  SkillType = "thermal"
-	SkillTypeSonic    SkillType = "sonic"
-	SkillTypeMagnetic SkillType = "magnetic"
-	SkillTypeAcidic   SkillType = "acidic"
-	SkillTypeGamma    SkillType = "gamma"
-	SkillTypeAbyssal  SkillType = "abyssal"
-)
-
-var (
-	AllSkillTypes = []SkillType{
-		SkillTypeKinetic,
-		SkillTypeVoltaic,
-		SkillTypeThermal,
-		SkillTypeSonic,
-		SkillTypeMagnetic,
-		SkillTypeAcidic,
-		SkillTypeGamma,
-		SkillTypeAbyssal,
-	}
-)
-
-type DamageMedium string
-
-const (
-	DamageMediumPhysical DamageMedium = "physical"
-	DamageMediumAether   DamageMedium = "aether"
-)
-
 type Skill struct {
 	Id          SkillId
 	Name        string
 	Description string
-	Type        SkillType
 	Ticks       []SkillTick
 }
 
@@ -101,9 +40,6 @@ func (s Skill) validate() {
 	}
 	if s.Description == "" {
 		errors = append(errors, "missing description")
-	}
-	if s.Type == "" {
-		errors = append(errors, "missing type")
 	}
 	if len(s.Ticks) == 0 {
 		errors = append(errors, "missing ticks")
@@ -143,3 +79,55 @@ func (s Skill) String() string {
 	y, _ := yaml.Marshal(s)
 	return string(y)
 }
+
+var Skill_Tackle = Skill{
+	Id:          "tackle",
+	Name:        "Tackle",
+	Description: "Tackle an enemy, dealing kinetic damage.",
+	Ticks:       simpleDamageSkillTicks(3, 3),
+}.register()
+
+var Skill_Crush = Skill{
+	Id:          "crush",
+	Name:        "Crush",
+	Description: "Slam down with immense force, dealing heavy kinetic damage.",
+	Ticks: skillTicks().
+		tick(damageTick().damage(6, 4)).
+		tick(nothingTick().repeat(2)...),
+}.register()
+
+var Skill_Shunt = Skill{
+	Id:          "shunt",
+	Name:        "Shunt",
+	Description: "Shunt the foe and enter a defencive stance.",
+	Ticks: skillTicks().
+		tick(damageTick().damage(6, 4)).
+		tick(nothingTick().repeat(2)...).
+		tick(stanceTick(TickStanceDefending).repeat(3)...),
+}.register()
+
+var Skill_Block = Skill{
+	Id:          "block",
+	Name:        "Block",
+	Description: "Raise your defences briefly",
+	Ticks: skillTicks().
+		tick(stanceTick(TickStanceDefending).repeat(3)...),
+}.register()
+
+var Skill_Riposte = Skill{
+	Id:          "riposte",
+	Name:        "Riposte",
+	Description: "Reflect damage after being exposed",
+	Ticks: skillTicks().
+		tick(stanceTick(TickStanceExposed).repeat(2)...).
+		tick(stanceTick(TickStanceReflecting).repeat(4)...),
+}.register()
+
+var Skill_DrawnBlow = Skill{
+	Id:          "drawn_blow",
+	Name:        "Drawn Blow",
+	Description: "Make a huge hit after being exposed",
+	Ticks: skillTicks().
+		tick(stanceTick(TickStanceExposed).repeat(4)...).
+		tick(damageTick().damage(15, 4)),
+}.register()

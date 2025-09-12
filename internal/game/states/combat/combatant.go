@@ -20,6 +20,7 @@ type Combatant interface {
 	GetCurrentSkill() *SkillInstance
 	SetCurrentSkill(skill *SkillInstance)
 
+	IsNextSkillCommitted() bool
 	PopNextSkill() *rpg.SkillId
 	PeekNextSkill() *rpg.SkillId
 }
@@ -74,13 +75,7 @@ func (h *HealthState) Update(timeDelta float64) {
 }
 
 type CombatantStats struct {
-	BodyType        rpg.BodyType
-	Affinities      []rpg.SkillType
-	Stance          rpg.CombatStance
-	PhysicalAttack  int
-	PhysicalDefense int
-	AetherAttack    int
-	AetherDefense   int
+	Stance rpg.CombatStance
 }
 
 type DamageFlashMask struct {

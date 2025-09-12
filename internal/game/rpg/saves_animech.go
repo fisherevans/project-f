@@ -5,10 +5,7 @@ const BaseShieldRegen = 3
 const BasePrimortalSlots = 1
 
 type Animech struct {
-	AdditionalShield         int `yaml:"additional_shield"`
-	AdditionalShieldRegen    int `yaml:"additional_shield_regen"`
-	AdditionalPrimortalSlots int `yaml:"additional_primortal_slots"`
-	UpgradePoints            int `yaml:"upgrade_points"`
+	AdditionalShield int `yaml:"additional_shield"`
 }
 
 func (a Animech) GetMaxShield() int {

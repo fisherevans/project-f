@@ -6,7 +6,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
@@ -40,17 +39,7 @@ func (s *skillType) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 	s.textbox.Render(ctx, target, matrix, s.content)
 }
 
-func (b *Builder) OfSkillType(st rpg.SkillType, shortName bool) Instance {
-	var name string
-	var width int
-	if shortName {
-		name = st.ShortName()
-		width = skillTypeWidthShort
-	} else {
-		name = st.Name()
-		width = skillTypeWidthLong
-	}
-	c := colors.OfSkillType(st).RGBA
+func (b *Builder) Of(name string, c pixel.RGBA, width int) Instance {
 	tb := textbox.NewInstance(
 		b.atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(width, skillTypeHeight,

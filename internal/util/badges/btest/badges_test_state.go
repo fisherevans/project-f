@@ -4,7 +4,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
@@ -32,13 +31,11 @@ func (s state) ClearColor() color.Color {
 func (s state) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 	m := pixel.IM.Moved(gfx.IVec(game.GameWidth*0.75, game.GameHeight-10))
-	for id, st := range rpg.AllSkillTypes {
-		badges.Using(atlas).OfSkillType(st, id%2 == 0).Render(ctx, s.batch, m.Moved(gfx.IVec(1, 1)), gfx.BottomLeft)
-		badges.Using(atlas).OfSkillType(st, id%2 != 0).Render(ctx, s.batch, m.Moved(gfx.IVec(-1, 1)), gfx.BottomRight)
-		badges.Using(atlas).OfSkillType(st, id%2 != 0).Render(ctx, s.batch, m.Moved(gfx.IVec(1, -1)), gfx.TopLeft)
-		badges.Using(atlas).OfSkillType(st, id%2 == 0).Render(ctx, s.batch, m.Moved(gfx.IVec(-1, -1)), gfx.TopRight)
-		m = m.Moved(pixel.V(0, -20))
-	}
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(1, 1)), gfx.BottomLeft)
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(-1, 1)), gfx.BottomRight)
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(1, -1)), gfx.TopLeft)
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(-1, -1)), gfx.TopRight)
+	m = m.Moved(pixel.V(0, -20))
 	gfx.DrawRect(
 		atlas,
 		s.batch,

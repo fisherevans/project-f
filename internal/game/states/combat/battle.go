@@ -18,11 +18,6 @@ type Battle struct {
 	OpponentSkillEnding bool
 }
 
-type BattleUpdateParams struct {
-	PlayerNextSkill   func() *rpg.SkillId
-	OpponentNextSkill func() *rpg.SkillId
-}
-
 func (b *Battle) GetPlayerCurrentTickProgress() float64 {
 	playerProgress := b.PendingProgress / 2.0
 	if b.TickPlayerNext {
@@ -39,30 +34,28 @@ func (b *Battle) GetOpponentCurrentTickProgress() float64 {
 	return opponentProgress
 }
 
-func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params BattleUpdateParams) {
+func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
 	ctx.DebugBR(fmt.Sprintf("PendingProgress: %f", b.PendingProgress))
 	ctx.DebugBR(fmt.Sprintf("TickPlayerNext: %t", b.TickPlayerNext))
 	ctx.DebugBR(fmt.Sprintf("PlayerSkill: %s", s.Player.GetCurrentSkill()))
 	ctx.DebugBR(fmt.Sprintf("OpponentSkill: %s", s.Opponent.GetCurrentSkill()))
 
 	if b.TickPlayerNext && s.Player.GetCurrentSkill() == nil {
-		nextSkill := params.PlayerNextSkill()
-		if nextSkill != nil {
-			s.Player.SetCurrentSkill(newInstance(*nextSkill))
-			s.Player.Tempo.Increment()
-		} else {
+		if s.Player.PeekNextSkill() == nil || !s.Player.IsNextSkillCommitted() {
 			s.Player.Tempo.Reset()
 			return
 		}
+		s.Player.SetCurrentSkill(newInstance(*s.Player.PopNextSkill()))
+		s.Player.Tempo.Increment()
 	}
 
 	if !b.TickPlayerNext && s.Opponent.GetCurrentSkill() == nil {
-		nextSkill := params.OpponentNextSkill()
-		if nextSkill != nil {
-			s.Opponent.SetCurrentSkill(newInstance(*nextSkill))
-		} else {
+		if s.Opponent.PeekNextSkill() == nil || !s.Opponent.IsNextSkillCommitted() {
+			//s.Opponent.Tempo.Reset()
 			return
 		}
+		s.Opponent.SetCurrentSkill(newInstance(*s.Opponent.PopNextSkill()))
+		//s.Opponent.Tempo.Increment()
 	}
 
 	tps := ticksPerSecond

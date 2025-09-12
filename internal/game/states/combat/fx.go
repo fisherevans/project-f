@@ -1,13 +1,15 @@
 package combat
 
 import (
+	"fmt"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/ext/text"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
-	"fmt"
-	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/text"
 )
 
 type FX interface {
@@ -39,7 +41,7 @@ func (fx *DamageFX) Update(ctx *game.Context, s *State, timeDelta float64) bool 
 }
 
 func (fx *DamageFX) Render(ctx *game.Context, target pixel.Target) {
-	color := colors.OfSkillType(fx.Damage.DamageType).RGBA
+	color := colors.HexColor("#c88")
 	color = colors.WithAlpha(color, 1.0-(fx.Age/damageFxMaxAge))
 
 	str := fmt.Sprintf("%d", fx.Damage.TotalDamage)

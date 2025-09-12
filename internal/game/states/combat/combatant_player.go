@@ -22,9 +22,10 @@ type PlayerCombatant interface {
 type Player struct {
 	*rpg.DeployedAnimech
 	*CurrentCombatantSkills
-	CurrentPrimortal int
-	NextSkill        *rpg.SkillId
-	Tempo            *Tempo
+	CurrentPrimortal   int
+	NextSkill          *rpg.SkillId
+	NextSkillCommitted bool
+	Tempo              *Tempo
 
 	Shield          *HealthState
 	Syncs           map[int]*HealthState
@@ -59,8 +60,13 @@ func (p *Player) PopNextSkill() *rpg.SkillId {
 		return nil
 	}
 	next := p.NextSkill
-	p.NextSkill = nil
+	// keep selection and just keep hitting a, or p.NextSkill = nil and force re selection
+	p.NextSkillCommitted = false
 	return next
+}
+
+func (p *Player) IsNextSkillCommitted() bool {
+	return p.NextSkillCommitted
 }
 
 func (p *Player) GetTempo() *Tempo {
@@ -74,15 +80,9 @@ func (p *Player) getDeployedPrimortal() *rpg.DeployedPrimortal {
 var _ PlayerCombatant = &Player{}
 
 func (p *Player) GetStats() CombatantStats {
-	dp := p.getDeployedPrimortal()
+	//dp := p.getDeployedPrimortal()
 	return CombatantStats{
-		BodyType:        dp.Base().BodyType,
-		Affinities:      []rpg.SkillType{dp.Base().Affinity},
-		PhysicalAttack:  dp.Base().BasePhysicalAttack + dp.AdditionalPhysicalAttack,
-		PhysicalDefense: dp.Base().BasePhysicalDefense + dp.AdditionalPhysicalDefense,
-		AetherAttack:    dp.Base().BaseAetherAttack + dp.AdditionalAetherAttack,
-		AetherDefense:   dp.Base().BaseAetherDefense + dp.AdditionalAetherDefense,
-		Stance:          p.GetCurrentSkill().GetCurrentStance(),
+		Stance: p.GetCurrentSkill().GetCurrentStance(),
 	}
 }
 

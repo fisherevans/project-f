@@ -18,7 +18,6 @@ const (
 )
 
 type SkillTickDamage struct {
-	Medium         DamageMedium
 	Amount         int
 	RandomVariance int
 }
@@ -62,10 +61,9 @@ func stanceTick(stance CombatStance) SkillTick {
 	}
 }
 
-func (st SkillTick) damage(amount, variance int, medium DamageMedium) SkillTick {
+func (st SkillTick) damage(amount, variance int) SkillTick {
 	st.Effects = append(st.Effects, SkillTickEffect{
 		Damage: &SkillTickDamage{
-			Medium:         medium,
 			Amount:         amount,
 			RandomVariance: variance,
 		},
@@ -85,8 +83,8 @@ func (t SkillTick) validate() []string {
 	return nil
 }
 
-func simpleDamageSkillTicks(damage int, medium DamageMedium, duration int) []SkillTick {
+func simpleDamageSkillTicks(damage int, duration int) []SkillTick {
 	return skillTicks().
-		tick(damageTick().damage(damage, 0, medium)).
+		tick(damageTick().damage(damage, 0)).
 		tick(nothingTick().repeat(duration - 1)...)
 }
