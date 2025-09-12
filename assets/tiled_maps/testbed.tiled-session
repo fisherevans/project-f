@@ -16,15 +16,19 @@
             "expandedObjectLayers": [
                 6
             ],
-            "scale": 3,
-            "selectedLayer": 3,
+            "scale": 5.5,
+            "selectedLayer": 6,
             "viewCenter": {
-                "x": 755.5,
-                "y": 708
+                "x": 768,
+                "y": 1408.4545454545455
             }
         },
         "snowhex_base.tsx": {
-            "scaleInDock": 1.2411,
+            "scaleInDock": 2.2807,
+            "scaleInEditor": 1
+        },
+        "space_base.tsx": {
+            "scaleInDock": 2.5279,
             "scaleInEditor": 1
         },
         "testing.tmx": {
@@ -49,10 +53,12 @@
     "openFiles": [
         "map1.tmx",
         "testing.tmx",
-        "snowhex_base.tsx"
+        "snowhex_base.tsx",
+        "space_base.tsx"
     ],
     "project": "testbed.tiled-project",
     "recentFiles": [
+        "space_base.tsx",
         "snowhex_base.tsx",
         "testing.tmx",
         "map1.tmx",

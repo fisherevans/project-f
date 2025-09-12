@@ -1,6 +1,8 @@
 package combat
 
 import (
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
 )
@@ -19,21 +21,33 @@ type PlayerCombatant interface {
 
 type Player struct {
 	*rpg.DeployedAnimech
+	*CurrentCombatantSkills
 	CurrentPrimortal int
 	NextSkill        *rpg.SkillId
 	Tempo            *Tempo
 
-	Shield *HealthState
-	Syncs  map[int]*HealthState
+	Shield          *HealthState
+	Syncs           map[int]*HealthState
+	DamageFlashMask *DamageFlashMask
 }
 
 func NewPlayer(deployed *rpg.DeployedAnimech) *Player {
 	return &Player{
-		DeployedAnimech: deployed,
-		Tempo:           &Tempo{},
-		Shield:          NewHealthState(deployed.GetMaxShield()),
-		Syncs:           make(map[int]*HealthState),
+		DeployedAnimech:        deployed,
+		CurrentCombatantSkills: NewCurrentCombatantSkills(),
+		Tempo:                  &Tempo{},
+		Shield:                 NewHealthState(deployed.GetMaxShield()),
+		Syncs:                  make(map[int]*HealthState),
+		DamageFlashMask:        NewDamageFlashMask(),
 	}
+}
+
+func (p *Player) Update(timeDelta float64) {
+	p.DamageFlashMask.Update(timeDelta)
+}
+
+func (p *Player) GetColorMask() pixel.RGBA {
+	return p.DamageFlashMask.getMask()
 }
 
 func (p *Player) PeekNextSkill() *rpg.SkillId {
@@ -68,6 +82,7 @@ func (p *Player) GetStats() CombatantStats {
 		PhysicalDefense: dp.Base().BasePhysicalDefense + dp.AdditionalPhysicalDefense,
 		AetherAttack:    dp.Base().BaseAetherAttack + dp.AdditionalAetherAttack,
 		AetherDefense:   dp.Base().BaseAetherDefense + dp.AdditionalAetherDefense,
+		Stance:          p.GetCurrentSkill().GetCurrentStance(),
 	}
 }
 
@@ -77,6 +92,7 @@ func (p *Player) ApplyDamage(damage rpg.DamageResult) {
 	if adjustment != 0 {
 		p.GetCurrentSync().AdjustTarget(adjustment)
 	}
+	p.DamageFlashMask.damaged()
 }
 
 func (p *Player) GetFightOption(slot int) *rpg.SkillId {

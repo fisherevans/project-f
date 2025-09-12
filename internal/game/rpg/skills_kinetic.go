@@ -38,6 +38,16 @@ var Skill_Block = Skill{
 		tick(stanceTick(TickStanceDefending).repeat(3)...),
 }.register()
 
+var Skill_Riposte = Skill{
+	Id:          "riposte",
+	Name:        "Riposte",
+	Description: "Reflect damage after being exposed",
+	Type:        SkillTypeKinetic,
+	Ticks: skillTicks().
+		tick(stanceTick(TickStanceExposed).repeat(3)...).
+		tick(stanceTick(TickStanceReflecting).repeat(3)...),
+}.register()
+
 var Skill_DrawnBlow = Skill{
 	Id:          "drawn_blow",
 	Name:        "Drawn Blow",

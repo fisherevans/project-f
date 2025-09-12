@@ -1,260 +1,16 @@
 package combat
 
 import (
+	"math"
+
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/game/shaders"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
-	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"fisherevans.com/project/f/internal/util/textbox"
-	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-
-	"image/color"
-	"math"
 )
-
-// Things to add
-// - enhance damage FX for various conditions (i.e. effective, immune, etc.)
-// - add skill log
-//   - add data structure to hold it
-//   - add rendering
-// - add arrow + select popup to view skill details
-// - add health delay (interp to target) - allow temp death
-//   - render target in bar
-// - state stuff
-//   - add transition state into combat (i.e. fade)
-//   - add battle intro that has creature enter
-//   - add initiative roll (maybe add ticks of confusion when starting)
-//   - add battle menu (fight, run, item, etc.)
-//   - add battle end (win, lose)
-// - generate experience at battle end (include in end summary)
-// - combat abilities
-//   - blocking mechanism
-//   - slow down tempo (make it smooth)
-// - add simple skill animations for effects to make it easier to understand what's happening
-//   - make sprite hop, like pokemon
-//   - add some sprite for fire, etc.
-// - add damage animations (i.e. red flash)
-// - sound
-//   - add damage noise (FIRST ONE)
-//   - add background music
-//   - add win vs lose chime
-// - add more interesting AI (more skills, show next skill after time)
-
-var ticksPerSecond = 1.5
-
-type OnComplete func(ctx *game.Context, s *State)
-
-type State struct {
-	Player     *Player
-	Opponent   Opponent
-	OnComplete OnComplete
-	Battle     *Battle
-
-	fx []FX
-
-	combatArrowAlpha       float64
-	combatArrowColumn      int
-	cachedContents         map[string]*textbox.Content
-	skillFlashTimeElapsed  float64
-	skillFlashAlpha        float64
-	skillFlashAlphaInverse float64
-
-	overlay        string
-	overlayElapsed float64
-
-	batch *pixel.Batch
-}
-
-func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
-	return &State{
-		Player: NewPlayer(animech),
-		Opponent: &Wall{
-			Health: NewHealthState(100),
-			Tempo:  &Tempo{},
-		},
-		OnComplete: onComplete,
-		Battle:     &Battle{},
-
-		cachedContents: map[string]*textbox.Content{},
-
-		batch: atlas.NewBatch(),
-	}
-}
-
-type HealthState struct {
-	Max        int
-	Target     int
-	Current    float64
-	AdjustRate float64
-}
-
-func NewHealthState(max int) *HealthState {
-	return &HealthState{
-		Max:        max,
-		Current:    float64(max),
-		Target:     max,
-		AdjustRate: 0.1,
-	}
-}
-
-func (h *HealthState) GetCurrentInt() int {
-	return int(math.Round(h.Current))
-}
-
-func (h *HealthState) AdjustTarget(amount int) int {
-	h.Target += amount
-	if h.Target < 0 {
-		remainder := h.Target
-		h.Target = 0
-		return remainder
-	}
-	if h.Target > h.Max {
-		remainder := h.Target - h.Max
-		h.Target = h.Max
-		return remainder
-	}
-	return 0
-}
-
-func (h *HealthState) Update(timeDelta float64) {
-	if math.Round(h.Current) == float64(h.Target) {
-		return
-	}
-	sign := 1.0
-	if h.Current > float64(h.Target) {
-		sign = -1
-	}
-	diff := h.AdjustRate * timeDelta * float64(h.Max)
-	maxDiff := math.Abs(float64(h.Target) - h.Current)
-	diff = math.Min(diff, maxDiff)
-	h.Current += sign * diff
-}
-
-type CombatantStats struct {
-	BodyType        rpg.BodyType
-	Affinities      []rpg.SkillType
-	PhysicalAttack  int
-	PhysicalDefense int
-	AetherAttack    int
-	AetherDefense   int
-}
-
-type Combatant interface {
-	Name() string
-	ApplyDamage(damage rpg.DamageResult)
-	GetStats() CombatantStats
-	GetTempo() *Tempo
-	PopNextSkill() *rpg.SkillId
-	PeekNextSkill() *rpg.SkillId
-}
-
-func (s *State) ClearColor() color.Color {
-	return color.Black
-}
-
-var atlas = resources.CreateAtlas(resources.AtlasFilter{
-	FontNames: []string{
-		resources.FontNameM5x7,
-		resources.FontNameM3x6,
-		resources.FontNameAddStandard,
-		resources.FontNameFF,
-		resources.FontName3x5,
-	},
-})
-
-func init() {
-	atlas.Dump("temp", "combat")
-}
-
-var backgroundSprite = resources.LoadSprite("combat/background_sample")
-
-var robotAnim = anim.IdleRobot(atlas)
-var plentAnim = anim.IdlePlent(atlas)
-
-func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	s.batch.Clear()
-
-	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4.RGBA)
-
-	if s.overlay == "" {
-		s.Opponent.GetHealth().Update(timeDelta)
-		s.Player.GetCurrentShield().Update(timeDelta)
-		s.Player.GetCurrentSync().Update(timeDelta)
-
-		s.Battle.Update(ctx, s, timeDelta, BattleUpdateParams{
-			PlayerNextSkill: func() *rpg.SkillId {
-				return s.Player.PopNextSkill()
-			},
-			OpponentNextSkill: func() *rpg.SkillId {
-				return s.Opponent.PopNextSkill()
-			},
-		})
-	}
-
-	if s.Player.GetCurrentSync().GetCurrentInt() <= 0 {
-		s.overlay = "{+c:#e64565,+o}You died!"
-		if s.overlayElapsed > 5 {
-			// todo
-			s.OnComplete(ctx, s)
-			return
-		}
-	}
-
-	if s.Opponent.GetHealth().GetCurrentInt() <= 0 {
-		s.overlay = "{+c:#45e682,+o}You won!"
-		if s.overlayElapsed > 5 {
-			// todo
-			s.OnComplete(ctx, s)
-			return
-		}
-	}
-
-	var remainingFx []FX
-	for _, fx := range s.fx {
-		if !fx.Update(ctx, s, timeDelta) {
-			remainingFx = append(remainingFx, fx)
-		}
-	}
-	s.fx = remainingFx
-
-	robotAnim.Update(timeDelta)
-	robotAnim.Sprite().Draw(s.batch, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))))
-
-	plentAnim.Update(timeDelta)
-	plentAnim.Sprite().Draw(s.batch, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.6667))))
-
-	// while time left
-	//  - progress time
-	//  - if skill ends, pop next
-
-	s.drawActiveSkills(ctx, s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
-
-	for _, fx := range s.fx {
-		fx.Render(ctx, s.batch)
-	}
-
-	s.renderSkills(ctx, s.batch, targetBounds, timeDelta)
-
-	s.drawPlayerStats(ctx)
-	s.drawOpponentStats(ctx)
-
-	s.Player.Tempo.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.675)))
-
-	if s.overlay != "" {
-		s.overlayElapsed += timeDelta
-		content := combatantNameText.NewComplexContent(s.overlay)
-		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight*0.75)), content, tbcfg.RenderFrom(gfx.Centered))
-	}
-
-	s.batch.Draw(target)
-}
 
 var tickBubbleDisplayNone = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 1, 1)
 var tickBubbleDisplayNormal = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 2, 1)
@@ -264,10 +20,9 @@ var tickBubbleDisplayVBar = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 
 var tickBarStanceBoxActive = atlas.GetSprite("combat/tick_bar/skill_active_stance_box")
 var tickBarStanceBoxPending = atlas.GetSprite("combat/tick_bar/skill_pending_stance_box")
 
-var stanceIcons = map[rpg.TickStanceType]pixelutil.BoundedDrawable{
+var stanceIcons = map[rpg.CombatStance]pixelutil.BoundedDrawable{
 	rpg.TickStanceDefending:  atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 1, 3),
 	rpg.TickStanceReflecting: atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 1, 1),
-	rpg.TickStanceReposing:   atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 1, 5),
 	rpg.TickStanceVulnerable: atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 5, 1),
 	rpg.TickStanceExposed:    atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 7, 3),
 }
@@ -287,17 +42,19 @@ func (s *State) drawActiveSkills(ctx *game.Context, target pixel.Target, targetB
 		opponentProgress += 0.5
 	}
 	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -skillEaterSprite.Bounds().H()/2))
-	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Battle.PlayerSkill, s.Player.PeekNextSkill(), false)
-	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Battle.OpponentSkill, s.Opponent.PeekNextSkill(), true)
+	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Player, false)
+	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Opponent, true)
 	skillEaterSprite.Draw(target, matrixTopMiddle)
 }
 
 var baseNextSkillMaskScale = 0.8
 var nextSkillFlashRation = 0.2
 
-func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, currentSkill *SkillInstance, nextSkillId *rpg.SkillId, flip bool) {
+func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, combatant Combatant, flip bool) {
 	nextSkillMaskScale := baseNextSkillMaskScale*(1-nextSkillFlashRation) + baseNextSkillMaskScale*nextSkillFlashRation*s.skillFlashAlpha
 	noNextSkillAlpha := 1.0
+	currentSkill := combatant.GetCurrentSkill()
+	nextSkillId := combatant.PeekNextSkill()
 	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, (currentTickProgress-0.5)*float64(skillBarTickSpacing)))
 	if currentSkill != nil {
 		matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, (float64(currentSkill.NextTick))*float64(skillBarTickSpacing)))

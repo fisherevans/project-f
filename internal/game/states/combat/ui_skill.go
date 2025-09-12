@@ -1,16 +1,13 @@
 package combat
 
 import (
-	"fmt"
 	"math"
-	"math/rand"
 
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -87,7 +84,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 		if option != nil {
 			opt := option.Get()
 			text = opt.Name
-			if s.Battle.PlayerSkill != nil && s.Battle.PlayerSkill.Skill.Id == opt.Id {
+			if s.Player.GetCurrentSkill() != nil && s.Player.GetCurrentSkill().Skill.Id == opt.Id {
 				optionActive = true
 			}
 			if s.Player.NextSkill != nil && *s.Player.NextSkill == opt.Id {
@@ -169,68 +166,4 @@ func (s *State) simpleSkillContent(text string) *textbox.Content {
 		s.cachedContents[text] = c
 	}
 	return c
-}
-
-type TickHandler func(ctx *game.Context, s *State, tick int, source Combatant, target Combatant) []rpg.DamageResult
-
-type SkillInstance struct {
-	Skill       *rpg.Skill
-	NextTick    int
-	Duration    int // 1+
-	OnTick      TickHandler
-	DisplayType func(int) rpg.TickDisplayType
-}
-
-func (i *SkillInstance) String() string {
-	if i == nil {
-		return "<none>"
-	}
-	return fmt.Sprintf("SkillInstance{NextTick: %d, Duration: %d}", i.NextTick, i.Duration)
-}
-
-func newInstance(skillId rpg.SkillId) *SkillInstance {
-	skill := skillId.Get()
-	var handlers []TickHandler
-	for _, tick := range skill.Ticks {
-		handlers = append(handlers, func(ctx *game.Context, s *State, tickId int, source Combatant, target Combatant) []rpg.DamageResult {
-			sourceStats := source.GetStats()
-			targetStats := target.GetStats()
-			var allDamage []rpg.DamageResult
-			for _, effect := range tick.Effects {
-				if effect.Damage != nil {
-					damage := effect.Damage.Amount
-					if effect.Damage.RandomVariance > 0 {
-						damage += rand.Intn(effect.Damage.RandomVariance*2+1) - effect.Damage.RandomVariance
-					}
-					result := rpg.ComputeDamage(rpg.DamageSource{
-						BaseDamage:     damage,
-						Affinities:     sourceStats.Affinities,
-						DamageMedium:   effect.Damage.Medium,
-						SkillType:      skill.Type,
-						PhysicalAttack: sourceStats.PhysicalAttack,
-						AetherAttack:   sourceStats.AetherAttack,
-						Tempo:          source.GetTempo().GetCurrent(),
-					}, rpg.DamageTarget{
-						TargetType:      targetStats.BodyType,
-						Affinities:      targetStats.Affinities,
-						PhysicalDefence: targetStats.PhysicalDefense,
-						AetherDefence:   targetStats.AetherDefense,
-					})
-					allDamage = append(allDamage, result)
-					target.ApplyDamage(result)
-				}
-			}
-			return allDamage
-		})
-	}
-	return &SkillInstance{
-		Skill:    &skill,
-		Duration: len(handlers) - 1,
-		OnTick: func(ctx *game.Context, s *State, tickId int, source Combatant, target Combatant) []rpg.DamageResult {
-			return handlers[tickId](ctx, s, tickId, source, target)
-		},
-		DisplayType: func(tickId int) rpg.TickDisplayType {
-			return skill.Ticks[tickId].DisplayType
-		},
-	}
 }

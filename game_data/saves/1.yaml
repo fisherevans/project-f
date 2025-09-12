@@ -8,11 +8,11 @@ captured_primortals:
         primortal_type: fire_slug
         nickname: Slug'em
         additional_sync: 40
-        additional_physical_attack: 20
+        additional_physical_attack: 0
         additional_aether_attack: 5
         research_points: 13
         selected_skills:
-            - flame_surge
+            - riposte
             - shunt
             - drawn_blow
             - block

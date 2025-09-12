@@ -14,10 +14,7 @@ type Battle struct {
 	PendingProgress float64
 	TickPlayerNext  bool
 
-	PlayerSkill       *SkillInstance
-	PlayerSkillEnding bool
-
-	OpponentSkill       *SkillInstance
+	PlayerSkillEnding   bool
 	OpponentSkillEnding bool
 }
 
@@ -26,16 +23,32 @@ type BattleUpdateParams struct {
 	OpponentNextSkill func() *rpg.SkillId
 }
 
+func (b *Battle) GetPlayerCurrentTickProgress() float64 {
+	playerProgress := b.PendingProgress / 2.0
+	if b.TickPlayerNext {
+		playerProgress += 0.5
+	}
+	return playerProgress
+}
+
+func (b *Battle) GetOpponentCurrentTickProgress() float64 {
+	opponentProgress := b.PendingProgress / 2.0
+	if !b.TickPlayerNext {
+		opponentProgress += 0.5
+	}
+	return opponentProgress
+}
+
 func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params BattleUpdateParams) {
 	ctx.DebugBR(fmt.Sprintf("PendingProgress: %f", b.PendingProgress))
 	ctx.DebugBR(fmt.Sprintf("TickPlayerNext: %t", b.TickPlayerNext))
-	ctx.DebugBR(fmt.Sprintf("PlayerSkill: %s", b.PlayerSkill))
-	ctx.DebugBR(fmt.Sprintf("OpponentSkill: %s", b.OpponentSkill))
+	ctx.DebugBR(fmt.Sprintf("PlayerSkill: %s", s.Player.GetCurrentSkill()))
+	ctx.DebugBR(fmt.Sprintf("OpponentSkill: %s", s.Opponent.GetCurrentSkill()))
 
-	if b.TickPlayerNext && b.PlayerSkill == nil {
+	if b.TickPlayerNext && s.Player.GetCurrentSkill() == nil {
 		nextSkill := params.PlayerNextSkill()
 		if nextSkill != nil {
-			b.PlayerSkill = newInstance(*nextSkill)
+			s.Player.SetCurrentSkill(newInstance(*nextSkill))
 			s.Player.Tempo.Increment()
 		} else {
 			s.Player.Tempo.Reset()
@@ -43,10 +56,10 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 		}
 	}
 
-	if !b.TickPlayerNext && b.OpponentSkill == nil {
+	if !b.TickPlayerNext && s.Opponent.GetCurrentSkill() == nil {
 		nextSkill := params.OpponentNextSkill()
 		if nextSkill != nil {
-			b.OpponentSkill = newInstance(*nextSkill)
+			s.Opponent.SetCurrentSkill(newInstance(*nextSkill))
 		} else {
 			return
 		}
@@ -60,20 +73,20 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64, params B
 	for b.PendingProgress >= 1 {
 		if b.TickPlayerNext {
 			if b.OpponentSkillEnding {
-				b.OpponentSkill = nil
+				s.Opponent.SetCurrentSkill(nil)
 				b.OpponentSkillEnding = false
 			}
-			dmg, over := b.PlayerSkill.Tick(ctx, s, s.Player, s.Opponent)
+			dmg, over := s.Player.GetCurrentSkill().Tick(ctx, s, s.Player, s.Opponent)
 			if over {
 				b.PlayerSkillEnding = true
 			}
 			s.emitDamageFx(dmg, false)
 		} else {
 			if b.PlayerSkillEnding {
-				b.PlayerSkill = nil
+				s.Player.SetCurrentSkill(nil)
 				b.PlayerSkillEnding = false
 			}
-			dmg, over := b.OpponentSkill.Tick(ctx, s, s.Opponent, s.Player)
+			dmg, over := s.Opponent.GetCurrentSkill().Tick(ctx, s, s.Opponent, s.Player)
 			if over {
 				b.OpponentSkillEnding = true
 			}
@@ -105,7 +118,6 @@ func (s *State) emitDamageFx(dmgs []rpg.DamageResult, damagingPlayer bool) {
 }
 
 func (i *SkillInstance) Tick(ctx *game.Context, s *State, source Combatant, target Combatant) ([]rpg.DamageResult, bool) {
-	//log.Info().Msgf("%s: %s.Tick(%d:%d)", source.Name(), i, i.NextTick, i.Duration)
 	var dmg []rpg.DamageResult
 	if i.NextTick <= i.Duration {
 		dmg = i.OnTick(ctx, s, i.NextTick, source, target)

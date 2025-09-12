@@ -91,7 +91,11 @@ func getDamageEffectiveness(skillType SkillType, bodyType BodyType) DamageEffect
 }
 
 const (
-	affinityMultiplier = 1.5
+	affinityMultiplier         = 1.5
+	stanceDefendingMultiplier  = 0.5
+	stanceReflectingMultiplier = 0.75
+	stanceExposedMultiplier    = 1.25
+	stanceVulnerableMultiplier = 1.5
 )
 
 type DamageSource struct {
@@ -102,6 +106,7 @@ type DamageSource struct {
 	PhysicalAttack int
 	AetherAttack   int
 	Tempo          int
+	Stance         CombatStance
 }
 
 type DamageTarget struct {
@@ -109,6 +114,7 @@ type DamageTarget struct {
 	Affinities      []SkillType
 	PhysicalDefence int
 	AetherDefence   int
+	Stance          CombatStance
 }
 
 type DamageResult struct {
@@ -144,6 +150,19 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 
 	tempoMultiplier := 1.0 + float64(source.Tempo)/20 // x2 @ 20
 	damage *= tempoMultiplier
+
+	switch target.Stance {
+	case TickStanceDefending:
+		damage *= stanceDefendingMultiplier
+	case TickStanceVulnerable:
+		damage *= stanceVulnerableMultiplier
+	case TickStanceExposed:
+		damage *= stanceExposedMultiplier
+		// todo apply stun
+	case TickStanceReflecting:
+		damage *= stanceReflectingMultiplier
+		// todo reflect damage in addition to dulling
+	}
 
 	return DamageResult{
 		TotalDamage:       int(math.Ceil(damage)), // short of immune, always deal at least 1 damage
