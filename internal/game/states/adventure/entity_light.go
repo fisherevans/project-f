@@ -10,19 +10,19 @@ import (
 type LightEntity struct {
 	InnateEntity
 	Light
-	Animation *anim.AnimatedSprite
+	Animations []*anim.AnimatedSprite
 }
 
 func (i *LightEntity) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	i.Light.Update(timeDelta)
-	if i.Animation != nil {
-		i.Animation.Update(timeDelta)
+	for _, a := range i.Animations {
+		a.Update(timeDelta)
 	}
 }
 
 func (i *LightEntity) RenderScene(target pixel.Target, matrix pixel.Matrix) {
-	if i.Animation != nil {
-		i.Animation.Sprite().Draw(target, matrix)
+	for _, a := range i.Animations {
+		a.Sprite().Draw(target, matrix)
 	}
 }
 

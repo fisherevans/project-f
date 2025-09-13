@@ -3,14 +3,16 @@ package resources
 import (
 	"bytes"
 	"errors"
-	"fisherevans.com/project/f/assets"
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 	"image"
 	"io/fs"
 	"path/filepath"
 	"strings"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
+
+	"fisherevans.com/project/f/assets"
 )
 
 var (
@@ -23,9 +25,10 @@ type spriteResource struct {
 }
 
 type SpriteMetadata struct {
-	Frame          *SpriteFrame     `yaml:"frame,omitempty"`
-	Tilesheet      *SpriteTilesheet `yaml:"tilesheet,omitempty"`
-	NonAtlasSprite bool             `yaml:"nonAtlasSprite,omitempty"`
+	Frame          *SpriteFrame                         `yaml:"frame,omitempty"`
+	Tilesheet      *SpriteTilesheet                     `yaml:"tilesheet,omitempty"`
+	Animations     map[string]*SpriteTilesheetAnimation `yaml:"animations,omitempty"`
+	NonAtlasSprite bool                                 `yaml:"nonAtlasSprite,omitempty"`
 }
 
 func (m SpriteMetadata) init(img image.Image) {
@@ -76,6 +79,14 @@ func loadSpriteResource(path string, name string, data []byte) error {
 	}
 	if metadata.Frame != nil {
 		frames[name] = metadata.Frame
+	}
+	if metadata.Animations != nil {
+		for animName, anim := range metadata.Animations {
+			tilesheetAnimations[tilesheetAnimationKey{
+				tilesheet: name,
+				name:      animName,
+			}] = anim
+		}
 	}
 
 	return nil

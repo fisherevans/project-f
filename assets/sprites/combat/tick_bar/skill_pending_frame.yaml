@@ -1,5 +1,8 @@
 frame:
+  frameModes:
+    left: repeat
+    right: repeat
   defaults:
-    cutMargin: 3
+    cutMargin: 4
     padding: 2
     frameMode: stretch

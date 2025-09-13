@@ -76,11 +76,12 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 	if nextSkillId != nil {
 		nextSkill := nextSkillId.Get()
 		mask := pixel.RGBA{1, 1, 1, 1}
+		mask = colors.ScaleColor(mask, 0.95)
 		if !combatant.IsNextSkillCommitted() {
-			mask = colors.ScaleColor(mask, 0.5)
+			mask = colors.ScaleColor(mask, 0.9)
 		}
 		mask = colors.ScaleColor(mask, nextSkillMaskScale)
-		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, mask, false, 1.0, nextSkillProgress, flip)
+		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, mask, combatant.IsNextSkillCommitted(), 1.0, nextSkillProgress, flip)
 	} else {
 		y := noneSelectedSprite.Bounds().H() / 2
 		noNextSkillAlpha *= s.skillFlashAlphaInverse

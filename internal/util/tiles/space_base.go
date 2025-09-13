@@ -21,3 +21,5 @@ var LightFork = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 25,
 
 var PDAEnabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 29}
 var PDADisabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 30}
+
+var Elythium = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 26, Row: 15}

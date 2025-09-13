@@ -101,6 +101,8 @@ func initializeMap(a *State, m *resources.Map) {
 			entityType = "interest"
 		case tiles.PDAEnabled:
 			entityType = "pda"
+		case tiles.Elythium:
+			entityType = "elythium"
 		}
 		switch entityType {
 		case "player":
@@ -265,13 +267,13 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			switch entity.SpriteId {
 			case tiles.Torch:
-				t.Animation = anim.Torch(atlas)
+				t.Animations = []*anim.AnimatedSprite{anim.Torch(atlas)}
 			case tiles.TorchRight:
-				t.Animation = anim.TorchRight(atlas)
+				t.Animations = []*anim.AnimatedSprite{anim.TorchRight(atlas)}
 				t.RenderZPriority = 10
 				t.Light.RenderDetails.PositionDelta = pixel.V(float64(resources.MapTileSize/2), 0)
 			case tiles.TorchLeft:
-				t.Animation = anim.TorchLeft(atlas)
+				t.Animations = []*anim.AnimatedSprite{anim.TorchLeft(atlas)}
 				t.RenderZPriority = 10
 				t.Light.RenderDetails.PositionDelta = pixel.V(-float64(resources.MapTileSize/2), 0)
 			}
@@ -292,13 +294,13 @@ func initializeMap(a *State, m *resources.Map) {
 					},
 					Modifiers: []LightModifier{
 						&LightModifierPulse{
-							PeriodSeconds:       2,
+							PeriodSeconds:       0.5,
 							SizeIntensity:       0.1,
 							BrightnessIntensity: 0.4,
 						},
 					},
 				},
-				Animation: anim.RedCoin(atlas),
+				Animations: []*anim.AnimatedSprite{anim.RedCoin(atlas)},
 			}
 			a.AddEntity(t)
 		case "light":
@@ -316,7 +318,7 @@ func initializeMap(a *State, m *resources.Map) {
 						ColorMask: colors.HexColor("#fff"),
 					},
 				},
-				Animation: anim.NewStaticAnimation(entity.SpriteId.From(atlas)),
+				Animations: []*anim.AnimatedSprite{anim.NewStaticAnimation(entity.SpriteId.From(atlas))},
 			}
 			if entity.SpriteId == tiles.LightFork {
 				t.RenderZPriority = 10
@@ -369,6 +371,33 @@ func initializeMap(a *State, m *resources.Map) {
 				OnMessage:    "You've got mail!",
 				OffMessage:   "There's nothing new here...",
 				toggled:      true,
+			})
+		case "elythium":
+			a.AddEntity(&LightEntity{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id:       entityId,
+						Passable: false,
+					},
+					MapLocation: location,
+				},
+				Light: Light{
+					RenderDetails: LightRenderDetails{
+						SizeScale: 1.5,
+						ColorMask: colors.HexColor("#f06"),
+					},
+					Modifiers: []LightModifier{
+						&LightModifierPulse{
+							PeriodSeconds:       4,
+							SizeIntensity:       0.1,
+							BrightnessIntensity: 0.4,
+						},
+					},
+				},
+				Animations: []*anim.AnimatedSprite{
+					anim.Load(atlas, "adventure/entities/elythium/crystals", "default"),
+					anim.Load(atlas, "adventure/entities/elythium/crystals_sparkle", "default"),
+				},
 			})
 
 		default:

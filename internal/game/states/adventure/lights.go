@@ -69,10 +69,20 @@ type LightModifierPulse struct {
 }
 
 func (l *LightModifierPulse) Update(timeDelta float64) {
-	l.elapsedSeconds = math.Remainder(l.elapsedSeconds+timeDelta, math.Pi)
-	scale := (math.Sin(l.elapsedSeconds*l.PeriodSeconds*math.Pi*2) + 1.0) / 2.0
+	// Advance time and wrap by the period to avoid float growth (no discontinuity in phase).
+	l.elapsedSeconds += timeDelta
+	l.elapsedSeconds = math.Mod(l.elapsedSeconds, l.PeriodSeconds)
+	if l.elapsedSeconds < 0 { // handle negative dt just in case
+		l.elapsedSeconds += l.PeriodSeconds
+	}
+
+	// Convert to phase [0,1), then to angle.
+	phase := l.elapsedSeconds / l.PeriodSeconds      // 0..1
+	scale := 0.5 * (math.Sin(2*math.Pi*phase) + 1.0) // 0..1
+
 	l.sizeMultiplier = 1.0 - scale*l.SizeIntensity
 	l.brightnessMultiplier = 1.0 - scale*l.BrightnessIntensity
+
 }
 
 func (l *LightModifierPulse) Apply(details *LightRenderDetails) {
