@@ -14,6 +14,7 @@ type SpriteTilesheetAnimation struct {
 	Tiles           []SpriteTilesheetAnimationTile    `yaml:"tiles"`
 	FramesPerSecond float64                           `yaml:"framesPerSecond"`
 	Randomize       bool                              `yaml:"randomize"`
+	PingPong        bool                              `yaml:"pingPong"`
 }
 
 type SpriteTilesheetAnimationSequence struct {

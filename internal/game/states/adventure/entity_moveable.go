@@ -44,7 +44,7 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	moveDelta := timeDelta * moveSpeed
 	m.ConstantMovement += moveDelta
 	m.MoveProgression += moveDelta
-	if m.MoveProgression >= 0.5 {
+	if m.MoveProgression >= 0.5 && m.IsPassable() {
 		adv.unoccupy(m.CurrentLocation, m.Id)
 	}
 	if m.MoveProgression >= 1.0 {
@@ -82,7 +82,7 @@ func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, de
 	if m.IsMoving() {
 		return false
 	}
-	if !adv.attemptToOccupy(newLocation, m.Id) {
+	if !m.IsPassable() && !adv.attemptToOccupy(newLocation, m.Id) {
 		return false
 	}
 	m.TargetLocation = newLocation
@@ -93,7 +93,7 @@ func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, de
 	return true
 }
 
-func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
+func (m *MoveableEntity) PreciseMapLocation() pixel.Vec {
 	location := m.CurrentLocation.ToVec()
 	if m.IsMoving() {
 		p := m.MoveProgression
@@ -106,6 +106,10 @@ func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
 		location = location.Add(delta)
 	}
 	return location
+}
+
+func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
+	return m.PreciseMapLocation()
 }
 
 func (m *MoveableEntity) Location() MapLocation {
@@ -154,6 +158,9 @@ func (m *MoveableEntity) TeleportTo(s *State, location MapLocation) {
 	if m.MoveState != MoveStateIdle {
 		log.Warn().Msgf("cannot teleport '%s' while moving '%d'", m.Id, m.MoveState)
 		return
+	}
+	if !m.IsPassable() {
+		m.CurrentLocation = location
 	}
 	currentLocation := m.CurrentLocation
 	if !s.attemptToOccupy(location, m.Id) {

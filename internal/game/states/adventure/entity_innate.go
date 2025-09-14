@@ -22,8 +22,12 @@ func (i *InnateEntity) Location() MapLocation {
 	return i.MapLocation
 }
 
-func (i *InnateEntity) RenderMapLocation() pixel.Vec {
+func (i *InnateEntity) PreciseMapLocation() pixel.Vec {
 	return pixel.V(float64(i.X), float64(i.Y))
+}
+
+func (i *InnateEntity) RenderMapLocation() pixel.Vec {
+	return i.PreciseMapLocation()
 }
 
 func (i *InnateEntity) Interact(ctx *game.Context, adv *State, source Entity) {

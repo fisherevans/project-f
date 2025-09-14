@@ -96,12 +96,18 @@ type Light struct {
 }
 
 func (l *Light) Update(timeDelta float64) {
+	if l == nil {
+		return
+	}
 	for _, m := range l.Modifiers {
 		m.Update(timeDelta)
 	}
 }
 
 func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
+	if l == nil {
+		return
+	}
 	renderDetails := l.RenderDetails
 	for _, m := range l.Modifiers {
 		m.Apply(&renderDetails)

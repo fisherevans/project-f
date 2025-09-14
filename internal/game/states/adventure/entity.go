@@ -16,6 +16,7 @@ func (i EntityId) GetEntityId() EntityId {
 type Entity interface {
 	Move(adv *State, timeDelta float64) float64
 	Update(ctx *game.Context, adv *State, timeDelta float64)
+	PreciseMapLocation() pixel.Vec
 	RenderMapLocation() pixel.Vec
 	IsPassable() bool
 	Location() MapLocation

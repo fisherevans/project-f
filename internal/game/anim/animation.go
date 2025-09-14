@@ -69,7 +69,6 @@ func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecon
 			weight:   tile.Weight,
 		})
 	}
-	fmt.Printf("tilesheet animation: %s:\n%#v\n", tilesheet, animated.frames)
 	return animated
 }
 
@@ -149,7 +148,11 @@ func Load(atlas *resources.Atlas, tilesheetName string, animationName string) *A
 	}
 	//j, _ := json.MarshalIndent(tiles, "", "  ")
 	//fmt.Printf("tilesheet animation: %s/%s:\n%s\n", tilesheetName, animationName, j)
-	return FromTilesheetTiles(atlas, tilesheetName, metadata.FramesPerSecond, metadata.Randomize, tiles)
+	a := FromTilesheetTiles(atlas, tilesheetName, metadata.FramesPerSecond, metadata.Randomize, tiles)
+	if metadata.PingPong {
+		a = a.ApplyPingPong()
+	}
+	return a
 }
 
 func (a *AnimatedSprite) Sprite() pixelutil.BoundedDrawable {

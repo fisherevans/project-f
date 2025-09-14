@@ -103,6 +103,8 @@ func initializeMap(a *State, m *resources.Map) {
 			entityType = "pda"
 		case tiles.Elythium:
 			entityType = "elythium"
+		case tiles.ShadowMob:
+			entityType = "shadow"
 		}
 		switch entityType {
 		case "player":
@@ -373,33 +375,10 @@ func initializeMap(a *State, m *resources.Map) {
 				toggled:      true,
 			})
 		case "elythium":
-			a.AddEntity(&LightEntity{
-				InnateEntity: InnateEntity{
-					BaseEntity: BaseEntity{
-						Id:       entityId,
-						Passable: false,
-					},
-					MapLocation: location,
-				},
-				Light: Light{
-					RenderDetails: LightRenderDetails{
-						SizeScale: 1.5,
-						ColorMask: colors.HexColor("#f06"),
-					},
-					Modifiers: []LightModifier{
-						&LightModifierPulse{
-							PeriodSeconds:       4,
-							SizeIntensity:       0.1,
-							BrightnessIntensity: 0.4,
-						},
-					},
-				},
-				Animations: []*anim.AnimatedSprite{
-					anim.Load(atlas, "adventure/entities/elythium/crystals", "default"),
-					anim.Load(atlas, "adventure/entities/elythium/crystals_sparkle", "default"),
-				},
-			})
+			a.AddEntity(NewElythiumDepositEntity(entityId, location))
 
+		case "shadow":
+			a.AddMob(NewShadowMob(entityId, location))
 		default:
 			log.Warn().Msgf("Unknown entity type: %s", entity)
 		}

@@ -1,0 +1,10 @@
+tilesheet:
+  tileWidth: 16
+  tileHeight: 30
+animations:
+  default:
+    sequence:
+      row: 1
+      columnFrom: 1
+      columnTo: 6
+    framesPerSecond: 2

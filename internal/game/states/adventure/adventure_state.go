@@ -29,6 +29,9 @@ var (
 		FontNames: []string{
 			resources.FontNameM5x7,
 			resources.FontNameM3x6,
+			resources.FontNameAddStandard,
+			resources.FontNameFF,
+			resources.FontName3x5,
 		},
 	})
 )
@@ -68,7 +71,10 @@ type State struct {
 	dialogues            *DialogueSystem
 	overlays             *OverlaySystem
 
-	blockInput bool
+	hud *Hud
+
+	blockInput     bool
+	enteringCombat bool
 
 	sceneBatch  *pixel.Batch
 	sceneCanvas *opengl.Canvas
@@ -81,6 +87,7 @@ type State struct {
 	litSceneCanvas *opengl.Canvas
 
 	hudBatch *pixel.Batch
+	mobs     []*ShadowMob
 }
 
 func New(mapName string, save *rpg.GameSave) game.State {
@@ -95,6 +102,8 @@ func New(mapName string, save *rpg.GameSave) game.State {
 		chatters:             NewChatterSystem(),
 		dialogues:            NewDialogueSystem(),
 		overlays:             NewOverlaySystem(),
+
+		hud: NewHud(),
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -150,6 +159,10 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 		}
 	}
 
+	for _, mob := range s.mobs {
+		mob.Update(ctx, s, timeDelta)
+	}
+
 	s.actions.ExecuteActions(ctx, s, timeDelta)
 
 	s.camera.Update(ctx, s, timeDelta)
@@ -164,6 +177,11 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 
 	for _, thisRenderLayer := range s.baseRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
+	}
+
+	for _, mob := range s.mobs {
+		renderLocation := mob.Location.Scaled(resources.MapTileSize.Float())
+		mob.Render(s.sceneBatch, cameraMatrix.Moved(renderLocation))
 	}
 
 	for _, entity := range s.locationSortedEntities() {
@@ -270,6 +288,7 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 
 	s.hudBatch.Clear()
 	s.chatters.OnTick(ctx, s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
+	s.hud.OnTick(ctx, s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
 	s.overlays.OnTick(ctx, s, target, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(ctx, s, s.hudBatch, renderBounds, timeDelta)
 	s.hudBatch.Draw(target)
@@ -315,4 +334,8 @@ func (s *State) inputMode() inputMode {
 		return inputModeDialogue
 	}
 	return inputModePlayerMovement
+}
+
+func (s *State) AddMob(mob *ShadowMob) {
+	s.mobs = append(s.mobs, mob)
 }
