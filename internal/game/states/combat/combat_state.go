@@ -5,7 +5,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -66,8 +65,6 @@ var backgroundSprite = resources.LoadSprite("combat/background_sample")
 var robotAnim = anim.IdleRobot(atlas)
 var plentAnim = anim.IdlePlent(atlas)
 
-type OnComplete func(ctx *game.Context, s *State)
-
 type Phase string
 
 const PhaseBattle Phase = "battle"
@@ -76,7 +73,7 @@ const PhaseComplete Phase = "complete"
 type State struct {
 	Player     *Player
 	Opponent   Opponent
-	OnComplete OnComplete
+	OnComplete game.CombatIntentComplete
 	Battle     *Battle
 
 	phase Phase
@@ -93,11 +90,11 @@ type State struct {
 	batch *pixel.Batch
 }
 
-func New(animech *rpg.DeployedAnimech, onComplete OnComplete) *State {
+func New(ctx *game.Context, i game.CombatIntent) game.State {
 	return &State{
-		Player:     NewPlayer(animech),
+		Player:     NewPlayer(i.Animech),
 		Opponent:   NewWall(),
-		OnComplete: onComplete,
+		OnComplete: i.OnComplete,
 		Battle:     &Battle{},
 
 		phase: PhaseBattle,
@@ -164,15 +161,18 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 
 	if s.phase == PhaseComplete {
 		overlay := "Battle complete!"
+		result := game.CombatIntentResult{}
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 {
 			overlay = "{+c:#e64565,+o}You died!"
 		} else if s.Opponent.GetHealth().GetCurrentInt() <= 0 {
 			overlay = "{+c:#45e682,+o}You won!"
+			result.PlayerWon = true
+			result.ResearchPoints = 1
 		}
 		content := combatantNameText.NewComplexContent(overlay)
 		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight*0.75)), content, tbcfg.RenderFrom(gfx.Centered))
 		if ctx.Controls.ButtonA().JustPressed() || ctx.Controls.ButtonB().JustPressed() {
-			s.OnComplete(ctx, s)
+			s.OnComplete(ctx, result)
 		}
 	}
 

@@ -23,5 +23,6 @@ var PDAEnabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1,
 var PDADisabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 30}
 
 var Elythium = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 26, Row: 15}
+var Rocket = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 27, Row: 15}
 
 var ShadowMob = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 39, Row: 2}

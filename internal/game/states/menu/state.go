@@ -37,13 +37,13 @@ type State struct {
 	batch *pixel.Batch
 }
 
-func New(background game.State) *State {
+func New(_ *game.Context, i game.MenuIntent) game.State {
 	return &State{
-		background: background,
+		background: i.Background,
 		transition: 0,
 		batch:      atlas.NewBatch(),
 
-		main: NewMain(),
+		main: createMain(),
 	}
 }
 

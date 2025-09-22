@@ -67,7 +67,7 @@ func (m Main) Render(s *State, ctx *game.Context, matrix pixel.Matrix, target pi
 	mainText.Render(ctx, target, frameTopLeft.Moved(pixel.V(padding, -padding)), content, tbcfg.Foreground(colors.White.RGBA))
 }
 
-func NewMain() Main {
+func createMain() Main {
 	return Main{
 		items: util.NewSimpleSelectable[MainItem]([]MainItem{
 			{
@@ -85,7 +85,9 @@ func NewMain() Main {
 			{
 				Label: "Return to game",
 				Action: func(s *State, ctx *game.Context) {
-					ctx.SwapActiveState(s.background)
+					ctx.SetActiveStateIntent(game.SwapStateIntent{
+						State: s.background,
+					})
 				},
 			},
 			{

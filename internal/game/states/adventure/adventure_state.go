@@ -13,7 +13,6 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
-	"fisherevans.com/project/f/internal/game/states/menu"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 )
@@ -90,8 +89,8 @@ type State struct {
 	mobs     []*ShadowMob
 }
 
-func New(mapName string, save *rpg.GameSave) game.State {
-	m := resources.GetMap(mapName)
+func New(_ *game.Context, i game.AdventureIntent) game.State {
+	m := resources.GetMap(i.MapName)
 	a := &State{
 		entities:             make(map[EntityId]Entity),
 		occupiedLocations:    make(map[MapLocation]EntityId),
@@ -135,7 +134,7 @@ func New(mapName string, save *rpg.GameSave) game.State {
 	)
 
 	initializeMap(a, m)
-	a.animech = save.NewDeployment()
+	a.animech = i.Save.NewDeployment()
 	return a
 }
 
@@ -296,7 +295,9 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	ctx.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
 
 	if ctx.Controls.ButtonStart().JustPressed() {
-		ctx.SwapActiveState(menu.New(s))
+		ctx.SetActiveStateIntent(game.MenuIntent{
+			Background: s,
+		})
 	}
 }
 

@@ -16,12 +16,6 @@ import (
 	"fisherevans.com/project/f/internal/util/tiles"
 )
 
-var npcRandomSpriteId = resources.TilesheetSpriteId{
-	Tilesheet: "ui",
-	Column:    2,
-	Row:       2,
-}
-
 func initializeMap(a *State, m *resources.Map) {
 	var minX, maxX, minY, maxY int
 	for _, layer := range m.Layers {
@@ -103,6 +97,8 @@ func initializeMap(a *State, m *resources.Map) {
 			entityType = "pda"
 		case tiles.Elythium:
 			entityType = "elythium"
+		case tiles.Rocket:
+			entityType = "rocket"
 		case tiles.ShadowMob:
 			entityType = "shadow"
 		}
@@ -379,6 +375,19 @@ func initializeMap(a *State, m *resources.Map) {
 
 		case "shadow":
 			a.AddMob(NewShadowMob(entityId, location))
+		case "rocket":
+			dest := TeleportReference(entity.GetStringMetadata("destination", ""))
+			e := &EntityTeleport{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id: entityId,
+					},
+					MapLocation: location,
+				},
+				RequiredElythium: 2,
+				Destination:      dest,
+			}
+			a.AddEntity(e)
 		default:
 			log.Warn().Msgf("Unknown entity type: %s", entity)
 		}

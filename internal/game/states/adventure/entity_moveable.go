@@ -44,7 +44,7 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	moveDelta := timeDelta * moveSpeed
 	m.ConstantMovement += moveDelta
 	m.MoveProgression += moveDelta
-	if m.MoveProgression >= 0.5 && m.IsPassable() {
+	if m.MoveProgression >= 0.5 && !m.IsPassable() {
 		adv.unoccupy(m.CurrentLocation, m.Id)
 	}
 	if m.MoveProgression >= 1.0 {

@@ -4,7 +4,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/states/combat"
 )
 
 func (adv *State) TriggerCombat() {
@@ -37,15 +36,25 @@ func (adv *State) TriggerCombat() {
 			s.blockInput = false
 			s.enteringCombat = false
 			ctx.RemoveCustomShader()
-			ctx.SwapActiveState(combat.New(adv.animech, func(ctx *game.Context, combatState *combat.State) {
-				ctx.Notify("Combat complete!")
-				ctx.SwapActiveState(adv)
-				// reset health for now
-				adv.animech.CurrentShield = adv.animech.GetMaxShield()
-				for _, p := range adv.animech.DeployedPrimortals {
-					p.CurrentSync = p.GetMaxSync()
-				}
-			}))
+			ctx.SetActiveStateIntent(game.CombatIntent{
+				Animech: adv.animech,
+				OnComplete: func(ctx *game.Context, r game.CombatIntentResult) {
+					ctx.Notify("Combat complete!")
+					if !r.PlayerWon {
+						ctx.SetActiveStateIntent(game.InitialState())
+						return
+					}
+					ctx.SetActiveStateIntent(game.SwapStateIntent{
+						State: adv,
+					})
+					adv.animech.AnimechExperience += r.ResearchPoints
+					// uncomment to fully recover after battle
+					//adv.animech.CurrentShield = adv.animech.GetMaxShield()
+					//for _, p := range adv.animech.DeployedPrimortals {
+					//	p.CurrentSync = p.GetMaxSync()
+					//}
+				},
+			})
 		}),
 	))
 }

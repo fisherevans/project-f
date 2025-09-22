@@ -4,7 +4,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/states/menu"
 )
 
 type EntityMenuTest struct {
@@ -16,7 +15,9 @@ func (e *EntityMenuTest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 }
 
 func (e *EntityMenuTest) Interact(ctx *game.Context, adv *State, source Entity) {
-	ctx.SwapActiveState(menu.New(adv))
+	ctx.SetActiveStateIntent(game.MenuIntent{
+		Background: adv,
+	})
 }
 
 type EntityCombatTest struct {

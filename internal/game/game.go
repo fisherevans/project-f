@@ -7,6 +7,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -44,6 +45,8 @@ type Context struct {
 	activeState  State
 	customShader AppliedShader
 
+	stateIntent any
+
 	CanvasScale         float64
 	CanvasMousePosition pixel.Vec
 	MouseInCanvas       bool
@@ -55,7 +58,7 @@ type Context struct {
 	GameSave *rpg.GameSave
 }
 
-func NewContext(window *opengl.Window, initialActiveState State, saveId string) *Context {
+func NewContext(window *opengl.Window, saveId string) *Context {
 	saves, err := rpg.LoadGameSaves()
 	if err != nil {
 		panic(err)
@@ -65,7 +68,7 @@ func NewContext(window *opengl.Window, initialActiveState State, saveId string) 
 		panic("Save not found: " + saveId)
 	}
 	return &Context{
-		activeState:  initialActiveState,
+		stateIntent:  InitialState(),
 		CanvasScale:  1.0,
 		Controls:     input.NewControls(),
 		Window:       window,
@@ -83,10 +86,23 @@ func (c *Context) GetActiveState() State {
 	return c.activeState
 }
 
-func (c *Context) SwapActiveState(newState State) State {
-	oldState := c.activeState
-	c.activeState = newState
-	return oldState
+func (c *Context) SetActiveStateIntent(intent any) {
+	if c.stateIntent != nil {
+		log.Warn().Msgf("something is overriding an existing state intent")
+	}
+	c.stateIntent = intent
+}
+
+func (c *Context) ApplyIntent() {
+	if c.stateIntent == nil {
+		return
+	}
+	s, err := createState(c, c.stateIntent)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to create new state from intent")
+	}
+	c.activeState = s
+	c.stateIntent = nil
 }
 
 func (c *Context) WithNoControls() *Context {

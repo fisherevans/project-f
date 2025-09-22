@@ -13,19 +13,19 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 )
 
-type Destination struct {
-	Name  string
-	State func(ctx *game.Context) game.State
+func init() {
+	game.RegisterStateFactory(New)
 }
+
 type Selector struct {
 	game.BaseState
 	selected int
-	states   []Destination
+	states   []game.SelectIntentDestination
 }
 
-func New(destinations ...Destination) game.State {
+func New(_ *game.Context, intent game.SelectIntent) game.State {
 	return &Selector{
-		states: destinations,
+		states: intent.Destinations,
 	}
 }
 
@@ -48,12 +48,12 @@ func (s *Selector) OnTick(ctx *game.Context, target *shaders.Canvas, targetBound
 	}
 
 	if ctx.Controls.ButtonA().JustPressed() {
-		ctx.SwapActiveState(s.states[s.selected].State(ctx))
+		ctx.SetActiveStateIntent(s.states[s.selected].Intent(ctx))
 		return
 	}
 
 	titleDrawer.Clear()
-	titleDrawer.WriteString("Select a State:")
+	titleDrawer.WriteString("SelectIntent a State:")
 	titleDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)))
 
 	optionDrawer.Clear()

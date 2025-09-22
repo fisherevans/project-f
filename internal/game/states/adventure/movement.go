@@ -70,11 +70,19 @@ func (t TeleportTile) OnEntryBegin(s *State, id EntityId) {
 		log.Warn().Msgf("teleport source reference not found: %s", t.Reference)
 		return
 	}
+	if source.Destination == "" {
+		return
+	}
 	destination, found := s.teleports[source.Destination]
 	if !found {
 		log.Warn().Msgf("teleport destination not found: %s", source.Destination)
 		return
 	}
+	s.teleport(player, destination)
+}
+
+func (s *State) teleport(entity *Player, destination Teleport) {
+
 	fadeOut := NewFadeOverlay(
 		pixel.RGBA{A: 0},
 		pixel.RGBA{A: 1},
@@ -94,21 +102,21 @@ func (t TeleportTile) OnEntryBegin(s *State, id EntityId) {
 		}),
 		NewSleepAction(teleportFadeTime),
 		NewWaitForAction(func() bool {
-			return !player.IsMoving()
+			return !entity.IsMoving()
 		}),
 		NewSimpleAction(func(ctx *game.Context, s *State) {
 			fadeOut.IsComplete = true
 			s.overlays.Add(fadeIn)
-			player.TeleportTo(s, destination.Location)
+			entity.TeleportTo(s, destination.Location)
 			if destination.ExitDirection != input.NotPressed {
-				player.FacingDirection = destination.ExitDirection
-				player.intentDirection = destination.ExitDirection
-				player.TriggerMovement(s, player.GetFacingLocation(), MoveStateWalking)
+				entity.FacingDirection = destination.ExitDirection
+				entity.intentDirection = destination.ExitDirection
+				entity.TriggerMovement(s, entity.GetFacingLocation(), MoveStateWalking)
 			}
 			s.blockInput = false
 		}),
 		NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
-			return NewFollowCamera(player.Id, player.RenderMapLocation(), EntityCameraSpeedPlayerDefault)
+			return NewFollowCamera(entity.Id, entity.RenderMapLocation(), EntityCameraSpeedPlayerDefault)
 		}),
 		NewWaitForAction(func() bool {
 			return fadeIn.IsComplete

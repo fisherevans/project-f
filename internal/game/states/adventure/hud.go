@@ -16,17 +16,61 @@ import (
 type Hud struct {
 	ElythiumCount     int
 	elythiumCountIcon *anim.AnimatedSprite
+
+	researchIcon *anim.AnimatedSprite
 }
 
 func NewHud() *Hud {
 	return &Hud{
 		ElythiumCount:     0,
 		elythiumCountIcon: anim.Load(atlas, "adventure/hud/elythium", "default"),
+		researchIcon:      anim.Load(atlas, "adventure/hud/research", "default"),
 	}
 }
 
 func (h *Hud) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
 	h.onTickElythiumCount(ctx, s, target, matrix, bounds, timeDelta)
+
+	type topRightCount struct {
+		icon   *anim.AnimatedSprite
+		count  int
+		fg     string
+		stroke string
+	}
+
+	counts := []topRightCount{
+		{
+			icon:   h.elythiumCountIcon,
+			count:  h.ElythiumCount,
+			stroke: "#3d1632",
+			fg:     "#edb2dc",
+		},
+		{
+			icon:   h.researchIcon,
+			count:  s.animech.AnimechExperience,
+			stroke: "#162d3d",
+			fg:     "#b2d4ed",
+		},
+	}
+
+	rowPadding := 2.0
+	padding := 6.0
+	for id, count := range counts {
+		count.icon.Update(timeDelta)
+		sprite := count.icon.Sprite()
+		topRight := pixel.IM.
+			Moved(pixel.V(game.GameWidth-padding, game.GameHeight-padding)).
+			Moved(pixel.V(0, -float64(id)*(sprite.Bounds().H()+rowPadding)))
+		count.icon.Sprite().Draw(target, topRight.Moved(gfx.TopRight.Align(sprite)))
+
+		content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:%s,+c:%s}%d", count.stroke, count.fg, count.count))
+		txtVNudge := -1.0 // push it down or up to align with sprite
+		txtVNudge -= (sprite.Bounds().H() - content.Bounds().H()) / 2
+		txtHNudge := -1.0 // padding between number and sprite
+		txtHNudge -= sprite.Bounds().W()
+		txtM := topRight.Moved(pixel.V(txtHNudge, txtVNudge))
+		hudCountText.Render(ctx, target, txtM, content, tbcfg.RenderFrom(gfx.TopRight))
+	}
 }
 
 var hucCountTextHeight = 10
