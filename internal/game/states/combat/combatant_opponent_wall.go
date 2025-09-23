@@ -19,7 +19,7 @@ type Wall struct {
 func NewWall() *Wall {
 	return &Wall{
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
-		Health:                 NewHealthState(100),
+		Health:                 NewHealthState(rand.Intn(15) + 20),
 		Tempo:                  &Tempo{},
 		DamageFlashMask:        NewDamageFlashMask(),
 	}

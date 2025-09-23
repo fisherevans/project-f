@@ -6,7 +6,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 )
 
-func (adv *State) TriggerCombat() {
+func (adv *State) TriggerCombat(onComplete func(*game.Context, *State)) {
 	if adv.enteringCombat {
 		return
 	}
@@ -48,6 +48,9 @@ func (adv *State) TriggerCombat() {
 						State: adv,
 					})
 					adv.animech.AnimechExperience += r.ResearchPoints
+					if onComplete != nil {
+						onComplete(ctx, adv)
+					}
 					// uncomment to fully recover after battle
 					//adv.animech.CurrentShield = adv.animech.GetMaxShield()
 					//for _, p := range adv.animech.DeployedPrimortals {

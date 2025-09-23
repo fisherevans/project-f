@@ -44,7 +44,7 @@ import (
 //   - add win vs lose chime
 // - add more interesting AI (more skills, show next skill after time)
 
-var ticksPerSecond = 1.5
+var ticksPerSecond = 2.0
 
 var atlas = resources.CreateAtlas(resources.AtlasFilter{
 	FontNames: []string{

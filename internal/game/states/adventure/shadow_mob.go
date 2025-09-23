@@ -89,7 +89,18 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 		TriggerRadius: 0.8,
 		OnTrigger: func(ctx *game.Context, s *State, m *ShadowMob) {
 			if ctx.DebugToggles.F5().ToggleState() {
-				s.TriggerCombat()
+				s.TriggerCombat(func(ctx *game.Context, s *State) {
+					for i, mob := range s.mobs {
+						if mob == m {
+							s.mobs[i] = s.mobs[len(s.mobs)-1]
+							s.mobs = s.mobs[:len(s.mobs)-1]
+							break
+						}
+					}
+					s.actions.Add(NewDelayAction(NewSimpleAction(func(ctx *game.Context, s *State) {
+						s.mobs = append(s.mobs, m)
+					}), 15))
+				})
 			} else {
 				ctx.Notify("Mob caught you! Toggle F5")
 			}

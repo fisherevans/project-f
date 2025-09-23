@@ -29,5 +29,5 @@ func (e *EntityCombatTest) RenderScene(target pixel.Target, matrix pixel.Matrix)
 }
 
 func (e *EntityCombatTest) Interact(ctx *game.Context, adv *State, source Entity) {
-	adv.TriggerCombat()
+	adv.TriggerCombat(nil)
 }
