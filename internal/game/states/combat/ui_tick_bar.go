@@ -170,7 +170,11 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 					iconMatrix = iconMatrix.Moved(pixel.V(-1.5, -5.5))
 				}
 				iconMatrix = iconMatrix.Moved(stanceDelta)
-				stanceIconSprite.DrawColorMask(target, iconMatrix.Chained(tickSpriteCenterMatrix), mask)
+				stanceMask := mask
+				if interruptedAt >= 0 {
+					stanceMask = colors.WithAlpha(mask, 0.2)
+				}
+				stanceIconSprite.DrawColorMask(target, iconMatrix.Chained(tickSpriteCenterMatrix), stanceMask)
 			}
 		}
 

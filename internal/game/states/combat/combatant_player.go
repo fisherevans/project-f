@@ -124,6 +124,10 @@ func (p *Player) GetCurrentShield() *HealthState {
 	return p.Shield
 }
 
+func (p *Player) GetTotalMaxHealth() int {
+	return p.Shield.Max + p.GetCurrentSync().Max
+}
+
 func (p *Player) IsDead() bool {
 	return p.GetCurrentSync().Current < 1
 }

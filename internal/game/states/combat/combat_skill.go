@@ -28,6 +28,9 @@ func (i *SkillInstance) GetCurrentStance() rpg.CombatStance {
 	if i == nil || i.NextTick == 0 || i.NextTick >= len(i.Skill.Ticks) {
 		return rpg.TickStanceNone
 	}
+	if i.InterruptedAt >= i.NextTick {
+		return rpg.TickStanceNone
+	}
 	lastTickStance := i.Skill.Ticks[i.NextTick-1].StanceType
 	nextTickStance := i.Skill.Ticks[i.NextTick].StanceType
 	if lastTickStance != nextTickStance {

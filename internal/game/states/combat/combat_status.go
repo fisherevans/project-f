@@ -56,8 +56,15 @@ func NewAppliedStatuses() *AppliedStatuses {
 				Status:    rpg.StatusPoisoned,
 				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 1, 1)),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
-					// todo change to % of max health
-					s.ApplyDamage(1, appliedTo, &DamageOptions{
+					pct := 0.01
+					switch cs.Level() {
+					case StatusLevel3:
+						pct = 0.03
+					case StatusLevel2:
+						pct = 0.02
+					}
+					dmg := int(math.Max(float64(appliedTo.GetTotalMaxHealth())*pct, 1.0))
+					s.ApplyDamage(dmg, appliedTo, &DamageOptions{
 						Status: rpg.StatusPoisoned,
 					})
 				},

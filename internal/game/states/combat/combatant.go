@@ -26,6 +26,7 @@ type Combatant interface {
 	IsNextSkillCommitted() bool
 	PopNextSkill() *rpg.SkillId
 	PeekNextSkill() *rpg.SkillId
+	GetTotalMaxHealth() int
 }
 
 type HealthState struct {

@@ -64,6 +64,10 @@ func (w *Wall) GetHealth() *HealthState {
 	return w.Health
 }
 
+func (w *Wall) GetTotalMaxHealth() int {
+	return w.Health.Max
+}
+
 func (w *Wall) IsDead() bool {
 	return w.Health.Current < 1
 }
