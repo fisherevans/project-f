@@ -1,3 +1,10 @@
 tilesheet:
   tileWidth: 16
   tileHeight: 16
+animations:
+  level_up:
+    sequence:
+      row: 28
+      columnFrom: 1
+      columnTo: 4
+    framesPerSecond: 2

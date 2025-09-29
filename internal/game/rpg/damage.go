@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	stanceDefendingMultiplier  = 0.5
-	stanceReflectingMultiplier = 0.5
-	stanceExposedMultiplier    = 1.5
-	stanceVulnerableMultiplier = 1.5
+	stanceDefendingMultiplier          = 0.25
+	stanceReflectingMultiplierIncoming = 0.5
+	stanceReflectingMultiplierOutgoing = 0.75
+	stanceVulnerableMultiplier         = 1.5
 )
 
 type DamageSource struct {
@@ -24,8 +24,9 @@ type DamageTarget struct {
 }
 
 type DamageResult struct {
-	TargetDamage int
-	SourceDamage int
+	TargetDamage   int
+	SourceDamage   int
+	InterruptSkill bool
 }
 
 func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
@@ -39,23 +40,25 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 
 	log.Info().Msgf("after tempo: %f", targetDamage)
 
+	interruptSkill := false
+
 	switch target.Stance {
 	case TickStanceDefending:
 		targetDamage *= stanceDefendingMultiplier
 	case TickStanceVulnerable:
 		targetDamage *= stanceVulnerableMultiplier
 	case TickStanceExposed:
-		targetDamage *= stanceExposedMultiplier
-		// todo apply stun
+		interruptSkill = true
 	case TickStanceReflecting:
-		targetDamage *= stanceReflectingMultiplier
-		sourceDamage = float64(source.BaseDamage) * (1 - stanceReflectingMultiplier)
+		sourceDamage = targetDamage * stanceReflectingMultiplierOutgoing
+		targetDamage *= stanceReflectingMultiplierIncoming
 	}
 
 	log.Info().Msgf("after stance %d - target: %f - source: %f", target.Stance, targetDamage, sourceDamage)
 
 	return DamageResult{
-		TargetDamage: int(math.Ceil(targetDamage)), // short of immune, always deal at least 1 damage
-		SourceDamage: int(math.Ceil(sourceDamage)),
+		TargetDamage:   int(math.Ceil(targetDamage)), // short of immune, always deal at least 1 damage
+		SourceDamage:   int(math.Ceil(sourceDamage)),
+		InterruptSkill: interruptSkill,
 	}
 }

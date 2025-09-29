@@ -112,7 +112,7 @@ func (s *State) ClearColor() color.Color {
 func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 
-	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.Grey4.RGBA)
+	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.HexString("#777"))
 
 	if s.phase == PhaseBattle {
 		s.Opponent.GetHealth().Update(timeDelta)
@@ -137,11 +137,8 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.Player.Update(timeDelta)
 	s.Opponent.Update(timeDelta)
 
-	robotAnim.Update(timeDelta)
-	robotAnim.Sprite().DrawColorMask(s.batch, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))), s.Player.GetColorMask())
-
-	plentAnim.Update(timeDelta)
-	plentAnim.Sprite().DrawColorMask(s.batch, pixel.IM.Moved(pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.6667))), s.Opponent.GetColorMask())
+	s.renderCombatantSprite(robotAnim, s.Player, true, timeDelta)
+	s.renderCombatantSprite(plentAnim, s.Opponent, false, timeDelta)
 
 	s.drawActiveSkills(ctx, s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
 
@@ -157,24 +154,54 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.Player.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.675)))
 	s.Opponent.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8+game.GameWidth/2, game.GameHeight*0.675)))
 
-	ctx.DebugBL("player stance: %d (%.1f)", s.Player.GetCurrentSkill().GetCurrentStance(), s.Battle.GetPlayerCurrentTickProgress())
+	ctx.DebugBL("player status: %s", s.Player.GetStatuses().String())
+	ctx.DebugBL("opponent status: %s", s.Opponent.GetStatuses().String())
 
 	if s.phase == PhaseComplete {
 		overlay := "Battle complete!"
 		result := game.CombatIntentResult{}
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 {
-			overlay = "{+c:#e64565,+o}You died!"
+			overlay = "{+c:#e64565,+o}YOU DIED!"
 		} else if s.Opponent.GetHealth().GetCurrentInt() <= 0 {
-			overlay = "{+c:#45e682,+o}You won!"
+			overlay = "{+c:#45e682,+o}YOU WON!"
 			result.PlayerWon = true
 			result.ResearchPoints = 1
 		}
 		content := combatantNameText.NewComplexContent(overlay)
-		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight*0.75)), content, tbcfg.RenderFrom(gfx.Centered))
+		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, math.Floor(game.GameHeight*0.6))), content, tbcfg.RenderFrom(gfx.Centered))
 		if ctx.Controls.ButtonA().JustPressed() || ctx.Controls.ButtonB().JustPressed() {
 			s.OnComplete(ctx, result)
 		}
 	}
 
 	s.batch.Draw(target)
+}
+
+func (s *State) renderCombatantSprite(sprite *anim.AnimatedSprite, com Combatant, leftSide bool, timeDelta float64) {
+	colorMask := com.GetColorMask()
+	if com.IsDead() {
+		colorMask = colors.MixColor(colorMask, colors.HexString("#af8686"))
+	} else {
+		sprite.Update(timeDelta)
+	}
+
+	var position pixel.Vec
+	rotateDirection := 1.0
+	if leftSide {
+		position = pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))
+	} else {
+		position = pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.6667))
+		rotateDirection = -1
+	}
+
+	m := pixel.IM
+	if com.IsDead() {
+		h := sprite.Sprite().Bounds().H()
+		ry := -h / 3.0
+		m = m.Rotated(pixel.V(0, ry), math.Pi/2.0*rotateDirection)
+	}
+	m = m.Moved(position)
+
+	sprite.Sprite().DrawColorMask(s.batch, m, colorMask)
+
 }

@@ -53,7 +53,7 @@ func (s *Selector) OnTick(ctx *game.Context, target *shaders.Canvas, targetBound
 	}
 
 	titleDrawer.Clear()
-	titleDrawer.WriteString("SelectIntent a State:")
+	titleDrawer.WriteString("Select a State:")
 	titleDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)))
 
 	optionDrawer.Clear()

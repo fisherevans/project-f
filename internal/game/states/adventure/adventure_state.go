@@ -124,13 +124,13 @@ func New(_ *game.Context, i game.AdventureIntent) game.State {
 
 	a.bloom.Threshold = 1.0
 	a.bloom.HighlightColors = shaders.RGBAtoVec3(
-		colors.HexColor("#f9324c"), // red coin
-		colors.HexColor("#feae34"), // torch yellow
-		colors.HexColor("#f77622"), // torch orange
-		colors.HexColor("#0069aa"), // water
+		colors.HexString("#f9324c"), // red coin
+		colors.HexString("#feae34"), // torch yellow
+		colors.HexString("#f77622"), // torch orange
+		colors.HexString("#0069aa"), // water
 
-		colors.HexColor("#ed3579"), // red led
-		colors.HexColor("#4CC9F0"), // blue led
+		colors.HexString("#ed3579"), // red led
+		colors.HexString("#4CC9F0"), // blue led
 	)
 
 	initializeMap(a, m)
@@ -138,8 +138,8 @@ func New(_ *game.Context, i game.AdventureIntent) game.State {
 	return a
 }
 
-var clearColor = colors.HexColor("#1a2d3b")
-var lightMapClear = colors.HexColor("#7e899e")
+var clearColor = colors.HexString("#1a2d3b")
+var lightMapClear = colors.HexString("#7e899e")
 
 func (s *State) ClearColor() color.Color {
 	return clearColor

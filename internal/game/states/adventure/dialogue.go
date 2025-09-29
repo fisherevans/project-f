@@ -42,7 +42,7 @@ var dialogueBox = textbox.NewInstance(
 	atlas.GetFont(resources.FontNameM5x7),
 	tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding(), 0,
 		tbcfg.Paging(2, true),
-		tbcfg.Foreground(colors.HexColor("#00164e")),
+		tbcfg.Foreground(colors.HexString("#00164e")),
 		tbcfg.ExtraLineSpacing(4)))
 
 func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {

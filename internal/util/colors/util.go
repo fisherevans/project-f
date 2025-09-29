@@ -40,10 +40,33 @@ func ColorFromName(name ColorName) NamedColor {
 	return Black
 }
 
+func Hex(u uint32) pixel.RGBA {
+	if u < 0xfff {
+		r := (u >> 8) & 0xF
+		g := (u >> 4) & 0xF
+		b := u & 0xF
+		r = r * 17 // duplicate nibble
+		g = g * 17
+		b = b * 17
+		return pixel.RGBA{
+			R: float64(r) / 255,
+			G: float64(g) / 255,
+			B: float64(b) / 255,
+			A: 1,
+		}
+	}
+	return pixel.RGBA{
+		R: float64((u>>16)&0xFF) / 255,
+		G: float64((u>>8)&0xFF) / 255,
+		B: float64(u&0xFF) / 255,
+		A: 1,
+	}
+}
+
 const hexErrMsg = "failed to parse color hex value"
 
-// HexColor converts #RGB, #RGBA, #RRGGBB, and #RRGGBBAA hex codes to colors (with or withou leading #)
-func HexColor(originalHex string) pixel.RGBA {
+// HexString converts #RGB, #RGBA, #RRGGBB, and #RRGGBBAA hex codes to colors (with or withou leading #)
+func HexString(originalHex string) pixel.RGBA {
 	hex := strings.TrimPrefix(originalHex, "#")
 	var r, g, b, a uint8 = 0, 0, 0, 255 // Default alpha to 255 (fully opaque)
 
@@ -136,6 +159,15 @@ func ScaleColor(c pixel.RGBA, v float64) pixel.RGBA {
 		G: c.G * v,
 		B: c.B * v,
 		A: c.A,
+	}
+}
+
+func MixColor(a, b pixel.RGBA) pixel.RGBA {
+	return pixel.RGBA{
+		R: a.R * b.R,
+		G: a.G * b.G,
+		B: a.B * b.B,
+		A: a.A * b.A,
 	}
 }
 

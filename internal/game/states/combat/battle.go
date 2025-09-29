@@ -2,12 +2,8 @@ package combat
 
 import (
 	"fmt"
-	"math/rand"
-
-	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/rpg"
 )
 
 type Battle struct {
@@ -65,83 +61,37 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
 	b.PendingProgress += timeDelta * tps
 	for b.PendingProgress >= 1 {
 		if b.TickPlayerNext {
+			s.Opponent.GetStatuses().DecreaseStacks()
 			if b.OpponentSkillEnding {
 				s.Opponent.SetCurrentSkill(nil)
 				b.OpponentSkillEnding = false
 			}
-			dmg, over := s.Player.GetCurrentSkill().Tick(ctx, s, s.Player, s.Opponent)
+			s.Player.GetStatuses().ApplyEffects(s, s.Player)
+			over := s.Player.GetCurrentSkill().Tick(ctx, s, s.Player, s.Opponent)
 			if over {
 				b.PlayerSkillEnding = true
 			}
-			s.emitDamageFx(dmg, false)
 		} else {
+			s.Player.GetStatuses().DecreaseStacks()
 			if b.PlayerSkillEnding {
 				s.Player.SetCurrentSkill(nil)
 				b.PlayerSkillEnding = false
 			}
-			dmg, over := s.Opponent.GetCurrentSkill().Tick(ctx, s, s.Opponent, s.Player)
+			s.Opponent.GetStatuses().ApplyEffects(s, s.Opponent)
+			over := s.Opponent.GetCurrentSkill().Tick(ctx, s, s.Opponent, s.Player)
 			if over {
 				b.OpponentSkillEnding = true
 			}
-			s.emitDamageFx(dmg, true)
 		}
 		b.PendingProgress -= 1.0
 		b.TickPlayerNext = !b.TickPlayerNext
 	}
 }
 
-func (s *State) emitDamageFx(dmgs []rpg.DamageResult, damagingPlayer bool) {
-	for _, dmg := range dmgs {
-		if dmg.TargetDamage > 0 {
-			if damagingPlayer {
-				s.emitPlayerDamageFx(dmg.TargetDamage)
-			} else {
-				s.emitOpponentDamageFx(dmg.TargetDamage)
-			}
-		}
-		if dmg.SourceDamage > 0 {
-			if damagingPlayer {
-				s.emitOpponentDamageFx(dmg.SourceDamage)
-			} else {
-				s.emitPlayerDamageFx(dmg.SourceDamage)
-			}
-		}
-	}
-}
-
-func (s *State) emitPlayerDamageFx(damage int) {
-	if damage == 0 {
-		return
-	}
-	playerPosition := pixel.V(game.GameWidth*0.15, game.GameHeight*0.5)
-	playerVelocity := pixel.V(20, rand.Float64()*50+50)
-	s.fx = append(s.fx, &DamageFX{
-		Damage:     damage,
-		Position:   playerPosition,
-		Velocity:   playerVelocity,
-		SpeedScale: 2,
-	})
-}
-
-func (s *State) emitOpponentDamageFx(damage int) {
-	if damage == 0 {
-		return
-	}
-	opponentPosition := pixel.V(game.GameWidth*0.85, game.GameHeight*0.5)
-	opponentVelocity := pixel.V(-20, rand.Float64()*50+50)
-	s.fx = append(s.fx, &DamageFX{
-		Damage:     damage,
-		Position:   opponentPosition,
-		Velocity:   opponentVelocity,
-		SpeedScale: 2,
-	})
-}
-
-func (i *SkillInstance) Tick(ctx *game.Context, s *State, source Combatant, target Combatant) ([]rpg.DamageResult, bool) {
-	var dmg []rpg.DamageResult
-	if i.NextTick <= i.Duration {
-		dmg = i.OnTick(ctx, s, i.NextTick, source, target)
+func (i *SkillInstance) Tick(ctx *game.Context, s *State, source Combatant, target Combatant) bool {
+	if i.NextTick <= i.Duration() {
+		i.OnTick(ctx, s, i.NextTick, source, target)
 		i.NextTick++
 	}
-	return dmg, i.NextTick > i.Duration
+	return i.NextTick > i.Duration()
 }

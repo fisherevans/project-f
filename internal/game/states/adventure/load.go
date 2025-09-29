@@ -95,6 +95,8 @@ func initializeMap(a *State, m *resources.Map) {
 			entityType = "interest"
 		case tiles.PDAEnabled:
 			entityType = "pda"
+		case tiles.LevelUp:
+			entityType = "level_up"
 		case tiles.Elythium:
 			entityType = "elythium"
 		case tiles.Rocket:
@@ -107,13 +109,13 @@ func initializeMap(a *State, m *resources.Map) {
 			normalPlayerLight := &Light{
 				RenderDetails: LightRenderDetails{
 					SizeScale: 1.5,
-					ColorMask: colors.HexColor("#888"),
+					ColorMask: colors.HexString("#888"),
 				},
 			}
 			dashPlayerLight := &Light{
 				RenderDetails: LightRenderDetails{
 					SizeScale: 1.5,
-					ColorMask: colors.HexColor("#88f"),
+					ColorMask: colors.HexString("#88f"),
 				},
 			}
 			a.player = &Player{
@@ -249,7 +251,7 @@ func initializeMap(a *State, m *resources.Map) {
 				Light: Light{
 					RenderDetails: LightRenderDetails{
 						SizeScale: 2,
-						ColorMask: colors.HexColor("#db9a3d"),
+						ColorMask: colors.HexString("#db9a3d"),
 					},
 					Modifiers: []LightModifier{
 						&LightModifierFlicker{
@@ -288,7 +290,7 @@ func initializeMap(a *State, m *resources.Map) {
 				Light: Light{
 					RenderDetails: LightRenderDetails{
 						SizeScale: 0.5,
-						ColorMask: colors.HexColor("#f00"),
+						ColorMask: colors.HexString("#f00"),
 					},
 					Modifiers: []LightModifier{
 						&LightModifierPulse{
@@ -313,7 +315,7 @@ func initializeMap(a *State, m *resources.Map) {
 				Light: Light{
 					RenderDetails: LightRenderDetails{
 						SizeScale: 1,
-						ColorMask: colors.HexColor("#fff"),
+						ColorMask: colors.HexString("#fff"),
 					},
 				},
 				Animations: []*anim.AnimatedSprite{anim.NewStaticAnimation(entity.SpriteId.From(atlas))},
@@ -323,19 +325,19 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			a.AddEntity(t)
 		case "glow":
-			colorMask := colors.HexColor("#fff")
+			colorMask := colors.HexString("#fff")
 			switch entity.SpriteId {
 			case tiles.GlowRed:
-				colorMask = colors.HexColor("#e05050")
+				colorMask = colors.HexString("#e05050")
 
 			case tiles.GlowOrange:
-				colorMask = colors.HexColor("#e09b50")
+				colorMask = colors.HexString("#e09b50")
 			case tiles.GlowAqua:
-				colorMask = colors.HexColor("#50d5e0")
+				colorMask = colors.HexString("#50d5e0")
 			case tiles.GlowPurple:
-				colorMask = colors.HexColor("#50d5e0")
+				colorMask = colors.HexString("#50d5e0")
 			case tiles.GlowPink:
-				colorMask = colors.HexColor("#e050cb")
+				colorMask = colors.HexString("#e050cb")
 			}
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
@@ -388,6 +390,36 @@ func initializeMap(a *State, m *resources.Map) {
 				Destination:      dest,
 			}
 			a.AddEntity(e)
+		case "level_up":
+			t := &LightEntity{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id:       entityId,
+						Passable: true,
+					},
+					MapLocation: location,
+				},
+				Light: Light{
+					RenderDetails: LightRenderDetails{
+						SizeScale: 1,
+						ColorMask: colors.HexString("#91f5a8"),
+					},
+					Modifiers: []LightModifier{
+						&LightModifierFlicker{
+							Jitter: &LightModifierJitterUpdate{
+								FrequencySeconds:   0.15,
+								FrequencyVariation: 0.05,
+							},
+							SizeVariation:       0.1,
+							BrightnessVariation: 0.1,
+						},
+					},
+				},
+				Animations: []*anim.AnimatedSprite{
+					anim.Load(atlas, "space_base", "level_up"),
+				},
+			}
+			a.AddEntity(t)
 		default:
 			log.Warn().Msgf("Unknown entity type: %s", entity)
 		}

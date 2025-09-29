@@ -1,11 +1,9 @@
 package menu
 
 import (
-	"os"
 	"strings"
 
 	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
@@ -46,6 +44,11 @@ func (m Main) Render(s *State, ctx *game.Context, matrix pixel.Matrix, target pi
 		if m.items.SelectedEntry != nil && m.items.SelectedEntry.Value.Action != nil {
 			m.items.SelectedEntry.Value.Action(s, ctx)
 		}
+	}
+	if ctx.Controls.ButtonStart().JustPressed() {
+		ctx.SetActiveStateIntent(game.SwapStateIntent{
+			State: s.background,
+		})
 	}
 
 	var labels []string
@@ -93,8 +96,7 @@ func createMain() Main {
 			{
 				Label: "Quit",
 				Action: func(s *State, ctx *game.Context) {
-					log.Info().Msg("Good bye!")
-					os.Exit(0)
+					ctx.SetActiveStateIntent(game.InitialState())
 				},
 			},
 		}),

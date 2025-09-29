@@ -92,8 +92,8 @@ var Skill_Crush = Skill{
 	Name:        "Crush",
 	Description: "Slam down with immense force, dealing heavy kinetic damage.",
 	Ticks: skillTicks().
-		tick(damageTick().damage(6, 4)).
-		tick(nothingTick().repeat(2)...),
+		tick(tick().damage(6, 4)).
+		tick(tick().repeat(2)...),
 }.register()
 
 var Skill_Shunt = Skill{
@@ -101,9 +101,27 @@ var Skill_Shunt = Skill{
 	Name:        "Shunt",
 	Description: "Shunt the foe and enter a defencive stance.",
 	Ticks: skillTicks().
-		tick(damageTick().damage(6, 4)).
-		tick(nothingTick().repeat(2)...).
+		tick(tick().damage(6, 4)).
+		tick(tick().repeat(2)...).
 		tick(stanceTick(TickStanceDefending).repeat(3)...),
+}.register()
+
+var Skill_Ignite = Skill{
+	Id:          "ignite",
+	Name:        "Ignite",
+	Description: "Has a chance to set the opponent on fire.",
+	Ticks: skillTicks().
+		tick(tick().status(StatusBurning, 8)).
+		tick(tick().repeat(2)...),
+}.register()
+
+var Skill_BileSurge = Skill{
+	Id:          "bile_surge",
+	Name:        "Bile Surge",
+	Description: "Spew bile all over an opponent.",
+	Ticks: skillTicks().
+		tick(stanceTick(TickStanceExposed).repeat(3)...).
+		tick(tick().status(StatusPoisoned, 5)),
 }.register()
 
 var Skill_Block = Skill{
@@ -129,5 +147,5 @@ var Skill_DrawnBlow = Skill{
 	Description: "Make a huge hit after being exposed",
 	Ticks: skillTicks().
 		tick(stanceTick(TickStanceExposed).repeat(4)...).
-		tick(damageTick().damage(15, 4)),
+		tick(tick().damage(15, 4)),
 }.register()

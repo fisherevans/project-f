@@ -10,6 +10,7 @@ import (
 
 type Wall struct {
 	*CurrentCombatantSkills
+	Statuses        *AppliedStatuses
 	Health          *HealthState
 	Tempo           *Tempo
 	NextSkill       *rpg.SkillId
@@ -19,7 +20,8 @@ type Wall struct {
 func NewWall() *Wall {
 	return &Wall{
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
-		Health:                 NewHealthState(rand.Intn(15) + 20),
+		Statuses:               NewAppliedStatuses(),
+		Health:                 NewHealthState(rand.Intn(25) + 50),
 		Tempo:                  &Tempo{},
 		DamageFlashMask:        NewDamageFlashMask(),
 	}
@@ -32,6 +34,10 @@ func (w *Wall) GetStats() CombatantStats {
 }
 
 var _ Opponent = &Wall{}
+
+func (w *Wall) IsPlayer() bool {
+	return false
+}
 
 func (w *Wall) Update(timeDelta float64) {
 	w.DamageFlashMask.Update(timeDelta)
@@ -46,12 +52,20 @@ func (w *Wall) ApplyDamage(damage int) {
 	w.DamageFlashMask.damaged()
 }
 
+func (w *Wall) GetStatuses() *AppliedStatuses {
+	return w.Statuses
+}
+
 func (w *Wall) Name() string {
 	return "Squishy Wall"
 }
 
 func (w *Wall) GetHealth() *HealthState {
 	return w.Health
+}
+
+func (w *Wall) IsDead() bool {
+	return w.Health.Current < 1
 }
 
 func (w *Wall) GetTempo() *Tempo {

@@ -99,7 +99,7 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	ctx.DebugBR("left %.1f, right %.1f, top %.1f, bottom %.1f", left, right, top, bottom)
 
 	render := func(vec pixel.Vec, origin gfx.OriginLocation) {
-		gfx.DrawRect(atlas, target, pixel.IM.Moved(vec), origin, tb.GetConfig().BoxWidth, tb.GetConfig().BoxHeight, colors.HexColor("#111"))
+		gfx.DrawRect(atlas, target, pixel.IM.Moved(vec), origin, tb.GetConfig().BoxWidth, tb.GetConfig().BoxHeight, colors.HexString("#111"))
 		tb.Render(ctx, target, pixel.IM.Moved(vec), content, append(opts, tbcfg.RenderFrom(origin))...)
 
 	}

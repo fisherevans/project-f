@@ -16,6 +16,9 @@ type Combatant interface {
 	GetTempo() *Tempo
 	Update(timeDelta float64)
 	GetColorMask() pixel.RGBA
+	GetStatuses() *AppliedStatuses
+	IsDead() bool
+	IsPlayer() bool
 
 	GetCurrentSkill() *SkillInstance
 	SetCurrentSkill(skill *SkillInstance)
@@ -37,7 +40,7 @@ func NewHealthState(max int) *HealthState {
 		Max:        max,
 		Current:    float64(max),
 		Target:     max,
-		AdjustRate: 0.1,
+		AdjustRate: 1.0, //0.1, // 1 == turn off
 	}
 }
 

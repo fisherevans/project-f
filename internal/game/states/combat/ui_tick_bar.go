@@ -17,14 +17,16 @@ var tickBubbleDisplayNormal = atlas.GetTilesheetSprite("combat/tick_bar/bubbles"
 var tickBubbleDisplaySpecial = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 3, 1)
 var tickBubbleDisplayVBar = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 4, 1)
 
+var tickBubbleOverlayInterrupt = atlas.GetTilesheetSprite("combat/tick_bar/bubbles_overlay", 1, 1)
+
 var tickBarStanceBoxActive = atlas.GetSprite("combat/tick_bar/skill_active_stance_box")
 var tickBarStanceBoxPending = atlas.GetSprite("combat/tick_bar/skill_pending_stance_box")
 
 var stanceIcons = map[rpg.CombatStance]pixelutil.BoundedDrawable{
-	rpg.TickStanceDefending:  atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 1, 3),
-	rpg.TickStanceReflecting: atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 1, 1),
-	rpg.TickStanceVulnerable: atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 5, 1),
-	rpg.TickStanceExposed:    atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 7, 3),
+	rpg.TickStanceDefending:  atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 1, 3), // shield
+	rpg.TickStanceReflecting: atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 1, 1), // reflect arrow
+	rpg.TickStanceVulnerable: atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 7, 1), // cross out shield
+	rpg.TickStanceExposed:    atlas.GetTilesheetSprite("combat/tick_bar/stance_icons", 7, 3), // !!!
 }
 
 var skillBarWidth = 8
@@ -62,16 +64,16 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 	nextSkillProgress := 0.0
 	if currentSkill != nil {
 		skillProgress := currentTickProgress + float64(currentSkill.NextTick)
-		skillProgressRemaining := float64(currentSkill.Duration) + 1.5 - skillProgress // i honestly don't know why I need to add 1.5
+		skillProgressRemaining := float64(currentSkill.Duration()) + 1.5 - skillProgress // i honestly don't know why I need to add 1.5
 		if skillProgressRemaining < 0.5 {
 			nextSkillProgress = 0.5 - skillProgressRemaining
 		}
 		mask := pixel.RGBA{1, 1, 1, 1}
 		alpha := math.Min((skillProgress)/1, 1)*(1-nextSkillMaskScale) + nextSkillMaskScale
 		mask = colors.ScaleColor(mask, alpha)
-		s.drawSkill(ctx, target, matrixTopMiddle, currentSkill.Skill, mask, skillProgress > 0.5, 1.0, skillProgress, flip)
-		matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -float64((currentSkill.Duration+1)*skillBarTickSpacing)))
-		noNextSkillAlpha = math.Min(1.0, (float64(currentSkill.NextTick-1)+currentTickProgress)/float64(currentSkill.Duration)) // 100% by 1 tick away
+		s.drawSkill(ctx, target, matrixTopMiddle, currentSkill.Skill, currentSkill.InterruptedAt, mask, skillProgress > 0.5, 1.0, skillProgress, flip)
+		matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -float64((currentSkill.Duration()+1)*skillBarTickSpacing)))
+		noNextSkillAlpha = math.Min(1.0, (float64(currentSkill.NextTick-1)+currentTickProgress)/float64(currentSkill.Duration())) // 100% by 1 tick away
 	}
 	if nextSkillId != nil {
 		nextSkill := nextSkillId.Get()
@@ -81,7 +83,7 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 			mask = colors.ScaleColor(mask, 0.9)
 		}
 		mask = colors.ScaleColor(mask, nextSkillMaskScale)
-		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, mask, combatant.IsNextSkillCommitted(), 1.0, nextSkillProgress, flip)
+		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, -1, mask, combatant.IsNextSkillCommitted(), 1.0, nextSkillProgress, flip)
 	} else {
 		y := noneSelectedSprite.Bounds().H() / 2
 		noNextSkillAlpha *= s.skillFlashAlphaInverse
@@ -89,11 +91,14 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 	}
 }
 
-func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, skill *rpg.Skill, mask pixel.RGBA, active bool, alpha float64, skillProgress float64, flip bool) {
+func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, skill *rpg.Skill, interruptedAt int, mask pixel.RGBA, active bool, alpha float64, skillProgress float64, flip bool) {
 	if skill == nil {
 		return
 	}
 	mask = colors.WithAlpha(mask, alpha)
+	if interruptedAt >= 0 {
+		mask = colors.ScaleColor(mask, 0.5)
+	}
 	rect := pixel.R(0, 0,
 		float64(skillBarWidth),
 		float64(skillBarTickSpacing*(skill.Duration()+1)))
@@ -171,17 +176,32 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 
 		// draw dots for each tick
 		var sprite pixelutil.BoundedDrawable
-		switch tick.DisplayType {
-		case rpg.TickDisplayDamage:
-			sprite = tickBubbleDisplayNormal
-		case rpg.TickDisplayNone:
-			// only render "none" dots if we're not in a stance
-			if !inStance {
-				sprite = tickBubbleDisplayNone
+		bubbleMask := colors.White.RGBA
+		var hasDamage, hasStatus bool
+		for _, e := range tick.Effects {
+			if e.Damage != nil {
+				hasDamage = true
+			}
+			if e.Status != nil {
+				hasStatus = true
+				if statusColor, exists := colors.StatusColors[e.Status.Status]; exists {
+					bubbleMask = statusColor
+				}
 			}
 		}
+		if hasDamage || hasStatus {
+			if interruptedAt >= 0 && i >= interruptedAt {
+				sprite = tickBubbleOverlayInterrupt
+			} else {
+				sprite = tickBubbleDisplayNormal
+			}
+		} else if !inStance {
+			// only render "none" dots if we're not in a stance
+			sprite = tickBubbleDisplayNone
+		}
+		bubbleMask = colors.Lerp(bubbleMask, colors.White.RGBA, 0.6)
 		if sprite != nil {
-			sprite.DrawColorMask(target, tickSpriteCenterMatrix, mask)
+			sprite.DrawColorMask(target, tickSpriteCenterMatrix, colors.MixColor(mask, bubbleMask))
 		}
 	}
 }

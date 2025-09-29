@@ -34,9 +34,9 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 		lines:       []StatBarLine{StatBarVisual, StatBarLabel},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 6, 1),
 		label:       "sync",
-		colorDark:   colors.HexColor("772712"),
-		color:       colors.HexColor("d58d7a"),
-		colorBright: colors.HexColor("ebc4bb"),
+		colorDark:   colors.HexString("772712"),
+		color:       colors.HexString("d58d7a"),
+		colorBright: colors.HexString("ebc4bb"),
 		current:     s.Player.GetCurrentSync().GetCurrentInt(),
 		max:         s.Player.GetCurrentSync().Max,
 	}
@@ -45,9 +45,9 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 5, 1),
 		label:       "shield",
-		colorDark:   colors.HexColor("126177"),
-		color:       colors.HexColor("73bed3"),
-		colorBright: colors.HexColor("bbe0eb"),
+		colorDark:   colors.HexString("126177"),
+		color:       colors.HexString("73bed3"),
+		colorBright: colors.HexString("bbe0eb"),
 		current:     s.Player.GetCurrentShield().GetCurrentInt(),
 		max:         s.Player.GetCurrentShield().Max,
 	}
@@ -57,7 +57,7 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 		originLocation: StatBoxOriginTopLeft,
 	}
 
-	s.drawCombatantStatBox(ctx, "Fumalug", statBox, gfx.IVec(0, game.GameHeight), gfx.TopLeft)
+	s.drawCombatantStatBox(ctx, "Fumalug", statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft)
 }
 
 func (s *State) drawOpponentStats(ctx *game.Context) {
@@ -65,9 +65,9 @@ func (s *State) drawOpponentStats(ctx *game.Context) {
 		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 7, 1),
 		label:       "health",
-		colorDark:   colors.HexColor("127839"),
-		color:       colors.HexColor("73d398"),
-		colorBright: colors.HexColor("bcebce"),
+		colorDark:   colors.HexString("127839"),
+		color:       colors.HexString("73d398"),
+		colorBright: colors.HexString("bcebce"),
 		// TODO render target
 		current: s.Opponent.GetHealth().GetCurrentInt(),
 		max:     s.Opponent.GetHealth().Max,
@@ -78,10 +78,10 @@ func (s *State) drawOpponentStats(ctx *game.Context) {
 		originLocation: StatBoxOriginTopRight,
 	}
 
-	s.drawCombatantStatBox(ctx, "Plent", statBox, gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight)
+	s.drawCombatantStatBox(ctx, "Plent", statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight)
 }
 
-func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *StatBox, origin pixel.Vec, originLocation gfx.OriginLocation) {
+func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *StatBox, statuses *AppliedStatuses, origin pixel.Vec, originLocation gfx.OriginLocation) {
 	renderScale := pixel.V(1, 1)
 	var nameContentOpts []textbox.ContentOpt
 	if originLocation == gfx.TopRight {
@@ -116,6 +116,12 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 		tbcfg.RenderFrom(originLocation))
 
 	statBox.Draw(ctx, s.batch, matrix.Moved(gfx.IVec(statBorderPadding, -paddedNameHeight).ScaledXY(renderScale)), statBoxWidth)
+
+	// todo time detla
+	statusM := matrix.
+		Moved(pixel.V(0, -float64(statBox.FrameHeight()+paddedNameHeight+1))).
+		Moved(originLocation.AlignFrom(gfx.BottomLeft, float64(5), 0))
+	statuses.Render(ctx, statusM, s.batch, 0, originLocation)
 }
 
 type StatBoxOriginLocation int

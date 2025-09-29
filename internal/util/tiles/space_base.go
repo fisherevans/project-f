@@ -19,6 +19,7 @@ var LightDoubleR = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 
 var LightTable = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 25, Row: 4}
 var LightFork = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 25, Row: 5}
 
+var LevelUp = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 28}
 var PDAEnabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 29}
 var PDADisabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 30}
 

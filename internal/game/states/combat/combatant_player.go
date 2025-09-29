@@ -22,6 +22,7 @@ type PlayerCombatant interface {
 type Player struct {
 	*rpg.DeployedAnimech
 	*CurrentCombatantSkills
+	Statuses           *AppliedStatuses
 	CurrentPrimortal   int
 	NextSkill          *rpg.SkillId
 	NextSkillCommitted bool
@@ -36,6 +37,7 @@ func NewPlayer(deployed *rpg.DeployedAnimech) *Player {
 	return &Player{
 		DeployedAnimech:        deployed,
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
+		Statuses:               NewAppliedStatuses(),
 		Tempo:                  &Tempo{},
 		Shield:                 NewHealthState(deployed.GetMaxShield()),
 		Syncs:                  make(map[int]*HealthState),
@@ -53,6 +55,10 @@ func (p *Player) GetColorMask() pixel.RGBA {
 
 func (p *Player) PeekNextSkill() *rpg.SkillId {
 	return p.NextSkill
+}
+
+func (p *Player) GetStatuses() *AppliedStatuses {
+	return p.Statuses
 }
 
 func (p *Player) PopNextSkill() *rpg.SkillId {
@@ -116,6 +122,13 @@ func (p *Player) GetCurrentSync() *HealthState {
 
 func (p *Player) GetCurrentShield() *HealthState {
 	return p.Shield
+}
+
+func (p *Player) IsDead() bool {
+	return p.GetCurrentSync().Current < 1
+}
+func (p *Player) IsPlayer() bool {
+	return true
 }
 
 func (p *Player) Name() string {

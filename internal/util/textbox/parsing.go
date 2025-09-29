@@ -1,12 +1,14 @@
 package textbox
 
 import (
-	"fisherevans.com/project/f/internal/util/colors"
+	"strconv"
+	"strings"
+
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
 	"github.com/rs/zerolog/log"
-	"strconv"
-	"strings"
+
+	"fisherevans.com/project/f/internal/util/colors"
 )
 
 /*
@@ -154,7 +156,7 @@ func (t *characterTemplate) parseCommand(commandText string) {
 				colorString := commandParts[1]
 				var color pixel.RGBA
 				if strings.HasPrefix(colorString, "#") {
-					color = colors.HexColor(commandParts[1])
+					color = colors.HexString(commandParts[1])
 				} else {
 					color = colors.ColorFromName(colors.ColorName(colorString)).RGBA
 				}
@@ -212,7 +214,7 @@ func requireColorOrDefault(param string, defaultColor pixel.RGBA) pixel.RGBA {
 		return defaultColor
 	}
 	if strings.HasPrefix(param, "#") {
-		return colors.HexColor(param)
+		return colors.HexString(param)
 	}
 	return colors.ColorFromName(colors.ColorName(param)).RGBA
 }

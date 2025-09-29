@@ -21,6 +21,9 @@ type frame struct {
 }
 
 func NewStaticAnimation(f pixelutil.BoundedDrawable) *AnimatedSprite {
+	if f == nil {
+		panic("nil drawable")
+	}
 	return &AnimatedSprite{
 		frames: []frame{{
 			drawable: f,

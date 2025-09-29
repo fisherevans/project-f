@@ -31,7 +31,7 @@ func NewElythiumDepositEntity(id EntityId, location MapLocation) Entity {
 		unminedlight: &Light{
 			RenderDetails: LightRenderDetails{
 				SizeScale: 1.5,
-				ColorMask: colors.HexColor("#f06"),
+				ColorMask: colors.HexString("#f06"),
 			},
 			Modifiers: []LightModifier{
 				&LightModifierPulse{
