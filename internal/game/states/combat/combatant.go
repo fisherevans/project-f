@@ -5,6 +5,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
+	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
 )
@@ -27,6 +28,8 @@ type Combatant interface {
 	PopNextSkill() *rpg.SkillId
 	PeekNextSkill() *rpg.SkillId
 	GetTotalMaxHealth() int
+
+	GetAnimation() *anim.AnimatedSprite
 }
 
 type HealthState struct {

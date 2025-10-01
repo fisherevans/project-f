@@ -31,7 +31,8 @@ type CombatIntentResult struct {
 type CombatIntentComplete func(ctx *Context, r CombatIntentResult)
 
 type CombatIntent struct {
-	Animech    *rpg.DeployedAnimech
+	Run        *rpg.Run
+	Opponent   rpg.PrimortalType
 	OnComplete CombatIntentComplete
 }
 

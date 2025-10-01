@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/gopxl/pixel/v2"
 
@@ -241,7 +242,9 @@ func (sb *StatBar) Draw(ctx *game.Context, target pixel.Target, matrix pixel.Mat
 			//sb.labelSprite.DrawColorMask(target, matrix.Moved(pixel.V(float64(2), float64(5)-sb.labelSprite.Bounds().H())).Moved(moveVec), sb.color)
 
 			valueContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%d{+c:%s}/%d", colors.ToHex(sb.colorBright), sb.current, colors.ToHex(sb.color), sb.max)) // TODO don't compute hex
-			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(float64((width-valueContent.Width())-2), 0)), valueContent)
+			valueDx := float64((width - valueContent.Width()) - 2)
+			valueDx = math.Max(valueDx, float64(labelContent.Width()+4))
+			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(valueDx, 0)), valueContent)
 		case StatBarVisual:
 			maxRectWidth := width - 2
 			currentRectWidth := int(float64(maxRectWidth) * float64(sb.current) / float64(sb.max))

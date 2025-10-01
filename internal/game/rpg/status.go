@@ -3,8 +3,16 @@ package rpg
 type StatusType string
 
 const (
-	StatusBurning  StatusType = "burning"
+	// kinetic
+	// todo fortified
+	// thermal
+	StatusBurning StatusType = "burning"
+	// corrosive
 	StatusPoisoned StatusType = "poisoned"
+	// voltaic
+	// todo ionized - makes next damage higher
+	// mutagenic
+	// todo mending - heals sync
 )
 
 func (s StatusType) PastTense() string {

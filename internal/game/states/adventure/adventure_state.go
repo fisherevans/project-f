@@ -10,7 +10,6 @@ import (
 	"golang.org/x/image/colornames"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
 	"fisherevans.com/project/f/internal/resources"
@@ -51,8 +50,6 @@ const (
 
 type State struct {
 	game.BaseState
-
-	animech *rpg.DeployedAnimech
 
 	mapWidth, mapHeight int
 	baseRenderLayers    []renderLayer
@@ -134,7 +131,6 @@ func New(_ *game.Context, i game.AdventureIntent) game.State {
 	)
 
 	initializeMap(a, m)
-	a.animech = i.Save.NewDeployment()
 	return a
 }
 

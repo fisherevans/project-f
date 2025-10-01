@@ -10,6 +10,8 @@ var Skills = map[SkillId]Skill{}
 
 type SkillId string
 
+const UnsetSkillId SkillId = ""
+
 func (id SkillId) Get() Skill {
 	if skill, exists := Skills[id]; exists {
 		return skill
@@ -22,6 +24,18 @@ type Skill struct {
 	Name        string
 	Description string
 	Ticks       []SkillTick
+}
+
+type Loadout struct {
+	Name     string
+	SkillSet SkillSet `yaml:"skill_set"`
+}
+
+type SkillSet struct {
+	Skill1 SkillId `yaml:"1"`
+	Skill2 SkillId `yaml:"2"`
+	Skill3 SkillId `yaml:"3"`
+	Skill4 SkillId `yaml:"4"`
 }
 
 func (s Skill) Duration() int {
@@ -80,72 +94,162 @@ func (s Skill) String() string {
 	return string(y)
 }
 
-var Skill_Tackle = Skill{
-	Id:          "tackle",
-	Name:        "Tackle",
-	Description: "Tackle an enemy, dealing kinetic damage.",
-	Ticks:       simpleDamageSkillTicks(3, 3),
-}.register()
+// ==============================================================
+// ===== BASIC SKILLS
+// ==============================================================
 
-var Skill_Crush = Skill{
-	Id:          "crush",
-	Name:        "Crush",
-	Description: "Slam down with immense force, dealing heavy kinetic damage.",
-	Ticks: skillTicks().
-		tick(tick().damage(6, 4)).
-		tick(tick().repeat(2)...),
-}.register()
+// Defending
 
-var Skill_Shunt = Skill{
-	Id:          "shunt",
-	Name:        "Shunt",
-	Description: "Shunt the foe and enter a defencive stance.",
+var Skill_Brace = Skill{
+	Id:          "brace",
+	Name:        "Brace",
+	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().damage(6, 4)).
 		tick(tick().repeat(2)...).
-		tick(stanceTick(TickStanceDefending).repeat(3)...),
+		tick(stanceTick(TickStanceDefending).repeat(2)...),
 }.register()
 
-var Skill_Ignite = Skill{
-	Id:          "ignite",
-	Name:        "Ignite",
-	Description: "Has a chance to set the opponent on fire.",
+var Skill_Guard = Skill{
+	Id:          "guard",
+	Name:        "Guard",
+	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().status(StatusBurning, 8)).
-		tick(tick().repeat(2)...),
+		tick(tick()).
+		tick(stanceTick(TickStanceDefending).repeat(3)...).
+		tick(tick()),
 }.register()
 
-var Skill_BileSurge = Skill{
-	Id:          "bile_surge",
-	Name:        "Bile Surge",
-	Description: "Spew bile all over an opponent.",
+// Attacking
+
+var Skill_Jab = Skill{
+	Id:          "jab",
+	Name:        "Jab",
+	Description: "todo",
 	Ticks: skillTicks().
-		tick(stanceTick(TickStanceExposed).repeat(3)...).
-		tick(tick().status(StatusPoisoned, 5)),
+		tick(tick().damage(5, 2)).
+		tick(tick().damage(2, 1)),
 }.register()
 
-var Skill_Block = Skill{
-	Id:          "block",
-	Name:        "Block",
-	Description: "Raise your defences briefly",
-	Ticks: skillTicks().
-		tick(stanceTick(TickStanceDefending).repeat(3)...),
-}.register()
-
-var Skill_Riposte = Skill{
-	Id:          "riposte",
-	Name:        "Riposte",
-	Description: "Reflect damage after being exposed",
-	Ticks: skillTicks().
-		tick(stanceTick(TickStanceExposed).repeat(2)...).
-		tick(stanceTick(TickStanceReflecting).repeat(4)...),
-}.register()
-
-var Skill_DrawnBlow = Skill{
-	Id:          "drawn_blow",
-	Name:        "Drawn Blow",
-	Description: "Make a huge hit after being exposed",
+var Skill_Strike = Skill{
+	Id:          "strike",
+	Name:        "Strike",
+	Description: "todo",
 	Ticks: skillTicks().
 		tick(stanceTick(TickStanceExposed).repeat(4)...).
-		tick(tick().damage(15, 4)),
+		tick(tick().damage(15, 0)),
+}.register()
+
+// ==============================================================
+// ===== KINETIC SKILLS
+// ==============================================================
+
+// skill name ideas: Riposte
+
+var Skill_ShoulderRoll = Skill{
+	Id:          "shoulder_roll",
+	Name:        "Shoulder Roll",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(tick()).
+		tick(tick().damage(10, 0)),
+}.register()
+
+var Skill_CurlUp = Skill{
+	Id:          "curl_up",
+	Name:        "Curl Up",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(stanceTick(TickStanceDefending).repeat(4)...), // todo add defence status
+}.register()
+
+// ==============================================================
+// ===== THERMAL SKILLS
+// ==============================================================
+
+// skill name ideas: ignite
+
+var Skill_Cinder = Skill{
+	Id:          "cinder",
+	Name:        "Cinder",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(tick().status(StatusBurning, 2)).
+		tick(tick()),
+}.register()
+
+var Skill_Searline = Skill{
+	Id:          "searline",
+	Name:        "Searline",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(tick().damage(3, 0).repeat(3)...). // todo increase burn status condition if there
+		tick(stanceTick(TickStanceVulnerable).repeat(3)...),
+}.register()
+
+// ==============================================================
+// ===== VOLTAIC SKILLS
+// ==============================================================
+
+var Skill_ArcDart = Skill{
+	Id:          "arc_dart",
+	Name:        "Arc Dart",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(tick().status(StatusBurning, 5)). // todo apply ionize
+		tick(stanceTick(TickStanceExposed).repeat(3)...),
+}.register()
+
+var Skill_ZapWrap = Skill{
+	Id:          "zap_wrap",
+	Name:        "Zap Wrap",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick().
+		tick(stanceTick(TickStanceDefending).damage(3, 3).repeat(4)...).
+		tick(),
+}.register()
+
+// ==============================================================
+// ===== CORROSIVE SKILLS
+// ==============================================================
+
+// skill name ideas: bile surge
+
+var Skill_Molt = Skill{
+	Id:          "molt",
+	Name:        "Molt",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(stanceTick(TickStanceExposed).repeat(3)...).
+		tick(), // TODO remove statuses
+}.register()
+
+var Skill_AcidSting = Skill{
+	Id:          "acid_string",
+	Name:        "Acid String",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(tick().damage(2, 0).status(StatusPoisoned, 3)).
+		tick(),
+}.register()
+
+// ==============================================================
+// ===== GROWTH SKILLS
+// ==============================================================
+
+var Skill_MendSpores = Skill{
+	Id:          "mend_spores",
+	Name:        "Mend Spores",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(tick().repeat(6)...), // TODO regen
+}.register()
+
+var Skill_PhotoSurge = Skill{
+	Id:          "photo_surge",
+	Name:        "Photo Surge",
+	Description: "todo",
+	Ticks: skillTicks().
+		tick(tick().damage(5, 0)). // TODO scale up over time
+		tick(stanceTick(TickStanceExposed).repeat(2)...),
 }.register()

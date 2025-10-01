@@ -62,9 +62,6 @@ func init() {
 
 var backgroundSprite = resources.LoadSprite("combat/background_sample")
 
-var robotAnim = anim.IdleRobot(atlas)
-var plentAnim = anim.IdlePlent(atlas)
-
 type Phase string
 
 const PhaseBattle Phase = "battle"
@@ -92,8 +89,8 @@ type State struct {
 
 func New(ctx *game.Context, i game.CombatIntent) game.State {
 	return &State{
-		Player:     NewPlayer(i.Animech),
-		Opponent:   NewWall(),
+		Player:     NewPlayer(ctx.GameSave.Animech, i.Run),
+		Opponent:   NewPrimortalOpponent(i.Opponent),
 		OnComplete: i.OnComplete,
 		Battle:     &Battle{},
 
@@ -137,8 +134,8 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.Player.Update(timeDelta)
 	s.Opponent.Update(timeDelta)
 
-	s.renderCombatantSprite(robotAnim, s.Player, true, timeDelta)
-	s.renderCombatantSprite(plentAnim, s.Opponent, false, timeDelta)
+	s.renderCombatantSprite(s.Player.GetAnimation(), s.Player, true, timeDelta)
+	s.renderCombatantSprite(s.Opponent.GetAnimation(), s.Opponent, false, timeDelta)
 
 	s.drawActiveSkills(ctx, s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
 
@@ -151,8 +148,8 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.drawPlayerStats(ctx)
 	s.drawOpponentStats(ctx)
 
-	s.Player.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.675)))
-	s.Opponent.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8+game.GameWidth/2, game.GameHeight*0.675)))
+	s.Player.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.6)))
+	s.Opponent.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8+game.GameWidth/2, game.GameHeight*0.6)))
 
 	ctx.DebugBL("player status: %s", s.Player.GetStatuses().String())
 	ctx.DebugBL("opponent status: %s", s.Opponent.GetStatuses().String())
@@ -190,7 +187,7 @@ func (s *State) renderCombatantSprite(sprite *anim.AnimatedSprite, com Combatant
 	if leftSide {
 		position = pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))
 	} else {
-		position = pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.6667))
+		position = pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.4))
 		rotateDirection = -1
 	}
 

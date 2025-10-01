@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 	"reflect"
+
+	"fisherevans.com/project/f/internal/game/rpg"
 )
 
 func init() {
@@ -46,14 +48,24 @@ func InitialState() SelectIntent {
 			Save:    ctx.GameSave,
 		}
 	})
-	i = i.With("Combat", func(ctx *Context) any {
-		return CombatIntent{
-			Animech: ctx.GameSave.NewDeployment(),
-			OnComplete: func(ctx *Context, r CombatIntentResult) {
-				ctx.Notify("Combat complete!")
-				ctx.SetActiveStateIntent(InitialState())
-			},
-		}
-	})
+
+	fight := func(p rpg.PrimortalType) {
+		i = i.With("Fight "+rpg.Primortals[p].Name, func(ctx *Context) any {
+			return CombatIntent{
+				Run:      &rpg.Run{},
+				Opponent: p,
+				OnComplete: func(ctx *Context, r CombatIntentResult) {
+					ctx.Notify("Combat complete!")
+					ctx.SetActiveStateIntent(InitialState())
+				},
+			}
+		})
+	}
+	fight(rpg.Primortal_Pumbl.Type)
+	fight(rpg.Primortal_Myceli.Type)
+	fight(rpg.Primortal_Scintail.Type)
+	fight(rpg.Primortal_Toxmidge.Type)
+	fight(rpg.Primortal_Volteel.Type)
+
 	return i
 }

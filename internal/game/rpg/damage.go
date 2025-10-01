@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	// todo make defending absolute, reflective relative
 	stanceDefendingMultiplier          = 0.25
 	stanceReflectingMultiplierIncoming = 0.5
 	stanceReflectingMultiplierOutgoing = 0.75

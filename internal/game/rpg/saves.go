@@ -2,10 +2,11 @@ package rpg
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 
 	"gopkg.in/yaml.v3"
 )
@@ -13,31 +14,13 @@ import (
 var gameSaveDirectory = "game_data/saves"
 
 type GameSave struct {
-	SaveId             string                               `yaml:"save_id"`
-	CharacterName      string                               `yaml:"character_name"`
-	Animech            *Animech                             `yaml:"animech"`
-	CapturedPrimortals map[PrimortalType]*CapturedPrimortal `yaml:"captured_primortals"`
-	Inventory          *Inventory                           `yaml:"inventory"`
-}
-
-func (g *GameSave) NewDeployment() *DeployedAnimech {
-	animech := &DeployedAnimech{
-		Animech:             g.Animech,
-		AnimechExperience:   0,
-		PrimortalExperience: nil,
-		CurrentShield:       BaseAnimechShield + g.Animech.AdditionalShield,
-		DeployedPrimortals:  nil,
-	}
-	for _, p := range g.CapturedPrimortals {
-		animech.DeployedPrimortals = append(animech.DeployedPrimortals, &DeployedPrimortal{
-			CapturedPrimortal: p,
-			CurrentSync:       p.Base().BaseSync + p.AdditionalSync,
-		})
-		if len(animech.DeployedPrimortals) >= 3 {
-			break
-		}
-	}
-	return animech
+	SaveId         string                               `yaml:"save_id"`
+	CharacterName  string                               `yaml:"character_name"`
+	Animech        *Animech                             `yaml:"animech"`
+	UnlockedSkills []SkillId                            `yaml:"unlocked_skills"`
+	Loadouts       []*Loadout                           `yaml:"loadouts"`
+	Inventory      *Inventory                           `yaml:"inventory"`
+	Primortals     map[PrimortalType]*PrimortalProgress `yaml:"primortals"`
 }
 
 func (g *GameSave) Save() error {
@@ -87,6 +70,8 @@ func LoadGameSaves() (map[string]*GameSave, error) {
 			log.Warn().Msgf("Failed to unmarshal %s: %v", path, err)
 			continue
 		}
+
+		// todo validate loaded saves (i.e. skills in loadouts are unlocked and valid ids)
 
 		// Ignore files whose name doesn't match the saveId
 		if gs.SaveId != base {

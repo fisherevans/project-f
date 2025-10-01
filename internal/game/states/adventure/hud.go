@@ -47,7 +47,7 @@ func (h *Hud) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pi
 		},
 		{
 			icon:   h.researchIcon,
-			count:  s.animech.AnimechExperience,
+			count:  ctx.GameSave.Animech.AnimechExperience, // todo not from a run
 			stroke: "#162d3d",
 			fg:     "#b2d4ed",
 		},

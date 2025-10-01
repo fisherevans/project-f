@@ -1,16 +1,13 @@
 package rpg
 
-type CapturedPrimortal struct {
-	PrimortalType  PrimortalType `yaml:"primortal_type"`
-	Nickname       string        `yaml:"nickname"`
-	AdditionalSync int           `yaml:"additional_sync"`
-	SelectedSkills []SkillId     `yaml:"selected_skills"`
-}
+type PrimortalVisibility string
 
-func (p CapturedPrimortal) GetMaxSync() int {
-	return p.Base().BaseSync + p.AdditionalSync
-}
+const (
+	PrimortalVisibilityUnknown PrimortalVisibility = ""
+	PrimortalVisibilitySeen    PrimortalVisibility = "seen"
+)
 
-func (p CapturedPrimortal) Base() Primortal {
-	return Primortals[p.PrimortalType]
+type PrimortalProgress struct {
+	Visibility     PrimortalVisibility `yaml:"visibility"`
+	ResearchPoints int                 `yaml:"research_points"`
 }

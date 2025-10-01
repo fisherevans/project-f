@@ -105,7 +105,7 @@ func Load(atlas *resources.Atlas, tilesheetName string, animationName string) *A
 		if from == 0 && to == 0 {
 			to = tilesheet.Columns
 		}
-		if from <= 0 || from >= to || to > tilesheet.Columns {
+		if from <= 0 || from > to || to > tilesheet.Columns {
 			panic(msgf("invalid column range %d-%d", from, to))
 		}
 		if len(metadata.Sequence.FrameWeights) == 0 {

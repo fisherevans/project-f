@@ -1,9 +1,6 @@
 # Adventure State
 
-- Camera
-  - change targets
 - Interactions
-  - User interaction (open door, read sign)
   - Movement interaction
     - push item
     - ice
@@ -37,18 +34,3 @@
   - following another entity
   - identify line of sight to trigger interactions
 - running vs walking
-
-# Combat State
-
-- tick based resolution of skills
-- current/next skill visualization
-- damage calculator
-- state manager (for health)
-- tempo 
-- log of actions
-
-# RPG Engine
-
-- skill progression
-- loadouts
-- 

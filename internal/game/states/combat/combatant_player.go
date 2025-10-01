@@ -4,6 +4,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
 )
 
@@ -20,7 +21,8 @@ type PlayerCombatant interface {
 }
 
 type Player struct {
-	*rpg.DeployedAnimech
+	*rpg.Run
+	*rpg.Animech
 	*CurrentCombatantSkills
 	Statuses           *AppliedStatuses
 	CurrentPrimortal   int
@@ -31,17 +33,21 @@ type Player struct {
 	Shield          *HealthState
 	Syncs           map[int]*HealthState
 	DamageFlashMask *DamageFlashMask
+
+	baseAnimation *anim.AnimatedSprite
 }
 
-func NewPlayer(deployed *rpg.DeployedAnimech) *Player {
+func NewPlayer(animech *rpg.Animech, run *rpg.Run) *Player {
 	return &Player{
-		DeployedAnimech:        deployed,
+		Animech:                animech,
+		Run:                    run,
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
 		Tempo:                  &Tempo{},
-		Shield:                 NewHealthState(deployed.GetMaxShield()),
+		Shield:                 NewHealthState(animech.GetMaxShield()),
 		Syncs:                  make(map[int]*HealthState),
 		DamageFlashMask:        NewDamageFlashMask(),
+		baseAnimation:          anim.IdleRobot(atlas),
 	}
 }
 
@@ -79,14 +85,14 @@ func (p *Player) GetTempo() *Tempo {
 	return p.Tempo
 }
 
-func (p *Player) getDeployedPrimortal() *rpg.DeployedPrimortal {
-	return p.DeployedPrimortals[p.CurrentPrimortal]
+func (p *Player) getAnimech() *rpg.Animech {
+	return p.Animech
 }
 
 var _ PlayerCombatant = &Player{}
 
 func (p *Player) GetStats() CombatantStats {
-	//dp := p.getDeployedPrimortal()
+	//animech := p.getAnimech()
 	return CombatantStats{
 		Stance: p.GetCurrentSkill().GetCurrentStance(),
 	}
@@ -102,19 +108,28 @@ func (p *Player) ApplyDamage(damage int) {
 }
 
 func (p *Player) GetFightOption(slot int) *rpg.SkillId {
-	dp := p.getDeployedPrimortal()
-	if slot >= len(dp.SelectedSkills) {
+	animech := p.getAnimech()
+	var id rpg.SkillId
+	switch slot {
+	case 1:
+		id = animech.SkillSet.Skill1
+	case 2:
+		id = animech.SkillSet.Skill2
+	case 3:
+		id = animech.SkillSet.Skill3
+	case 4:
+		id = animech.SkillSet.Skill4
+	}
+	if id == rpg.UnsetSkillId {
 		return nil
 	}
-	skill := dp.SelectedSkills[slot]
-	return &skill
+	return &id
 }
 
 func (p *Player) GetCurrentSync() *HealthState {
 	sync, exists := p.Syncs[p.CurrentPrimortal]
 	if !exists {
-		dp := p.getDeployedPrimortal()
-		sync = NewHealthState(dp.GetMaxSync())
+		sync = NewHealthState(p.Animech.GetMaxSync())
 		p.Syncs[p.CurrentPrimortal] = sync
 	}
 	return sync
@@ -136,11 +151,11 @@ func (p *Player) IsPlayer() bool {
 }
 
 func (p *Player) Name() string {
-	dp := p.getDeployedPrimortal()
-	if dp.Nickname != "" {
-		return dp.Nickname
-	}
-	return dp.Base().Name
+	return "Player" // todo plumb player name
+}
+
+func (p *Player) GetAnimation() *anim.AnimatedSprite {
+	return p.baseAnimation
 }
 
 type SkillFightOption rpg.Skill
