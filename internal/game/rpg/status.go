@@ -5,22 +5,37 @@ type StatusType string
 const (
 	// kinetic
 	// todo fortified
+	StatusFortified StatusType = "fortified"
 	// thermal
 	StatusBurning StatusType = "burning"
 	// corrosive
 	StatusPoisoned StatusType = "poisoned"
 	// voltaic
-	// todo ionized - makes next damage higher
+	StatusIonized StatusType = "ionized"
 	// mutagenic
-	// todo mending - heals sync
+	StatusMending StatusType = "mending"
 )
 
-func (s StatusType) PastTense() string {
+func (s StatusType) Label() string {
 	switch s {
+	case StatusFortified:
+		return "Fortified"
 	case StatusBurning:
 		return "Burned"
 	case StatusPoisoned:
 		return "Poisoned"
+	case StatusIonized:
+		return "Ionized"
+	case StatusMending:
+		return "Mending"
 	}
 	return ""
 }
+
+type StatusLevel int
+
+const (
+	StatusLevel1 StatusLevel = 1
+	StatusLevel2 StatusLevel = 2
+	StatusLevel3 StatusLevel = 3
+)

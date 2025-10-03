@@ -21,6 +21,7 @@ type SkillTickStatus struct {
 }
 
 type SkillTickEffect struct {
+	Self   bool
 	Damage *SkillTickDamage
 	Status *SkillTickStatus
 }
@@ -36,7 +37,7 @@ func skillTicks() SkillTicks {
 	return []SkillTick{}
 }
 
-func (sts SkillTicks) tick(ts ...SkillTick) SkillTicks {
+func (sts SkillTicks) add(ts ...SkillTick) SkillTicks {
 	sts = append(sts, ts...)
 	return sts
 }
@@ -61,12 +62,21 @@ func (st SkillTick) damage(amount, variance int) SkillTick {
 	return st
 }
 
-func (st SkillTick) status(status StatusType, stacks float64) SkillTick {
+func (st SkillTick) statusSelf(status StatusType, stacks float64) SkillTick {
+	return st.status(status, stacks, true)
+}
+
+func (st SkillTick) statusOpponent(status StatusType, stacks float64) SkillTick {
+	return st.status(status, stacks, false)
+}
+
+func (st SkillTick) status(status StatusType, stacks float64, self bool) SkillTick {
 	st.Effects = append(st.Effects, SkillTickEffect{
 		Status: &SkillTickStatus{
 			Status: status,
 			Stacks: stacks,
 		},
+		Self: self,
 	})
 	return st
 }
@@ -85,6 +95,6 @@ func (t SkillTick) validate() []string {
 
 func simpleDamageSkillTicks(damage int, duration int) []SkillTick {
 	return skillTicks().
-		tick(tick().damage(damage, 0)).
-		tick(tick().repeat(duration - 1)...)
+		add(tick().damage(damage, 0)).
+		add(tick().repeat(duration - 1)...)
 }

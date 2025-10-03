@@ -47,7 +47,7 @@ func NewPlayer(animech *rpg.Animech, run *rpg.Run) *Player {
 		Shield:                 NewHealthState(animech.GetMaxShield()),
 		Syncs:                  make(map[int]*HealthState),
 		DamageFlashMask:        NewDamageFlashMask(),
-		baseAnimation:          anim.IdleRobot(atlas),
+		baseAnimation:          anim.Load(atlas, "animech/combat_animech", "default"),
 	}
 }
 
@@ -92,32 +92,40 @@ func (p *Player) getAnimech() *rpg.Animech {
 var _ PlayerCombatant = &Player{}
 
 func (p *Player) GetStats() CombatantStats {
-	//animech := p.getAnimech()
 	return CombatantStats{
-		Stance: p.GetCurrentSkill().GetCurrentStance(),
+		Stance:       p.GetCurrentSkill().GetCurrentStance(),
+		StatusLevels: p.Statuses.GetLevels(),
 	}
 }
 
-func (p *Player) ApplyDamage(damage int) {
-	adjustment := -damage
-	adjustment = p.Shield.AdjustTarget(adjustment)
-	if adjustment != 0 {
-		p.GetCurrentSync().AdjustTarget(adjustment)
+func (p *Player) AdjustHealth(amount int) {
+	if amount == 0 {
+		return
 	}
-	p.DamageFlashMask.damaged()
+	if amount > 0 { // healing
+		amount = p.GetCurrentSync().AdjustTarget(amount)
+		if amount != 0 {
+			p.Shield.AdjustTarget(amount)
+		}
+	} else { // damaging
+		amount = p.Shield.AdjustTarget(amount)
+		if amount != 0 {
+			p.GetCurrentSync().AdjustTarget(amount)
+		}
+	}
 }
 
 func (p *Player) GetFightOption(slot int) *rpg.SkillId {
 	animech := p.getAnimech()
 	var id rpg.SkillId
 	switch slot {
-	case 1:
+	case 0:
 		id = animech.SkillSet.Skill1
-	case 2:
+	case 1:
 		id = animech.SkillSet.Skill2
-	case 3:
+	case 2:
 		id = animech.SkillSet.Skill3
-	case 4:
+	case 3:
 		id = animech.SkillSet.Skill4
 	}
 	if id == rpg.UnsetSkillId {
@@ -151,7 +159,7 @@ func (p *Player) IsPlayer() bool {
 }
 
 func (p *Player) Name() string {
-	return "Player" // todo plumb player name
+	return "Animech" // todo plumb player name
 }
 
 func (p *Player) GetAnimation() *anim.AnimatedSprite {

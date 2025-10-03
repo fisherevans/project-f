@@ -12,7 +12,7 @@ import (
 
 type Combatant interface {
 	Name() string
-	ApplyDamage(damage int)
+	AdjustHealth(amount int)
 	GetStats() CombatantStats
 	GetTempo() *Tempo
 	Update(timeDelta float64)
@@ -82,7 +82,8 @@ func (h *HealthState) Update(timeDelta float64) {
 }
 
 type CombatantStats struct {
-	Stance rpg.CombatStance
+	Stance       rpg.CombatStance
+	StatusLevels map[rpg.StatusType]rpg.StatusLevel
 }
 
 type DamageFlashMask struct {
@@ -114,6 +115,10 @@ func (d *DamageFlashMask) getMask() pixel.RGBA {
 
 func (d *DamageFlashMask) damaged() {
 	d.timeRecovered = 0
+}
+
+func (d *DamageFlashMask) healed() {
+	// TODO flash green
 }
 
 type CurrentCombatantSkills struct {

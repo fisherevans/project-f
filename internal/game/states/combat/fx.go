@@ -58,41 +58,40 @@ func (fx *baseFx) Update(ctx *game.Context, s *State, timeDelta float64) bool {
 	return fx.Age > fxMaxAge
 }
 
+var baseFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas).
+	AlignedTo(pixel.Center)
+
 func (fx *baseFx) renderFx(ctx *game.Context, color pixel.RGBA, text string, target pixel.Target) {
 	color = colors.WithAlpha(color, 1.0-(fx.Age/fxMaxAge))
 
-	damageFxText.Clear()
-	damageFxText.Dot = pixel.ZV
-	damageFxText.Color = colors.ScaleColor(color, 0.1)
-	damageFxText.WriteString(text)
-	damageFxText.Draw(target, pixel.IM.Moved(fx.Position))
+	baseFxText.Clear()
+	baseFxText.Dot = pixel.ZV
+	baseFxText.Color = colors.ScaleColor(color, 0.1)
+	baseFxText.WriteString(text)
+	baseFxText.Draw(target, pixel.IM.Moved(fx.Position))
 
-	damageFxText.Dot = pixel.ZV.Add(pixel.V(-1, 1))
-	damageFxText.Color = color
-	damageFxText.WriteString(text)
-	damageFxText.Draw(target, pixel.IM.Moved(fx.Position))
+	baseFxText.Dot = pixel.ZV.Add(pixel.V(-1, 1))
+	baseFxText.Color = color
+	baseFxText.WriteString(text)
+	baseFxText.Draw(target, pixel.IM.Moved(fx.Position))
 }
 
-type DamageFX struct {
+type HealthAdjustFX struct {
 	*baseFx
-	Damage int
-	Color  pixel.RGBA
+	DisplayAmount int
+	Color         pixel.RGBA
 }
 
-func NewDamageFX(damage int, color pixel.RGBA, target Combatant) *DamageFX {
-	return &DamageFX{
-		Damage: damage,
-		Color:  color,
-		baseFx: newBaseFx(target),
+func NewHealthAdjustFX(amount int, color pixel.RGBA, target Combatant) *HealthAdjustFX {
+	return &HealthAdjustFX{
+		DisplayAmount: amount,
+		Color:         color,
+		baseFx:        newBaseFx(target),
 	}
 }
 
-var damageFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas).
-	AlignedTo(pixel.Center)
-
-func (fx *DamageFX) Render(ctx *game.Context, target pixel.Target) {
-	text := fmt.Sprintf("%d", fx.Damage)
-	fx.baseFx.renderFx(ctx, fx.Color, text, target)
+func (fx *HealthAdjustFX) Render(ctx *game.Context, target pixel.Target) {
+	fx.baseFx.renderFx(ctx, fx.Color, fmt.Sprintf("%+d", fx.DisplayAmount), target)
 }
 
 type WordFX struct {
@@ -112,8 +111,6 @@ func NewWordFX(word string, color pixel.RGBA, target Combatant) *WordFX {
 		baseFx: b,
 	}
 }
-
-var wordFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas)
 
 func (fx *WordFX) Render(ctx *game.Context, target pixel.Target) {
 	fx.baseFx.renderFx(ctx, fx.Color, fx.Word, target)

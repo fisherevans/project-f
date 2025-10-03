@@ -1,0 +1,23 @@
+setcpm(60)
+$: n("<-4 -2 -3 -2>")
+  .slow(2)
+  .release(2)
+  .scale("B:diminished")
+  .sound("gm_pad_bowed")
+  .attack(0.7)
+  .lpf(slider(399.6, 0, 1200))
+
+$: n("<-6 -3 [-5 -3] -5>")
+  .slow(2)
+  .release(2)
+  .scale("B:diminished")
+  .sound("gm_fx_sci_fi")
+  .attack(0.1)
+  .lpf(slider(332.4, 0, 1200))
+  .gain(0.8)
+
+$: sound("bd,<white pink brown>*4")
+.decay(.05)
+.gain(0.45)
+
+$: s("~ [~ hh]*2").gain(0.2)

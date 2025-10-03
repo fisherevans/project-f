@@ -103,6 +103,8 @@ func initializeMap(a *State, m *resources.Map) {
 			entityType = "rocket"
 		case tiles.ShadowMob:
 			entityType = "shadow"
+		case tiles.DummyFightRobot:
+			entityType = "dummy_robot"
 		}
 		switch entityType {
 		case "player":
@@ -202,7 +204,7 @@ func initializeMap(a *State, m *resources.Map) {
 				},
 				topic: entity.GetStringMetadata("topic", ""),
 			})
-		case "combat":
+		case "dummy_robot":
 			a.AddEntity(&EntityCombatTest{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{

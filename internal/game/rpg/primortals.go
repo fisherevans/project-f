@@ -15,11 +15,26 @@ func (pt PrimortalType) Primortal() Primortal {
 }
 
 type Primortal struct {
-	Type                   PrimortalType
-	Name                   string
-	BaseSync               int
-	UnlockableSkills       []UnlockableSkill
-	AdditionalCombatSkills []SkillId
+	Type             PrimortalType
+	Name             string
+	Description      string
+	BaseSync         int
+	UnlockableSkills []UnlockableSkill
+	CombatArchetypes map[string]PrimortalCombatArchetype
+}
+
+type PrimortalCombatArchetype struct {
+	AdditionalSync         int             `yaml:"additional_sync"`
+	AdditionalSyncVariance int             `yaml:"additional_sync_variance"`
+	SkillPool              CombatSkillPool `yaml:"skill_pool"`
+}
+
+type CombatSkillPool struct {
+	Random *CombatSkillPoolRandom `yaml:"random"`
+}
+
+type CombatSkillPoolRandom struct {
+	WeightedSkills map[SkillId]int `yaml:"weighted_skills"`
 }
 
 type UnlockableSkill struct {
@@ -51,11 +66,32 @@ var DefaultUnlockableSkills = []UnlockableSkill{
 	},
 }
 
-// kinetic - little roll up rock guy - mix between sandshrew and geodude
+var Primortal_Dummy = Primortal{
+	Type:        "dummy",
+	Name:        "Dummy",
+	Description: "A test robot to hit for fun.",
+	BaseSync:    50,
+	CombatArchetypes: map[string]PrimortalCombatArchetype{
+		"default": {
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					WeightedSkills: map[SkillId]int{
+						Skill_Brace.Id: 40,
+						Skill_Guard.Id: 20,
+						Skill_Jab.Id:   10,
+					},
+				},
+			},
+		},
+	},
+}.register()
+
+// kinetic
 var Primortal_Pumbl = Primortal{
-	Type:     "pumbl",
-	Name:     "Pumbl",
-	BaseSync: 70,
+	Type:        "pumbl",
+	Name:        "Pumbl",
+	Description: "Little roll up rock guy. A mix between Sandshrew and Geodude.",
+	BaseSync:    30,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_ShoulderRoll.Id,
@@ -66,16 +102,29 @@ var Primortal_Pumbl = Primortal{
 			Cost:    5,
 		},
 	},
-	AdditionalCombatSkills: []SkillId{
-		Skill_Guard.Id,
+	CombatArchetypes: map[string]PrimortalCombatArchetype{
+		"default": {
+			AdditionalSync:         10,
+			AdditionalSyncVariance: 5,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					WeightedSkills: map[SkillId]int{
+						Skill_ShoulderRoll.Id: 40,
+						Skill_CurlUp.Id:       40,
+						Skill_Guard.Id:        20,
+					},
+				},
+			},
+		},
 	},
 }.register()
 
-// thermal - little lizard guy - heat fins that glow
+// thermal
 var Primortal_Scintail = Primortal{
-	Type:     "scintail",
-	Name:     "Scintail",
-	BaseSync: 50,
+	Type:        "scintail",
+	Name:        "Scintail",
+	Description: "A cute lizard guy with heat fins that glow.",
+	BaseSync:    25,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_Cinder.Id,
@@ -86,17 +135,30 @@ var Primortal_Scintail = Primortal{
 			Cost:    7,
 		},
 	},
-	AdditionalCombatSkills: []SkillId{
-		Skill_Brace.Id,
-		Skill_Strike.Id,
+	CombatArchetypes: map[string]PrimortalCombatArchetype{
+		"default": {
+			AdditionalSync:         5,
+			AdditionalSyncVariance: 10,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					WeightedSkills: map[SkillId]int{
+						Skill_Cinder.Id:   20,
+						Skill_Searline.Id: 40,
+						Skill_Brace.Id:    10,
+						Skill_Strike.Id:   20,
+					},
+				},
+			},
+		},
 	},
 }.register()
 
-// voltaic - eel, with stubby little feet - can stand up right
+// voltaic
 var Primortal_Volteel = Primortal{
-	Type:     "volteel",
-	Name:     "Volteel",
-	BaseSync: 40,
+	Type:        "volteel",
+	Name:        "Volteel",
+	Description: "An eel with stubby little feet that can stand up right.",
+	BaseSync:    20,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_ArcDart.Id,
@@ -107,18 +169,31 @@ var Primortal_Volteel = Primortal{
 			Cost:    4,
 		},
 	},
-	AdditionalCombatSkills: []SkillId{
-		Skill_Strike.Id,
+	CombatArchetypes: map[string]PrimortalCombatArchetype{
+		"default": {
+			AdditionalSync:         10,
+			AdditionalSyncVariance: 10,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					WeightedSkills: map[SkillId]int{
+						Skill_ArcDart.Id: 20,
+						Skill_ZapWrap.Id: 40,
+						Skill_Strike.Id:  10,
+					},
+				},
+			},
+		},
 	},
 }.register()
 
 // voltaic - arcmander
 
-// corrosive - flying insect with pincers
+// corrosive
 var Primortal_Toxmidge = Primortal{
-	Type:     "toxmidge",
-	Name:     "Toxmidge",
-	BaseSync: 50,
+	Type:        "toxmidge",
+	Name:        "Toxmidge",
+	Description: "A flying gross flying insect that squirts acid.",
+	BaseSync:    15,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_AcidSting.Id,
@@ -129,17 +204,30 @@ var Primortal_Toxmidge = Primortal{
 			Cost:    7,
 		},
 	},
-	AdditionalCombatSkills: []SkillId{
-		Skill_Guard.Id,
-		Skill_Jab.Id,
+	CombatArchetypes: map[string]PrimortalCombatArchetype{
+		"default": {
+			AdditionalSync:         5,
+			AdditionalSyncVariance: 5,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					WeightedSkills: map[SkillId]int{
+						Skill_AcidSting.Id: 20,
+						Skill_Molt.Id:      10,
+						Skill_Guard.Id:     20,
+						Skill_Jab.Id:       20,
+					},
+				},
+			},
+		},
 	},
 }.register()
 
-// mutagenic - little mushroom guy, base turns into legs
+// mutagenic
 var Primortal_Myceli = Primortal{
-	Type:     "myceli",
-	Name:     "Myceli",
-	BaseSync: 80,
+	Type:        "myceli",
+	Name:        "Myceli",
+	Description: "A fun guy with tentacle legs.",
+	BaseSync:    40,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_PhotoSurge.Id,
@@ -150,8 +238,20 @@ var Primortal_Myceli = Primortal{
 			Cost:    5,
 		},
 	},
-	AdditionalCombatSkills: []SkillId{
-		Skill_Brace.Id,
-		Skill_Jab.Id,
+	CombatArchetypes: map[string]PrimortalCombatArchetype{
+		"default": {
+			AdditionalSync:         0,
+			AdditionalSyncVariance: 10,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					WeightedSkills: map[SkillId]int{
+						Skill_PhotoSurge.Id: 40,
+						Skill_MendSpores.Id: 10,
+						Skill_Jab.Id:        20,
+						Skill_Brace.Id:      20,
+					},
+				},
+			},
+		},
 	},
 }.register()

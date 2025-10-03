@@ -20,10 +20,13 @@ type RandomSkillChooser struct {
 	totalWeight int
 }
 
-func NewRandomSkillChooserEven(skills []rpg.SkillId) SkillChooser {
+func NewSkillChooser(pool rpg.CombatSkillPool) SkillChooser {
+	if pool.Random == nil {
+		panic("no random skill pool")
+	}
 	var options []randomSkillChoice
-	for _, skill := range skills {
-		options = append(options, randomSkillChoice{skill: &skill, weight: 1})
+	for skill, weight := range pool.Random.WeightedSkills {
+		options = append(options, randomSkillChoice{skill: &skill, weight: weight})
 	}
 	return NewRandomSkillChooser(options)
 }

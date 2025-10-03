@@ -64,7 +64,7 @@ func (s Skill) validate() {
 		errors = append(errors, tick.validate()...)
 		if tick.StanceType != lastStance {
 			if stanceDuration <= 1 && lastStance != TickStanceNone {
-				errors = append(errors, "skill stance duration must be greater than 1 tick")
+				errors = append(errors, "skill stance duration must be greater than 1 add")
 			}
 			stanceDuration = 0
 			lastStance = tick.StanceType
@@ -73,7 +73,7 @@ func (s Skill) validate() {
 		lastStance = tick.StanceType
 	}
 	if stanceDuration <= 1 && lastStance != TickStanceNone {
-		errors = append(errors, "skill stance duration must be greater than 1 tick")
+		errors = append(errors, "skill stance duration must be greater than 1 add")
 	}
 	if len(errors) > 0 {
 		panic("invalid skill definition: " + strings.Join(errors, ", ") + "\n" + s.String())
@@ -105,8 +105,8 @@ var Skill_Brace = Skill{
 	Name:        "Brace",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().repeat(2)...).
-		tick(stanceTick(TickStanceDefending).repeat(2)...),
+		add(tick().repeat(3)...).
+		add(stanceTick(TickStanceDefending).repeat(2)...),
 }.register()
 
 var Skill_Guard = Skill{
@@ -114,9 +114,9 @@ var Skill_Guard = Skill{
 	Name:        "Guard",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick()).
-		tick(stanceTick(TickStanceDefending).repeat(3)...).
-		tick(tick()),
+		add(tick()).
+		add(stanceTick(TickStanceDefending).repeat(3)...).
+		add(tick()),
 }.register()
 
 // Attacking
@@ -126,8 +126,8 @@ var Skill_Jab = Skill{
 	Name:        "Jab",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().damage(5, 2)).
-		tick(tick().damage(2, 1)),
+		add(tick().damage(5, 2)).
+		add(tick().repeat(2)...),
 }.register()
 
 var Skill_Strike = Skill{
@@ -135,8 +135,8 @@ var Skill_Strike = Skill{
 	Name:        "Strike",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(stanceTick(TickStanceExposed).repeat(4)...).
-		tick(tick().damage(15, 0)),
+		add(stanceTick(TickStanceExposed).repeat(4)...).
+		add(tick().damage(15, 0)),
 }.register()
 
 // ==============================================================
@@ -150,8 +150,8 @@ var Skill_ShoulderRoll = Skill{
 	Name:        "Shoulder Roll",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick()).
-		tick(tick().damage(10, 0)),
+		add(tick().repeat(4)...).
+		add(tick().damage(10, 0)),
 }.register()
 
 var Skill_CurlUp = Skill{
@@ -159,7 +159,8 @@ var Skill_CurlUp = Skill{
 	Name:        "Curl Up",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(stanceTick(TickStanceDefending).repeat(4)...), // todo add defence status
+		add(tick().statusSelf(StatusFortified, 5)).
+		add(stanceTick(TickStanceDefending).repeat(3)...),
 }.register()
 
 // ==============================================================
@@ -173,8 +174,9 @@ var Skill_Cinder = Skill{
 	Name:        "Cinder",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().status(StatusBurning, 2)).
-		tick(tick()),
+		add(tick().repeat(3)...).
+		add(tick().statusOpponent(StatusBurning, 3)).
+		add(tick()),
 }.register()
 
 var Skill_Searline = Skill{
@@ -182,8 +184,8 @@ var Skill_Searline = Skill{
 	Name:        "Searline",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().damage(3, 0).repeat(3)...). // todo increase burn status condition if there
-		tick(stanceTick(TickStanceVulnerable).repeat(3)...),
+		add(tick().damage(3, 0).repeat(3)...). // todo increase burn status condition if there
+		add(stanceTick(TickStanceVulnerable).repeat(3)...),
 }.register()
 
 // ==============================================================
@@ -195,8 +197,9 @@ var Skill_ArcDart = Skill{
 	Name:        "Arc Dart",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().status(StatusBurning, 5)). // todo apply ionize
-		tick(stanceTick(TickStanceExposed).repeat(3)...),
+		add(tick().statusOpponent(StatusIonized, 6)).
+		add(tick()).
+		add(stanceTick(TickStanceExposed).repeat(3)...),
 }.register()
 
 var Skill_ZapWrap = Skill{
@@ -204,9 +207,9 @@ var Skill_ZapWrap = Skill{
 	Name:        "Zap Wrap",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick().
-		tick(stanceTick(TickStanceDefending).damage(3, 3).repeat(4)...).
-		tick(),
+		add().
+		add(stanceTick(TickStanceDefending).damage(3, 3).repeat(4)...).
+		add(),
 }.register()
 
 // ==============================================================
@@ -220,8 +223,8 @@ var Skill_Molt = Skill{
 	Name:        "Molt",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(stanceTick(TickStanceExposed).repeat(3)...).
-		tick(), // TODO remove statuses
+		add(stanceTick(TickStanceExposed).repeat(4)...).
+		add(), // TODO remove statuses
 }.register()
 
 var Skill_AcidSting = Skill{
@@ -229,8 +232,8 @@ var Skill_AcidSting = Skill{
 	Name:        "Acid String",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().damage(2, 0).status(StatusPoisoned, 3)).
-		tick(),
+		add(tick().damage(2, 0).statusOpponent(StatusPoisoned, 3)).
+		add(tick().repeat(3)...),
 }.register()
 
 // ==============================================================
@@ -242,7 +245,8 @@ var Skill_MendSpores = Skill{
 	Name:        "Mend Spores",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().repeat(6)...), // TODO regen
+		add(tick().statusSelf(StatusMending, 10)).
+		add(tick().repeat(6)...),
 }.register()
 
 var Skill_PhotoSurge = Skill{
@@ -250,6 +254,6 @@ var Skill_PhotoSurge = Skill{
 	Name:        "Photo Surge",
 	Description: "todo",
 	Ticks: skillTicks().
-		tick(tick().damage(5, 0)). // TODO scale up over time
-		tick(stanceTick(TickStanceExposed).repeat(2)...),
+		add(tick().damage(5, 0)). // TODO scale up over time
+		add(stanceTick(TickStanceExposed).repeat(2)...),
 }.register()

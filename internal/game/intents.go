@@ -34,6 +34,7 @@ type CombatIntent struct {
 	Run        *rpg.Run
 	Opponent   rpg.PrimortalType
 	OnComplete CombatIntentComplete
+	Background string
 }
 
 type AdventureIntent struct {

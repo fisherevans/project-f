@@ -62,7 +62,10 @@ var (
 
 var (
 	StatusColors = map[rpg.StatusType]pixel.RGBA{
-		rpg.StatusBurning:  HexString("#e96b22"),
-		rpg.StatusPoisoned: HexString("#3ed661"),
+		rpg.StatusFortified: HexString("#2275e9"),
+		rpg.StatusBurning:   HexString("#e96b22"),
+		rpg.StatusPoisoned:  HexString("#6b2aa6"),
+		rpg.StatusIonized:   HexString("#b5e922"),
+		rpg.StatusMending:   HexString("#35e922"),
 	}
 )

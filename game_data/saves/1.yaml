@@ -2,18 +2,25 @@ save_id: "1"
 character_name: Isaac
 animech:
     additional_shield: 55
+    additional_sync: 20
     experience_points: 10
     skill_set:
       1: jab
       2: guard
+      3: mend_spores
+      4: arc_dart
 unlocked_skills:
   - jab
   - guard
+  - mend_spores
+  - arc_dart
 loadouts:
   - name: "Default"
     skill_set:
       1: jab
       2: guard
+      3: mend_spores
+      4: arc_dart
 primortals:
   pumbl:
     visibility: defeated

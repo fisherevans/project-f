@@ -52,8 +52,9 @@ func InitialState() SelectIntent {
 	fight := func(p rpg.PrimortalType) {
 		i = i.With("Fight "+rpg.Primortals[p].Name, func(ctx *Context) any {
 			return CombatIntent{
-				Run:      &rpg.Run{},
-				Opponent: p,
+				Run:        &rpg.Run{},
+				Opponent:   p,
+				Background: "combat/background_sylvoria",
 				OnComplete: func(ctx *Context, r CombatIntentResult) {
 					ctx.Notify("Combat complete!")
 					ctx.SetActiveStateIntent(InitialState())

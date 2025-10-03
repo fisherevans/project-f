@@ -109,6 +109,7 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 	}
 	frames.New(frameName, atlas).Draw(target, rect, matrixBottomLeft, frames.WithColor(mask))
 
+	var postRenders []func() // used to render on top of the tick bar, after the dots/lines are rendered - mostly for the stance box + icons
 	for i := 0; i <= skill.Duration(); i++ {
 		lastStance := rpg.TickStanceNone
 		if i > 0 {
@@ -158,7 +159,13 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 			stanceBoxMatrix = stanceBoxMatrix.Moved(pixel.V(0, -5.5))
 			stanceBoxMatrix = stanceBoxMatrix.Moved(stanceDelta)
 			stanceBoxMatrix = stanceBoxMatrix.Chained(tickSpriteCenterMatrix)
-			boxSprite.DrawColorMask(target, stanceBoxMatrix, mask)
+			{
+				thisMatrix := stanceBoxMatrix
+				thisMask := mask
+				postRenders = append(postRenders, func() {
+					boxSprite.DrawColorMask(target, thisMatrix, thisMask)
+				})
+			}
 
 			// draw the icon
 			if stanceIconSprite, exists := stanceIcons[tick.StanceType]; exists {
@@ -174,7 +181,13 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 				if interruptedAt >= 0 {
 					stanceMask = colors.WithAlpha(mask, 0.2)
 				}
-				stanceIconSprite.DrawColorMask(target, iconMatrix.Chained(tickSpriteCenterMatrix), stanceMask)
+				{
+					thisMatrix := iconMatrix.Chained(tickSpriteCenterMatrix)
+					thisMask := stanceMask
+					postRenders = append(postRenders, func() {
+						stanceIconSprite.DrawColorMask(target, thisMatrix, thisMask)
+					})
+				}
 			}
 		}
 
@@ -207,5 +220,9 @@ func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddl
 		if sprite != nil {
 			sprite.DrawColorMask(target, tickSpriteCenterMatrix, colors.MixColor(mask, bubbleMask))
 		}
+	}
+
+	for _, postRender := range postRenders {
+		postRender()
 	}
 }

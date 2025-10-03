@@ -9,6 +9,7 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 
@@ -60,7 +61,7 @@ func init() {
 	atlas.Dump("temp", "combat")
 }
 
-var backgroundSprite = resources.LoadSprite("combat/background_sample")
+var backgroundVignette = resources.LoadSprite("combat/background_vignette_mask")
 
 type Phase string
 
@@ -84,6 +85,8 @@ type State struct {
 	skillFlashAlpha        float64
 	skillFlashAlphaInverse float64
 
+	backgroundSprite pixelutil.BoundedDrawable
+
 	batch *pixel.Batch
 }
 
@@ -98,6 +101,8 @@ func New(ctx *game.Context, i game.CombatIntent) game.State {
 
 		cachedContents: map[string]*textbox.Content{},
 
+		backgroundSprite: atlas.GetSprite(i.Background),
+
 		batch: atlas.NewBatch(),
 	}
 }
@@ -109,7 +114,10 @@ func (s *State) ClearColor() color.Color {
 func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 
-	backgroundSprite.DrawColorMask(target, pixel.IM.Moved(targetBounds.Center()), colors.HexString("#777"))
+	s.backgroundSprite.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	target.SetComposeMethod(pixel.ComposeMultiply)
+	backgroundVignette.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	target.SetComposeMethod(pixel.ComposeOver)
 
 	if s.phase == PhaseBattle {
 		s.Opponent.GetHealth().Update(timeDelta)
@@ -185,9 +193,9 @@ func (s *State) renderCombatantSprite(sprite *anim.AnimatedSprite, com Combatant
 	var position pixel.Vec
 	rotateDirection := 1.0
 	if leftSide {
-		position = pixel.V(math.Floor(game.GameWidth*0.15), math.Floor(game.GameHeight*0.566))
+		position = pixel.V(math.Floor(game.GameWidth*0.2), math.Floor(game.GameHeight*0.4))
 	} else {
-		position = pixel.V(math.Floor(game.GameWidth*0.85), math.Floor(game.GameHeight*0.4))
+		position = pixel.V(math.Floor(game.GameWidth*0.8), math.Floor(game.GameHeight*0.4))
 		rotateDirection = -1
 	}
 

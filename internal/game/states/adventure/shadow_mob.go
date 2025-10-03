@@ -89,7 +89,7 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 		TriggerRadius: 0.8,
 		OnTrigger: func(ctx *game.Context, s *State, m *ShadowMob) {
 			if ctx.DebugToggles.F5().ToggleState() {
-				s.TriggerCombat(func(ctx *game.Context, s *State) {
+				s.TriggerCombat(nil, "combat/background_sylvoria", func(ctx *game.Context, s *State) {
 					for i, mob := range s.mobs {
 						if mob == m {
 							s.mobs[i] = s.mobs[len(s.mobs)-1]

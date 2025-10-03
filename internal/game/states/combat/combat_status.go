@@ -16,14 +16,6 @@ import (
 	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
-type StatusLevel int
-
-const (
-	StatusLevel1 StatusLevel = 1
-	StatusLevel2 StatusLevel = 2
-	StatusLevel3 StatusLevel = 3
-)
-
 type CombatStatus struct {
 	Status               rpg.StatusType
 	Stacks               float64
@@ -35,14 +27,14 @@ type CombatStatus struct {
 
 const maxStacks = 14
 
-func (s *CombatStatus) Level() StatusLevel {
+func (s *CombatStatus) Level() rpg.StatusLevel {
 	if s.Stacks >= 7 {
-		return StatusLevel3
+		return rpg.StatusLevel3
 	}
 	if s.Stacks >= 3 {
-		return StatusLevel2
+		return rpg.StatusLevel2
 	}
-	return StatusLevel1
+	return rpg.StatusLevel1
 }
 
 type AppliedStatuses struct {
@@ -53,27 +45,34 @@ func NewAppliedStatuses() *AppliedStatuses {
 	return &AppliedStatuses{
 		Statuses: []*CombatStatus{
 			{
+				Status:    rpg.StatusFortified,
+				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 5, 1)),
+				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
+					// nothing, effects happen when receiving damage
+				},
+			},
+			{
 				Status:    rpg.StatusPoisoned,
 				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 1, 1)),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
 					pct := 0.01
 					switch cs.Level() {
-					case StatusLevel3:
+					case rpg.StatusLevel3:
 						pct = 0.03
-					case StatusLevel2:
+					case rpg.StatusLevel2:
 						pct = 0.02
 					}
 					dmg := int(math.Max(float64(appliedTo.GetTotalMaxHealth())*pct, 1.0))
-					s.ApplyDamage(dmg, appliedTo, &DamageOptions{
+					s.AdjustHealth(-dmg, appliedTo, &DamageOptions{
 						Status: rpg.StatusPoisoned,
 					})
 				},
 				CustomTickDecay: func(s *State, cs *CombatStatus) {
-					decayPerTick := func(l StatusLevel) float64 {
+					decayPerTick := func(l rpg.StatusLevel) float64 {
 						switch l {
-						case StatusLevel3:
+						case rpg.StatusLevel3:
 							return 0.5
-						case StatusLevel2:
+						case rpg.StatusLevel2:
 							return 0.75
 						default:
 							return 1.0
@@ -90,8 +89,47 @@ func NewAppliedStatuses() *AppliedStatuses {
 					if dmg < 1 {
 						dmg = 1
 					}
-					s.ApplyDamage(dmg, appliedTo, &DamageOptions{
+					s.AdjustHealth(-dmg, appliedTo, &DamageOptions{
 						Status: rpg.StatusBurning,
+					})
+				},
+			},
+			{
+				Status:    rpg.StatusIonized,
+				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 3, 1)),
+				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
+					// nothing, effects happen when applying damage
+				},
+				CustomTickDecay: func(s *State, cs *CombatStatus) {
+					decayPerTick := func(l rpg.StatusLevel) float64 {
+						switch l {
+						case rpg.StatusLevel3:
+							return 0.25
+						case rpg.StatusLevel2:
+							return 0.5
+						default:
+							return 0.75
+						}
+					}
+					cs.Stacks -= decayPerTick(cs.Level())
+				},
+			},
+			{
+				Status:    rpg.StatusMending,
+				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 4, 1)),
+				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
+					healthPerTick := func(l rpg.StatusLevel) int {
+						switch l {
+						case rpg.StatusLevel3:
+							return 3
+						case rpg.StatusLevel2:
+							return 2
+						default:
+							return 1
+						}
+					}
+					s.AdjustHealth(healthPerTick(cs.Level()), appliedTo, &DamageOptions{
+						Status: rpg.StatusMending,
 					})
 				},
 			},
@@ -158,17 +196,17 @@ func (a *AppliedStatuses) String() string {
 		if status.Stacks == 0 {
 			continue
 		}
-		parts = append(parts, fmt.Sprintf("%c:%d", status.Status[0], status.Stacks))
+		parts = append(parts, fmt.Sprintf("%s:%d(%.1f)", status.Status, status.Level(), status.Stacks))
 	}
 	return strings.Join(parts, "|")
 }
 
 var (
 	statusFrame        = frames.New("combat/status_frame", atlas)
-	statusLevelSprites = map[StatusLevel]pixelutil.BoundedDrawable{
-		StatusLevel1: atlas.GetTilesheetSprite("combat/status_level", 1, 1),
-		StatusLevel2: atlas.GetTilesheetSprite("combat/status_level", 2, 1),
-		StatusLevel3: atlas.GetTilesheetSprite("combat/status_level", 3, 1),
+	statusLevelSprites = map[rpg.StatusLevel]pixelutil.BoundedDrawable{
+		rpg.StatusLevel1: atlas.GetTilesheetSprite("combat/status_level", 1, 1),
+		rpg.StatusLevel2: atlas.GetTilesheetSprite("combat/status_level", 2, 1),
+		rpg.StatusLevel3: atlas.GetTilesheetSprite("combat/status_level", 3, 1),
 	}
 )
 
@@ -187,9 +225,9 @@ func (a *AppliedStatuses) Render(ctx *game.Context, originM pixel.Matrix, target
 
 		frameMaskLerp := 0.1
 		switch level {
-		case StatusLevel2:
+		case rpg.StatusLevel2:
 			frameMaskLerp = 0.4
-		case StatusLevel3:
+		case rpg.StatusLevel3:
 			frameMaskLerp = 0.7
 		}
 		color := colors.StatusColors[status.Status]
@@ -213,5 +251,26 @@ func (a *AppliedStatuses) Render(ctx *game.Context, originM pixel.Matrix, target
 		icon.Draw(target, m.Moved(gfx.BottomLeft.Align(icon)).Moved(pixel.V(margin, margin+levelSprite.Bounds().H()+spacing)))
 
 		dx += w + xPadding
+	}
+}
+
+func (a *AppliedStatuses) GetLevels() map[rpg.StatusType]rpg.StatusLevel {
+	levels := map[rpg.StatusType]rpg.StatusLevel{}
+	for _, status := range a.Statuses {
+		levels[status.Status] = status.Level()
+	}
+	return levels
+}
+
+func (a *AppliedStatuses) ReduceResult(reductions map[rpg.StatusType]float64) {
+	for _, status := range a.Statuses {
+		reduction, exists := reductions[status.Status]
+		if !exists {
+			continue
+		}
+		status.Stacks -= reduction
+		if status.Stacks < 0 {
+			status.Stacks = 0
+		}
 	}
 }

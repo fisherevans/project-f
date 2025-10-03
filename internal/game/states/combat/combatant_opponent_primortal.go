@@ -24,28 +24,30 @@ type PrimortalOpponent struct {
 
 func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 	p := rpg.Primortals[primortal]
-	var skills []rpg.SkillId
-	for _, us := range p.UnlockableSkills {
-		skills = append(skills, us.SkillId)
+	archetype, exists := primortal.Primortal().CombatArchetypes["default"]
+	if !exists {
+		panic("no default archetype for primortal: " + primortal)
 	}
-	for _, s := range p.AdditionalCombatSkills {
-		skills = append(skills, s)
+	syncVariance := archetype.AdditionalSyncVariance
+	if syncVariance > 0 {
+		syncVariance = rand.Intn(syncVariance)
 	}
 	return &PrimortalOpponent{
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
-		Health:                 NewHealthState(rand.Intn(25) + 50),
+		Health:                 NewHealthState(p.BaseSync + archetype.AdditionalSync),
 		Tempo:                  &Tempo{},
 		DamageFlashMask:        NewDamageFlashMask(),
 		name:                   p.Name,
-		skillChooser:           NewRandomSkillChooserEven(skills),
+		skillChooser:           NewSkillChooser(archetype.SkillPool),
 		baseAnimation:          anim.Load(atlas, "primortals/"+string(primortal), "default"),
 	}
 }
 
 func (o *PrimortalOpponent) GetStats() CombatantStats {
 	return CombatantStats{
-		Stance: o.GetCurrentSkill().GetCurrentStance(),
+		Stance:       o.GetCurrentSkill().GetCurrentStance(),
+		StatusLevels: o.Statuses.GetLevels(),
 	}
 }
 
@@ -63,9 +65,8 @@ func (o *PrimortalOpponent) GetColorMask() pixel.RGBA {
 	return o.DamageFlashMask.getMask()
 }
 
-func (o *PrimortalOpponent) ApplyDamage(damage int) {
-	o.Health.AdjustTarget(-damage)
-	o.DamageFlashMask.damaged()
+func (o *PrimortalOpponent) AdjustHealth(amount int) {
+	o.Health.AdjustTarget(amount)
 }
 
 func (o *PrimortalOpponent) GetStatuses() *AppliedStatuses {

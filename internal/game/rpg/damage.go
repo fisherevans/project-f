@@ -14,20 +14,53 @@ const (
 	stanceVulnerableMultiplier         = 1.5
 )
 
+type ionizedModifier struct {
+	multiplier     float64
+	stackReduction float64
+}
+
+var (
+	statusFortifiedMultipliersIncoming = map[StatusLevel]float64{
+		StatusLevel1: 0.75,
+		StatusLevel2: 0.5,
+		StatusLevel3: 0.25,
+	}
+	statusIonizedModifiers = map[StatusLevel]ionizedModifier{
+		StatusLevel1: {
+			multiplier:     1.5,
+			stackReduction: 3,
+		},
+		StatusLevel2: {
+			multiplier:     2,
+			stackReduction: 5,
+		},
+		StatusLevel3: {
+			multiplier:     2.5,
+			stackReduction: 7,
+		},
+	}
+)
+
 type DamageSource struct {
-	BaseDamage int
-	Tempo      int
-	Stance     CombatStance
+	BaseDamage   int
+	Tempo        int
+	Stance       CombatStance
+	StatusLevels map[StatusType]StatusLevel
 }
 
 type DamageTarget struct {
-	Stance CombatStance
+	Stance       CombatStance
+	StatusLevels map[StatusType]StatusLevel
 }
 
 type DamageResult struct {
-	TargetDamage   int
-	SourceDamage   int
+	TargetDamage int
+	SourceDamage int
+
 	InterruptSkill bool
+
+	TargetStatusStackReductions map[StatusType]float64
+	SourceStatusStackReductions map[StatusType]float64
 }
 
 func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
@@ -40,6 +73,20 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 	targetDamage *= tempoMultiplier
 
 	log.Info().Msgf("after tempo: %f", targetDamage)
+
+	if fortifiedLevel, isFortified := target.StatusLevels[StatusFortified]; isFortified {
+		if mult, ok := statusFortifiedMultipliersIncoming[fortifiedLevel]; ok {
+			targetDamage *= mult
+		}
+	}
+
+	targetStackReductions := map[StatusType]float64{}
+	if ionizedLevel, isIonized := target.StatusLevels[StatusIonized]; isIonized {
+		if modifier, ok := statusIonizedModifiers[ionizedLevel]; ok {
+			targetDamage *= modifier.multiplier
+			targetStackReductions[StatusIonized] = modifier.stackReduction
+		}
+	}
 
 	interruptSkill := false
 
@@ -58,8 +105,9 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 	log.Info().Msgf("after stance %d - target: %f - source: %f", target.Stance, targetDamage, sourceDamage)
 
 	return DamageResult{
-		TargetDamage:   int(math.Ceil(targetDamage)), // short of immune, always deal at least 1 damage
-		SourceDamage:   int(math.Ceil(sourceDamage)),
-		InterruptSkill: interruptSkill,
+		TargetDamage:                int(math.Ceil(targetDamage)), // short of immune, always deal at least 1 damage
+		SourceDamage:                int(math.Ceil(sourceDamage)),
+		InterruptSkill:              interruptSkill,
+		TargetStatusStackReductions: targetStackReductions,
 	}
 }

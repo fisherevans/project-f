@@ -9,7 +9,7 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 )
 
-func (adv *State) TriggerCombat(onComplete func(*game.Context, *State)) {
+func (adv *State) TriggerCombat(opponentIntent *rpg.PrimortalType, background string, onComplete func(*game.Context, *State)) {
 	if adv.enteringCombat {
 		return
 	}
@@ -39,17 +39,23 @@ func (adv *State) TriggerCombat(onComplete func(*game.Context, *State)) {
 			s.blockInput = false
 			s.enteringCombat = false
 			ctx.RemoveCustomShader()
-			options := []rpg.PrimortalType{
-				rpg.Primortal_Volteel.Type,
-				rpg.Primortal_Toxmidge.Type,
-				rpg.Primortal_Scintail.Type,
-				rpg.Primortal_Myceli.Type,
-				rpg.Primortal_Pumbl.Type,
+			var opponent rpg.PrimortalType
+			if opponentIntent != nil {
+				opponent = *opponentIntent
+			} else {
+				options := []rpg.PrimortalType{
+					rpg.Primortal_Volteel.Type,
+					rpg.Primortal_Toxmidge.Type,
+					rpg.Primortal_Scintail.Type,
+					rpg.Primortal_Myceli.Type,
+					rpg.Primortal_Pumbl.Type,
+				}
+				opponent = options[rand.Intn(len(options))]
 			}
-			opponent := options[rand.Intn(len(options))]
 			ctx.SetActiveStateIntent(game.CombatIntent{
-				Run:      &rpg.Run{},
-				Opponent: opponent,
+				Run:        &rpg.Run{},
+				Opponent:   opponent,
+				Background: background,
 				OnComplete: func(ctx *game.Context, r game.CombatIntentResult) {
 					ctx.Notify("Combat complete!")
 					if !r.PlayerWon {

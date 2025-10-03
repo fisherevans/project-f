@@ -23,6 +23,7 @@ var LevelUp = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Ro
 var PDAEnabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 29}
 var PDADisabled = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 1, Row: 30}
 
+var DummyFightRobot = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 25, Row: 15}
 var Elythium = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 26, Row: 15}
 var Rocket = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 27, Row: 15}
 

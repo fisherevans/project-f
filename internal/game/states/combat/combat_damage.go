@@ -9,16 +9,24 @@ type DamageOptions struct {
 	Status rpg.StatusType
 }
 
-func (s *State) ApplyDamage(damage int, target Combatant, opt *DamageOptions) {
-	if damage == 0 {
+func (s *State) AdjustHealth(amount int, target Combatant, opt *DamageOptions) {
+	if amount == 0 {
 		return
 	}
-	target.ApplyDamage(damage)
-	color := colors.White.RGBA
+	target.AdjustHealth(amount)
+	if amount > 0 {
+		// p.DamageFlashMask.healed()
+	} else {
+		// todo p.DamageFlashMask.damaged()
+	}
+	color := colors.Hex(0xed0027)
+	if amount > 0 {
+		color = colors.Hex(0x1ced00)
+	}
 	if opt != nil {
 		if statusColor, exists := colors.StatusColors[opt.Status]; exists {
 			color = statusColor
 		}
 	}
-	s.fx = append(s.fx, NewDamageFX(damage, color, target))
+	s.fx = append(s.fx, NewHealthAdjustFX(amount, color, target))
 }

@@ -60,11 +60,15 @@ func (si *SkillInstance) OnTick(ctx *game.Context, s *State, tickId int, source 
 	targetStats := target.GetStats()
 	for _, effect := range tick.Effects {
 		if effect.Status != nil {
-			target.GetStatuses().Add(effect.Status.Status, effect.Status.Stacks)
-			word := effect.Status.Status.PastTense()
+			applyTo := target
+			if effect.Self {
+				applyTo = source
+			}
+			applyTo.GetStatuses().Add(effect.Status.Status, effect.Status.Stacks)
+			word := effect.Status.Status.Label()
 			color, colorExists := colors.StatusColors[effect.Status.Status]
 			if word != "" && colorExists {
-				s.AddFX(NewWordFX(word, color, target))
+				s.AddFX(NewWordFX(word, color, applyTo))
 			}
 		}
 		if effect.Damage != nil {
@@ -73,15 +77,19 @@ func (si *SkillInstance) OnTick(ctx *game.Context, s *State, tickId int, source 
 				damage += rand.Intn(effect.Damage.RandomVariance*2+1) - effect.Damage.RandomVariance
 			}
 			result := rpg.ComputeDamage(rpg.DamageSource{
-				BaseDamage: damage,
-				Tempo:      source.GetTempo().GetCurrent(),
-				Stance:     sourceStats.Stance,
+				BaseDamage:   damage,
+				Tempo:        source.GetTempo().GetCurrent(),
+				Stance:       sourceStats.Stance,
+				StatusLevels: sourceStats.StatusLevels,
 			}, rpg.DamageTarget{
-				Stance: targetStats.Stance,
+				Stance:       targetStats.Stance,
+				StatusLevels: targetStats.StatusLevels,
 			})
 			ctx.Notify("damage from %d to %d", damage, result.TargetDamage)
-			s.ApplyDamage(result.TargetDamage, target, nil)
-			s.ApplyDamage(result.SourceDamage, source, nil)
+			s.AdjustHealth(-result.TargetDamage, target, nil)
+			s.AdjustHealth(-result.SourceDamage, source, nil)
+			target.GetStatuses().ReduceResult(result.TargetStatusStackReductions)
+			source.GetStatuses().ReduceResult(result.SourceStatusStackReductions)
 			if result.InterruptSkill {
 				if target.GetCurrentSkill() != nil {
 					target.GetCurrentSkill().Interrupt()

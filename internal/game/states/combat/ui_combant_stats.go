@@ -20,7 +20,7 @@ var (
 	combatStatFrame            = frames.New("combat/combatant_stats/box", atlas)
 	statBarFrame               = frames.New("combat/combatant_stats/bar", atlas)
 	combatantNameText          = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), tbcfg.NewConfig(200, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
-	statBorderPadding          = 3
+	statBorderPadding          = 1
 	statBorderPaddingNameExtra = 6
 	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(200, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 	noneSelectedSprite         = atlas.GetSprite("combat/tick_bar/skill_none_selected")
@@ -58,7 +58,7 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 		originLocation: StatBoxOriginTopLeft,
 	}
 
-	s.drawCombatantStatBox(ctx, "Fumalug", statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft)
+	s.drawCombatantStatBox(ctx, s.Player.Name(), statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft)
 }
 
 func (s *State) drawOpponentStats(ctx *game.Context) {
@@ -79,7 +79,7 @@ func (s *State) drawOpponentStats(ctx *game.Context) {
 		originLocation: StatBoxOriginTopRight,
 	}
 
-	s.drawCombatantStatBox(ctx, "Plent", statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight)
+	s.drawCombatantStatBox(ctx, s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight)
 }
 
 func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *StatBox, statuses *AppliedStatuses, origin pixel.Vec, originLocation gfx.OriginLocation) {
@@ -90,7 +90,7 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 		renderScale = pixel.V(-1, 1)
 	}
 	nameContent := combatantNameText.NewComplexContent("{+o:#cfcfcf,+c:black}"+name, nameContentOpts...)
-	paddedNameHeight := statBorderPadding + combatantNameText.Metadata.GetFullLineHeight() + 2 // 1 for outline, 1 for spacing
+	paddedNameHeight := statBorderPadding + combatantNameText.Metadata.GetFullLineHeight() + 3 // 1 for outline, 1 for spacing, 1 for letter tails
 
 	matrix := pixel.IM.Moved(origin)
 
@@ -119,9 +119,11 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 	statBox.Draw(ctx, s.batch, matrix.Moved(gfx.IVec(statBorderPadding, -paddedNameHeight).ScaledXY(renderScale)), statBoxWidth)
 
 	// todo time detla
+	statusSidePadding := 5
+	statusTopPadding := 1
 	statusM := matrix.
-		Moved(pixel.V(0, -float64(statBox.FrameHeight()+paddedNameHeight+1))).
-		Moved(originLocation.AlignFrom(gfx.BottomLeft, float64(5), 0))
+		Moved(pixel.V(0, -float64(statBox.FrameHeight()+paddedNameHeight+statusTopPadding))).
+		Moved(originLocation.AlignFrom(gfx.Centered, float64(statusSidePadding*2), 0))
 	statuses.Render(ctx, statusM, s.batch, 0, originLocation)
 }
 
