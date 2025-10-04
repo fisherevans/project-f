@@ -50,6 +50,16 @@ func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matri
 		matrix = matrix.Moved(gfx.IVec(int(-rect.W()), 0))
 	case gfx.Centered:
 		matrix = matrix.Moved(gfx.IVec(int(-rect.W()/2), int(-rect.H()/2)))
+	case gfx.LeftCenter:
+		matrix = matrix.Moved(gfx.IVec(0, int(-rect.H()/2)))
+	case gfx.TopCenter:
+		matrix = matrix.Moved(gfx.IVec(int(-rect.W()/2), int(-rect.H())))
+	case gfx.RightCenter:
+		matrix = matrix.Moved(gfx.IVec(int(-rect.W()), int(-rect.H()/2)))
+	case gfx.BottomCenter:
+		matrix = matrix.Moved(gfx.IVec(int(-rect.W()/2), 0))
+	default:
+		panic("invalid origin")
 	}
 
 	subRects := map[resources.FrameSide]pixel.Rect{

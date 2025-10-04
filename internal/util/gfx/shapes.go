@@ -1,9 +1,11 @@
 package gfx
 
 import (
-	"fisherevans.com/project/f/internal/resources"
 	"fmt"
+
 	"github.com/gopxl/pixel/v2"
+
+	"fisherevans.com/project/f/internal/resources"
 )
 
 func DrawRect(atlas *resources.Atlas, target pixel.Target, inputMatrix pixel.Matrix, originLocation OriginLocation, width, height int, color pixel.RGBA) {
@@ -25,6 +27,14 @@ func DrawRect(atlas *resources.Atlas, target pixel.Target, inputMatrix pixel.Mat
 	case TopRight:
 		matrix = matrix.Moved(pixel.V(-fw/2, -fh/2))
 	case Centered: // do nothing
+	case LeftCenter:
+		matrix = matrix.Moved(pixel.V(fw/2, 0))
+	case TopCenter:
+		matrix = matrix.Moved(pixel.V(0, -fh/2))
+	case RightCenter:
+		matrix = matrix.Moved(pixel.V(-fw/2, 0))
+	case BottomCenter:
+		matrix = matrix.Moved(pixel.V(0, fh/2))
 	default:
 		panic(fmt.Sprintf("unknown origin location: %d", originLocation))
 	}

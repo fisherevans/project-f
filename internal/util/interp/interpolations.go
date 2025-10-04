@@ -83,6 +83,14 @@ func SmoothstepAsymmetrical(sIn, sOut float64) Function {
 	}
 }
 
+func EaseOutQuad(t float64) float64 {
+	return 1 - (1-t)*(1-t)
+}
+
+func EaseOutCubic(t float64) float64 {
+	return 1 - math.Pow(1-t, 3)
+}
+
 // Smootherstep is C2 continuous; even gentler acceleration/deceleration.
 // f(t) = t^3 (t(6t-15)+10)
 func Smootherstep(t float64) float64 {
@@ -179,7 +187,7 @@ func EaseInOutSine(t float64) float64 {
 type TimedProgress struct {
 	duration      float64
 	interpolation Function
-	elapsed       float64
+	progress      float64
 	reverse       bool
 }
 
@@ -191,26 +199,36 @@ func NewTimedProgress(duration float64, interpolation Function) *TimedProgress {
 }
 
 func (t *TimedProgress) Update(timeDelta float64) {
-	t.elapsed += timeDelta
+	pDelta := timeDelta / t.duration
+	if t.reverse {
+		pDelta = -pDelta
+	}
+	t.progress = clamp(t.progress + pDelta)
 }
 
 func (t *TimedProgress) IsComplete() bool {
-	return t.elapsed >= t.duration
+	if t.reverse {
+		return t.progress <= 0
+	}
+	return t.progress >= 1
 }
 
 func (t *TimedProgress) Progress() float64 {
-	p := clamp(t.elapsed / t.duration)
-	if t.reverse {
-		return 1.0 - p
-	}
-	return t.interpolation(p)
+	return t.interpolation(t.progress)
 }
 
 func (t *TimedProgress) Reset() {
-	t.elapsed = 0
+	if t.reverse {
+		t.progress = 1
+	} else {
+		t.progress = 0
+	}
 }
 
 func (t *TimedProgress) Reverse() {
-	t.elapsed = 0
 	t.reverse = !t.reverse
+}
+
+func (t *TimedProgress) SetFunction(f Function) {
+	t.interpolation = f
 }

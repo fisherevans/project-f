@@ -1,7 +1,9 @@
 package rpg
 
 import (
+	"fmt"
 	"math"
+	"math/rand"
 
 	"github.com/rs/zerolog/log"
 )
@@ -41,30 +43,42 @@ var (
 	}
 )
 
-type DamageSource struct {
-	BaseDamage   int
+type CombatantStats struct {
 	Tempo        int
 	Stance       CombatStance
 	StatusLevels map[StatusType]StatusLevel
 }
 
-type DamageTarget struct {
-	Stance       CombatStance
-	StatusLevels map[StatusType]StatusLevel
+type Damage struct {
+	Damage SkillTickDamage
 }
 
 type DamageResult struct {
 	TargetDamage int
 	SourceDamage int
 
+	Missed         bool
 	InterruptSkill bool
 
 	TargetStatusStackReductions map[StatusType]float64
 	SourceStatusStackReductions map[StatusType]float64
 }
 
-func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
-	targetDamage := float64(source.BaseDamage)
+func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantStats) DamageResult {
+	if dmg.MissRate > 0 && rand.Float64() < dmg.MissRate {
+		return DamageResult{
+			Missed: true,
+		}
+	}
+
+	if dmg.Amount == 5 {
+		fmt.Println("hi")
+	}
+
+	targetDamage := float64(dmg.Amount)
+	if dmg.RandomVariance > 0 {
+		targetDamage += float64(dmg.RandomVariance) * (2*rand.Float64() - 1)
+	}
 	sourceDamage := 0.0
 
 	log.Info().Msgf("base damage: %f", targetDamage)
@@ -102,6 +116,9 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 		targetDamage *= stanceReflectingMultiplierIncoming
 	}
 
+	targetDamage = ScaleByStatus(targetDamage, target.StatusLevels, dmg.ScaledBy.TargetStatus)
+	targetDamage = ScaleByStatus(targetDamage, source.StatusLevels, dmg.ScaledBy.SourceStatus)
+
 	log.Info().Msgf("after stance %d - target: %f - source: %f", target.Stance, targetDamage, sourceDamage)
 
 	return DamageResult{
@@ -110,4 +127,16 @@ func ComputeDamage(source DamageSource, target DamageTarget) DamageResult {
 		InterruptSkill:              interruptSkill,
 		TargetStatusStackReductions: targetStackReductions,
 	}
+}
+
+func ScaleByStatus(amount float64, statusLevels map[StatusType]StatusLevel, statusMultipliers map[StatusType]map[StatusLevel]float64) float64 {
+	if statusMultipliers == nil || statusLevels == nil {
+		return amount
+	}
+	for status, level := range statusLevels {
+		if multiplier, ok := statusMultipliers[status][level]; ok {
+			amount *= multiplier
+		}
+	}
+	return amount
 }

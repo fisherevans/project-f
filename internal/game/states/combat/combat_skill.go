@@ -2,7 +2,6 @@ package combat
 
 import (
 	"fmt"
-	"math/rand"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -64,28 +63,25 @@ func (si *SkillInstance) OnTick(ctx *game.Context, s *State, tickId int, source 
 			if effect.Self {
 				applyTo = source
 			}
-			applyTo.GetStatuses().Add(effect.Status.Status, effect.Status.Stacks)
-			word := effect.Status.Status.Label()
-			color, colorExists := colors.StatusColors[effect.Status.Status]
-			if word != "" && colorExists {
-				s.AddFX(NewWordFX(word, color, applyTo))
+			doApply := true
+			switch effect.Status.RequireExistingStacks {
+			case rpg.SkillTickStatusRequireExistingStacks:
+				doApply = applyTo.GetStatuses().HasStatus(effect.Status.Status)
+			case rpg.SkillTickStatusRequireNoStacks:
+				doApply = !applyTo.GetStatuses().HasStatus(effect.Status.Status)
+			}
+			if doApply {
+				applyTo.GetStatuses().Add(effect.Status.Status, effect.Status.Stacks)
+				word := effect.Status.Status.Label()
+				color, colorExists := colors.StatusColors[effect.Status.Status]
+				if word != "" && colorExists {
+					s.AddFX(NewWordFX(word, color, applyTo))
+				}
 			}
 		}
 		if effect.Damage != nil {
-			damage := effect.Damage.Amount
-			if effect.Damage.RandomVariance > 0 {
-				damage += rand.Intn(effect.Damage.RandomVariance*2+1) - effect.Damage.RandomVariance
-			}
-			result := rpg.ComputeDamage(rpg.DamageSource{
-				BaseDamage:   damage,
-				Tempo:        source.GetTempo().GetCurrent(),
-				Stance:       sourceStats.Stance,
-				StatusLevels: sourceStats.StatusLevels,
-			}, rpg.DamageTarget{
-				Stance:       targetStats.Stance,
-				StatusLevels: targetStats.StatusLevels,
-			})
-			ctx.Notify("damage from %d to %d", damage, result.TargetDamage)
+			result := rpg.ComputeDamage(*effect.Damage, sourceStats, targetStats)
+			ctx.Notify("damage from %d to %d", effect.Damage.Amount, result.TargetDamage)
 			s.AdjustHealth(-result.TargetDamage, target, nil)
 			s.AdjustHealth(-result.SourceDamage, source, nil)
 			target.GetStatuses().ReduceResult(result.TargetStatusStackReductions)
@@ -96,6 +92,9 @@ func (si *SkillInstance) OnTick(ctx *game.Context, s *State, tickId int, source 
 					target.GetTempo().Reset()
 					s.fx = append(s.fx, NewWordFX("Interrupt!", colors.HexString("#daff4b"), target))
 				}
+			}
+			if result.Missed {
+				s.fx = append(s.fx, NewWordFX("Missed!", colors.HexString("#b9b9b9"), source))
 			}
 		}
 	}

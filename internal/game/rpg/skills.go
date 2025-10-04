@@ -126,7 +126,7 @@ var Skill_Jab = Skill{
 	Name:        "Jab",
 	Description: "todo",
 	Ticks: skillTicks().
-		add(tick().damage(5, 2)).
+		add(tick().damageAmountVaried(5, 2)).
 		add(tick().repeat(2)...),
 }.register()
 
@@ -136,7 +136,7 @@ var Skill_Strike = Skill{
 	Description: "todo",
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceExposed).repeat(4)...).
-		add(tick().damage(15, 0)),
+		add(tick().damageAmount(15)),
 }.register()
 
 // ==============================================================
@@ -151,7 +151,7 @@ var Skill_ShoulderRoll = Skill{
 	Description: "todo",
 	Ticks: skillTicks().
 		add(tick().repeat(4)...).
-		add(tick().damage(10, 0)),
+		add(tick().damageAmount(10)),
 }.register()
 
 var Skill_CurlUp = Skill{
@@ -184,8 +184,12 @@ var Skill_Searline = Skill{
 	Name:        "Searline",
 	Description: "todo",
 	Ticks: skillTicks().
-		add(tick().damage(3, 0).repeat(3)...). // todo increase burn status condition if there
-		add(stanceTick(TickStanceVulnerable).repeat(3)...),
+		add(stanceTick(TickStanceVulnerable).repeat(3)...).
+		add(tick().damageAmount(3).status(&SkillTickStatus{
+			Status:                StatusBurning,
+			Stacks:                2,
+			RequireExistingStacks: SkillTickStatusRequireExistingStacks,
+		}, false).repeat(3)...),
 }.register()
 
 // ==============================================================
@@ -197,9 +201,9 @@ var Skill_ArcDart = Skill{
 	Name:        "Arc Dart",
 	Description: "todo",
 	Ticks: skillTicks().
-		add(tick().statusOpponent(StatusIonized, 6)).
+		add(stanceTick(TickStanceExposed).repeat(3)...).
 		add(tick()).
-		add(stanceTick(TickStanceExposed).repeat(3)...),
+		add(tick().statusOpponent(StatusIonized, 6)),
 }.register()
 
 var Skill_ZapWrap = Skill{
@@ -208,7 +212,8 @@ var Skill_ZapWrap = Skill{
 	Description: "todo",
 	Ticks: skillTicks().
 		add().
-		add(stanceTick(TickStanceDefending).damage(3, 3).repeat(4)...).
+		add(stanceTick(TickStanceDefending).damageAmountVaried(3, 3).repeat(3)...).
+		add(stanceTick(TickStanceDefending).statusOpponent(StatusIonized, 3)).
 		add(),
 }.register()
 
@@ -232,7 +237,7 @@ var Skill_AcidSting = Skill{
 	Name:        "Acid String",
 	Description: "todo",
 	Ticks: skillTicks().
-		add(tick().damage(2, 0).statusOpponent(StatusPoisoned, 3)).
+		add(tick().damageAmount(2).statusOpponent(StatusPoisoned, 4)).
 		add(tick().repeat(3)...),
 }.register()
 
@@ -245,8 +250,9 @@ var Skill_MendSpores = Skill{
 	Name:        "Mend Spores",
 	Description: "todo",
 	Ticks: skillTicks().
-		add(tick().statusSelf(StatusMending, 10)).
-		add(tick().repeat(6)...),
+		add(tick().statusSelf(StatusMending, 5)).
+		add(stanceTick(TickStanceExposed).repeat(4)...).
+		add(tick().statusSelf(StatusMending, 5)),
 }.register()
 
 var Skill_PhotoSurge = Skill{
@@ -254,6 +260,17 @@ var Skill_PhotoSurge = Skill{
 	Name:        "Photo Surge",
 	Description: "todo",
 	Ticks: skillTicks().
-		add(tick().damage(5, 0)). // TODO scale up over time
-		add(stanceTick(TickStanceExposed).repeat(2)...),
+		add(stanceTick(TickStanceExposed).repeat(2)...).
+		add(tick().damage(&SkillTickDamage{
+			Amount: 5,
+			ScaledBy: SkillTickDamageScalers{
+				SourceStatus: map[StatusType]map[StatusLevel]float64{
+					StatusMending: {
+						StatusLevel1: 1.5,
+						StatusLevel2: 2,
+						StatusLevel3: 3,
+					},
+				},
+			},
+		})),
 }.register()

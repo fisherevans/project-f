@@ -13,7 +13,7 @@ import (
 type Combatant interface {
 	Name() string
 	AdjustHealth(amount int)
-	GetStats() CombatantStats
+	GetStats() rpg.CombatantStats
 	GetTempo() *Tempo
 	Update(timeDelta float64)
 	GetColorMask() pixel.RGBA
@@ -79,11 +79,6 @@ func (h *HealthState) Update(timeDelta float64) {
 	maxDiff := math.Abs(float64(h.Target) - h.Current)
 	diff = math.Min(diff, maxDiff)
 	h.Current += sign * diff
-}
-
-type CombatantStats struct {
-	Stance       rpg.CombatStance
-	StatusLevels map[rpg.StatusType]rpg.StatusLevel
 }
 
 type DamageFlashMask struct {

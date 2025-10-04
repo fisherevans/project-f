@@ -205,14 +205,7 @@ func initializeMap(a *State, m *resources.Map) {
 				topic: entity.GetStringMetadata("topic", ""),
 			})
 		case "dummy_robot":
-			a.AddEntity(&EntityCombatTest{
-				InnateEntity: InnateEntity{
-					BaseEntity: BaseEntity{
-						Id: entityId,
-					},
-					MapLocation: location,
-				},
-			})
+			a.AddEntity(NewEntityCombatTest(entityId, location))
 		case "menu_test":
 			a.AddEntity(&EntityMenuTest{
 				InnateEntity: InnateEntity{

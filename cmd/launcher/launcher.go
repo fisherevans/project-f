@@ -4,6 +4,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"github.com/gopxl/pixel/v2/backends/opengl"
+
 	_ "fisherevans.com/project/f/cmd/setup"
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/runtime"
@@ -11,7 +13,7 @@ import (
 	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/menu"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
-	"github.com/gopxl/pixel/v2/backends/opengl"
+	"fisherevans.com/project/f/internal/game/states/xenolog"
 )
 
 func main() {
@@ -21,6 +23,7 @@ func main() {
 	game.RegisterStateFactory(adventure.New)
 	game.RegisterStateFactory(combat.New)
 	game.RegisterStateFactory(menu.New)
+	game.RegisterStateFactory(xenolog.New)
 	game.RegisterStateFactory(state_selector.New)
 	opengl.Run(runtime.Run)
 }

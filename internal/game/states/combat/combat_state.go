@@ -29,7 +29,7 @@ import (
 //   - add transition state into combat (i.e. fade)
 //   - add battle intro that has creature enter
 //   - add initiative roll (maybe add ticks of confusion when starting)
-//   - add battle menu (fight, run, item, etc.)
+//   - add battle xenolog (fight, run, item, etc.)
 //   - add battle end (win, lose)
 // - generate experience at battle end (include in end summary)
 // - combat abilities

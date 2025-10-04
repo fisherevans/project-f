@@ -91,8 +91,9 @@ func (p *Player) getAnimech() *rpg.Animech {
 
 var _ PlayerCombatant = &Player{}
 
-func (p *Player) GetStats() CombatantStats {
-	return CombatantStats{
+func (p *Player) GetStats() rpg.CombatantStats {
+	return rpg.CombatantStats{
+		Tempo:        p.GetTempo().GetCurrent(),
 		Stance:       p.GetCurrentSkill().GetCurrentStance(),
 		StatusLevels: p.Statuses.GetLevels(),
 	}

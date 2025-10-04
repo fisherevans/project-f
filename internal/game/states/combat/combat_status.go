@@ -34,7 +34,10 @@ func (s *CombatStatus) Level() rpg.StatusLevel {
 	if s.Stacks >= 3 {
 		return rpg.StatusLevel2
 	}
-	return rpg.StatusLevel1
+	if s.Stacks >= 1 {
+		return rpg.StatusLevel1
+	}
+	return rpg.StatusLevel0
 }
 
 type AppliedStatuses struct {

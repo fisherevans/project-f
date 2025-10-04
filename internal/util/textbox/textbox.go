@@ -77,6 +77,14 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 		matrix = matrix.Moved(gfx.IVec(-width/2, -height/2))
 	case gfx.TopLeft:
 		matrix = matrix.Moved(gfx.IVec(0, -height))
+	case gfx.LeftCenter:
+		matrix = matrix.Moved(gfx.IVec(0, -height/2))
+	case gfx.TopCenter:
+		matrix = matrix.Moved(gfx.IVec(-width/2, -height))
+	case gfx.RightCenter:
+		matrix = matrix.Moved(gfx.IVec(-width, -height/2))
+	case gfx.BottomCenter:
+		matrix = matrix.Moved(gfx.IVec(-width/2, 0))
 	default:
 		panic("invalid origin")
 	}

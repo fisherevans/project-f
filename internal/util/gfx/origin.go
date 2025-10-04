@@ -12,6 +12,10 @@ const (
 	TopLeft
 	BottomRight
 	TopRight
+	LeftCenter
+	TopCenter
+	RightCenter
+	BottomCenter
 )
 
 type Bounded interface {
@@ -49,6 +53,14 @@ func (l OriginLocation) AlignFrom(original OriginLocation, w, h float64) pixel.V
 		delta = pixel.V(-w, h)
 	case BottomRight:
 		delta = pixel.V(-w, 0)
+	case LeftCenter:
+		delta = pixel.V(0, halfH)
+	case TopCenter:
+		delta = pixel.V(-halfW, h)
+	case RightCenter:
+		delta = pixel.V(-w, halfH)
+	case BottomCenter:
+		delta = pixel.V(-halfW, 0)
 	}
 	// now move from bottom left to target (l)
 	switch l {
@@ -62,6 +74,14 @@ func (l OriginLocation) AlignFrom(original OriginLocation, w, h float64) pixel.V
 		delta = delta.Add(pixel.V(-w, -h))
 	case BottomRight:
 		delta = delta.Add(pixel.V(-w, 0))
+	case LeftCenter:
+		delta = delta.Add(pixel.V(0, -halfH))
+	case TopCenter:
+		delta = delta.Add(pixel.V(-halfW, -h))
+	case RightCenter:
+		delta = delta.Add(pixel.V(-w, -halfH))
+	case BottomCenter:
+		delta = delta.Add(pixel.V(-halfW, 0))
 	}
 	return delta
 }

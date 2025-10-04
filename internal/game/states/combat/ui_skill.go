@@ -49,7 +49,7 @@ var (
 	skillStatsBadge           = badges.Using(atlas).ButtonAction("select", "stats")
 	skillPendingCancelBadge   = badges.Using(atlas).ButtonAction("a", "commit")
 	skillCommittedCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel")
-	skillMenuBadge            = badges.Using(atlas).ButtonAction("start", "menu")
+	skillMenuBadge            = badges.Using(atlas).ButtonAction("start", "xenolog")
 )
 
 func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
@@ -163,11 +163,11 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 	}
 
 	if ctx.Controls.ButtonSelect().JustPressed() {
-		ctx.Notify("TODO - add stats menu")
+		ctx.Notify("TODO - add stats xenolog")
 	}
 
 	if ctx.Controls.ButtonStart().JustPressed() {
-		ctx.Notify("TODO - add combat menu")
+		ctx.Notify("TODO - add combat xenolog")
 	}
 }
 

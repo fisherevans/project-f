@@ -45,3 +45,7 @@ type AdventureIntent struct {
 type SwapStateIntent struct {
 	State State
 }
+
+type XenologIntent struct {
+	Background State
+}

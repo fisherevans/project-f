@@ -295,6 +295,11 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 			Background: s,
 		})
 	}
+	if ctx.Controls.ButtonSelect().JustPressed() {
+		ctx.SetActiveStateIntent(game.XenologIntent{
+			Background: s,
+		})
+	}
 }
 
 func (s *State) locationSortedEntities() []Entity {

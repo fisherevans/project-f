@@ -44,8 +44,9 @@ func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 	}
 }
 
-func (o *PrimortalOpponent) GetStats() CombatantStats {
-	return CombatantStats{
+func (o *PrimortalOpponent) GetStats() rpg.CombatantStats {
+	return rpg.CombatantStats{
+		Tempo:        o.GetTempo().GetCurrent(),
 		Stance:       o.GetCurrentSkill().GetCurrentStance(),
 		StatusLevels: o.Statuses.GetLevels(),
 	}

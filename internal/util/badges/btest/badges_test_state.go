@@ -49,7 +49,7 @@ func (s state) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pi
 		{"a", "choose"},
 		{"A", "select"},
 		{"select", "info"},
-		{"start", "menu"},
+		{"start", "xenolog"},
 		{"b", "cancel"},
 		{"B", "back"},
 	}
