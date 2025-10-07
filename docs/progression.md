@@ -58,14 +58,13 @@ The progression in *Project F* mixes **persistent upgrades** you carry between r
 - Like RP, XP must be **extracted** to be banked.
 
 **How you spend it (at HQ)**
-- **Core Stats** — escalating costs with soft caps:
+- You need to spend a certain amount of **XP** to **upgrade** your Animech. For each upgrade, you can increase one of the **Core Stats** of your Animech: 
   - **Shield**: e.g., +10 → +20 → +50 (costs rise at each tier).
   - **Sync**: similar stepping with increasing costs.
   - **Shield Regeneration**: incremental tiers with increasing costs.
-- **Systems & Utilities (Gated)**:
-  - Certain abilities (e.g., **Dash**) are **locked** until you discover related **modules** or reach story milestones out in the world.
-  - Once discovered, you can invest XP to unlock/upgrade them.
-- **Xenocrypt Efficiency**: Improve capture reliability or research yield over time.
+  - **Xenocrypt Efficiency**: Improve capture reliability or research yield over time.
+- Each time you upgrade, you're level increases. Certain behavioral/functional upgrades are **gated** until you reach a certain level. Some might be gates behind items you find while exploring (like schematics):
+  - Dashing is an example
 
 > Design intent: XP paths are mostly **linear/laddered** with increasing price points, encouraging broad investment and long‑term planning rather than deep min‑max branching.
 

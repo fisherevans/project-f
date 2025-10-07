@@ -221,10 +221,10 @@ func (a *AppliedStatuses) Render(ctx *game.Context, originM pixel.Matrix, target
 		dxDirection = 1
 	}
 	for _, status := range a.Statuses {
-		if status.Stacks == 0 {
+		level := status.Level()
+		if level == rpg.StatusLevel0 {
 			continue
 		}
-		level := status.Level()
 
 		frameMaskLerp := 0.1
 		switch level {

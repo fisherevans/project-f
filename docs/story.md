@@ -1,118 +1,206 @@
-# Story
+# Context and Setting
 
-"You" are the player.
+> Your full history isn't laid out explicitly. Through conversations, datalogs, and recovered memories, the player gradually pieces together the following:
 
-- [Context & Setting](#context-and-setting)
-- [Chapters](#chapters)
-- Additional Ideas
+### Early Life
 
-## Context and Setting
+You were born into a comfortable middle-class family on the inner rim - not wealthy, but privileged enough to receive a strong education and opportunity. Your mother worked in biotech research under a Thanadox subsidiary. Her sudden death was explained away as a lab accident, though official reports were sealed under "proprietary technology loss." Your father was a civic administrator - outspoken about corporate overreach. He died a few years later in a "transport collision" involving a corporate courier vessel.
 
-### Personal Background
+After his death, your brother turned defiant - rallying others, protesting, fighting for worker and human rights against the same powers that broke you both. You stayed out of it, unwilling to wade back into the chaos. You fear he thinks you're a coward. He fears you think he's reckless and naive.
 
-> Your history is not laid out explicitly. Through conversations and other hints, you find out about your life:
+You bury yourself in the study of xenobiology and alien ecosystems - the parts of life that still felt untainted, far away from corrupt societies. You try to get away from it all, taking a remote research job in an outer system. Far away from society, and people, and problems. Far away from your brother.
 
-#### Childhood
+### The Outpost Years
 
-You were born into a wealthy bureaucratic family in the inner rim. As you grew up, you had no interest in the politics and were mostly fascinated with exploration and the new life forms being discovered due to advancements in space travel.
+You ended up at a remote research outpost, orbiting the edges of known space. Officially, the team was studying new organic lifeforms discovered within Elythium-rich biomes - organisms rumored to generate energy far more efficiently than synthetic methods. Unofficially, the project's goal was clear: find a living alternative to industrial Elythium extraction, and patent it before the activist networks caught wind. You try to ignore that, and focus on the planet ecology studies.
 
-Your mother died while you were young. It was unexpected and poorly documented. Those who know about it in detail refuse to share more than what is in the newspapers - they she suffered from an unexpected brain aneurysm.
+The work was repetitive, claustrophobic, and morally gray. But the people were good - scientists, engineers, and workers who made the best of isolation. Your brother was one of the few people you still spoke to back home. He'd joined reformist groups, fighting to expose Thanadox's exploitation of living ecosystems. You'd argue over comms: *"It's not that simple."* / *"It never is when you're on their payroll."*
 
-You were sent through education programs that were only available to wealthy.
+The job was meant to be temporary - a contract to get your life back on track. But when your renewal came up, Thanadox denied your release, citing "mission critical extension clauses." Protests across the system were escalating, and Thanadox was tightening its grip. When your brother stopped replying, you assumed he'd been arrested or gone underground.
 
-Before you finish your schooling, your father was assassinated. You wanted to just ignore the societal norms and stop trying to participate in politics and become a recluse. Your brother (your last remaining family member) thought the opposite and tried to take over the family's holdings. This drove a wedge between you two.
+### The Night of the Explosion
 
-You fell into a deep depression and ran into debts as a result of escapism gambling.
+Desperate to reach him, you convinced a few coworkers to cover for you. You took a rover and drove beyond the refinery's interference field, setting up a small tight-beam transmitter - cheap, illegal consumer gear. You sent your message, and waited. Hours passed. No reply.
 
-Your brother refused to help you and offers no sympathy as he feels you already betrayed him by letting him deal with the fallout of Dad's death. You're debtor essentially forces into slave labor. You're shipped off to a remote moon colony to work in the mines to pay off your debt. You know that will never happen. Thankfully you're not used as a physical laborer, but as an engineer managing the equipment due to your partial education.
+Then the sky tore open.
 
-#### Life Anew
+A streak of light, not much brighter than shooting stare - slammed into the horizon where the refinery stood.
 
-You essentially start life over, distancing yourself from your past.
+The world went white.
 
-While you hate your day-to-day life, and long to see nature and escape society, you still manage to make some strong friendships with others working the mine.
+A heartbeat later, the shockwave hit. You were thrown to the ground. You drove back, screaming into dead comms. Every life support system was gone. Everyone who you worked with - dead.
 
-You often joke with your friends about escaping the mining colony with some habitation equipment to explore the asteroid ridden moon. But you never mean it. It's always a joke.
+### The Aftermath
 
-After a particularly gnarly tiff with your boss, warning him not to send people (including your friends) down to the mine due to an issue with life support, you end your shift and dope up to escape. During your high, you decide to say "fuck it" and actually do it. You go steal hibernation gear and sneak out.
+Thanadox's official report called it an act of terrorism. They claimed to have detected "unauthorized communications" outside the refinery - evidence of activist coordination. You knew that meant *you*. You say nothing.
 
-You know deep down it's stupid and won't work, but you also know deep down you want to get caught, you want to die out there, you want to end this.
+When they rescued you days later, dehydrated and delirious, you repeated their lie back to them. They believed you. Keeping you alive was easier than killing you.
 
-While hiding within a crater trying to setup camp, you feel the ground shake. With no atmosphere, you hear nothing, and see nothing. You can't leave the shadow of the creator without burning alive so you're forced to wait. Upon venturing out once again multiple sleep cycles later, you find an obliterated mining colony.
+Back in the city, you found the truth: Your brother had been shot during a protest crackdown - one justified by the refinery explosion you'd accidentally enabled. No trial. No funeral. Just another data point. He never knew you lived.
 
-You immediately blame yourself. You know the life support issue couldn't have cause the explosion, but you convince yourself that your friends would have been alive if they had the proper, working equipment.
+### Rebirth
 
-#### One Last Chance
+You had nothing left. When a Thanadox ad appeares - *"Remote Astrobiology Research. Soul-Link Technology Testing. Full pay, minimal contact."* - it felt like both punishment and escape. You end up signing up. To get away - far away.
 
-You're picked up by a Thanadox surveying ship that was inspecting the wreckage and brought aboard. You assume they were just responding to a distress signal.
+### Later Revelations
 
-You explain your situation and background to them - but they find no records of you in the system. You assume the syndicate eradicated your records to ensure you never left the mining colony.
+As the story unfolds, fragments of truth emerge:
 
-Due to your education and experience with the mining equipment, you're offered a position as an Astrobiologist, which is considered an undesirable job due to the isolation, risk of death, and use of untested technologies (Animechs). You take it as the only other option they give you is manual labor in the bowels of a colossal space ship in even worse conditions you were in before.
+- Your mother's "lab accident" was tied to an early experiment in soul-transfer technology - the prototype that made Animech linking possible.
+- Your father's death was orchestrated by Thanadox as he was getting too close to the truth around your mother's death.
+- The explosion was executed by Thanadox themselves - having gotten the research they wanted, and needing a media smoke screen to distract from the protests and riot coverage, they fake a suicide bombing.
 
-#### Revelations
+# The Story
 
-You learn later on that:
+# ## Prologue – The Orientation
 
-- Your mother actually died as she was part of an experiment related to transferring a human soul - pre-animech technology
-- Your father was assassinated by the activist cell you join later on
-- Your brother's attempts to maintain the families holding seemed to fail. But in reality, he was forced to invest and support shadow organizations that were part of Thanadox Industries. He is furthering 
-- Thanadox was actually behind the explosion. It wasn't intentional, the mining company had found the remains of a massive living organism in the core of the asteroid. Thanadox caught wind and came in to attempt to research it. In the process they somehow triggered a massive explosion by taking a gamble on trying to capture the Primortal essence of the being.
-- The ship only picked you up to ensure know survivors knew of their involvement. Once they found out you thought it was due to faulty equipment, they thought it was best to keep you alive. It was only in their best interest, their original plan was to stick you out the airlock.
+- **The Hook**
+ - Blackness, atmospheric sounds
+ - Sudden, random cuts to:
+ - An explosion
+ - Yelling
+ - People lying on the floor
+ - Refinery on fire
+- **Paperwork**
+ - Fade from black.
+ - "Hey, are you even listening? This is important."
+ - You're at a desk or counter, filling out paperwork. The supervisor is blabbing about new-to-you topics:
+ - Thanadox remote contractors
+ - Soul-linking procedures
+ - Possible risks with soul transfers
+ - There are other people in the room filling out the same paperwork.
+ - You complete onboarding:
+ - Legal name
+ - Nickname
+ - Mini interaction to sign your name
+ - You bring the paperwork to the supervisor; they confirm everything is correct.
+ - You're told to report to training.
+- **Soul Transfer**
+ - You exit and follow the hallway to the training room.
+ - Reception waves you through: they're ready for you in the back, go to room 17.
+ - There's a chair and a trainer in one room, with a window looking into another room containing an Animech.
+ - When you enter, the trainer asks if you've read your onboarding docs - you say you have.
+ - They ask you to get in the chair. Initial checks run; you're re-confirmed as a viable candidate.
+ - The transfer begins:
+ - The screen glitches and warps; audio distorts.
+ - Quick cuts from the night of the explosion - brief and disorienting.
+ - Visuals flicker between the chair room and the Animech room.
+ - A sharp snap and flash: you're in the Animech.
 
-### World Building
+ - Controls are inverted for a moment; you stumble.
+ - After a few steps, an intercom apologizes - parameters were mixed up.
+ - A short glitch; movement feels correct.
 
-Context about the world this game is set in...
+ - Calibration Interaction
+ - Flip a few switches and solve a simple puzzle to verify alignment and feedback.
+- **Combat & Capture**
+ - They warn you that it's time to test combat capabilities.
+ - A robot enters a mini-arena.
+ - You complete simple combat - you have basic moves; the robot just blocks and sometimes or idles.
+ - After winning, they release a Primortal specimen. You choose a type.
+ - A shadowy mob enters, spots you, and rushes. You can't escape if you try.
+ - You battle and take damage.
+ - If you die, you snap back to the chair. They send you in again; you re-choose a type and try until you win (it's easy).
+ - Post-win, they introduce the **XenoCrypt**:
+ - You pick it up, then enter another room to find a Primortal.
+ - Tooltips in combat explain how to capture for research.
+ - Resource Drill: You enter a room with Elythium and collect a set amount.
+ - Return the Animech to a mock extraction site, turn in the Elythium, and begin transfer back to your body.
+ - Back in the chair, they check you over. Everything feels normal.
+- **Upgrades**
+ - They hand you a **XenoLog**, tell you to go through to upgrade tutorial
+ - Check the Animech experience and apply an upgrade.
+ - Open the Primortal you caught and unlock its first skill.
+ - They note you'll access these once you're on mission.
+ - Lore note: Animechs can't be preloaded with knowledge. They're semi-organic and must learn through experience. Growth ties to the Animech's soul.
+- **Slumber**
+ - Time for bunk. Find your bed and get some rest.
+ - On the way, pass through the café - chatter about training: failed connections, not feeling like themselves, people upset they "signed their name away."
 
-## Chapters
+ - Choose to rest - area complete. Your first dread flashback begins (see "Flashbacks" - "The Explosion").
+- **Departure**
+ - You wake in your bunk with a call to report to departures.
+ - Head to the hangar; someone tells you to go to ship #13
+ - You find it. They explain the Animech's soul you trained with has been loaded into your ship, and your ship is stocked with shells to load it into.
+ - It's time for your first mission.
+ - The nav is pre-loaded with your destination.
+ - A quick tour: bridge, Animech holding zone, your bunk, travel cases. Only the nav console is active.
+ - One option: choose planet, hit launch.
+ - You enter the linking chair; fade to black.
+- **Title Card**
 
-### Introduction
+ - You spawn on your first planet as an Animech, on mission to collect research.
 
-The game starts in a simulated environment, it is a training exercise put on by your new employer: Thanadox Industries.
+---
 
-- First, you are told to initiate the Imbuing process, where you enter a chair (like in the Matrix) and start the transition. Your soul is transferred to the Animech in the same room - and suddenly, you start controlling it. Your body remains still and no longer moves and does not interact.
-- You're then told to explore a small environment requiring you to enter new rooms, turns on lights and open doors. Eventually you are locked in a room and a creature is let loose with you. You have to trigger an encounter with it and defeat it in battle.
-- Once defeated, you are brought to a XenoCrypt, which you pick up. You're told to choose one of the specimens to attempt the capture. There are explanations for each one and must choose which room to enter.
-- Once you enter and capture the Specimen, you then be instructed to pick up a canister of Elythium, which will meet the requirements to initiate the return transfer. (You're told that in a real scenario, you'll need much more to escape orbit).
-- Using the checkpoint at the end of the intro biome, you initiate a return.
-- Once your soul returns to your body, you're told to interact with the Animech control computer, which walks you through the process of creating a new Animetric Core, leveling up, and spending research points.
-- After this, you're sent on your own ship and given a specific planet to explore and return captured Primortal back.
-- You then begin the game loop of sending your Animech to a biome, capturing Primortals, and upgrading your build.
-- Once you reach a set number of Primortals, you'll be given more research goals.
+# Act 1 – Flashbacks
 
-During this introduction, it's explained that the work you're be doing is important and for a good cause. Human expansion and exploitation is resulting in countless alien life forms to become extinct. Your goal is to document the life that exists on newly discovered planets, so that they can be preserved for future generations. The research of this special powers these Specimen have access to are also researched to further medicine and technologies.
+*Chronological order, not necessarily the order presented to the player.* Most are presented in order, with the noted exceptions. They generally are played to the user when they rest between runs.
 
-### Cracks in the Facade
+> **Journal & Memories**
+> - Your personal journal in the bunk lets you re-view flashbacks you've unlocked.
+> - The journal shows them in chronological order, even if you experienced them out of order.
+> - You can see where gaps exist, but not how much is missing.
 
-While exploring, you find evidence of nefarious acts done by the company
-- You come across another Astrobiologist who is pessimistic and negative, though not hostile.
-- You find flyers from activist groups in various checkpoints and outposts.
-- Comments made by the snarky Astrobiologist and other NPCs align with and support the evidence
+- **The Prison**
+ - Break room at the research outputs.
+ - You vent: You want to go back home, your contract is up, but Thandox keeps denying your release. "They're going to keep us here forever." The work isn't what you wanted, you feel like you're being used.
+ - Work comms are strictly for operations - no personal use.
+ - "I've gotta tell my brother. He's all I've got."
+- **The Mission**
+ - Your friends cover for you, leave rover keys, log you as "sick."
+ - You sneak out, needing to get beyond the refinery's interference to send a tight-beam home using consumer gear.
+ - Comms take time; after sending, you wait for a response.
+ - Optional light minigame: keep the dish aligned to maintain signal.
+- **The Explosion** *(first seen during Orientation and the first bunk sleep)*
+ - Waiting for your brother's response.
+ - You look up at the stars.
+ - A "shooting star" streaks down and hits the refinery.
+ - A massive explosion.
+ - No sound for a few beats... then the shockwave.
+ - Goes black.
+- **The Aftermath**
+ - You race the rover back. The refinery's life support is gone. Everyone's dead.
+ - Red emergency lighting.
+ - A coworker is trapped in an intact airlock but can't exit.
+ - You talk through the barrier. You can't save them. You try to offer your suit; they refuse.
+- **The Extraction**
+ - Days blur. Low food, water, and oxygen. You sit by an SOS beacon.
+ - A ship lands; someone hauls you aboard.
+ - You wake in recovery.
+ - They ask what you know. You say nothing, you were just on a survey mission and got lucky. They say the company claims it was activists inside the station, a suicide bomber. They say it was someone you knew, who was a friend.
+- **The Room**
+ - You make it back to the city. Your friends died covering for you.
+ - Your brother still isn't replying.
+ - You go to his place - final eviction notice on the door.
+ - No answer.
+ - You use your key.
+ - He's not there.
+ - Flyers for protests and activist meetups are scattered around.
+- **The Void**
+ - He's dead.
+ - It's not clear how you find out yet - TBD.
+ - One of many shot at a protest, labeled a member of a "terrorist cell."
+ - No trial. No funeral. No coverage.
+- **The Call**
+ - In your brother's small one-room apartment - cyberpunk glow, media streaming.
+ - News: the company blames activists for the research blast. You know that's a lie - quick flash to the projectile descending from orbit.
+ - Nothing feels real. You blame yourself almost as much as the company. You're angry at the world.
+ - An ad rolls: remote astrobiology contractors needed; must sign experimental soul-transfer waiver.
+- **The Job**
+ - Sterile office.
+ - Tests for "compatibility," no details given.
+ - You're compatible; "someone will call you soon."
+ - Cut to you at home in the dark. Your PDA buzzes.
+ - "We're ready for you."
+ - Transit jump cut - you arrive at Orientation.
 
-### Truth unveiled
+# Act 2 – Community
 
-- You find smoking gun evidence, maybe on a pirate ship? or decimated moon base?
-- broken corporation tech and animechs found in in a civilian area that's been obliterated, news reports call it a terrorist attack
-- They find out you know too much, make it clear they plan to "terminate" your contract
+- Connect with NPCs and settlements in the outer systems
+- Find evidence against Thanadox, proof they staged bombings and blamed the people
+- Repeat NPCs become friends, find cells of independent communities, activism == surviving
 
-### Counter offensive
+# Act 3 – A New Start
 
-- The snark master brings you into the fold, and introduces you to an activist group
-- In an attempt to save yourself, with help from the activists, you try to break into the corporations operations and wipe their database of yourself, so you can escape
-- You're tasked with another ops mission to release all of the companies data to the public to make it accessible to everyone
-
-### Exposing the truth
-
-- You're betrayed in the final moments of your last mission, left stranded. The activist cell was using you and is actually after the info for their own benefit
-- You find a way to still release the data, as well as proof of all the bad things both sides were doing.
-- Both organization have to close up shop after the backlash
-- you start an independent research network that makes all their research public and is transparent about their practices
-
-TODO, make the end worth while...
-
-## Additional Ideas
-
-To incorporate...
-
-- who is the player? have they been impacted by the loss of ecosystems? are they impacted directly by the corporations actions?
-- Make the activist group have the same roots as the corporation - show the size creates greed and corruption. they turned itno nhilists as opposed to activists onc they felt helpless
+Instead of flashbacks, you begin to get premonitions of what's coming when you sleep. Your goals are within reach. You work to make them real.
