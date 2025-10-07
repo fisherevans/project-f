@@ -52,7 +52,7 @@ As the story unfolds, fragments of truth emerge:
 
 # The Story
 
-# ## Prologue – The Orientation
+## Prologue – The Orientation
 
 - **The Hook**
   - Blackness, atmospheric sounds
@@ -127,9 +127,7 @@ As the story unfolds, fragments of truth emerge:
 - **Title Card**
   - You spawn on your first planet as an Animech, on mission to collect research.
 
----
-
-# Act 1 – Flashbacks
+## Act 1 – Flashbacks
 
 *Chronological order, not necessarily the order presented to the player.* Most are presented in order, with the noted exceptions. They generally are played to the user when they rest between runs.
 
@@ -191,12 +189,12 @@ As the story unfolds, fragments of truth emerge:
   - "We're ready for you."
   - Transit jump cut - you arrive at Orientation.
 
-# Act 2 – Community
+## Act 2 – Community
 
 - Connect with NPCs and settlements in the outer systems
 - Find evidence against Thanadox, proof they staged bombings and blamed the people
 - Repeat NPCs become friends, find cells of independent communities, activism == surviving
 
-# Act 3 – A New Start
+## Act 3 – A New Start
 
 Instead of flashbacks, you begin to get premonitions of what's coming when you sleep. Your goals are within reach. You work to make them real.
