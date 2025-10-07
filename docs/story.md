@@ -55,81 +55,77 @@ As the story unfolds, fragments of truth emerge:
 # ## Prologue – The Orientation
 
 - **The Hook**
- - Blackness, atmospheric sounds
- - Sudden, random cuts to:
- - An explosion
- - Yelling
- - People lying on the floor
- - Refinery on fire
+  - Blackness, atmospheric sounds
+  - Sudden, random cuts to:
+  - An explosion
+  - Yelling
+  - People lying on the floor
+  - Refinery on fire
 - **Paperwork**
- - Fade from black.
- - "Hey, are you even listening? This is important."
- - You're at a desk or counter, filling out paperwork. The supervisor is blabbing about new-to-you topics:
- - Thanadox remote contractors
- - Soul-linking procedures
- - Possible risks with soul transfers
- - There are other people in the room filling out the same paperwork.
- - You complete onboarding:
- - Legal name
- - Nickname
- - Mini interaction to sign your name
- - You bring the paperwork to the supervisor; they confirm everything is correct.
- - You're told to report to training.
+  - Fade from black.
+  - "Hey, are you even listening? This is important."
+  - You're at a desk or counter, filling out paperwork. The supervisor is blabbing about new-to-you topics:
+    - Thanadox remote contractors
+    - Soul-linking procedures
+    - Possible risks with soul transfers
+  - There are other people in the room filling out the same paperwork.
+  - You complete onboarding:
+    - Legal name
+    - Nickname
+    - Mini interaction to sign your name
+  - You bring the paperwork to the supervisor; they confirm everything is correct.
+  - You're told to report to training.
 - **Soul Transfer**
- - You exit and follow the hallway to the training room.
- - Reception waves you through: they're ready for you in the back, go to room 17.
- - There's a chair and a trainer in one room, with a window looking into another room containing an Animech.
- - When you enter, the trainer asks if you've read your onboarding docs - you say you have.
- - They ask you to get in the chair. Initial checks run; you're re-confirmed as a viable candidate.
- - The transfer begins:
- - The screen glitches and warps; audio distorts.
- - Quick cuts from the night of the explosion - brief and disorienting.
- - Visuals flicker between the chair room and the Animech room.
- - A sharp snap and flash: you're in the Animech.
-
- - Controls are inverted for a moment; you stumble.
- - After a few steps, an intercom apologizes - parameters were mixed up.
- - A short glitch; movement feels correct.
-
- - Calibration Interaction
- - Flip a few switches and solve a simple puzzle to verify alignment and feedback.
+  - You exit and follow the hallway to the training room.
+  - Reception waves you through: they're ready for you in the back, go to room 17.
+  - There's a chair and a trainer in one room, with a window looking into another room containing an Animech.
+  - When you enter, the trainer asks if you've read your onboarding docs - you say you have.
+  - They ask you to get in the chair. Initial checks run; you're re-confirmed as a viable candidate.
+  - The transfer begins:
+    - The screen glitches and warps; audio distorts.
+    - Quick cuts from the night of the explosion - brief and disorienting.
+    - Visuals flicker between the chair room and the Animech room.
+    - A sharp snap and flash: you're in the Animech.
+  - Controls are inverted for a moment; you stumble.
+    - After a few steps, an intercom apologizes - parameters were mixed up.
+    - A short glitch; movement feels correct.
+  - Calibration Interaction
+    - Flip a few switches and solve a simple puzzle to verify alignment and feedback.
 - **Combat & Capture**
- - They warn you that it's time to test combat capabilities.
- - A robot enters a mini-arena.
- - You complete simple combat - you have basic moves; the robot just blocks and sometimes or idles.
- - After winning, they release a Primortal specimen. You choose a type.
- - A shadowy mob enters, spots you, and rushes. You can't escape if you try.
- - You battle and take damage.
- - If you die, you snap back to the chair. They send you in again; you re-choose a type and try until you win (it's easy).
- - Post-win, they introduce the **XenoCrypt**:
- - You pick it up, then enter another room to find a Primortal.
- - Tooltips in combat explain how to capture for research.
- - Resource Drill: You enter a room with Elythium and collect a set amount.
- - Return the Animech to a mock extraction site, turn in the Elythium, and begin transfer back to your body.
- - Back in the chair, they check you over. Everything feels normal.
+  - They warn you that it's time to test combat capabilities.
+  - A robot enters a mini-arena.
+  - You complete simple combat - you have basic moves; the robot just blocks and sometimes or idles.
+  - After winning, they release a Primortal specimen. You choose a type.
+  - A shadowy mob enters, spots you, and rushes. You can't escape if you try.
+  - You battle and take damage.
+    - If you die, you snap back to the chair. They send you in again; you re-choose a type and try until you win (it's easy).
+  - Post-win, they introduce the **XenoCrypt**:
+  - You pick it up, then enter another room to find a Primortal.
+  - Tooltips in combat explain how to capture for research.
+  - Resource Drill: You enter a room with Elythium and collect a set amount.
+  - Return the Animech to a mock extraction site, turn in the Elythium, and begin transfer back to your body.
+  - Back in the chair, they check you over. Everything feels normal.
 - **Upgrades**
- - They hand you a **XenoLog**, tell you to go through to upgrade tutorial
- - Check the Animech experience and apply an upgrade.
- - Open the Primortal you caught and unlock its first skill.
- - They note you'll access these once you're on mission.
- - Lore note: Animechs can't be preloaded with knowledge. They're semi-organic and must learn through experience. Growth ties to the Animech's soul.
+  - They hand you a **XenoLog**, tell you to go through to upgrade tutorial
+  - Check the Animech experience and apply an upgrade.
+  - Open the Primortal you caught and unlock its first skill.
+  - They note you'll access these once you're on mission.
+  - Lore note: Animechs can't be preloaded with knowledge. They're semi-organic and must learn through experience. Growth ties to the Animech's soul.
 - **Slumber**
- - Time for bunk. Find your bed and get some rest.
- - On the way, pass through the café - chatter about training: failed connections, not feeling like themselves, people upset they "signed their name away."
-
- - Choose to rest - area complete. Your first dread flashback begins (see "Flashbacks" - "The Explosion").
+  - Time for bunk. Find your bed and get some rest.
+  - On the way, pass through the café - chatter about training: failed connections, not feeling like themselves, people upset they "signed their name away."
+  - Choose to rest - area complete. Your first dread flashback begins (see "Flashbacks" - "The Explosion").
 - **Departure**
- - You wake in your bunk with a call to report to departures.
- - Head to the hangar; someone tells you to go to ship #13
- - You find it. They explain the Animech's soul you trained with has been loaded into your ship, and your ship is stocked with shells to load it into.
- - It's time for your first mission.
- - The nav is pre-loaded with your destination.
- - A quick tour: bridge, Animech holding zone, your bunk, travel cases. Only the nav console is active.
- - One option: choose planet, hit launch.
- - You enter the linking chair; fade to black.
+  - You wake in your bunk with a call to report to departures.
+  - Head to the hangar; someone tells you to go to ship #13
+  - You find it. They explain the Animech's soul you trained with has been loaded into your ship, and your ship is stocked with shells to load it into.
+  - It's time for your first mission.
+  - The nav is pre-loaded with your destination.
+  - A quick tour: bridge, Animech holding zone, your bunk, travel cases. Only the nav console is active.
+  - One option: choose planet, hit launch.
+  - You enter the linking chair; fade to black.
 - **Title Card**
-
- - You spawn on your first planet as an Animech, on mission to collect research.
+  - You spawn on your first planet as an Animech, on mission to collect research.
 
 ---
 
@@ -143,57 +139,57 @@ As the story unfolds, fragments of truth emerge:
 > - You can see where gaps exist, but not how much is missing.
 
 - **The Prison**
- - Break room at the research outputs.
- - You vent: You want to go back home, your contract is up, but Thandox keeps denying your release. "They're going to keep us here forever." The work isn't what you wanted, you feel like you're being used.
- - Work comms are strictly for operations - no personal use.
- - "I've gotta tell my brother. He's all I've got."
+  - Break room at the research outputs.
+  - You vent: You want to go back home, your contract is up, but Thandox keeps denying your release. "They're going to keep us here forever." The work isn't what you wanted, you feel like you're being used.
+  - Work comms are strictly for operations - no personal use.
+  - "I've gotta tell my brother. He's all I've got."
 - **The Mission**
- - Your friends cover for you, leave rover keys, log you as "sick."
- - You sneak out, needing to get beyond the refinery's interference to send a tight-beam home using consumer gear.
- - Comms take time; after sending, you wait for a response.
- - Optional light minigame: keep the dish aligned to maintain signal.
+  - Your friends cover for you, leave rover keys, log you as "sick."
+  - You sneak out, needing to get beyond the refinery's interference to send a tight-beam home using consumer gear.
+  - Comms take time; after sending, you wait for a response.
+  - Optional light minigame: keep the dish aligned to maintain signal.
 - **The Explosion** *(first seen during Orientation and the first bunk sleep)*
- - Waiting for your brother's response.
- - You look up at the stars.
- - A "shooting star" streaks down and hits the refinery.
- - A massive explosion.
- - No sound for a few beats... then the shockwave.
- - Goes black.
+  - Waiting for your brother's response.
+  - You look up at the stars.
+  - A "shooting star" streaks down and hits the refinery.
+  - A massive explosion.
+  - No sound for a few beats... then the shockwave.
+  - Goes black.
 - **The Aftermath**
- - You race the rover back. The refinery's life support is gone. Everyone's dead.
- - Red emergency lighting.
- - A coworker is trapped in an intact airlock but can't exit.
- - You talk through the barrier. You can't save them. You try to offer your suit; they refuse.
+  - You race the rover back. The refinery's life support is gone. Everyone's dead.
+  - Red emergency lighting.
+  - A coworker is trapped in an intact airlock but can't exit.
+  - You talk through the barrier. You can't save them. You try to offer your suit; they refuse.
 - **The Extraction**
- - Days blur. Low food, water, and oxygen. You sit by an SOS beacon.
- - A ship lands; someone hauls you aboard.
- - You wake in recovery.
- - They ask what you know. You say nothing, you were just on a survey mission and got lucky. They say the company claims it was activists inside the station, a suicide bomber. They say it was someone you knew, who was a friend.
+  - Days blur. Low food, water, and oxygen. You sit by an SOS beacon.
+  - A ship lands; someone hauls you aboard.
+  - You wake in recovery.
+  - They ask what you know. You say nothing, you were just on a survey mission and got lucky. They say the company claims it was activists inside the station, a suicide bomber. They say it was someone you knew, who was a friend.
 - **The Room**
- - You make it back to the city. Your friends died covering for you.
- - Your brother still isn't replying.
- - You go to his place - final eviction notice on the door.
- - No answer.
- - You use your key.
- - He's not there.
- - Flyers for protests and activist meetups are scattered around.
+  - You make it back to the city. Your friends died covering for you.
+  - Your brother still isn't replying.
+  - You go to his place - final eviction notice on the door.
+  - No answer.
+  - You use your key.
+  - He's not there.
+  - Flyers for protests and activist meetups are scattered around.
 - **The Void**
- - He's dead.
- - It's not clear how you find out yet - TBD.
- - One of many shot at a protest, labeled a member of a "terrorist cell."
- - No trial. No funeral. No coverage.
+  - He's dead.
+  - It's not clear how you find out yet - TBD.
+  - One of many shot at a protest, labeled a member of a "terrorist cell."
+  - No trial. No funeral. No coverage.
 - **The Call**
- - In your brother's small one-room apartment - cyberpunk glow, media streaming.
- - News: the company blames activists for the research blast. You know that's a lie - quick flash to the projectile descending from orbit.
- - Nothing feels real. You blame yourself almost as much as the company. You're angry at the world.
- - An ad rolls: remote astrobiology contractors needed; must sign experimental soul-transfer waiver.
+  - In your brother's small one-room apartment - cyberpunk glow, media streaming.
+  - News: the company blames activists for the research blast. You know that's a lie - quick flash to the projectile descending from orbit.
+  - Nothing feels real. You blame yourself almost as much as the company. You're angry at the world.
+  - An ad rolls: remote astrobiology contractors needed; must sign experimental soul-transfer waiver.
 - **The Job**
- - Sterile office.
- - Tests for "compatibility," no details given.
- - You're compatible; "someone will call you soon."
- - Cut to you at home in the dark. Your PDA buzzes.
- - "We're ready for you."
- - Transit jump cut - you arrive at Orientation.
+  - Sterile office.
+  - Tests for "compatibility," no details given.
+  - You're compatible; "someone will call you soon."
+  - Cut to you at home in the dark. Your PDA buzzes.
+  - "We're ready for you."
+  - Transit jump cut - you arrive at Orientation.
 
 # Act 2 – Community
 
