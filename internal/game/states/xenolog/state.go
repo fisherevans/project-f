@@ -35,11 +35,11 @@ type State struct {
 	screen *Screen
 }
 
-func New(_ *game.Context, i game.XenologIntent) game.State {
+func New(ctx *game.Context, i game.XenologIntent) game.State {
 	return &State{
 		background: i.Background,
 		transition: interp.NewTimedProgress(.4, interp.Smootherstep),
-		screen:     NewScreen(),
+		screen:     NewScreen(ctx),
 	}
 }
 

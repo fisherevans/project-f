@@ -2,6 +2,7 @@ package textbox
 
 import (
 	"fmt"
+
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
 )
@@ -15,7 +16,8 @@ type cColor struct {
 }
 
 type cUnderline struct {
-	color pixel.RGBA
+	color        pixel.RGBA
+	colorDefined bool
 }
 
 type cOutline struct {

@@ -8,6 +8,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/game/shaders/bloom"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
@@ -28,22 +29,53 @@ var (
 	spritePrimortal = atlas.GetSprite("xenolog/select_primortal")
 )
 
+var (
+	smallTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
+		tbcfg.NewConfig(screenWidth, 10,
+			tbcfg.WithExpandMode(tbcfg.ExpandFit),
+			tbcfg.HAligned(tbcfg.HAlignCenter),
+			tbcfg.VAligned(tbcfg.VAlignTop),
+			tbcfg.Foreground(uiMask),
+			tbcfg.RenderFrom(gfx.TopCenter)))
+
+	mediumTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard),
+		tbcfg.NewConfig(screenWidth, 10,
+			tbcfg.WithExpandMode(tbcfg.ExpandFit),
+			tbcfg.HAligned(tbcfg.HAlignCenter),
+			tbcfg.VAligned(tbcfg.VAlignTop),
+			tbcfg.Foreground(uiMask),
+			tbcfg.RenderFrom(gfx.TopCenter)))
+)
+
 type Screen struct {
 	canvas     *shaders.Canvas
 	batch      *pixel.Batch
+	bloom      *bloom.Helper
 	selectLeft bool
 	left       *selectBox
 	right      *selectBox
+	isSelected bool
+
+	animechMenu    *animechMenu
+	primortalsMenu *primortalsMenu
 }
 
-func NewScreen() *Screen {
+func NewScreen(ctx *game.Context) *Screen {
 	s := &Screen{
-		canvas:     shaders.NewCanvas(screenWidth, screenHeight),
-		batch:      atlas.NewBatch(),
-		selectLeft: true,
-		left:       newSelectBox(spriteAnimech, "Animech", "Upgrade Available"),
-		right:      newSelectBox(spritePrimortal, "Primortals", ""),
+		canvas: shaders.NewCanvas(screenWidth, screenHeight),
+		batch:  atlas.NewBatch(),
+		bloom: bloom.NewHelper(
+			screenWidth, screenHeight,
+			bloom.DefaultBrightnessConfig(),
+			bloom.DefaultBlurConfig(),
+			bloom.DefaultBlendConfig().WithIntensity(0.5)),
+		selectLeft:     true,
+		left:           newSelectBox(spriteAnimech, "Animech", ""),
+		right:          newSelectBox(spritePrimortal, "Primortals", ""),
+		animechMenu:    newAnimechMenu(ctx),
+		primortalsMenu: newPrimortalsMenu(ctx),
 	}
+	s.refreshState(ctx)
 	return s
 }
 
@@ -52,22 +84,57 @@ func (s *Screen) Bounds() pixel.Rect {
 }
 
 func (s *Screen) OnTick(state *State, ctx *game.Context, targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
-	center := pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight/2))
 	s.batch.Clear()
 
+	if s.isSelected {
+		if s.selectLeft {
+			s.animechMenu.RenderAnimech(s, ctx, s.batch, timeDelta)
+		} else {
+			s.primortalsMenu.RenderPrimortals(s, ctx, s.batch, timeDelta)
+		}
+	} else {
+		s.RenderMenuSelection(ctx, s.batch, timeDelta)
+	}
+
+	s.canvas.Clear(screenClear)
+	s.batch.Draw(s.canvas)
+	s.canvas.Draw(target, targetMatrix)
+
+	bloomed := s.bloom.ApplyBloom(s.canvas)
+	bloomed.Draw(target, targetMatrix)
+}
+
+func (s *Screen) RenderMenuSelection(ctx *game.Context, target *pixel.Batch, timeDelta float64) {
+	center := pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight/2))
 	if ctx.Controls.DPad().JustPressedDirection() == input.Left {
 		s.selectLeft = true
 	} else if ctx.Controls.DPad().JustPressedDirection() == input.Right {
 		s.selectLeft = false
 	}
+	if ctx.Controls.ButtonA().JustPressed() {
+		s.isSelected = true
+	}
 
 	dx := math.Floor(float64(selectBoxWidth) * 0.6)
-	s.left.render(ctx, center.Moved(pixel.V(-dx, 0)), s.batch, s.selectLeft, timeDelta)
-	s.right.render(ctx, center.Moved(pixel.V(dx, 0)), s.batch, !s.selectLeft, timeDelta)
+	s.left.render(ctx, center.Moved(pixel.V(-dx, 0)), target, s.selectLeft, timeDelta)
+	s.right.render(ctx, center.Moved(pixel.V(dx, 0)), target, !s.selectLeft, timeDelta)
+}
 
-	s.canvas.Clear(screenClear)
-	s.batch.Draw(s.canvas)
-	s.canvas.Draw(target, targetMatrix)
+func (s *Screen) returnToMenu(ctx *game.Context) {
+	s.isSelected = false
+	s.refreshState(ctx)
+}
+
+func (s *Screen) refreshState(ctx *game.Context) {
+	s.left.subLabel = ""
+	if s.animechMenu.isUpgradeAvailable(ctx) {
+		s.left.subLabel = "Upgrade Available"
+	}
+
+	s.right.subLabel = ""
+	if s.primortalsMenu.isUpgradeAvailable(ctx) {
+		s.right.subLabel = "Upgrade Available"
+	}
 }
 
 var (
@@ -101,8 +168,8 @@ var (
 
 type selectBox struct {
 	sprite   pixelutil.BoundedDrawable
-	label    *textbox.Content
-	subLabel *textbox.Content
+	label    string
+	subLabel string
 
 	elapsed float64
 }
@@ -113,13 +180,9 @@ func (b *selectBox) Bounds() pixel.Rect {
 
 func newSelectBox(sprite pixelutil.BoundedDrawable, label, subLabel string) *selectBox {
 	s := &selectBox{
-		sprite: sprite,
-	}
-	if label != "" {
-		s.label = selectBoxLabelText.NewSimpleContent(label)
-	}
-	if subLabel != "" {
-		s.subLabel = selectBoxSubLabelText.NewSimpleContent(subLabel)
+		sprite:   sprite,
+		label:    label,
+		subLabel: subLabel,
 	}
 	return s
 }
@@ -139,16 +202,17 @@ func (b *selectBox) render(ctx *game.Context, center pixel.Matrix, target pixel.
 	spriteCenter := bottomCenter.Moved(gfx.BottomCenter.Align(b.sprite))
 	b.sprite.DrawColorMask(target, spriteCenter, mask)
 
-	if b.label != nil {
-		selectBoxLabelText.Render(ctx, target, center.Moved(gfx.IVec(0, selectBoxHeight/2-selectBoxLabelMargin)), b.label, tbcfg.Foreground(mask))
+	if b.label != "" {
+		c := selectBoxLabelText.NewSimpleContent(b.label)
+		selectBoxLabelText.Render(ctx, target, center.Moved(gfx.IVec(0, selectBoxHeight/2-selectBoxLabelMargin)), c, tbcfg.Foreground(mask))
 	}
 
-	if b.subLabel != nil {
-		subLabelMaskLerp := (math.Sin(b.elapsed*selectBoxSubLabelFlashSpeed*2.0*math.Pi) + 1.0) / 2.0
-		subLabelMask := colors.Lerp(uiMask, colors.White.RGBA, subLabelMaskLerp)
+	if b.subLabel != "" {
+		subLabelMask := flash(b.elapsed, selectBoxSubLabelFlashSpeed, uiMask, colors.White.RGBA)
+		c := selectBoxSubLabelText.NewSimpleContent(b.subLabel)
 		selectBoxSubLabelText.Render(ctx, target,
 			center.Moved(gfx.IVec(0, -selectBoxHeight/2-selectBoxSubLabelMargin)),
-			b.subLabel,
+			c,
 			tbcfg.Foreground(subLabelMask))
 	}
 
@@ -159,4 +223,10 @@ func (b *selectBox) render(ctx *game.Context, center pixel.Matrix, target pixel.
 			Moved(pixel.V(0, selectBoxArrowMargin+dy))
 		selectBoxArrow.Draw(target, arrowBottomCenter.Moved(gfx.BottomCenter.Align(selectBoxArrow)))
 	}
+}
+
+func flash(elapsed, speed float64, from, to pixel.RGBA) pixel.RGBA {
+	lerp := (math.Sin(elapsed*speed*2.0*math.Pi) + 1.0) / 2.0
+	mask := colors.Lerp(from, to, lerp)
+	return mask
 }

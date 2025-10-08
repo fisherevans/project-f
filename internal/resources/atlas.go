@@ -36,6 +36,17 @@ func (a *Atlas) GetSprite(name string) pixelutil.BoundedDrawable {
 	return sprite
 }
 
+func (a *Atlas) GetSpriteOrDefault(name string, fallback string) pixelutil.BoundedDrawable {
+	sprite, exists := a.sprites[name]
+	if !exists {
+		sprite, exists = a.sprites[fallback]
+	}
+	if !exists {
+		log.Fatal().Str("sprite", name).Str("fallback", fallback).Msg("sprite nor fallback not found")
+	}
+	return sprite
+}
+
 func (a *Atlas) GetTilesheetSprite(tilesheet string, col, row int) pixelutil.BoundedDrawable {
 	return a.GetTilesheetSpriteById(TilesheetSpriteId{
 		Tilesheet: tilesheet,

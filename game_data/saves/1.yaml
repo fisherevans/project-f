@@ -1,32 +1,30 @@
 save_id: "1"
 character_name: Isaac
 animech:
-    additional_shield: 55
-    additional_sync: 20
-    experience_points: 10
     skill_set:
-      1: jab
-      2: photo_surge
-      3: mend_spores
-      4: arc_dart
-unlocked_skills:
-  - jab
-  - guard
-  - mend_spores
-  - arc_dart
+        "1": jab
+        "2": photo_surge
+        "3": mend_spores
+        "4": arc_dart
+    experience_points: 209
+    upgrades:
+        shield_level: 5
+        sync_level: 2
 loadouts:
-  - name: "Default"
-    skill_set:
-      1: jab
-      2: guard
-      3: mend_spores
-      4: arc_dart
-primortals:
-  pumbl:
-    visibility: defeated
-    research_points: 5
+    - name: Default
+      skill_set:
+        "1": jab
+        "2": guard
+        "3": mend_spores
+        "4": arc_dart
 inventory:
-  items:
-  - type: towel
-    quantity: 3
-
+    items:
+        - type: towel
+          quantity: 3
+primortals:
+    myceli:
+        visibility: defeated
+        research_points: 15
+    pumbl:
+        visibility: defeated
+        research_points: 5

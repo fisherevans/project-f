@@ -2,16 +2,26 @@ package bloom
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/gopxl/glhf/v2"
 	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game/shaders"
 )
+
+type Scene interface {
+	Draw(target pixel.Target, m pixel.Matrix)
+	Texture() *glhf.Texture
+}
 
 type BlendConfig struct {
 	Intensity float32
 	BloomBias float32
 	SceneBias float32
+}
+
+func (c BlendConfig) WithIntensity(i float32) BlendConfig {
+	c.Intensity = i
+	return c
 }
 
 func DefaultBlendConfig() BlendConfig {
@@ -84,7 +94,7 @@ func NewHelper(width, height int, brightnessCfg BrightnessConfig, blurCfg BlurCo
 	return b
 }
 
-func (b *Helper) GenerateBloomCanvas(scene *opengl.Canvas) *shaders.Canvas {
+func (b *Helper) GenerateBloomCanvas(scene Scene) *shaders.Canvas {
 	// draw colors to brightness threshold canvas - i.e. get the highlights only
 	b.brightness.Clear(pixel.RGBA{})
 	b.brightness.SetBrightnessThresholdShader(
@@ -125,7 +135,7 @@ func (b *Helper) GenerateBloomCanvas(scene *opengl.Canvas) *shaders.Canvas {
 	return blurred
 }
 
-func (b *Helper) ApplyBloom(scene *opengl.Canvas) *shaders.Canvas {
+func (b *Helper) ApplyBloom(scene Scene) *shaders.Canvas {
 	blurred := b.GenerateBloomCanvas(scene)
 
 	// blend the blurred highlights with the scene

@@ -151,7 +151,11 @@ func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.
 				listCharStart := matrix.Project(tb.text.Dot).Add(pixel.V(-1, -1))
 				if underlineStart == nil {
 					underlineStart = &listCharStart
-					underlineColor = c.style.underline.color
+					if c.style.underline.colorDefined {
+						underlineColor = c.style.underline.color
+					} else {
+						underlineColor = renderParams.foreground
+					}
 				}
 				extraLength := 0.0
 				if c.style.shadow != nil {

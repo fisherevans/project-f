@@ -1,10 +1,8 @@
 # Types
 
-In *Project F*, combat and creatures are shaped by five **types**. These are not a rock‑paper‑scissors weakness system, but instead **behavioral archetypes** that give structure to skills, statuses, and strategies. The **Xenolog** serves as the player’s compendium and progress tracker, tying these systems together.
+In *Project F*, combat and creatures are shaped by five **types**. These are not a rock‑paper‑scissors weakness system, but instead **behavioral archetypes** that give structure to skills, statuses, and strategies.
 
----
-
-## Creature Archetypes
+## Creature Types
 
 Creatures in *Project F* embody one or more types. Their abilities, behaviors, and strategies align with the type’s identity.  
 

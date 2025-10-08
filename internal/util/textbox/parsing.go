@@ -142,8 +142,10 @@ func (t *characterTemplate) parseCommand(commandText string) {
 			}
 			switch subCmd[0] {
 			case cmdUnderline:
+				c, set := optionalColor(param)
 				t.underline = &cUnderline{
-					color: requireColorOrDefault(param, defaultColor.RGBA),
+					color:        c,
+					colorDefined: set,
 				}
 			case cmdShadow:
 				t.shadow = &cShadow{
@@ -217,6 +219,19 @@ func requireColorOrDefault(param string, defaultColor pixel.RGBA) pixel.RGBA {
 		return colors.HexString(param)
 	}
 	return colors.ColorFromName(colors.ColorName(param)).RGBA
+}
+
+func optionalColor(param string) (pixel.RGBA, bool) {
+	var c pixel.RGBA
+	if param == "" {
+		return c, false
+	}
+	if strings.HasPrefix(param, "#") {
+		c = colors.HexString(param)
+	} else {
+		c = colors.ColorFromName(colors.ColorName(param)).RGBA
+	}
+	return c, true
 }
 
 func requireFloat(param string, defaultValue float64) float64 {

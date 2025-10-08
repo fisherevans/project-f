@@ -1,36 +1,33 @@
 # Exploration & Adventure
 
-Exploration in *Project F* takes place in a **top‑down, tile‑based overworld**. Each planet is divided into **zones** connected in a one‑way, branching web of paths; once you decide to move forward, you need to keep pushing as you cannot return to earlier zones. This creates tension between pushing deeper for more rewards and finding an extraction point before your Animech is destroyed.
-
----
+Exploration in *Project F* takes place in a **top‑down, tile‑based overworld**. Each planet is divided into **zones** connected in an (often) one‑way, branching web of paths; once you decide to move forward, you need to keep pushing as you cannot return to earlier zones. This creates tension between pushing deeper for more rewards and finding an extraction point before your Animech is destroyed.
 
 ## Planet & Zone Structure
 
 - Planets are built from **zones** connected in a branching, converging web.  
 - Zones are **overworld‑style maps** (similar to Pokémon or Golden Sun dungeons).  
-- Progression is **forward‑only**: once you descend ledges, cross chasms, or commit to paths, you cannot return.  
-- Multiple **extraction endpoints** exist at the web’s edges and intersections.  
+- Most progression is **forward‑only**: once you descend ledges, cross chasms, or commit to paths, you cannot return.
+  - For towns/settlements, dungeons, quest areas, and other areas - back tracking will likely be allowed.
+
+- Multiple **extraction endpoints** exist at the web’s edges and intersections, allowing you to finish early, or push to gather more research.
 - Worlds remain largely **static**, but with light variance:  
   - Creature spawns may shift between runs.  
   - Roguelike caches may appear in different spots.  
   - Some zones may change permanently when you trigger story events or unlock new routes.  
-
----
+- As you explore a biome, you will discover new starting areas that can be chosen when initiating a deployment - this reduces the frustration of having to constantly traeverse the same area over and over.
 
 ## Exploration Mechanics
 
 Exploration is about movement, discovery, and light puzzle‑solving.  
 
-- **Tile Interactions** — pushable blocks, teleporters, sliding tiles, hazards.  
-- **Gated Abilities** — some paths require Animech upgrades (e.g., Dash to cross gaps).  
-- **Side Journeys** — hazards and puzzles mainly gate **optional content** like quest items or hidden rewards, not main progression.  
-- **Permanent Changes** — unlocking caches, discovering new routes, or altering the environment may change the world for future runs.  
-
----
+- **Tile Interactions** - pushable blocks, teleporters, sliding tiles, hazards.  
+- **Gated Abilities** - some paths require Animech upgrades (e.g., Dash to cross gaps).  
+- **Side Journeys** - hazards and puzzles mainly gate **optional content** like quest items or hidden rewards, not main progression.  
+- **Permanent Changes** - unlocking caches, discovering new routes, or altering the environment may change the world for future runs.  
 
 ## Encounters
 
-Creatures appear visibly in the overworld as **shadowy figures** or **characters**.  
+Specimen/creatures appear visibly in the overworld as **shadowy figures** or **characters**.  
 
 - **Shadow Mobs**  
   - Wander the map.  
@@ -39,7 +36,7 @@ Creatures appear visibly in the overworld as **shadowy figures** or **characters
   - Colliding with a shadow starts combat.  
   - Fleeing from combat removes the mob with no rewards.  
 
-Other combatants are fully visible int he overworld:
+Other combatants are fully visible in the overworld:
 
 - **Trainer‑like Characters**  
   - Battles triggered by line‑of‑sight or proximity.  
@@ -52,8 +49,6 @@ There are no multi-battlers, they are always 1v1:
   - Multiple fights in sequence (e.g., swarms of shadows or groups of guards).  
   - No simultaneous multi‑battles, but back‑to‑back encounters can occur.  
 
----
-
 ## Run‑Specific Mods
 
 During runs, you may discover **caches** that offer **temporary combat upgrades**.  
@@ -65,19 +60,16 @@ During runs, you may discover **caches** that offer **temporary combat upgrades*
   - Reduced penalty while Vulnerable.  
   - Increased XP gains.  
   - Reduced mob aggression for easier traversal.  
-
----
+- Some might let you swap out skills in your current load-out, allowing you to adjust your build based on the mods you've found.
 
 ## Settlements & Outposts
 
 Planets feature **safe zones** with static, persistent states:  
 
-- **NPCs** — provide story progression, side quests, or world flavor.  
-- **Shops/Traders** — offer limited resources or services; stock may refresh but location persists.  
-- **Healing/Rest Points** — restore Shield and Sync.  
-- **Landing Zones** — once discovered, some can be used as **alternate starting points** on future runs.  
-
----
+- **NPCs** - provide story progression, side quests, or world flavor.  
+- **Shops/Traders** - offer limited resources or services; stock may refresh but location persists.  
+- **Healing/Rest Points** - restore Shield and Sync.  
+- **Landing Zones** - once discovered, some can be used as **alternate starting points** on future runs.  
 
 ## Extraction
 
@@ -85,8 +77,6 @@ Planets feature **safe zones** with static, persistent states:
 - Reaching an endpoint requires enough **Elythium** (found in deposits during exploration).  
 - On successful extraction, all XP and Research Points carried are **banked** at HQ.  
 - Failure to extract (running out of Sync or Elythium) results in losing all unbanked progress.  
-
----
 
 ## Summary
 

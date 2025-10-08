@@ -1,12 +1,11 @@
 # Glossary
 
-- **Thanadox Industries** - A massive corporation that essentially controls life in the outer worlds.
-
-  - Roots: Thanatos (death), Paradox
-
-  - Outwardly, their goal is to prevent death of ecosystems due to human exploitation and exploration
-
-  - Inwardly, there methods of preserving life are morally dubious, and are exploitable in their own right.
+- **Thanadox Industries** - A massive corporation that essentially controls life in the outer-system (and much of your home system).
+- Roots: Thanatos (death), Paradox
+  
+- Outwardly, their goal is to prevent death of ecosystems due to human exploitation and exploration
+  
+- Inwardly, there methods of preserving life are morally dubious, and are exploitable in their own right.
 - **Astrobiologist** - Someone who researches the fauna of alien planets and galaxies.
 - **Soul** - The players being, their intents, and core experiences.
 - **Animech** - A humanoid robot that is imbued with your soul allowing you to act on its behalf from long distances.
@@ -16,7 +15,8 @@
 - **Resonance** - Used during combat. Increasing it makes it easier to capture the specimen.
 - **Capture** - The act of extracting the essence of a specimen, turning it into its Primortal form, or expanding an existing one.
 - **XenoCrypt** - The tool used by the Animech to capture Primortals.
-- Roots: Xeno for alien, crypt for storage or containment
+  - Roots: Xeno for alien, crypt for storage or containment
+
 - **Primortal** - The physical and metaphysical essence of a creature. It captures everything from the anatomy of a creature, to it's DNA, to the fingerprint of its soul.
 
   - Roots:  (Primal, Primordial, Mortal / Immortal)
@@ -34,6 +34,5 @@
     - **Shield** (SHLD) is the temporary amount of damage that can be taken before Sync begins taking damage
     - **Sync** (SYNC) represent the link between the Animech and the player's soul, depleted after shield is fully down.
     - **Experience** (EXP) is gained from combat encounters and levels up the Animech
-    - The level of the animech adds an upper cap to unlock-able skill trees, requiring higher levels to unlock newer skills for Primortals
 - **Primortals:**
-- **Research Points** (RPTS) are gained from combat encounters and from capturing specimen. They are used to unlock skills specific to the associated creature type.
+    - **Research Points** (RPTS) are gained from combat encounters and from capturing specimen. They are used to unlock skills specific to the associated creature type.

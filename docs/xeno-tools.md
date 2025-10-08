@@ -1,6 +1,6 @@
-## The Xenolog
+## The XenoLog
 
-The **Xenolog** is your compendium of knowledge, tracking progress across runs.  
+The **XenoLog** is your compendium of knowledge, tracking progress across runs.  
 
 - **Creature Entries**  
   - Species discovered, lore, and type alignment.  

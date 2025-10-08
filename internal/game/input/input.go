@@ -1,9 +1,10 @@
 package input
 
 import (
+	"time"
+
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
-	"time"
 )
 
 type Controls struct {

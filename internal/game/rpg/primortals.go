@@ -1,6 +1,8 @@
 package rpg
 
 var Primortals = map[PrimortalType]Primortal{}
+var XenoLogEntries = map[int]PrimortalType{}
+var MaxXenoLogEntryIndex = 0
 var reservedUnlockableSkill = map[SkillId]bool{}
 
 const SkillCostUnavailable = 0
@@ -15,6 +17,7 @@ func (pt PrimortalType) Primortal() Primortal {
 }
 
 type Primortal struct {
+	XenoLogIndex     int
 	Type             PrimortalType
 	Name             string
 	Description      string
@@ -49,6 +52,18 @@ func (p Primortal) register() Primortal {
 	for _, us := range p.UnlockableSkills {
 		if taken, _ := reservedUnlockableSkill[us.SkillId]; taken {
 			panic("duplicate unlockable skill: " + us.SkillId)
+		}
+	}
+	if p.XenoLogIndex < 0 || p.XenoLogIndex > 1000 {
+		panic("invalid XenoLogIndex: " + string(p.XenoLogIndex))
+	}
+	if p.XenoLogIndex != 0 {
+		if _, exists := XenoLogEntries[p.XenoLogIndex]; exists {
+			panic("duplicate XenoLogIndex: " + string(p.XenoLogIndex))
+		}
+		XenoLogEntries[p.XenoLogIndex] = p.Type
+		if p.XenoLogIndex > MaxXenoLogEntryIndex {
+			MaxXenoLogEntryIndex = p.XenoLogIndex
 		}
 	}
 	Primortals[p.Type] = p
@@ -88,10 +103,11 @@ var Primortal_Dummy = Primortal{
 
 // kinetic
 var Primortal_Pumbl = Primortal{
-	Type:        "pumbl",
-	Name:        "Pumbl",
-	Description: "Little roll up rock guy. A mix between Sandshrew and Geodude.",
-	BaseSync:    30,
+	Type:         "pumbl",
+	Name:         "Pumbl",
+	XenoLogIndex: 3,
+	Description:  "Little roll up rock guy. A mix between Sandshrew and Geodude.",
+	BaseSync:     30,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_ShoulderRoll.Id,
@@ -121,10 +137,11 @@ var Primortal_Pumbl = Primortal{
 
 // thermal
 var Primortal_Scintail = Primortal{
-	Type:        "scintail",
-	Name:        "Scintail",
-	Description: "A cute lizard guy with heat fins that glow.",
-	BaseSync:    25,
+	Type:         "scintail",
+	Name:         "Scintail",
+	XenoLogIndex: 43,
+	Description:  "A cute lizard guy with heat fins that glow.",
+	BaseSync:     25,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_Cinder.Id,
@@ -155,10 +172,11 @@ var Primortal_Scintail = Primortal{
 
 // voltaic
 var Primortal_Volteel = Primortal{
-	Type:        "volteel",
-	Name:        "Volteel",
-	Description: "An eel with stubby little feet that can stand up right.",
-	BaseSync:    20,
+	Type:         "volteel",
+	Name:         "Volteel",
+	XenoLogIndex: 8,
+	Description:  "An eel with stubby little feet that can stand up right.",
+	BaseSync:     20,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_ArcDart.Id,
@@ -190,10 +208,11 @@ var Primortal_Volteel = Primortal{
 
 // corrosive
 var Primortal_Toxmidge = Primortal{
-	Type:        "toxmidge",
-	Name:        "Toxmidge",
-	Description: "A flying gross flying insect that squirts acid.",
-	BaseSync:    15,
+	Type:         "toxmidge",
+	Name:         "Toxmidge",
+	XenoLogIndex: 9,
+	Description:  "A flying gross flying insect that squirts acid.",
+	BaseSync:     15,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_AcidSting.Id,
@@ -224,10 +243,11 @@ var Primortal_Toxmidge = Primortal{
 
 // mutagenic
 var Primortal_Myceli = Primortal{
-	Type:        "myceli",
-	Name:        "Myceli",
-	Description: "A fun guy with tentacle legs.",
-	BaseSync:    40,
+	Type:         "myceli",
+	Name:         "Myceli",
+	XenoLogIndex: 19,
+	Description:  "A fun guy with tentacle legs.",
+	BaseSync:     40,
 	UnlockableSkills: []UnlockableSkill{
 		{
 			SkillId: Skill_PhotoSurge.Id,

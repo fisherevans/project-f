@@ -4,16 +4,44 @@ const BaseAnimechShield = 25
 const BaseAnimechSync = 25
 
 type Animech struct {
-	SkillSet          SkillSet `yaml:"skill_set"`
-	AdditionalShield  int      `yaml:"additional_shield"`
-	AdditionalSync    int      `yaml:"additional_sync"`
-	AnimechExperience int      `yaml:"animech_experience"`
+	SkillSet          SkillSet         `yaml:"skill_set"`
+	AnimechExperience int              `yaml:"experience_points"`
+	Upgrades          *AnimechUpgrades `yaml:"upgrades"`
 }
 
 func (a Animech) GetMaxShield() int {
-	return BaseAnimechShield + a.AdditionalShield
+	return BaseAnimechShield + a.Upgrades.AdditionalShield()
 }
 
 func (a Animech) GetMaxSync() int {
-	return BaseAnimechSync + a.AdditionalSync
+	return BaseAnimechSync + a.Upgrades.AdditionalSync()
+}
+
+type AnimechUpgrades struct {
+	ShieldLevel int `yaml:"shield_level"`
+	SyncLevel   int `yaml:"sync_level"`
+}
+
+func (u AnimechUpgrades) GetLevel() int {
+	return 1 + u.ShieldLevel + u.SyncLevel
+}
+
+func (u AnimechUpgrades) AdditionalSync() int {
+	return AnimechUpgradeAdditionalSync(u.GetLevel())
+}
+
+func (u AnimechUpgrades) AdditionalShield() int {
+	return AnimechUpgradeAdditionalShield(u.GetLevel())
+}
+
+func AnimechUpgradeAdditionalSync(level int) int {
+	return level * 10
+}
+
+func AnimechUpgradeAdditionalShield(level int) int {
+	return level * 5
+}
+
+func AnimechUpgradeExperienceRequiredToUpgrade(level int) int {
+	return 25 * (level + 1)
 }
