@@ -14,11 +14,6 @@ func (s *State) AdjustHealth(amount int, target Combatant, opt *DamageOptions) {
 		return
 	}
 	target.AdjustHealth(amount)
-	if amount > 0 {
-		// p.DamageFlashMask.healed()
-	} else {
-		// todo p.DamageFlashMask.damaged()
-	}
 	color := colors.Hex(0xed0027)
 	if amount > 0 {
 		color = colors.Hex(0x1ced00)

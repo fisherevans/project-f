@@ -4,7 +4,6 @@ type StatusType string
 
 const (
 	// kinetic
-	// todo fortified
 	StatusFortified StatusType = "fortified"
 	// thermal
 	StatusBurning StatusType = "burning"

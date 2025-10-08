@@ -91,13 +91,13 @@ func (l *line) commit(text *text.Text) {
 	l.typingDone = 0
 }
 
-func (l *line) doTyping(todo int) int {
-	if l.typingDone+todo > l.typingTotal {
-		remaining := l.typingDone + todo - l.typingTotal
+func (l *line) doTyping(toType int) int {
+	if l.typingDone+toType > l.typingTotal {
+		remaining := l.typingDone + toType - l.typingTotal
 		l.typingDone = l.typingTotal
 		return remaining
 	}
-	l.typingDone += todo
+	l.typingDone += toType
 	return 0
 }
 

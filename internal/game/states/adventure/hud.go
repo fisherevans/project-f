@@ -38,6 +38,7 @@ func (h *Hud) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pi
 		stroke string
 	}
 
+	// todo display elythium as a guage
 	counts := []topRightCount{
 		{
 			icon:   h.elythiumCountIcon,

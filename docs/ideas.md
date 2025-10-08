@@ -1,5 +1,7 @@
 # Adventure State
 
+- elythium gauge instead of number
+
 - Interactions
   - Movement interaction
     - push item

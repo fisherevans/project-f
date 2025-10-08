@@ -81,39 +81,59 @@ func (h *HealthState) Update(timeDelta float64) {
 	h.Current += sign * diff
 }
 
-type DamageFlashMask struct {
-	FullMask         pixel.RGBA
+type HealthFlash struct {
+	DamageMask       pixel.RGBA
+	HealMask         pixel.RGBA
 	RecoveryDuration float64
 
+	wasDamaged    bool
 	timeRecovered float64
 }
 
-func NewDamageFlashMask() *DamageFlashMask {
-	return &DamageFlashMask{
-		FullMask:         pixel.RGBA{1, 0.4, 0.4, 1},
+func NewDamageFlashMask() *HealthFlash {
+	return &HealthFlash{
+		DamageMask:       pixel.RGBA{1, 0.4, 0.4, 1},
+		HealMask:         pixel.RGBA{0.4, 1, 0.4, 1},
 		RecoveryDuration: 0.5,
 	}
 }
 
-func (d *DamageFlashMask) Update(timeDelta float64) {
+func (d *HealthFlash) Update(timeDelta float64) {
 	d.timeRecovered += timeDelta
 }
 
-func (d *DamageFlashMask) getMask() pixel.RGBA {
+func (d *HealthFlash) getMask() pixel.RGBA {
 	recovered := pixel.RGBA{1, 1, 1, 1}
 	recoveryProgress := math.Min(1, d.timeRecovered/d.RecoveryDuration)
 	if recoveryProgress >= 1 {
 		return recovered
 	}
-	return colors.Lerp(d.FullMask, recovered, recoveryProgress)
+	mask := d.HealMask
+	if d.wasDamaged {
+		mask = d.DamageMask
+	}
+	return colors.Lerp(mask, recovered, recoveryProgress)
 }
 
-func (d *DamageFlashMask) damaged() {
+func (d *HealthFlash) damaged() {
+	d.wasDamaged = true
 	d.timeRecovered = 0
 }
 
-func (d *DamageFlashMask) healed() {
-	// TODO flash green
+func (d *HealthFlash) healed() {
+	d.wasDamaged = false
+	d.timeRecovered = 0
+}
+
+func (d *HealthFlash) basedOnAdjust(amount int) {
+	if amount == 0 {
+		return
+	}
+	if amount > 0 {
+		d.healed()
+	} else {
+		d.damaged()
+	}
 }
 
 type CurrentCombatantSkills struct {

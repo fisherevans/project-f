@@ -30,9 +30,9 @@ type Player struct {
 	NextSkillCommitted bool
 	Tempo              *Tempo
 
-	Shield          *HealthState
-	Syncs           map[int]*HealthState
-	DamageFlashMask *DamageFlashMask
+	Shield      *HealthState
+	Syncs       map[int]*HealthState
+	HealthFlash *HealthFlash
 
 	baseAnimation *anim.AnimatedSprite
 }
@@ -46,17 +46,17 @@ func NewPlayer(animech *rpg.Animech, run *rpg.Run) *Player {
 		Tempo:                  &Tempo{},
 		Shield:                 NewHealthState(animech.GetMaxShield()),
 		Syncs:                  make(map[int]*HealthState),
-		DamageFlashMask:        NewDamageFlashMask(),
+		HealthFlash:            NewDamageFlashMask(),
 		baseAnimation:          anim.Load(atlas, "animech/combat_animech", "default"),
 	}
 }
 
 func (p *Player) Update(timeDelta float64) {
-	p.DamageFlashMask.Update(timeDelta)
+	p.HealthFlash.Update(timeDelta)
 }
 
 func (p *Player) GetColorMask() pixel.RGBA {
-	return p.DamageFlashMask.getMask()
+	return p.HealthFlash.getMask()
 }
 
 func (p *Player) PeekNextSkill() *rpg.SkillId {
@@ -103,6 +103,7 @@ func (p *Player) AdjustHealth(amount int) {
 	if amount == 0 {
 		return
 	}
+	p.HealthFlash.basedOnAdjust(amount)
 	if amount > 0 { // healing
 		amount = p.GetCurrentSync().AdjustTarget(amount)
 		if amount != 0 {

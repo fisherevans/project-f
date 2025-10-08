@@ -11,11 +11,11 @@ import (
 
 type PrimortalOpponent struct {
 	*CurrentCombatantSkills
-	Statuses        *AppliedStatuses
-	Health          *HealthState
-	Tempo           *Tempo
-	NextSkill       *rpg.SkillId
-	DamageFlashMask *DamageFlashMask
+	Statuses    *AppliedStatuses
+	Health      *HealthState
+	Tempo       *Tempo
+	NextSkill   *rpg.SkillId
+	HealthFlash *HealthFlash
 
 	name          string
 	skillChooser  SkillChooser
@@ -37,7 +37,7 @@ func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 		Statuses:               NewAppliedStatuses(),
 		Health:                 NewHealthState(p.BaseSync + archetype.AdditionalSync),
 		Tempo:                  &Tempo{},
-		DamageFlashMask:        NewDamageFlashMask(),
+		HealthFlash:            NewDamageFlashMask(),
 		name:                   p.Name,
 		skillChooser:           NewSkillChooser(archetype.SkillPool),
 		baseAnimation:          anim.Load(atlas, "primortals/"+string(primortal), "default"),
@@ -59,15 +59,16 @@ func (o *PrimortalOpponent) IsPlayer() bool {
 }
 
 func (o *PrimortalOpponent) Update(timeDelta float64) {
-	o.DamageFlashMask.Update(timeDelta)
+	o.HealthFlash.Update(timeDelta)
 }
 
 func (o *PrimortalOpponent) GetColorMask() pixel.RGBA {
-	return o.DamageFlashMask.getMask()
+	return o.HealthFlash.getMask()
 }
 
 func (o *PrimortalOpponent) AdjustHealth(amount int) {
 	o.Health.AdjustTarget(amount)
+	o.HealthFlash.basedOnAdjust(amount)
 }
 
 func (o *PrimortalOpponent) GetStatuses() *AppliedStatuses {
