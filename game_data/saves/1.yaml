@@ -6,10 +6,10 @@ animech:
         "2": photo_surge
         "3": mend_spores
         "4": arc_dart
-    experience_points: 209
+    experience_points: 211
     upgrades:
-        shield_level: 2
-        sync_level: 5
+        shield_level: 1
+        sync_level: 6
 loadouts:
     - name: Default
       skill_set:

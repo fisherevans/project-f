@@ -1,10 +1,19 @@
-# Project F (Primortal?)
+# Project F
 
-> The title is a work in progress. The letter F might indicate how many times I've started a game and not finished it. I'm leaning towards "Primortal" which is [fairly unique](https://www.google.com/search?q=primortal&source=hp&oq=primortal).
->
-> But... this game is by far the furthest along I've ever gotten on a personal project - better yet, it's the one I've felt the most confident in executing. All of those attempts over the past 10-15 years now feel like practice. When I've felt stumped or stuck while working on this project, it's not because I didn't know how to do it - it was because I wasn't sure which direction was best. It's a good feeling. A motivating feeling.
+"Project F" is a singke player, 2D pixelart, sci-fi, catch-em-all roguelike built in Go using a custom engine inspired by retro RPG games, pulling in modern themes and mechanics. The game is designed to be played in the form factor of a Game Boy Advance.
 
-A single player space RPG designed to be played in the form factor of a Game Boy Advance.
+
+You play as an astrobiologist remotely piloting a humanoid Animech to explore alien worlds, capturing life forms and harnessing their powers. While playing, you uncover the truth behind the corporation that employs you in this dystopian world. Combat is a tactical mix or turn based skill selection, and well timed execution.
+
+> *Click the image below to watch a recent demo.*
+
+[![Watch a demo](https://img.youtube.com/vi/4j0PABJWh3c/hqdefault.jpg)](https://www.youtube.com/watch?v=4j0PABJWh3c)
+
+## Quick Links
+
+- [Devlog](https://www.tumblr.com/fishwingdev) (with screenshots & demo footage)
+- [Story](story.md)
+- [Gameplay loop](core-loop.md)
 
 # Game Summary
 
@@ -64,3 +73,24 @@ Other goals I have for this game are that:
 - Final Fantasy
   - Various moral quandaries
   - Mix of real time + turn based combat
+
+# Tools Used
+
+- [Aseprite](https://www.aseprite.org/) to edit sprites
+- [Tiled](https://www.mapeditor.org/) to create maps
+- Libraries:
+  - [Pixel](https://github.com/gopxl/pixel), a lightweight Golang OpenGL wrapper
+- Sprites (temporary and altered):
+  - [SnowHex](https://snowhex.itch.io/)
+  - [CyberMonkeyAssets](https://cybermonkeyassets.itch.io/sci-fi-spacial-pack)
+- Fonts:
+  - [AddStandard](https://www.dafont.com/addstandardbitmap.font)
+  - [3-by-5 Pixel Font](https://fontstruct.com/fontstructions/show/716744/3_by_5_pixel_font)
+  - [m3x7](https://fontstruct.com/fontstructions/show/2372824/3x7-font)
+  - [m3x5](https://fontstruct.com/fontstructions/show/716744/3_by_5_pixel_font)
+- AI usage disclaimer:
+  - I sometimes use AI to generate images:
+    - For smaller sprites, as references/templates
+    - For larger backdrops (processed them in post)
+  - Some code snipets/blocks are AI generated and altered to fit my needs
+  - AI tools are used in my IDE for autocomplete/predictive typing
