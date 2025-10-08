@@ -139,7 +139,7 @@ var Primortal_Pumbl = Primortal{
 var Primortal_Scintail = Primortal{
 	Type:         "scintail",
 	Name:         "Scintail",
-	XenoLogIndex: 43,
+	XenoLogIndex: 4,
 	Description:  "A cute lizard guy with heat fins that glow.",
 	BaseSync:     25,
 	UnlockableSkills: []UnlockableSkill{

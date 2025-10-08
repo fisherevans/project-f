@@ -120,7 +120,8 @@ func (v *primortalDetailView) handleInput(ctx *game.Context, ps *primortalsMenu)
 	}
 	if ctx.Controls.ButtonA().JustPressed() {
 		us := v.primortal.Primortal().UnlockableSkills[v.selection]
-		if !ctx.GameSave.IsSkillUnlocked(us.SkillId) && us.Cost <= ctx.GameSave.Primortals[v.primortal].ResearchPoints {
+		savedPrimortal, savedPrimortalExists := ctx.GameSave.Primortals[v.primortal]
+		if !ctx.GameSave.IsSkillUnlocked(us.SkillId) && savedPrimortalExists && us.Cost <= savedPrimortal.ResearchPoints {
 			ctx.GameSave.Primortals[v.primortal].ResearchPoints -= us.Cost
 			ctx.GameSave.UnlockedSkills[us.SkillId] = struct{}{}
 		}
@@ -136,7 +137,6 @@ func (v *primortalDetailView) handleInput(ctx *game.Context, ps *primortalsMenu)
 				ctx.GameSave.Primortals[v.primortal].ResearchPoints += us.Cost
 			}
 		}
-		saveOrNotify(ctx)
 	}
 }
 
