@@ -16,7 +16,7 @@ Combat in *Project F* is a tactical, turn-based system built on **skills, stance
 
 When a skill ends and no new skill is queued, combat **pauses** until the player selects their next skill. Planning ahead is rewarded however: if you pre-queue skills so that combat flows uninterrupted, you gain **Tempo**, which increases the effectiveness of certain skills and stances.
 
-In the image below you can see an example of player and opponent skills. Skills flow up, and as the "tick dots" hit the upper threshold, they trigger. On the left hand side you see a skill which starts with a 3-tick vulnerable stance ("!!!"), and the 4th dick does damage (the white dot). On the right side, a damage tick *just* triggered, following by 2 idle ticks (small black dots), then a 2-tick defensive stance (shield). In this case, the damaging tick on the left will trigger while the opponent is in a defensive stance, reducing its effectiveness.
+In the image below you can see an example of player and opponent skills. Skills flow up, and as the "tick dots" hit the upper threshold, they trigger. On the left hand side you see a skill which starts with a 3-tick vulnerable stance ("!!!"), and the 4th tick does damage (the white dot). On the right side, a damage tick *just* triggered, following by 2 idle ticks (small black dots), then a 2-tick defensive stance (shield). In this case, the damaging tick on the left will trigger while the opponent is in a defensive stance, reducing its effectiveness.
 
 ![Tick Example](media/tick_example.png)
 
