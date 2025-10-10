@@ -6,7 +6,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -17,13 +16,13 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-type primortalDetailView struct {
+type primortalDetailMenu struct {
 	primortal rpg.PrimortalType
 	selection int
 }
 
-func newPrimortalDetailView(primortal rpg.PrimortalType) *primortalDetailView {
-	return &primortalDetailView{
+func newPrimortalDetailMenu(primortal rpg.PrimortalType) *primortalDetailMenu {
+	return &primortalDetailMenu{
 		primortal: primortal,
 	}
 }
@@ -40,8 +39,10 @@ var (
 			tbcfg.RenderFrom(gfx.TopCenter)))
 )
 
-func (v *primortalDetailView) RenderPrimortalView(ps *primortalsMenu, ctx *game.Context, target *pixel.Batch, timeDelta float64) {
-	v.handleInput(ctx, ps)
+func (*primortalDetailMenu) Enter(Context) {}
+
+func (v *primortalDetailMenu) OnTick(ctx Context, target pixel.Target, timeDelta float64) {
+	v.handleInput(ctx)
 
 	mediumText := newTextRenderer(ctx, target, mediumTextbox)
 	smallText := newTextRenderer(ctx, target, smallTextbox)
@@ -101,9 +102,9 @@ func (v *primortalDetailView) RenderPrimortalView(ps *primortalsMenu, ctx *game.
 	smallText.render("[F1] to reset", screenWidth-detailMargin, detailMargin, uiMask, tbcfg.RenderFrom(gfx.BottomRight))
 }
 
-func (v *primortalDetailView) handleInput(ctx *game.Context, ps *primortalsMenu) {
+func (v *primortalDetailMenu) handleInput(ctx Context) {
 	if ctx.Controls.ButtonB().JustPressed() {
-		ps.returnToList(ctx)
+		ctx.PopMenu()
 	}
 	if ctx.Controls.DPad().DirectionJustPressedOrRepeated(input.Up) {
 		v.selection--
@@ -140,7 +141,7 @@ func (v *primortalDetailView) handleInput(ctx *game.Context, ps *primortalsMenu)
 	}
 }
 
-func saveOrNotify(ctx *game.Context) {
+func saveOrNotify(ctx Context) {
 	if err := ctx.GameSave.Save(); err != nil {
 		log.Err(err).Msg("failed to save game")
 		ctx.Notify("Failed to save game!!!")

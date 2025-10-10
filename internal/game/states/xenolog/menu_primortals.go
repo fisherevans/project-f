@@ -6,7 +6,6 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -25,11 +24,9 @@ type primortalsMenu struct {
 	scrollSpeed  float64
 	initialized  bool
 	elapsed      float64
-
-	detailView *primortalDetailView
 }
 
-func newPrimortalsMenu(ctx *game.Context) *primortalsMenu {
+func newPrimortalsMenu(ctx Context) *primortalsMenu {
 	return &primortalsMenu{
 		selection:    1,
 		dy:           0,
@@ -38,17 +35,9 @@ func newPrimortalsMenu(ctx *game.Context) *primortalsMenu {
 	}
 }
 
-func (m *primortalsMenu) isUpgradeAvailable(ctx *game.Context) bool {
-	for pType, save := range ctx.GameSave.Primortals {
-		next := nextUnlock(pType.Primortal(), ctx.GameSave)
-		if next != nil && save.ResearchPoints >= next.Cost {
-			return true
-		}
-	}
-	return false
-}
+func (*primortalsMenu) Enter(Context) {}
 
-func (m *primortalsMenu) RenderPrimortals(s *Screen, ctx *game.Context, target *pixel.Batch, timeDelta float64) {
+func (m *primortalsMenu) OnTick(ctx Context, target pixel.Target, timeDelta float64) {
 	m.elapsed += timeDelta
 
 	if !m.initialized {
@@ -56,19 +45,14 @@ func (m *primortalsMenu) RenderPrimortals(s *Screen, ctx *game.Context, target *
 		m.initialized = true
 	}
 
-	if m.detailView != nil {
-		m.detailView.RenderPrimortalView(m, ctx, target, timeDelta)
-		return
-	}
-
-	m.handleInput(ctx, s)
+	m.handleInput(ctx)
 	m.updateScroll(screenHeight, timeDelta)
 	m.drawList(ctx, target)
 }
 
-func (m *primortalsMenu) handleInput(ctx *game.Context, s *Screen) {
+func (m *primortalsMenu) handleInput(ctx Context) {
 	if ctx.Controls.ButtonB().JustPressed() {
-		s.returnToMenu(ctx)
+		ctx.PopMenu()
 	}
 	if ctx.Controls.DPad().DirectionJustPressedOrRepeated(input.Up) {
 		m.selection--
@@ -85,7 +69,7 @@ func (m *primortalsMenu) handleInput(ctx *game.Context, s *Screen) {
 	if ctx.Controls.ButtonA().JustPressed() {
 		pType, exists := rpg.XenoLogEntries[m.selection]
 		if exists {
-			m.detailView = newPrimortalDetailView(pType)
+			ctx.PushMenu(newPrimortalDetailMenu(pType))
 		}
 	}
 }
@@ -125,11 +109,11 @@ func (m *primortalsMenu) updateScroll(screenHeight int, timeDelta float64) {
 	m.dy = int(math.Floor(float64(m.dy) + dist*step))
 }
 
-func (m *primortalsMenu) drawList(ctx *game.Context, target *pixel.Batch) {
+func (m *primortalsMenu) drawList(ctx Context, target pixel.Target) {
 	smallText := newTextRenderer(ctx, target, smallTextbox)
 
 	baseY := screenHeight - primortalRowHeight + m.dy
-	upgradeMask := flash(m.elapsed, selectBoxSubLabelFlashSpeed, uiMask, colors.White.RGBA)
+	upgradeMask := colors.Lerp(uiMask, uiMaskSelected, ctx.Utils.TimeCycleSin(selectBoxSubLabelFlashSpeed))
 
 	upgradeAbove := false
 	upgradeBelow := false
@@ -192,10 +176,6 @@ func (m *primortalsMenu) drawList(ctx *game.Context, target *pixel.Batch) {
 	if upgradeBelow {
 		smallText.render("v UPGRADE", screenWidth-toolTipMargin, toolTipMargin, upgradeMask, tbcfg.RenderFrom(gfx.BottomRight))
 	}
-}
-
-func (m *primortalsMenu) returnToList(ctx *game.Context) {
-	m.detailView = nil
 }
 
 func nextUnlock(primortal rpg.Primortal, save *rpg.GameSave) *rpg.UnlockableSkill {

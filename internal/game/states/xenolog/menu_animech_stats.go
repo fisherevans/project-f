@@ -6,16 +6,14 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
-	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-type animechMenu struct {
+type animechStatsMenu struct {
 	upgrades  []*upgradedState
 	actions   []*action
 	selection int
@@ -30,11 +28,11 @@ type upgradedState struct {
 
 type action struct {
 	label   string
-	handler func(ctx *game.Context, m *animechMenu)
+	handler func(ctx Context, m *animechStatsMenu)
 }
 
-func newAnimechMenu(ctx *game.Context) *animechMenu {
-	return &animechMenu{
+func newAnimechStatsMenu(ctx Context) *animechStatsMenu {
+	return &animechStatsMenu{
 		upgrades: []*upgradedState{
 			{
 				label:        "Sync",
@@ -50,7 +48,7 @@ func newAnimechMenu(ctx *game.Context) *animechMenu {
 		actions: []*action{
 			{
 				label: "[COMMIT]",
-				handler: func(ctx *game.Context, m *animechMenu) {
+				handler: func(ctx Context, m *animechStatsMenu) {
 					log.Info().Msgf("in commit")
 					for _, upgrade := range m.upgrades {
 						for l := 0; l < upgrade.uncommitedLevelIncrease; l++ {
@@ -68,7 +66,7 @@ func newAnimechMenu(ctx *game.Context) *animechMenu {
 			},
 			{
 				label: "[RESET]",
-				handler: func(ctx *game.Context, m *animechMenu) {
+				handler: func(ctx Context, m *animechStatsMenu) {
 					for _, upgrade := range m.upgrades {
 						upgrade.uncommitedLevelIncrease = 0
 					}
@@ -77,7 +75,7 @@ func newAnimechMenu(ctx *game.Context) *animechMenu {
 			},
 			{
 				label: "[RE-SPEC]",
-				handler: func(ctx *game.Context, m *animechMenu) {
+				handler: func(ctx Context, m *animechStatsMenu) {
 					for _, upgrade := range m.upgrades {
 						upgrade.uncommitedLevelIncrease = 0
 					}
@@ -92,24 +90,24 @@ func newAnimechMenu(ctx *game.Context) *animechMenu {
 					m.selection = 0
 				},
 			},
+			{
+				label: "[EDIT SKILL SET]",
+				handler: func(ctx Context, m *animechStatsMenu) {
+					ctx.PushMenu(newSkillSetMenu(ctx))
+				},
+			},
 		},
 	}
 }
 
-func (m *animechMenu) isUpgradeAvailable(ctx *game.Context) bool {
-	available := ctx.GameSave.Animech.AnimechExperience
-	level := ctx.GameSave.Animech.Upgrades.GetLevel()
-	if available >= rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1) {
-		return true
-	}
-	return false
+func (m *animechStatsMenu) Enter(Context) {
+
 }
 
-func (m *animechMenu) RenderAnimech(s *Screen, ctx *game.Context, target *pixel.Batch, timeDelta float64) {
+func (m *animechStatsMenu) OnTick(ctx Context, target pixel.Target, timeDelta float64) {
 	if ctx.Controls.ButtonB().JustPressed() {
-		s.returnToMenu(ctx)
+		ctx.PopMenu()
 	}
-
 	availableExperience := ctx.GameSave.Animech.AnimechExperience
 	currentLevel := ctx.GameSave.Animech.Upgrades.GetLevel()
 	uncommitedLevel := currentLevel
@@ -211,25 +209,4 @@ func (m *animechMenu) RenderAnimech(s *Screen, ctx *game.Context, target *pixel.
 		levelText += fmt.Sprintf("{+c:white} > %d", uncommitedLevel)
 	}
 	mediumText.render("Level: "+levelText, screenWidth/2+20, screenHeight-10, uiMask, tbcfg.RenderFrom(gfx.TopLeft))
-}
-
-type textRenderer struct {
-	ctx    *game.Context
-	target *pixel.Batch
-	tb     *textbox.Instance
-}
-
-func newTextRenderer(ctx *game.Context, target *pixel.Batch, tb *textbox.Instance) *textRenderer {
-	return &textRenderer{
-		ctx:    ctx,
-		target: target,
-		tb:     tb,
-	}
-}
-
-func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tbcfg.ConfigOpt) (int, int) {
-	c := r.tb.NewComplexContent(text)
-	matrix := pixel.IM.Moved(gfx.IVec(x, y))
-	r.tb.Render(r.ctx, r.target, matrix, c, append(opts, tbcfg.Foreground(mask))...)
-	return c.Width(), c.Height()
 }
