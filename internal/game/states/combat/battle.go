@@ -30,11 +30,11 @@ func (b *Battle) GetOpponentCurrentTickProgress() float64 {
 	return opponentProgress
 }
 
-func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
-	ctx.DebugBR(fmt.Sprintf("PendingProgress: %f", b.PendingProgress))
-	ctx.DebugBR(fmt.Sprintf("TickPlayerNext: %t", b.TickPlayerNext))
-	ctx.DebugBR(fmt.Sprintf("PlayerSkill: %s", s.Player.GetCurrentSkill()))
-	ctx.DebugBR(fmt.Sprintf("OpponentSkill: %s", s.Opponent.GetCurrentSkill()))
+func (b *Battle) Update(s *State, timeDelta float64) {
+	game.DebugBR(fmt.Sprintf("PendingProgress: %f", b.PendingProgress))
+	game.DebugBR(fmt.Sprintf("TickPlayerNext: %t", b.TickPlayerNext))
+	game.DebugBR(fmt.Sprintf("PlayerSkill: %s", s.Player.GetCurrentSkill()))
+	game.DebugBR(fmt.Sprintf("OpponentSkill: %s", s.Opponent.GetCurrentSkill()))
 
 	if b.TickPlayerNext && s.Player.GetCurrentSkill() == nil {
 		if s.Player.PeekNextSkill() == nil || !s.Player.IsNextSkillCommitted() {
@@ -55,7 +55,7 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
 	}
 
 	tps := ticksPerSecond
-	if ctx.DebugToggles.F1().ToggleState() {
+	if game.DebugToggles().F1().ToggleState() {
 		tps *= 2
 	}
 	b.PendingProgress += timeDelta * tps
@@ -67,7 +67,7 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
 				b.OpponentSkillEnding = false
 			}
 			s.Player.GetStatuses().ApplyEffects(s, s.Player)
-			over := s.Player.GetCurrentSkill().Tick(ctx, s, s.Player, s.Opponent)
+			over := s.Player.GetCurrentSkill().Tick(s, s.Player, s.Opponent)
 			if over {
 				b.PlayerSkillEnding = true
 			}
@@ -78,7 +78,7 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
 				b.PlayerSkillEnding = false
 			}
 			s.Opponent.GetStatuses().ApplyEffects(s, s.Opponent)
-			over := s.Opponent.GetCurrentSkill().Tick(ctx, s, s.Opponent, s.Player)
+			over := s.Opponent.GetCurrentSkill().Tick(s, s.Opponent, s.Player)
 			if over {
 				b.OpponentSkillEnding = true
 			}
@@ -88,9 +88,9 @@ func (b *Battle) Update(ctx *game.Context, s *State, timeDelta float64) {
 	}
 }
 
-func (i *SkillInstance) Tick(ctx *game.Context, s *State, source Combatant, target Combatant) bool {
+func (i *SkillInstance) Tick(s *State, source Combatant, target Combatant) bool {
 	if i.NextTick <= i.Duration() {
-		i.OnTick(ctx, s, i.NextTick, source, target)
+		i.OnTick(s, i.NextTick, source, target)
 		i.NextTick++
 	}
 	return i.NextTick > i.Duration()

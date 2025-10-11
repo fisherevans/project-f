@@ -63,10 +63,10 @@ type ShadowMob struct {
 	chaseChangeMax   float64 // max seconds between chase retargets
 
 	// Triggering: fire a hook when close to player (e.g., to start combat)
-	triggerRadius   float64                                         // tiles; 0=disabled
-	triggerCooldown float64                                         // seconds between triggers
-	triggerTimer    float64                                         // counts down
-	OnTrigger       func(ctx *game.Context, s *State, m *ShadowMob) // optional callback
+	triggerRadius   float64                      // tiles; 0=disabled
+	triggerCooldown float64                      // seconds between triggers
+	triggerTimer    float64                      // counts down
+	OnTrigger       func(s *State, m *ShadowMob) // optional callback
 }
 
 // ShadowMobConfig exposes the high-level knobs you likely want to set at spawn time.
@@ -77,7 +77,7 @@ type ShadowMobConfig struct {
 	SenseMin      float64
 	SenseMax      float64
 	TriggerRadius float64
-	OnTrigger     func(ctx *game.Context, s *State, m *ShadowMob)
+	OnTrigger     func(s *State, m *ShadowMob)
 }
 
 // DefaultShadowMobConfig returns a config pre-populated with balanced defaults.
@@ -87,9 +87,9 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 		SenseMin:      3.5,
 		SenseMax:      4.5,
 		TriggerRadius: 0.8,
-		OnTrigger: func(ctx *game.Context, s *State, m *ShadowMob) {
-			if ctx.DebugToggles.F5().ToggleState() {
-				s.TriggerCombat(nil, "combat/background_sylvoria", func(ctx *game.Context, s *State) {
+		OnTrigger: func(s *State, m *ShadowMob) {
+			if game.DebugToggles().F5().ToggleState() {
+				s.TriggerCombat(nil, "combat/background_sylvoria", func(s *State) {
 					for i, mob := range s.mobs {
 						if mob == m {
 							s.mobs[i] = s.mobs[len(s.mobs)-1]
@@ -97,12 +97,12 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 							break
 						}
 					}
-					s.actions.Add(NewDelayAction(NewSimpleAction(func(ctx *game.Context, s *State) {
+					s.actions.Add(NewDelayAction(NewSimpleAction(func(s *State) {
 						s.mobs = append(s.mobs, m)
 					}), 15))
 				})
 			} else {
-				ctx.Notify("Mob caught you! Toggle F5")
+				game.DebugNotification("Mob caught you! Toggle F5")
 			}
 		},
 	}
@@ -284,12 +284,12 @@ func (m *ShadowMob) moveOrBounce(s *State, proposed pixel.Vec, toPlayer pixel.Ve
 	m.retarget(toPlayer)
 }
 
-func (m *ShadowMob) Update(ctx *game.Context, s *State, timeDelta float64) {
+func (m *ShadowMob) Update(s *State, timeDelta float64) {
 	if timeDelta <= 0 {
 		return
 	}
 
-	ctx.DebugBL("mob state: %s", m.state)
+	game.DebugBL("mob state: %s", m.state)
 
 	// Cooldown for trigger hook
 	if m.triggerTimer > 0 {
@@ -317,7 +317,7 @@ func (m *ShadowMob) Update(ctx *game.Context, s *State, timeDelta float64) {
 	// Proximity trigger (independent of state)
 	if m.triggerRadius > 0 && distToPlayer <= m.triggerRadius && m.triggerTimer == 0 {
 		if m.OnTrigger != nil {
-			m.OnTrigger(ctx, s, m)
+			m.OnTrigger(s, m)
 		}
 		m.triggerTimer = m.triggerCooldown
 	}

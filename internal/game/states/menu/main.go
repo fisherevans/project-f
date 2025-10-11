@@ -31,22 +31,22 @@ var (
 
 type MainItem struct {
 	Label  string
-	Action func(s *State, ctx *game.Context)
+	Action func(s *State)
 }
 
 type Main struct {
 	items *util.Selectable[MainItem]
 }
 
-func (m Main) Render(s *State, ctx *game.Context, matrix pixel.Matrix, target pixel.Target, targetBounds pixel.Rect) {
-	m.items.UpdateSelection(ctx.Controls)
-	if ctx.Controls.ButtonA().JustPressed() {
+func (m Main) Render(s *State, matrix pixel.Matrix, target pixel.Target, targetBounds pixel.Rect) {
+	m.items.UpdateSelection(game.Controls[*State]())
+	if game.Controls[*State]().ButtonA().JustPressed() {
 		if m.items.SelectedEntry != nil && m.items.SelectedEntry.Value.Action != nil {
-			m.items.SelectedEntry.Value.Action(s, ctx)
+			m.items.SelectedEntry.Value.Action(s)
 		}
 	}
-	if ctx.Controls.ButtonStart().JustPressed() {
-		ctx.SetActiveStateIntent(game.SwapStateIntent{
+	if game.Controls[*State]().ButtonStart().JustPressed() {
+		game.SetActiveStateIntent(game.SwapStateIntent{
 			State: s.background,
 		})
 	}
@@ -67,7 +67,7 @@ func (m Main) Render(s *State, ctx *game.Context, matrix pixel.Matrix, target pi
 	frameTopLeft := matrix.Moved(pixel.V(margin, targetBounds.H()-margin))
 	frameBounds := pixel.R(0, 0, content.Bounds().W()+padding*2, content.Bounds().H()+padding*2)
 	mainFrame.Draw(target, frameBounds, frameTopLeft)
-	mainText.Render(ctx, target, frameTopLeft.Moved(pixel.V(padding, -padding)), content, tbcfg.Foreground(colors.White.RGBA))
+	mainText.Render(target, frameTopLeft.Moved(pixel.V(padding, -padding)), content, tbcfg.Foreground(colors.White.RGBA))
 }
 
 func createMain() Main {
@@ -87,16 +87,16 @@ func createMain() Main {
 			},
 			{
 				Label: "Return to game",
-				Action: func(s *State, ctx *game.Context) {
-					ctx.SetActiveStateIntent(game.SwapStateIntent{
+				Action: func(s *State) {
+					game.SetActiveStateIntent(game.SwapStateIntent{
 						State: s.background,
 					})
 				},
 			},
 			{
 				Label: "Quit",
-				Action: func(s *State, ctx *game.Context) {
-					ctx.SetActiveStateIntent(game.InitialState())
+				Action: func(s *State) {
+					game.SetActiveStateIntent(game.InitialState())
 				},
 			},
 		}),

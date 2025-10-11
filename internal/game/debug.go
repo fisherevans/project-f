@@ -20,22 +20,6 @@ type DebugInfo struct {
 	notifications []*Notification
 }
 
-func (d *DebugInfo) DebugTL(format string, a ...any) {
-	d.Debug(AreaTopLeft, format, a...)
-}
-
-func (d *DebugInfo) DebugBL(format string, a ...any) {
-	d.Debug(AreaBottomLeft, format, a...)
-}
-
-func (d *DebugInfo) DebugTR(format string, a ...any) {
-	d.Debug(AreaTopRight, format, a...)
-}
-
-func (d *DebugInfo) DebugBR(format string, a ...any) {
-	d.Debug(AreaBottomRight, format, a...)
-}
-
 func (d *DebugInfo) Debug(area DebugArea, format string, a ...any) {
 	if d.lines == nil {
 		d.lines = map[DebugArea][]string{}

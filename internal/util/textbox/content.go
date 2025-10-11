@@ -1,13 +1,14 @@
 package textbox
 
 import (
-	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/util"
-	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
-	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/text"
 	"math"
 	"strings"
+
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/ext/text"
+
+	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
 type Content struct {
@@ -57,10 +58,10 @@ func (c *Content) Bounds() pixel.Rect {
 	return pixel.R(0, 0, float64(c.width), float64(c.height))
 }
 
-func (c *Content) Update(ctx *game.Context, timeDelta float64) {
+func (c *Content) Update(timeDelta float64) {
 	// update character effects
 	for _, e := range c.effects {
-		e.Update(ctx, timeDelta)
+		e.Update(timeDelta)
 	}
 	if c.scrollPosition != float64(c.startLine) {
 		toScroll := timeDelta / c.tb.cfg.ScrollTimePerLine

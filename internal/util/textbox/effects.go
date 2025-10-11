@@ -1,13 +1,13 @@
 package textbox
 
 import (
-	"fisherevans.com/project/f/internal/game"
-	"github.com/gopxl/pixel/v2"
 	"math/rand"
+
+	"github.com/gopxl/pixel/v2"
 )
 
 type RenderEffect interface {
-	Update(ctx *game.Context, timeDelta float64)
+	Update(timeDelta float64)
 	Apply(params *characterRenderParams)
 }
 
@@ -26,7 +26,7 @@ func newRumble(rate float64, extreme bool) *rumbleRenderEffect {
 	}
 }
 
-func (r *rumbleRenderEffect) Update(ctx *game.Context, timeDelta float64) {
+func (r *rumbleRenderEffect) Update(timeDelta float64) {
 	r.elapsed += timeDelta
 	for r.elapsed > r.rate {
 		r.elapsed -= r.rate

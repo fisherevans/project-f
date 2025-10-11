@@ -86,7 +86,7 @@ type State struct {
 	mobs     []*ShadowMob
 }
 
-func New(_ *game.Context, i game.AdventureIntent) game.State {
+func New(i game.AdventureIntent) game.State {
 	m := resources.GetMap(i.MapName)
 	a := &State{
 		entities:             make(map[EntityId]Entity),
@@ -141,31 +141,31 @@ func (s *State) ClearColor() color.Color {
 	return clearColor
 }
 
-func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	ctx.DebugTL("delta: %.3f", timeDelta)
+func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+	game.DebugTL("delta: %.3f", timeDelta)
 
 	for _, entity := range s.entities {
 		remaining := timeDelta
 		for remaining > 0 {
 			nextRemaining := entity.Move(s, remaining)
 			elapsed := remaining - nextRemaining
-			entity.Update(ctx, s, elapsed)
+			entity.Update(s, elapsed)
 			remaining = nextRemaining
 		}
 	}
 
 	for _, mob := range s.mobs {
-		mob.Update(ctx, s, timeDelta)
+		mob.Update(s, timeDelta)
 	}
 
-	s.actions.ExecuteActions(ctx, s, timeDelta)
+	s.actions.ExecuteActions(s, timeDelta)
 
-	s.camera.Update(ctx, s, timeDelta)
-	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(ctx, s, targetBounds)
+	s.camera.Update(s, timeDelta)
+	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)
 
 	// SCENE
 
-	ctx.DebugBR("player moving: %.1f", s.player.ConstantMovement)
+	game.DebugBR("player moving: %.1f", s.player.ConstantMovement)
 
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
@@ -202,43 +202,43 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 
-	switch ctx.DebugToggles.F2().Presses() % 4 {
+	switch game.DebugToggles().F2().Presses() % 4 {
 	case 0, 1:
 		s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
 		s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
 		s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
-		if ctx.DebugToggles.F2().Presses()%4 == 1 {
+		if game.DebugToggles().F2().Presses()%4 == 1 {
 			s.lightMapCanvas.Clear(lightMapClear)
-			ctx.DebugBL("lighting mode: on (ambient only)")
+			game.DebugBL("lighting mode: on (ambient only)")
 		} else {
-			ctx.DebugBL("lighting mode: on")
+			game.DebugBL("lighting mode: on")
 		}
 		s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
 		s.litSceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 	case 2:
 		s.sceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-		ctx.DebugBL("lighting mode: off")
+		game.DebugBL("lighting mode: off")
 	case 3:
 		s.lightMapCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-		ctx.DebugBL("lighting mode: debug")
+		game.DebugBL("lighting mode: debug")
 	}
 
 	// BLOOM
 
-	switch ctx.DebugToggles.F1().Presses() % 4 {
+	switch game.DebugToggles().F1().Presses() % 4 {
 	case 0:
 		bloomed := s.bloom.ApplyBloom(s.sceneCanvas)
 		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-		ctx.DebugBL("bloom mode: on")
+		game.DebugBL("bloom mode: on")
 	case 1:
-		ctx.DebugBL("bloom mode: off")
+		game.DebugBL("bloom mode: off")
 	case 2, 3:
 		oldPasses := s.bloom.Passes
-		if ctx.DebugToggles.F1().Presses()%4 == 3 {
+		if game.DebugToggles().F1().Presses()%4 == 3 {
 			s.bloom.Passes = 0
-			ctx.DebugBL("bloom mode: debug - no blur")
+			game.DebugBL("bloom mode: debug - no blur")
 		} else {
-			ctx.DebugBL("bloom mode: debug")
+			game.DebugBL("bloom mode: debug")
 		}
 		bloomed := s.bloom.GenerateBloomCanvas(s.sceneCanvas)
 		s.bloom.Passes = oldPasses
@@ -246,57 +246,57 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 	}
 
-	if ctx.Window.Pressed(pixel.KeyI) {
+	if game.Window().Pressed(pixel.KeyI) {
 		s.bloom.Intensity -= 0.01
 	}
-	if ctx.Window.Pressed(pixel.KeyO) {
+	if game.Window().Pressed(pixel.KeyO) {
 		s.bloom.Intensity += 0.01
 	}
 	if s.bloom.Intensity < 0 {
 		s.bloom.Intensity = 0
 	}
 
-	if ctx.Window.Pressed(pixel.KeyK) {
+	if game.Window().Pressed(pixel.KeyK) {
 		s.bloom.BloomBias -= 0.01
 	}
-	if ctx.Window.Pressed(pixel.KeyL) {
+	if game.Window().Pressed(pixel.KeyL) {
 		s.bloom.BloomBias += 0.01
 	}
 	if s.bloom.BloomBias < 0 {
 		s.bloom.BloomBias = 0
 	}
 
-	if ctx.Window.Pressed(pixel.KeyComma) {
+	if game.Window().Pressed(pixel.KeyComma) {
 		s.bloom.SceneBias -= 0.01
 	}
-	if ctx.Window.Pressed(pixel.KeyPeriod) {
+	if game.Window().Pressed(pixel.KeyPeriod) {
 		s.bloom.SceneBias += 0.01
 	}
 	if s.bloom.SceneBias < 0 {
 		s.bloom.SceneBias = 0
 	}
-	ctx.DebugBL("blend intensity: %.2f", s.bloom.Intensity)
-	ctx.DebugBL("blend bloom bias: %.2f", s.bloom.BloomBias)
-	ctx.DebugBL("blend scene bias: %.2f", s.bloom.SceneBias)
+	game.DebugBL("blend intensity: %.2f", s.bloom.Intensity)
+	game.DebugBL("blend bloom bias: %.2f", s.bloom.BloomBias)
+	game.DebugBL("blend scene bias: %.2f", s.bloom.SceneBias)
 
 	// HUD + CHAT
 
 	s.hudBatch.Clear()
-	s.chatters.OnTick(ctx, s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
-	s.hud.OnTick(ctx, s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
-	s.overlays.OnTick(ctx, s, target, s.hudBatch, timeDelta)
-	s.dialogues.OnTick(ctx, s, s.hudBatch, renderBounds, timeDelta)
+	s.chatters.OnTick(s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
+	s.hud.OnTick(s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
+	s.overlays.OnTick(s, target, s.hudBatch, timeDelta)
+	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.hudBatch.Draw(target)
 
-	ctx.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
+	game.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
 
-	if ctx.Controls.ButtonStart().JustPressed() {
-		ctx.SetActiveStateIntent(game.MenuIntent{
+	if game.Controls[*State]().ButtonStart().JustPressed() {
+		game.SetActiveStateIntent(game.MenuIntent{
 			Background: s,
 		})
 	}
-	if ctx.Controls.ButtonSelect().JustPressed() {
-		ctx.SetActiveStateIntent(game.XenologIntent{
+	if game.Controls[*State]().ButtonSelect().JustPressed() {
+		game.SetActiveStateIntent(game.XenologIntent{
 			Background: s,
 		})
 	}

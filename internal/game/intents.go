@@ -6,7 +6,7 @@ type SelectIntent struct {
 	Destinations []SelectIntentDestination
 }
 
-func (s SelectIntent) With(name string, intent func(ctx *Context) any) SelectIntent {
+func (s SelectIntent) With(name string, intent func() any) SelectIntent {
 	s.Destinations = append(s.Destinations, SelectIntentDestination{
 		Name:   name,
 		Intent: intent,
@@ -16,7 +16,7 @@ func (s SelectIntent) With(name string, intent func(ctx *Context) any) SelectInt
 
 type SelectIntentDestination struct {
 	Name   string
-	Intent func(*Context) any
+	Intent func() any
 }
 
 type MenuIntent struct {
@@ -28,7 +28,7 @@ type CombatIntentResult struct {
 	ResearchPoints int
 }
 
-type CombatIntentComplete func(ctx *Context, r CombatIntentResult)
+type CombatIntentComplete func(r CombatIntentResult)
 
 type CombatIntent struct {
 	Run        *rpg.Run

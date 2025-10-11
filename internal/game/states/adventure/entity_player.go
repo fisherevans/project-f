@@ -12,14 +12,15 @@ type Player struct {
 	intentDuration  float64
 }
 
-func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
-	defer p.AnimatedMoveableEntity.Update(ctx, adv, timeDelta)
+func (p *Player) Update(adv *State, timeDelta float64) {
+	defer p.AnimatedMoveableEntity.Update(adv, timeDelta)
 	// trigger running or face new direction after movement
 	if p.IsMoving() {
-		if ctx.Controls.DPad().IsPressed() {
-			p.intentDirection = ctx.Controls.DPad().GetDirection()
+		if game.Controls[*State]().DPad().IsPressed() {
+			p.intentDirection = game.Controls[*State]().
+			DPad().GetDirection()
 		}
-		if ctx.Controls.ButtonB().IsPressed() {
+		if game.Controls[*State]().ButtonB().IsPressed() {
 			if p.MoveState == MoveStateWalking {
 				p.MoveState = MoveStateRunning
 			}
@@ -39,8 +40,9 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		p.FacingDirection = p.intentDirection
 	}
 	// trigger movement if player is pressing a direction
-	if ctx.Controls.DPad().IsPressed() {
-		direction := ctx.Controls.DPad().GetDirection()
+	if game.Controls[*State]().DPad().IsPressed() {
+		direction := game.Controls[*State]().
+		DPad().GetDirection()
 		p.FacingDirection = direction
 		if p.intentDirection != direction {
 			p.intentDirection = direction
@@ -49,14 +51,14 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		p.intentDuration += timeDelta
 		if p.intentDuration > 0.075 {
 			speed := MoveStateWalking
-			if ctx.Controls.ButtonB().IsPressed() {
+			if game.Controls[*State]().ButtonB().IsPressed() {
 				speed = MoveStateRunning
 			}
 			p.TriggerMovement(adv, p.GetFacingLocation(), speed)
 		}
 	}
 	// interact with item if player is pressing A
-	if ctx.Controls.ButtonA().JustPressedOrRepeated() {
+	if game.Controls[*State]().ButtonA().JustPressedOrRepeated() {
 		interactLocation := p.InteractLocation()
 		if interactLocation == nil {
 			return
@@ -64,7 +66,7 @@ func (p *Player) Update(ctx *game.Context, adv *State, timeDelta float64) {
 		targetEntityId, entityExists := adv.occupiedBy(interactLocation.Location)
 		if entityExists {
 			targetEntity := adv.entities[targetEntityId]
-			targetEntity.Interact(ctx, adv, p)
+			targetEntity.Interact(adv, p)
 			return
 		}
 		doDash := false

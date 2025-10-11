@@ -37,7 +37,7 @@ type State struct {
 	batch *pixel.Batch
 }
 
-func New(_ *game.Context, i game.MenuIntent) game.State {
+func New(i game.MenuIntent) game.State {
 	return &State{
 		background: i.Background,
 		transition: 0,
@@ -51,9 +51,9 @@ func (s *State) ClearColor() color.Color {
 	return colors.Black.RGBA
 }
 
-func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	if s.background != nil {
-		s.background.OnTick(ctx.WithNoControls(), target, targetBounds, 0)
+		s.background.OnTick(target, targetBounds, 0)
 	}
 
 	s.batch.Clear()
@@ -64,7 +64,7 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	gfx.DrawRect(atlas, s.batch, pixel.IM, gfx.BottomLeft, game.GameWidth, game.GameHeight, fadeColor)
 
 	matrix := pixel.IM.Moved(pixel.V(-100.0*(1.0-s.transition), 0))
-	s.main.Render(s, ctx, matrix, s.batch, targetBounds)
+	s.main.Render(s, matrix, s.batch, targetBounds)
 
 	s.batch.Draw(target)
 }

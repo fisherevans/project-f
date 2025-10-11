@@ -7,7 +7,6 @@ import (
 	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"github.com/gopxl/pixel/v2/ext/text"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
@@ -38,7 +37,7 @@ type characterRenderParams struct {
 	foreground pixel.RGBA
 }
 
-func (tb *Instance) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, content *Content, opts ...tbcfg.ConfigOpt) {
+func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Content, opts ...tbcfg.ConfigOpt) {
 	tb.text.Clear()
 
 	// per render cfg overrides

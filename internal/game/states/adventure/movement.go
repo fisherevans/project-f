@@ -4,7 +4,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 )
 
@@ -96,7 +95,7 @@ func (s *State) teleport(entity *Player, destination Teleport) {
 		NewBaseOverlay(teleportFadeTime, false, nil),
 	)
 	s.actions.Add(NewSerialActions(
-		NewSimpleAction(func(ctx *game.Context, s *State) {
+		NewSimpleAction(func(s *State) {
 			s.blockInput = true
 			s.overlays.Add(fadeOut)
 		}),
@@ -104,7 +103,7 @@ func (s *State) teleport(entity *Player, destination Teleport) {
 		NewWaitForAction(func() bool {
 			return !entity.IsMoving()
 		}),
-		NewSimpleAction(func(ctx *game.Context, s *State) {
+		NewSimpleAction(func(s *State) {
 			fadeOut.IsComplete = true
 			s.overlays.Add(fadeIn)
 			entity.TeleportTo(s, destination.Location)
@@ -115,7 +114,7 @@ func (s *State) teleport(entity *Player, destination Teleport) {
 			}
 			s.blockInput = false
 		}),
-		NewChangeCameraAction(func(ctx *game.Context, s *State) Camera {
+		NewChangeCameraAction(func(s *State) Camera {
 			return NewFollowCamera(entity.Id, entity.RenderMapLocation(), EntityCameraSpeedPlayerDefault)
 		}),
 		NewWaitForAction(func() bool {

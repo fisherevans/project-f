@@ -11,10 +11,10 @@ const (
 	ActionIncomplete
 )
 
-type ActionFunction func(*game.Context, *State, float64) ActionState
+type ActionFunction func(*State, float64) ActionState
 
 type Action interface {
-	Execute(ctx *game.Context, s *State, timeDelta float64) ActionState
+	Execute(s *State, timeDelta float64) ActionState
 }
 
 type ActionQueue struct {
@@ -33,11 +33,11 @@ func (q *ActionQueue) Depth() int {
 	return len(q.actions)
 }
 
-func (q *ActionQueue) ExecuteActions(ctx *game.Context, s *State, timeDelta float64) {
-	ctx.DebugBR("action queue: %d", len(q.actions))
+func (q *ActionQueue) ExecuteActions(s *State, timeDelta float64) {
+	game.DebugBR("action queue: %d", len(q.actions))
 	remaining := q.actions[:0] // Reuse the same slice memory
 	for _, action := range q.actions {
-		if action.Execute(ctx, s, timeDelta) == ActionIncomplete {
+		if action.Execute(s, timeDelta) == ActionIncomplete {
 			remaining = append(remaining, action)
 		}
 	}
@@ -48,14 +48,14 @@ type baseAction struct {
 	action ActionFunction
 }
 
-func (b *baseAction) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
-	return b.action(ctx, s, timeDelta)
+func (b *baseAction) Execute(s *State, timeDelta float64) ActionState {
+	return b.action(s, timeDelta)
 }
 
-func NewSimpleAction(action func(*game.Context, *State)) *baseAction {
+func NewSimpleAction(action func(*State)) *baseAction {
 	return &baseAction{
-		action: func(ctx *game.Context, s *State, _ float64) ActionState {
-			action(ctx, s)
+		action: func(s *State, _ float64) ActionState {
+			action(s)
 			return ActionComplete
 		},
 	}
@@ -63,7 +63,7 @@ func NewSimpleAction(action func(*game.Context, *State)) *baseAction {
 
 func NewWaitForAction(f func() bool) *baseAction {
 	return &baseAction{
-		action: func(ctx *game.Context, s *State, _ float64) ActionState {
+		action: func(s *State, _ float64) ActionState {
 			if f() {
 				return ActionComplete
 			}
@@ -76,11 +76,11 @@ func NewAction(fn ActionFunction) Action {
 	return &baseAction{fn}
 }
 
-func NewChangeCameraAction(camera func(ctx *game.Context, s *State) Camera) Action {
+func NewChangeCameraAction(camera func(s *State) Camera) Action {
 	return &baseAction{
-		action: func(ctx *game.Context, s *State, timeDelta float64) ActionState {
-			s.camera = camera(ctx, s)
-			ctx.Notify("changing camera to %s", s.camera.CurrentLocation().String())
+		action: func(s *State, timeDelta float64) ActionState {
+			s.camera = camera(s)
+			game.DebugNotification("changing camera to %s", s.camera.CurrentLocation().String())
 			return ActionComplete
 		},
 	}
@@ -92,12 +92,12 @@ type delayAction struct {
 	elapsedSeconds float64
 }
 
-func (d *delayAction) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
+func (d *delayAction) Execute(s *State, timeDelta float64) ActionState {
 	d.elapsedSeconds += timeDelta
 	if d.elapsedSeconds < d.delaySeconds {
 		return ActionIncomplete
 	}
-	return d.action.Execute(ctx, s, timeDelta)
+	return d.action.Execute(s, timeDelta)
 }
 
 func NewDelayAction(action Action, delaySeconds float64) Action {
@@ -112,7 +112,7 @@ type sleepAction struct {
 	elapsedSeconds float64
 }
 
-func (d *sleepAction) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
+func (d *sleepAction) Execute(s *State, timeDelta float64) ActionState {
 	d.elapsedSeconds += timeDelta
 	if d.elapsedSeconds < d.sleepSeconds {
 		return ActionIncomplete
@@ -130,9 +130,9 @@ type serialActions struct {
 	actions []Action
 }
 
-func (c *serialActions) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
+func (c *serialActions) Execute(s *State, timeDelta float64) ActionState {
 	for len(c.actions) > 0 {
-		if c.actions[0].Execute(ctx, s, timeDelta) == ActionIncomplete {
+		if c.actions[0].Execute(s, timeDelta) == ActionIncomplete {
 			return ActionIncomplete
 		}
 		c.actions = c.actions[1:]
@@ -150,13 +150,13 @@ type parallelActions struct {
 	actions []Action
 }
 
-func (c *parallelActions) Execute(ctx *game.Context, s *State, timeDelta float64) ActionState {
+func (c *parallelActions) Execute(s *State, timeDelta float64) ActionState {
 	if len(c.actions) == 0 {
 		return ActionComplete
 	}
 	var remaining []Action
 	for _, action := range c.actions {
-		if action.Execute(ctx, s, timeDelta) == ActionIncomplete {
+		if action.Execute(s, timeDelta) == ActionIncomplete {
 			remaining = append(remaining, action)
 		}
 	}

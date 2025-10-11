@@ -232,3 +232,9 @@ func (t *TimedProgress) Reverse() {
 func (t *TimedProgress) SetFunction(f Function) {
 	t.interpolation = f
 }
+
+func Lerp(from, to, progress float64) float64 {
+	progress = clamp(progress)
+	delta := to - from
+	return from + delta*progress
+}

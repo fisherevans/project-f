@@ -52,7 +52,7 @@ var (
 	skillMenuBadge            = badges.Using(atlas).ButtonAction("start", "xenolog")
 )
 
-func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 	bottomLeft := pixel.V(float64((game.GameWidth-(skillFrameWidth*2+skillFrameHorizontalSpacing))/2), 3)
 
 	s.skillFlashTimeElapsed += timeDelta
@@ -60,8 +60,9 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 	s.skillFlashAlpha = 0.5 + sin*0.5                         // [0.5-1]
 	s.skillFlashAlphaInverse = 0.5 + (1.0-sin)*0.5
 
-	if ctx.Controls.DPad().IsPressed() {
-		dir := ctx.Controls.DPad().PressedDirection()
+	if game.Controls[*State]().DPad().IsPressed() {
+		dir := game.Controls[*State]().
+			DPad().PressedDirection()
 		switch dir {
 		case input.Up:
 			s.combatArrowAlpha, s.combatArrowColumn = 1, 2
@@ -72,7 +73,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 		case input.Left:
 			s.combatArrowAlpha, s.combatArrowColumn = 1, 5
 		}
-		if ctx.Controls.DPad().JustPressed() {
+		if game.Controls[*State]().DPad().JustPressed() {
 			selectSkill := s.Player.GetFightOption(typeOptionKeyReverse[dir])
 			if selectSkill != s.Player.NextSkill {
 				s.Player.NextSkill = s.Player.GetFightOption(typeOptionKeyReverse[dir])
@@ -119,7 +120,7 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 		}
 		frameRect := pixel.R(0, 0, float64(skillFrameWidth), float64(skillFrameHeight))
 		frame.Draw(target, frameRect, matrix)
-		skillText.Render(ctx, target, matrix, content)
+		skillText.Render(target, matrix, content)
 		if optionPending {
 			skillPendingProgress.Update(timeDelta)
 			s := skillPendingProgress.Sprite()
@@ -134,40 +135,40 @@ func (s *State) renderSkills(ctx *game.Context, target pixel.Target, targetBound
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
 	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).Draw(target, centerMatrix)
 	s.combatArrowAlpha -= timeDelta * 0.75
-	ctx.DebugTR("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
+	game.DebugTR("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
 		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
 	}
 
 	badgeBottomLeft := pixel.V(3, 3)
 	badgeBottomRight := pixel.V(targetBounds.W()-3, 3)
-	skillStatsBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomLeft), gfx.BottomLeft)
+	skillStatsBadge.Render(target, pixel.IM.Moved(badgeBottomLeft), gfx.BottomLeft)
 	if s.Player.NextSkill != nil {
 		if s.Player.IsNextSkillCommitted() {
-			skillCommittedCancelBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+			skillCommittedCancelBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
 		} else {
-			skillPendingCancelBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+			skillPendingCancelBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
 		}
-		if ctx.Controls.ButtonA().JustPressed() {
+		if game.Controls[*State]().ButtonA().JustPressed() {
 			s.Player.NextSkillCommitted = true
-		} else if ctx.Controls.ButtonB().JustPressed() {
+		} else if game.Controls[*State]().ButtonB().JustPressed() {
 			s.Player.NextSkill = nil
 			s.Player.NextSkillCommitted = false
 		}
 	} else {
-		skillMenuBadge.Render(ctx, target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+		skillMenuBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
 	}
 
-	if s.Player.NextSkill != nil && ctx.Controls.ButtonB().JustPressed() {
+	if s.Player.NextSkill != nil && game.Controls[*State]().ButtonB().JustPressed() {
 		s.Player.NextSkill = nil
 	}
 
-	if ctx.Controls.ButtonSelect().JustPressed() {
-		ctx.Notify("TODO - add stats xenolog")
+	if game.Controls[*State]().ButtonSelect().JustPressed() {
+		game.DebugNotification("TODO - add stats xenolog")
 	}
 
-	if ctx.Controls.ButtonStart().JustPressed() {
-		ctx.Notify("TODO - add combat xenolog")
+	if game.Controls[*State]().ButtonStart().JustPressed() {
+		game.DebugNotification("TODO - add combat xenolog")
 	}
 }
 

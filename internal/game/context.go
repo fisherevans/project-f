@@ -1,7 +1,6 @@
 package game
 
 import (
-	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/rs/zerolog/log"
 
@@ -10,9 +9,28 @@ import (
 	"fisherevans.com/project/f/internal/game/shaders"
 )
 
-var Ctx *Context
+var controls *input.Controls
+var controlsNoop *input.Controls
 
-type Context struct {
+func Controls[T State]() *input.Controls {
+	if ctx == nil {
+		return controls
+	}
+	// Compare the requested state type T against the runtime active state's type
+	if _, ok := any(ctx.activeState).(T); ok {
+		return controls
+	}
+	// Non-active states get a controls instance that is never updated (reads as neutral)
+	return controlsNoop
+}
+
+func UpdateControls(window *opengl.Window) {
+	controls.Update(window)
+}
+
+var ctx *context
+
+type context struct {
 	DebugInfo
 
 	activeState  State
@@ -20,20 +38,16 @@ type Context struct {
 
 	stateIntent any
 
-	CanvasScale         float64
-	CanvasMousePosition pixel.Vec
-	MouseInCanvas       bool
-	Controls            *input.Controls
-	Window              *opengl.Window
+	window *opengl.Window
 
-	GameSave *rpg.GameSave
+	save *rpg.GameSave
 
-	Elapsed      float64
-	Utils        ContextUtils
-	DebugToggles *DebugToggles
+	elapsed      float64
+	utils        ContextUtils
+	debugToggles *DebugToggleSystem
 }
 
-func NewContext(window *opengl.Window, saveId string) *Context {
+func Initialize(window *opengl.Window, saveId string) {
 	saves, err := rpg.LoadGameSaves()
 	if err != nil {
 		panic(err)
@@ -42,68 +56,102 @@ func NewContext(window *opengl.Window, saveId string) *Context {
 	if !ok {
 		panic("Save not found: " + saveId)
 	}
-	ctx := &Context{
+	ctx = &context{
 		stateIntent:  InitialState(),
-		CanvasScale:  1.0,
-		Controls:     input.NewControls(),
-		Window:       window,
-		GameSave:     save,
-		DebugToggles: newToggles(),
+		window:       window,
+		save:         save,
+		debugToggles: newToggles(),
 	}
-	ctx.Utils = ContextUtils{
-		ctx: ctx,
-	}
-	return ctx
+	ctx.utils = ContextUtils{}
 
+	controls = input.NewControls()
+	controlsNoop = input.NewControls()
 }
 
-func (c *Context) Update(window *opengl.Window, timeDelta float64) {
-	c.Controls.Update(window)
-	c.DebugToggles.update(window)
-	c.Elapsed += timeDelta
+func Update(window *opengl.Window, timeDelta float64) {
+	ctx.debugToggles.update(window)
+	ctx.elapsed += timeDelta
 }
 
-func (c *Context) GetActiveState() State {
-	return c.activeState
+func GetActiveState() State {
+	return ctx.activeState
 }
 
-func (c *Context) SetActiveStateIntent(intent any) {
-	if c.stateIntent != nil {
+func SetActiveStateIntent(intent any) {
+	if ctx.stateIntent != nil {
 		log.Warn().Msgf("something is overriding an existing state intent")
 	}
-	c.stateIntent = intent
+	ctx.stateIntent = intent
 }
 
-func (c *Context) ApplyIntent() {
-	if c.stateIntent == nil {
+func ApplyIntent() {
+	if ctx.stateIntent == nil {
 		return
 	}
-	s, err := createState(c, c.stateIntent)
+	s, err := createState(ctx.stateIntent)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to create new state from intent")
+		log.Fatal().Err(err).Msg("failed to ctxreate new state from intent")
 	}
-	c.activeState = s
-	c.stateIntent = nil
+	ctx.activeState = s
+	ctx.stateIntent = nil
 }
 
-func (c *Context) WithNoControls() *Context {
-	without := *c
-	without.Controls = input.NewControls()
-	return &without
+func SetCustomShader(shader AppliedShader) {
+	ctx.customShader = shader
 }
 
-func (c *Context) SetCustomShader(shader AppliedShader) {
-	c.customShader = shader
+func GetCustomShader() AppliedShader {
+	return ctx.customShader
 }
 
-func (c *Context) GetCustomShader() AppliedShader {
-	return c.customShader
-}
-
-func (c *Context) RemoveCustomShader() {
-	c.customShader = nil
+func RemoveCustomShader() {
+	ctx.customShader = nil
 }
 
 type AppliedShader interface {
 	Apply(shaderOptions shaders.Options, timeDelta float64)
+}
+
+func DebugNotification(format string, args ...any) {
+	ctx.Notify(format, args...)
+}
+
+func DebugTL(format string, a ...any) {
+	ctx.Debug(AreaTopLeft, format, a...)
+}
+
+func DebugBL(format string, a ...any) {
+	ctx.Debug(AreaBottomLeft, format, a...)
+}
+
+func DebugTR(format string, a ...any) {
+	ctx.Debug(AreaTopRight, format, a...)
+}
+
+func DebugBR(format string, a ...any) {
+	ctx.Debug(AreaBottomRight, format, a...)
+}
+
+func DebugToggles() *DebugToggleSystem {
+	return ctx.debugToggles
+}
+
+func CurrentSave() *rpg.GameSave {
+	return ctx.save
+}
+
+func Window() *opengl.Window {
+	return ctx.window
+}
+
+func Utils() ContextUtils {
+	return ctx.utils
+}
+
+func PopDebugLines() map[DebugArea][]string {
+	return ctx.PopDebugLines()
+}
+
+func PopNotifications(time float64) []string {
+	return ctx.PopNotifications(time)
 }

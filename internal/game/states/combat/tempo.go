@@ -5,7 +5,6 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
@@ -50,7 +49,7 @@ var (
 	tempoTextComboHuge   = newComboText(resources.FontNameAddStandard)
 )
 
-func (t *Tempo) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix) {
+func (t *Tempo) Render(target pixel.Target, matrix pixel.Matrix) {
 	if t.current == 0 {
 		return
 	}
@@ -73,10 +72,10 @@ func (t *Tempo) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matr
 	comboText = tempoTextComboSmall
 
 	nameContent := tempoTextName.NewComplexContent("{+o:black}tempo")
-	tempoTextName.Render(ctx, target, matrix, nameContent, tbcfg.Foreground(colors.Warm2.RGBA))
+	tempoTextName.Render(target, matrix, nameContent, tbcfg.Foreground(colors.Warm2.RGBA))
 	matrix = matrix.Moved(gfx.IVec(nameContent.Width()+2, 0))
 
 	comboContentText := fmt.Sprintf("{+o:warm_1}x%d", t.current)
 	comboContent := comboText.NewComplexContent(comboContentText)
-	comboText.Render(ctx, target, matrix, comboContent, tbcfg.Foreground(color.RGBA))
+	comboText.Render(target, matrix, comboContent, tbcfg.Foreground(color.RGBA))
 }

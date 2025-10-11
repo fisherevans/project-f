@@ -19,8 +19,8 @@ func (e *EntityMenuTest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 
 }
 
-func (e *EntityMenuTest) Interact(ctx *game.Context, adv *State, source Entity) {
-	ctx.SetActiveStateIntent(game.MenuIntent{
+func (e *EntityMenuTest) Interact(adv *State, source Entity) {
+	game.SetActiveStateIntent(game.MenuIntent{
 		Background: adv,
 	})
 }
@@ -57,8 +57,8 @@ func (e *EntityCombatTest) RenderScene(target pixel.Target, matrix pixel.Matrix)
 	dummyCombatSprite.Draw(target, matrix)
 }
 
-func (e *EntityCombatTest) Update(ctx *game.Context, adv *State, timeDelta float64) {
-	e.InnateEntity.Update(ctx, adv, timeDelta)
+func (e *EntityCombatTest) Update(adv *State, timeDelta float64) {
+	e.InnateEntity.Update(adv, timeDelta)
 	e.TimeTillNextQuip -= timeDelta
 	if e.TimeTillNextQuip <= 0 {
 		adv.chatters.Add(newBasicEntityChatter(e.Id, 4, dummyQuips[rand.Intn(len(dummyQuips))]))
@@ -66,7 +66,7 @@ func (e *EntityCombatTest) Update(ctx *game.Context, adv *State, timeDelta float
 	}
 }
 
-func (e *EntityCombatTest) Interact(ctx *game.Context, adv *State, source Entity) {
+func (e *EntityCombatTest) Interact(adv *State, source Entity) {
 	stutters := []string{"Beep.", "Boop.", "Die.", "Die!", "{+u}DIE!!!{-u"}
 	var message string
 	for id, s := range stutters {
@@ -76,8 +76,8 @@ func (e *EntityCombatTest) Interact(ctx *game.Context, adv *State, source Entity
 		message += s
 	}
 	log.Info().Msgf("message: %s", message)
-	adv.dialogues.Append(NewBasicDialogue(message, func(ctx *game.Context, s *State) {
-		adv.TriggerCombat(&rpg.Primortal_Dummy.Type, "combat/background_space_base", func(ctx *game.Context, s *State) {
+	adv.dialogues.Append(NewBasicDialogue(message, func(s *State) {
+		adv.TriggerCombat(&rpg.Primortal_Dummy.Type, "combat/background_space_base", func(s *State) {
 			adv.dialogues.Append(NewBasicDialogue("Well, butter my bolts... you actually did it.", nil))
 		})
 	}))

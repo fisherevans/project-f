@@ -174,6 +174,6 @@ func (o SkillFightOption) OptionName() string {
 	return o.Name
 }
 
-func (o SkillFightOption) Trigger(ctx *game.Context, s *State) {
-	ctx.Notify("Triggering skill: %s", o.Name)
+func (o SkillFightOption) Trigger(s *State) {
+	game.DebugNotification("Triggering skill: %s", o.Name)
 }

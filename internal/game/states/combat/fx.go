@@ -20,8 +20,8 @@ var fxMaxAge = 4.0
 var fxGravity = -100.0
 
 type FX interface {
-	Update(ctx *game.Context, s *State, timeDelta float64) bool
-	Render(ctx *game.Context, target pixel.Target)
+	Update(s *State, timeDelta float64) bool
+	Render(target pixel.Target)
 }
 
 type baseFx struct {
@@ -48,7 +48,7 @@ func newBaseFx(combatant Combatant) *baseFx {
 	}
 }
 
-func (fx *baseFx) Update(ctx *game.Context, s *State, timeDelta float64) bool {
+func (fx *baseFx) Update(s *State, timeDelta float64) bool {
 	if fx.SpeedScale > 0 {
 		timeDelta = timeDelta * fx.SpeedScale
 	}
@@ -61,7 +61,7 @@ func (fx *baseFx) Update(ctx *game.Context, s *State, timeDelta float64) bool {
 var baseFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas).
 	AlignedTo(pixel.Center)
 
-func (fx *baseFx) renderFx(ctx *game.Context, color pixel.RGBA, text string, target pixel.Target) {
+func (fx *baseFx) renderFx(color pixel.RGBA, text string, target pixel.Target) {
 	color = colors.WithAlpha(color, 1.0-(fx.Age/fxMaxAge))
 
 	baseFxText.Clear()
@@ -90,8 +90,8 @@ func NewHealthAdjustFX(amount int, color pixel.RGBA, target Combatant) *HealthAd
 	}
 }
 
-func (fx *HealthAdjustFX) Render(ctx *game.Context, target pixel.Target) {
-	fx.baseFx.renderFx(ctx, fx.Color, fmt.Sprintf("%+d", fx.DisplayAmount), target)
+func (fx *HealthAdjustFX) Render(target pixel.Target) {
+	fx.baseFx.renderFx(fx.Color, fmt.Sprintf("%+d", fx.DisplayAmount), target)
 }
 
 type WordFX struct {
@@ -112,6 +112,6 @@ func NewWordFX(word string, color pixel.RGBA, target Combatant) *WordFX {
 	}
 }
 
-func (fx *WordFX) Render(ctx *game.Context, target pixel.Target) {
-	fx.baseFx.renderFx(ctx, fx.Color, fx.Word, target)
+func (fx *WordFX) Render(target pixel.Target) {
+	fx.baseFx.renderFx(fx.Color, fx.Word, target)
 }

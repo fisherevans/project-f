@@ -5,7 +5,6 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
@@ -31,12 +30,12 @@ func (s *skillType) Bounds() pixel.Rect {
 	return pixel.R(0, 0, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight))
 }
 
-func (s *skillType) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation) {
+func (s *skillType) Render(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation) {
 	matrix = matrix.Moved(origin.AlignFrom(gfx.BottomLeft, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight)))
 	s.frame.Draw(target, pixel.R(0, 0, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight)), matrix,
 		frames.WithRenderOrigin(gfx.BottomLeft),
 		frames.WithColor(s.color))
-	s.textbox.Render(ctx, target, matrix, s.content)
+	s.textbox.Render(target, matrix, s.content)
 }
 
 func (b *Builder) Of(name string, c pixel.RGBA, width int) Instance {

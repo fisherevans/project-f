@@ -6,7 +6,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util/interp"
 )
@@ -116,7 +115,7 @@ func (m *MoveableEntity) Location() MapLocation {
 	return m.CurrentLocation
 }
 
-func (m *MoveableEntity) Interact(ctx *game.Context, adv *State, source Entity) {
+func (m *MoveableEntity) Interact(adv *State, source Entity) {
 
 }
 

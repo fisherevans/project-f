@@ -8,8 +8,8 @@ animech:
         "4": arc_dart
     experience_points: 211
     upgrades:
-        shield_level: 0
-        sync_level: 7
+        shield_level: 7
+        sync_level: 0
 loadouts:
     - name: Default
       skill_set:
@@ -24,7 +24,10 @@ inventory:
 primortals:
     myceli:
         visibility: defeated
-        research_points: 3
+        research_points: 21
     pumbl:
         visibility: defeated
-        research_points: 1
+        research_points: 16
+unlocked_skills:
+    mend_spores: {}
+    photo_surge: {}

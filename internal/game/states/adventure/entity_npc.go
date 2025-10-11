@@ -21,8 +21,8 @@ type NPC struct {
 	idleDuration    float64
 }
 
-func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
-	defer n.AnimatedMoveableEntity.Update(ctx, adv, timeDelta)
+func (n *NPC) Update(adv *State, timeDelta float64) {
+	defer n.AnimatedMoveableEntity.Update(adv, timeDelta)
 	if n.IsMoving() {
 		return
 	}
@@ -61,7 +61,7 @@ func (n *NPC) Update(ctx *game.Context, adv *State, timeDelta float64) {
 	n.TriggerMovement(adv, n.GetLocationInDirection(dir), MoveStateWalking)
 }
 
-func (n *NPC) Interact(ctx *game.Context, adv *State, source Entity) {
+func (n *NPC) Interact(adv *State, source Entity) {
 	if n.Talking {
 		return
 	}
@@ -69,8 +69,8 @@ func (n *NPC) Interact(ctx *game.Context, adv *State, source Entity) {
 	n.TalkingTowards = source.GetEntityId()
 	duration := 5.
 	adv.chatters.Add(newBasicEntityChatter(n.Id, duration, util.OneOffDialogues.Random()))
-	adv.actions.Add(NewDelayAction(NewSimpleAction(func(ctx *game.Context, _ *State) {
-		ctx.Notify("npc %s is no longer talking", n.Id)
+	adv.actions.Add(NewDelayAction(NewSimpleAction(func(_ *State) {
+		game.DebugNotification("npc %s is no longer talking", n.Id)
 		n.Talking = false
 	}), duration))
 }

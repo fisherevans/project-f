@@ -3,7 +3,6 @@ package badges
 import (
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
@@ -30,7 +29,7 @@ func (s *ButtonAction) Bounds() pixel.Rect {
 	return pixel.R(0, 0, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight))
 }
 
-func (s *ButtonAction) Render(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation) {
+func (s *ButtonAction) Render(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation) {
 	buttonContentW := s.buttonContent.Width()
 	actionContentW := s.actionContent.Width()
 	buttonFrameW := buttonBadgeSpacing + buttonTextPadding + buttonContentW + buttonTextPadding + buttonBadgeSpacing
@@ -49,8 +48,8 @@ func (s *ButtonAction) Render(ctx *game.Context, target pixel.Target, matrix pix
 	s.frame.Draw(target, pixel.R(0, 0, float64(buttonFrameW), float64(buttonBadgeHeight)), matrix,
 		frames.WithRenderOrigin(gfx.BottomLeft),
 		frames.WithColor(s.buttonColor))
-	s.textbox.Render(ctx, target, matrix.Moved(gfx.IVec(buttonBadgeSpacing+buttonTextPadding, buttonBadgeSpacing)), s.buttonContent, tbcfg.Foreground(s.actionColor))
-	s.textbox.Render(ctx, target, matrix.Moved(gfx.IVec(buttonFrameW+buttonBadgeSpacing, buttonBadgeSpacing)), s.actionContent, tbcfg.Foreground(s.buttonColor))
+	s.textbox.Render(target, matrix.Moved(gfx.IVec(buttonBadgeSpacing+buttonTextPadding, buttonBadgeSpacing)), s.buttonContent, tbcfg.Foreground(s.actionColor))
+	s.textbox.Render(target, matrix.Moved(gfx.IVec(buttonFrameW+buttonBadgeSpacing, buttonBadgeSpacing)), s.actionContent, tbcfg.Foreground(s.buttonColor))
 }
 
 func (b *Builder) ButtonAction(button, action string) *ButtonAction {

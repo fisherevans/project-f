@@ -35,11 +35,11 @@ type State struct {
 	screen *Screen
 }
 
-func New(ctx *game.Context, i game.XenologIntent) game.State {
+func New(i game.XenologIntent) game.State {
 	return &State{
 		background: i.Background,
 		transition: interp.NewTimedProgress(.4, interp.Smootherstep),
-		screen:     NewScreen(ctx),
+		screen:     NewScreen(),
 	}
 }
 
@@ -47,15 +47,15 @@ func (s *State) ClearColor() color.Color {
 	return colors.Black.RGBA
 }
 
-func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.transition.Update(timeDelta)
 
 	if s.exiting || !s.transition.IsComplete() {
-		s.background.OnTick(ctx.WithNoControls(), target, targetBounds, timeDelta) // render with 0 time delta
+		s.background.OnTick(target, targetBounds, timeDelta) // render with 0 time delta
 	}
 
 	if s.exiting && s.transition.IsComplete() {
-		ctx.SetActiveStateIntent(game.SwapStateIntent{
+		game.SetActiveStateIntent(game.SwapStateIntent{
 			State: s.background,
 		})
 	}
@@ -63,8 +63,8 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	fullDeltaY := deviceBackgroundSprite.Bounds().H()
 	dy := (1.0 - s.transition.Progress()) * fullDeltaY
 
-	ctx.DebugBL("transition: %f", s.transition.Progress())
-	ctx.DebugBL("dy: %f", dy)
+	game.DebugBL("transition: %f", s.transition.Progress())
+	game.DebugBL("dy: %f", dy)
 
 	bgMatrix := pixel.IM.Moved(gfx.BottomLeft.Align(deviceBackgroundSprite)).
 		Moved(pixel.V(0, -dy))
@@ -75,9 +75,9 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	screenMatrix := pixel.IM.Moved(gfx.BottomLeft.Align(s.screen)).
 		Moved(pixel.V(paddingX, paddingY)).
 		Moved(pixel.V(0, -dy))
-	s.screen.OnTick(s, ctx, screenMatrix, target, timeDelta)
+	s.screen.OnTick(s, screenMatrix, target, timeDelta)
 
-	if ctx.Controls.ButtonSelect().JustPressed() {
+	if game.Controls[*State]().ButtonSelect().JustPressed() {
 		s.exiting = !s.exiting
 		s.transition.Reverse()
 	}

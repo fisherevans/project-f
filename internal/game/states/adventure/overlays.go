@@ -12,7 +12,7 @@ import (
 )
 
 type Overlay interface {
-	OnTick(ctx *game.Context, s *State, target *pixel.Batch, timeDelta float64) bool
+	OnTick(s *State, target *pixel.Batch, timeDelta float64) bool
 }
 
 type OverlaySystem struct {
@@ -27,10 +27,10 @@ func (o *OverlaySystem) Add(overlay Overlay) {
 	o.overlays = append(o.overlays, overlay)
 }
 
-func (o *OverlaySystem) OnTick(ctx *game.Context, s *State, shader shaders.Options, target *pixel.Batch, timeDelta float64) {
+func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.Batch, timeDelta float64) {
 	var remaining []Overlay
 	for _, overlay := range o.overlays {
-		if !overlay.OnTick(ctx, s, target, timeDelta) {
+		if !overlay.OnTick(s, target, timeDelta) {
 			remaining = append(remaining, overlay)
 		}
 	}
@@ -40,7 +40,7 @@ func (o *OverlaySystem) OnTick(ctx *game.Context, s *State, shader shaders.Optio
 type BaseOverlay struct {
 	DurationSeconds float64
 	AutoComplete    bool
-	OnComplete      func(ctx *game.Context, s *State)
+	OnComplete      func(s *State)
 
 	IsComplete bool
 
@@ -48,7 +48,7 @@ type BaseOverlay struct {
 	lastComplete   bool
 }
 
-func NewBaseOverlay(durationSeconds float64, autoComplete bool, onComplete func(ctx *game.Context, s *State)) *BaseOverlay {
+func NewBaseOverlay(durationSeconds float64, autoComplete bool, onComplete func(s *State)) *BaseOverlay {
 	return &BaseOverlay{
 		DurationSeconds: durationSeconds,
 		AutoComplete:    autoComplete,
@@ -56,7 +56,7 @@ func NewBaseOverlay(durationSeconds float64, autoComplete bool, onComplete func(
 	}
 }
 
-func (o *BaseOverlay) OnTick(ctx *game.Context, s *State, target *pixel.Batch, timeDelta float64) bool {
+func (o *BaseOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) bool {
 	o.elapsedSeconds += timeDelta
 	if o.elapsedSeconds >= o.DurationSeconds && o.AutoComplete {
 		o.IsComplete = true
@@ -64,7 +64,7 @@ func (o *BaseOverlay) OnTick(ctx *game.Context, s *State, target *pixel.Batch, t
 	if o.IsComplete && !o.lastComplete {
 		o.lastComplete = true
 		if o.OnComplete != nil {
-			o.OnComplete(ctx, s)
+			o.OnComplete(s)
 		}
 	}
 	return o.IsComplete
@@ -95,8 +95,8 @@ func NewFadeOverlay(fromColor pixel.RGBA, toColor pixel.RGBA, transitions int, b
 	}
 }
 
-func (f *FadeOverlay) OnTick(ctx *game.Context, s *State, target *pixel.Batch, timeDelta float64) bool {
-	isComplete := f.BaseOverlay.OnTick(ctx, s, target, timeDelta)
+func (f *FadeOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) bool {
+	isComplete := f.BaseOverlay.OnTick(s, target, timeDelta)
 
 	// draw color with multiple transitions support
 	p := f.Progress()

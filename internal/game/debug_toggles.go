@@ -5,7 +5,7 @@ import (
 	"github.com/gopxl/pixel/v2/backends/opengl"
 )
 
-type DebugToggles struct {
+type DebugToggleSystem struct {
 	toggles map[pixel.Button]*DebugToggle
 }
 
@@ -47,8 +47,8 @@ func (dt *DebugToggle) update(key pixel.Button, win *opengl.Window) {
 	}
 }
 
-func newToggles() *DebugToggles {
-	dt := &DebugToggles{
+func newToggles() *DebugToggleSystem {
+	dt := &DebugToggleSystem{
 		toggles: map[pixel.Button]*DebugToggle{},
 	}
 	keys := []pixel.Button{
@@ -67,33 +67,33 @@ func newToggles() *DebugToggles {
 	return dt
 }
 
-func (dt *DebugToggles) update(win *opengl.Window) {
+func (dt *DebugToggleSystem) update(win *opengl.Window) {
 	for key, toggle := range dt.toggles {
 		toggle.update(key, win)
 	}
 }
 
-func (dt *DebugToggles) F1() *DebugToggle {
+func (dt *DebugToggleSystem) F1() *DebugToggle {
 	return dt.toggles[pixel.KeyF1]
 }
-func (dt *DebugToggles) F2() *DebugToggle {
+func (dt *DebugToggleSystem) F2() *DebugToggle {
 	return dt.toggles[pixel.KeyF2]
 }
-func (dt *DebugToggles) F3() *DebugToggle {
+func (dt *DebugToggleSystem) F3() *DebugToggle {
 	return dt.toggles[pixel.KeyF3]
 }
-func (dt *DebugToggles) F4() *DebugToggle {
+func (dt *DebugToggleSystem) F4() *DebugToggle {
 	return dt.toggles[pixel.KeyF4]
 }
-func (dt *DebugToggles) F5() *DebugToggle {
+func (dt *DebugToggleSystem) F5() *DebugToggle {
 	return dt.toggles[pixel.KeyF5]
 }
-func (dt *DebugToggles) F6() *DebugToggle {
+func (dt *DebugToggleSystem) F6() *DebugToggle {
 	return dt.toggles[pixel.KeyF6]
 }
-func (dt *DebugToggles) F7() *DebugToggle {
+func (dt *DebugToggleSystem) F7() *DebugToggle {
 	return dt.toggles[pixel.KeyF7]
 }
-func (dt *DebugToggles) F8() *DebugToggle {
+func (dt *DebugToggleSystem) F8() *DebugToggle {
 	return dt.toggles[pixel.KeyF8]
 }

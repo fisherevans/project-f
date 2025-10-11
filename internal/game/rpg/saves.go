@@ -9,6 +9,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"gopkg.in/yaml.v3"
+
+	"fisherevans.com/project/f/internal/util/delta"
 )
 
 var gameSaveDirectory = "game_data/saves"
@@ -21,27 +23,26 @@ type GameSave struct {
 	Inventory     *Inventory                           `yaml:"inventory"`
 	Primortals    map[PrimortalType]*PrimortalProgress `yaml:"primortals"`
 
-	unlockedSkillsList []SkillId            `yaml:"unlocked_skills"`
-	UnlockedSkills     map[SkillId]struct{} `yaml:"-"`
-}
-
-func (g *GameSave) initializeAfterLoad() {
-	g.UnlockedSkills = map[SkillId]struct{}{}
-	for _, s := range g.unlockedSkillsList {
-		g.UnlockedSkills[s] = struct{}{}
-	}
-}
-
-func (g *GameSave) normalizeBeforeSave() {
-	g.unlockedSkillsList = []SkillId{}
-	for s := range g.UnlockedSkills {
-		g.unlockedSkillsList = append(g.unlockedSkillsList, s)
-	}
+	ControlledUnlockedSkills map[SkillId]struct{} `yaml:"unlocked_skills"`
 }
 
 func (g *GameSave) IsSkillUnlocked(skill SkillId) bool {
-	_, isUnlocked := g.UnlockedSkills[skill]
+	_, isUnlocked := g.ControlledUnlockedSkills[skill]
 	return isUnlocked
+}
+
+func (g *GameSave) UnlockSkill(skill SkillId) {
+	if g.ControlledUnlockedSkills == nil {
+		g.ControlledUnlockedSkills = map[SkillId]struct{}{}
+	}
+	g.ControlledUnlockedSkills[skill] = struct{}{}
+}
+
+func (g *GameSave) RemoveUnlockedSkill(skill SkillId) {
+	if g.ControlledUnlockedSkills == nil {
+		g.ControlledUnlockedSkills = map[SkillId]struct{}{}
+	}
+	delete(g.ControlledUnlockedSkills, skill)
 }
 
 func (g *GameSave) Save() error {
@@ -52,7 +53,15 @@ func (g *GameSave) Save() error {
 	filename := fmt.Sprintf("%s.yaml", g.SaveId)
 	path := filepath.Join(gameSaveDirectory, filename)
 
-	g.normalizeBeforeSave()
+	// Load the existing save (if any) to compute a delta
+	var oldSave *GameSave
+	if existingData, err := os.ReadFile(path); err == nil {
+		var prev GameSave
+		if err := yaml.Unmarshal(existingData, &prev); err == nil {
+			oldSave = &prev
+		}
+	}
+
 	data, err := yaml.Marshal(g)
 	if err != nil {
 		return fmt.Errorf("failed to marshal GameSave: %w", err)
@@ -60,6 +69,14 @@ func (g *GameSave) Save() error {
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("failed to write GameSave: %w", err)
+	}
+
+	// Compute and log a human-readable delta
+	d := delta.HumanDiff(oldSave, g)
+	if strings.TrimSpace(d) == "" {
+		log.Info().Msgf("Saved game to %s (no changes)", path)
+	} else {
+		log.Info().Msgf("Saved game to %s. Changes:\n%s", path, d)
 	}
 
 	return nil
@@ -92,7 +109,6 @@ func LoadGameSaves() (map[string]*GameSave, error) {
 			log.Warn().Msgf("Failed to unmarshal %s: %v", path, err)
 			continue
 		}
-		gs.initializeAfterLoad()
 
 		// todo validate loaded saves (i.e. skills in loadouts are unlocked and valid ids)
 

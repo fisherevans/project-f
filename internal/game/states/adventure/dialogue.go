@@ -45,15 +45,15 @@ var dialogueBox = textbox.NewInstance(
 		tbcfg.Foreground(colors.HexString("#00164e")),
 		tbcfg.ExtraLineSpacing(4)))
 
-func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
+func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
-	ctx.DebugBR("dialogue queue: %d", len(ds.queuedDialogues))
+	game.DebugBR("dialogue queue: %d", len(ds.queuedDialogues))
 	if !ds.HasPriority() {
 		return
 	}
 	dialogue := ds.queuedDialogues[0]
 
-	dialogue.Content().Update(ctx, timeDelta)
+	dialogue.Content().Update(timeDelta)
 
 	frameBounds := pixel.R(
 		float64(dialogueFrameMargin),
@@ -64,18 +64,23 @@ func (ds *DialogueSystem) OnTick(ctx *game.Context, s *State, target pixel.Targe
 
 	bottomLeft := gfx.IVec(dialogueFrameMargin+dialogueFrame.LeftPadding(), dialogueFrameMargin+dialogueFrame.BottomPadding())
 
-	dialogueBox.Render(ctx, target, pixel.IM.Moved(bottomLeft), dialogue.Content())
+	dialogueBox.Render(target, pixel.IM.Moved(bottomLeft), dialogue.Content())
 
-	a := ctx.Controls.ButtonA().JustPressed()
-	bPressed := ctx.Controls.ButtonB().IsPressed()
-	bJustPressed := ctx.Controls.ButtonB().JustPressed()
-	down := ctx.Controls.DPad().DirectionJustPressed(input.Down)
-	up := ctx.Controls.DPad().DirectionJustPressed(input.Up)
+	a := game.Controls[*State]().
+		ButtonA().JustPressed()
+	bPressed := game.Controls[*State]().
+		ButtonB().IsPressed()
+	bJustPressed := game.Controls[*State]().
+		ButtonB().JustPressed()
+	down := game.Controls[*State]().
+		DPad().DirectionJustPressed(input.Down)
+	up := game.Controls[*State]().
+		DPad().DirectionJustPressed(input.Up)
 	if a || bPressed || bJustPressed || down {
 		if dialogue.Content().IsContentFullyDisplayed() {
 			if a || bJustPressed {
 				ds.queuedDialogues = ds.queuedDialogues[1:]
-				dialogue.OnDismiss(ctx, s)
+				dialogue.OnDismiss(s)
 			}
 		} else if dialogue.Content().IsPageFullyDisplayed() {
 			dialogue.Content().NextPage()
@@ -101,16 +106,16 @@ func (ds *DialogueSystem) flushPending() {
 type Dialogue interface {
 	Message() string
 	Content() *textbox.Content
-	OnDismiss(*game.Context, *State)
+	OnDismiss(*State)
 }
 
 type basicDialogue struct {
 	message   string
 	content   *textbox.Content
-	onDismiss func(*game.Context, *State)
+	onDismiss func(*State)
 }
 
-func NewBasicDialogue(message string, onDismiss func(ctx *game.Context, state *State)) Dialogue {
+func NewBasicDialogue(message string, onDismiss func(state *State)) Dialogue {
 	content := dialogueBox.NewComplexContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
 		message:   message,
@@ -127,8 +132,8 @@ func (b basicDialogue) Content() *textbox.Content {
 	return b.content
 }
 
-func (b basicDialogue) OnDismiss(context *game.Context, state *State) {
+func (b basicDialogue) OnDismiss(state *State) {
 	if b.onDismiss != nil {
-		b.onDismiss(context, state)
+		b.onDismiss(state)
 	}
 }

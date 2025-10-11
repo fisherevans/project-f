@@ -28,13 +28,13 @@ func (s state) ClearColor() color.Color {
 	return color.Black
 }
 
-func (s state) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s state) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 	m := pixel.IM.Moved(gfx.IVec(game.GameWidth*0.75, game.GameHeight-10))
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(1, 1)), gfx.BottomLeft)
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(-1, 1)), gfx.BottomRight)
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(1, -1)), gfx.TopLeft)
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(ctx, s.batch, m.Moved(gfx.IVec(-1, -1)), gfx.TopRight)
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(1, 1)), gfx.BottomLeft)
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(-1, 1)), gfx.BottomRight)
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(1, -1)), gfx.TopLeft)
+	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(-1, -1)), gfx.TopRight)
 	m = m.Moved(pixel.V(0, -20))
 	gfx.DrawRect(
 		atlas,
@@ -57,15 +57,19 @@ func (s state) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pi
 		pressed := false
 		switch strings.ToLower(a[0]) {
 		case "a":
-			pressed = ctx.Controls.ButtonA().IsPressed()
+			pressed = game.Controls[*State]().
+			ButtonA().IsPressed()
 		case "b":
-			pressed = ctx.Controls.ButtonB().IsPressed()
+			pressed = game.Controls[*State]().
+			ButtonB().IsPressed()
 		case "select":
-			pressed = ctx.Controls.ButtonSelect().IsPressed()
+			pressed = game.Controls[*State]().
+			ButtonSelect().IsPressed()
 		case "start":
-			pressed = ctx.Controls.ButtonStart().IsPressed()
+			pressed = game.Controls[*State]().
+			ButtonStart().IsPressed()
 		}
-		badges.Using(atlas).ButtonAction(a[0], a[1]).Highlighted(pressed).Render(ctx, s.batch, m, gfx.BottomLeft)
+		badges.Using(atlas).ButtonAction(a[0], a[1]).Highlighted(pressed).Render(s.batch, m, gfx.BottomLeft)
 		m = m.Moved(pixel.V(0, 15))
 	}
 	s.batch.Draw(target)

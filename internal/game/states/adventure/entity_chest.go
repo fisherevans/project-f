@@ -17,9 +17,9 @@ func (e *EntityChest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 
 }
 
-func (e *EntityChest) Interact(ctx *game.Context, adv *State, source Entity) {
+func (e *EntityChest) Interact(adv *State, source Entity) {
 	triggerDialogue := func(msg string) {
-		ctx.Notify("appending dialogue")
+		game.DebugNotification("appending dialogue")
 		adv.dialogues.Append(NewBasicDialogue(msg, nil))
 	}
 	if e.hasItem {

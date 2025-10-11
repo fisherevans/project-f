@@ -3,7 +3,6 @@ package adventure
 import (
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 )
 
@@ -13,7 +12,7 @@ type LightEntity struct {
 	Animations []*anim.AnimatedSprite
 }
 
-func (i *LightEntity) Update(ctx *game.Context, adv *State, timeDelta float64) {
+func (i *LightEntity) Update(adv *State, timeDelta float64) {
 	i.Light.Update(timeDelta)
 	for _, a := range i.Animations {
 		a.Update(timeDelta)

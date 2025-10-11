@@ -6,155 +6,165 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/navigtion"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
 type animechStatsMenu struct {
-	upgrades  []*upgradedState
-	actions   []*action
-	selection int
+	screen   *Screen
+	upgrades []*upgradedState
+	actions  []*action
+	nav      *navigtion.System[*animechStatsMenu]
+
+	availableExperience            int
+	uncommitedLevel                int
+	requiredExperienceForNextLevel int
 }
 
 type upgradedState struct {
+	navigtion.BaseItem[*animechStatsMenu]
 	label                   string
 	uncommitedLevelIncrease int
 	level                   *int
 	boostAtLevel            func(level int) int
 }
 
-type action struct {
-	label   string
-	handler func(ctx Context, m *animechStatsMenu)
+func (u *upgradedState) OnDirectionJustPressed(dir input.Direction, m *animechStatsMenu) {
+	if dir == input.Left {
+		u.uncommitedLevelIncrease--
+		if u.uncommitedLevelIncrease < 0 {
+			u.uncommitedLevelIncrease = 0
+		}
+		m.updateUncommitedUpgrades()
+	}
+	if dir == input.Right {
+		if m.availableExperience >= m.requiredExperienceForNextLevel {
+			u.uncommitedLevelIncrease++
+		}
+		m.updateUncommitedUpgrades()
+	}
 }
 
-func newAnimechStatsMenu(ctx Context) *animechStatsMenu {
-	return &animechStatsMenu{
+type action struct {
+	navigtion.BaseItem[*animechStatsMenu]
+	label   string
+	handler func(m *animechStatsMenu)
+}
+
+func (a *action) OnButtonAJustPressed(m *animechStatsMenu) {
+	if a.handler == nil {
+		return
+	}
+	a.handler(m)
+}
+
+func newAnimechStatsMenu(s *Screen) *animechStatsMenu {
+	menu := &animechStatsMenu{
+		screen: s,
+		nav:    navigtion.NewSystem[*animechStatsMenu](),
 		upgrades: []*upgradedState{
 			{
 				label:        "Sync",
-				level:        &ctx.GameSave.Animech.Upgrades.SyncLevel,
+				level:        &game.CurrentSave().Animech.Upgrades.SyncLevel,
 				boostAtLevel: rpg.AnimechUpgradeAdditionalSync,
 			},
 			{
 				label:        "Shield",
-				level:        &ctx.GameSave.Animech.Upgrades.ShieldLevel,
+				level:        &game.CurrentSave().Animech.Upgrades.ShieldLevel,
 				boostAtLevel: rpg.AnimechUpgradeAdditionalShield,
 			},
 		},
 		actions: []*action{
 			{
 				label: "[COMMIT]",
-				handler: func(ctx Context, m *animechStatsMenu) {
-					log.Info().Msgf("in commit")
+				handler: func(m *animechStatsMenu) {
 					for _, upgrade := range m.upgrades {
 						for l := 0; l < upgrade.uncommitedLevelIncrease; l++ {
-							ctx.GameSave.Animech.AnimechExperience -= rpg.AnimechUpgradeExperienceRequiredToUpgrade(ctx.GameSave.Animech.Upgrades.GetLevel())
+							game.CurrentSave().Animech.AnimechExperience -= rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
 							*upgrade.level++
 						}
 						upgrade.uncommitedLevelIncrease = 0
 					}
-					m.selection = 0
-					if err := ctx.GameSave.Save(); err != nil {
+					m.nav.Highlight(m.upgrades[0], m)
+					if err := game.CurrentSave().Save(); err != nil {
 						log.Error().Err(err).Msg("failed to save game")
-						ctx.Notify("Failed to save game")
+						game.DebugNotification("Failed to save game")
 					}
 				},
 			},
 			{
 				label: "[RESET]",
-				handler: func(ctx Context, m *animechStatsMenu) {
+				handler: func(m *animechStatsMenu) {
 					for _, upgrade := range m.upgrades {
 						upgrade.uncommitedLevelIncrease = 0
 					}
-					m.selection = 0
+					m.nav.Highlight(m.upgrades[0], m)
 				},
 			},
 			{
 				label: "[RE-SPEC]",
-				handler: func(ctx Context, m *animechStatsMenu) {
+				handler: func(m *animechStatsMenu) {
 					for _, upgrade := range m.upgrades {
 						upgrade.uncommitedLevelIncrease = 0
 					}
-					for ctx.GameSave.Animech.Upgrades.SyncLevel > 0 {
-						ctx.GameSave.Animech.Upgrades.SyncLevel--
-						ctx.GameSave.Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(ctx.GameSave.Animech.Upgrades.GetLevel())
+					for game.CurrentSave().Animech.Upgrades.SyncLevel > 0 {
+						game.CurrentSave().Animech.Upgrades.SyncLevel--
+						game.CurrentSave().Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
 					}
-					for ctx.GameSave.Animech.Upgrades.ShieldLevel > 0 {
-						ctx.GameSave.Animech.Upgrades.ShieldLevel--
-						ctx.GameSave.Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(ctx.GameSave.Animech.Upgrades.GetLevel())
+					for game.CurrentSave().Animech.Upgrades.ShieldLevel > 0 {
+						game.CurrentSave().Animech.Upgrades.ShieldLevel--
+						game.CurrentSave().Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
 					}
-					m.selection = 0
+					m.nav.Highlight(m.upgrades[0], m)
 				},
 			},
 			{
 				label: "[EDIT SKILL SET]",
-				handler: func(ctx Context, m *animechStatsMenu) {
-					ctx.PushMenu(newSkillSetMenu(ctx))
+				handler: func(m *animechStatsMenu) {
+					s.PushMenu(newSkillSetMenu(s))
+					// todo this is weird
 				},
 			},
 		},
 	}
-}
-
-func (m *animechStatsMenu) Enter(Context) {
-
-}
-
-func (m *animechStatsMenu) OnTick(ctx Context, target pixel.Target, timeDelta float64) {
-	if ctx.Controls.ButtonB().JustPressed() {
-		ctx.PopMenu()
+	for _, upgrade := range menu.upgrades {
+		menu.nav.AddNextToLast(input.Down, menu, upgrade)
 	}
-	availableExperience := ctx.GameSave.Animech.AnimechExperience
-	currentLevel := ctx.GameSave.Animech.Upgrades.GetLevel()
-	uncommitedLevel := currentLevel
+	for _, action := range menu.actions {
+		menu.nav.AddNextToLast(input.Down, menu, action)
+	}
+	return menu
+}
+
+func (m *animechStatsMenu) Enter() {}
+
+func (m *animechStatsMenu) updateUncommitedUpgrades() {
+	m.availableExperience = game.CurrentSave().Animech.AnimechExperience
+	m.uncommitedLevel = game.CurrentSave().Animech.Upgrades.GetLevel()
 	for _, upgrade := range m.upgrades {
 		for l := 0; l < upgrade.uncommitedLevelIncrease; l++ {
-			availableExperience -= rpg.AnimechUpgradeExperienceRequiredToUpgrade(uncommitedLevel)
-			uncommitedLevel++
+			m.availableExperience -= rpg.AnimechUpgradeExperienceRequiredToUpgrade(m.uncommitedLevel)
+			m.uncommitedLevel++
 		}
 	}
+	m.requiredExperienceForNextLevel = rpg.AnimechUpgradeExperienceRequiredToUpgrade(m.uncommitedLevel)
+}
 
-	nextLevelRequiredExperience := rpg.AnimechUpgradeExperienceRequiredToUpgrade(uncommitedLevel)
+func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
+	if game.Controls[*State]().ButtonB().JustPressed() {
+		m.screen.PopMenu()
+	} else {
+		m.nav.HandleInputs(game.Controls[*State](), m)
+	}
+	m.updateUncommitedUpgrades()
 
-	if ctx.Controls.DPad().DirectionJustPressedOrRepeated(input.Up) {
-		m.selection--
-		if m.selection < 0 {
-			m.selection = 0
-		}
-	}
-	if ctx.Controls.DPad().DirectionJustPressedOrRepeated(input.Down) {
-		m.selection++
-		maxSelection := len(m.upgrades) + len(m.actions) - 1
-		if m.selection > maxSelection {
-			m.selection = maxSelection
-		}
-	}
-	if m.selection >= 0 && m.selection < len(m.upgrades) {
-		if ctx.Controls.DPad().JustPressedDirection() == input.Left {
-			m.upgrades[m.selection].uncommitedLevelIncrease--
-			if m.upgrades[m.selection].uncommitedLevelIncrease < 0 {
-				m.upgrades[m.selection].uncommitedLevelIncrease = 0
-			}
-		}
-		if ctx.Controls.DPad().JustPressedDirection() == input.Right {
-			if availableExperience >= nextLevelRequiredExperience {
-				m.upgrades[m.selection].uncommitedLevelIncrease++
-			}
-		}
-	}
-	if ctx.Controls.ButtonA().JustPressed() {
-		actionSelection := m.selection - len(m.upgrades)
-		if actionSelection >= 0 && actionSelection < len(m.actions) {
-			m.actions[actionSelection].handler(ctx, m)
-		}
-	}
-
-	smallText := newTextRenderer(ctx, target, smallTextbox)
-	mediumText := newTextRenderer(ctx, target, mediumTextbox)
+	smallText := newTextRenderer(target, smallTextbox)
+	mediumText := newTextRenderer(target, mediumTextbox)
 
 	lineHeight := 14
 
@@ -169,9 +179,9 @@ func (m *animechStatsMenu) OnTick(ctx Context, target pixel.Target, timeDelta fl
 		y -= lineHeight
 	}
 
-	for id, upgrade := range m.upgrades {
+	for _, upgrade := range m.upgrades {
 		mask := uiMask
-		if id == m.selection {
+		if m.nav.IsHighlighted(upgrade) {
 			mask = colors.White.RGBA
 		}
 		level := *upgrade.level + upgrade.uncommitedLevelIncrease
@@ -183,17 +193,17 @@ func (m *animechStatsMenu) OnTick(ctx Context, target pixel.Target, timeDelta fl
 			smallText.render("<", statX-10, y, mask)
 		}
 		smallText.render(fmt.Sprintf("%s%d", levelFormat, level), statX, y, mask)
-		if availableExperience >= nextLevelRequiredExperience {
+		if m.availableExperience >= m.requiredExperienceForNextLevel {
 			smallText.render(">", statX+10, y, mask)
 		}
 		smallText.render(fmt.Sprintf("+%d %s", upgrade.boostAtLevel(level), upgrade.label), boostX, y, mask, tbcfg.RenderFrom(gfx.TopLeft))
 		y -= lineHeight
 	}
 
-	for id, action := range m.actions {
+	for _, a := range m.actions {
 		mask := uiMask
-		label := action.label
-		if id == m.selection-len(m.upgrades) {
+		label := a.label
+		if m.nav.IsHighlighted(a) {
 			mask = colors.White.RGBA
 			label = ">> " + label + " <<"
 		}
@@ -201,12 +211,13 @@ func (m *animechStatsMenu) OnTick(ctx Context, target pixel.Target, timeDelta fl
 		y -= lineHeight
 	}
 
-	expText := fmt.Sprintf("Experience required: %d/%d", availableExperience, nextLevelRequiredExperience)
+	expText := fmt.Sprintf("Experience required: %d/%d", m.availableExperience, m.requiredExperienceForNextLevel)
 	smallText.render(expText, 10, 10, uiMask, tbcfg.RenderFrom(gfx.BottomLeft))
 
+	currentLevel := game.CurrentSave().Animech.Upgrades.GetLevel()
 	levelText := fmt.Sprintf("%d", currentLevel)
-	if currentLevel != uncommitedLevel {
-		levelText += fmt.Sprintf("{+c:white} > %d", uncommitedLevel)
+	if currentLevel != m.uncommitedLevel {
+		levelText += fmt.Sprintf("{+c:white} > %d", m.uncommitedLevel)
 	}
 	mediumText.render("Level: "+levelText, screenWidth/2+20, screenHeight-10, uiMask, tbcfg.RenderFrom(gfx.TopLeft))
 }

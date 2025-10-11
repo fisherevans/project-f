@@ -6,6 +6,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -17,12 +18,14 @@ import (
 )
 
 type primortalDetailMenu struct {
+	screen    *Screen
 	primortal rpg.PrimortalType
 	selection int
 }
 
-func newPrimortalDetailMenu(primortal rpg.PrimortalType) *primortalDetailMenu {
+func newPrimortalDetailMenu(screen *Screen, primortal rpg.PrimortalType) *primortalDetailMenu {
 	return &primortalDetailMenu{
+		screen:    screen,
 		primortal: primortal,
 	}
 }
@@ -39,19 +42,19 @@ var (
 			tbcfg.RenderFrom(gfx.TopCenter)))
 )
 
-func (*primortalDetailMenu) Enter(Context) {}
+func (*primortalDetailMenu) Enter() {}
 
-func (v *primortalDetailMenu) OnTick(ctx Context, target pixel.Target, timeDelta float64) {
-	v.handleInput(ctx)
+func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
+	v.handleInput()
 
-	mediumText := newTextRenderer(ctx, target, mediumTextbox)
-	smallText := newTextRenderer(ctx, target, smallTextbox)
-	descriptionText := newTextRenderer(ctx, target, descriptionTextbox)
+	mediumText := newTextRenderer(target, mediumTextbox)
+	smallText := newTextRenderer(target, smallTextbox)
+	descriptionText := newTextRenderer(target, descriptionTextbox)
 	p := v.primortal.Primortal()
 	y := screenHeight - detailMargin
 
 	rp := 0
-	if savedPrimortal, exists := ctx.GameSave.Primortals[v.primortal]; exists {
+	if savedPrimortal, exists := game.CurrentSave().Primortals[v.primortal]; exists {
 		rp = savedPrimortal.ResearchPoints
 	}
 
@@ -85,7 +88,7 @@ func (v *primortalDetailMenu) OnTick(ctx Context, target pixel.Target, timeDelta
 		suffix := ""
 		if seenLocked {
 			suffix = " (locked)"
-		} else if ctx.GameSave.IsSkillUnlocked(us.SkillId) {
+		} else if game.CurrentSave().IsSkillUnlocked(us.SkillId) {
 			suffix = " (unlocked)"
 		} else {
 			suffix = fmt.Sprintf(" {+c:white}>> %d RP <<{-c}", us.Cost)
@@ -102,48 +105,49 @@ func (v *primortalDetailMenu) OnTick(ctx Context, target pixel.Target, timeDelta
 	smallText.render("[F1] to reset", screenWidth-detailMargin, detailMargin, uiMask, tbcfg.RenderFrom(gfx.BottomRight))
 }
 
-func (v *primortalDetailMenu) handleInput(ctx Context) {
-	if ctx.Controls.ButtonB().JustPressed() {
-		ctx.PopMenu()
+func (v *primortalDetailMenu) handleInput() {
+	if game.Controls[*State]().ButtonB().JustPressed() {
+		v.screen.PopMenu()
 	}
-	if ctx.Controls.DPad().DirectionJustPressedOrRepeated(input.Up) {
+	if game.Controls[*State]().DPad().DirectionJustPressedOrRepeated(input.Up) {
 		v.selection--
 		if v.selection < 0 {
 			v.selection = 0
 		}
 	}
-	if ctx.Controls.DPad().DirectionJustPressedOrRepeated(input.Down) {
+	if game.Controls[*State]().DPad().DirectionJustPressedOrRepeated(input.Down) {
 		v.selection++
 		maxSelection := len(v.primortal.Primortal().UnlockableSkills) - 1
 		if v.selection > maxSelection {
 			v.selection = maxSelection
 		}
 	}
-	if ctx.Controls.ButtonA().JustPressed() {
+	if game.Controls[*State]().ButtonA().JustPressed() {
 		us := v.primortal.Primortal().UnlockableSkills[v.selection]
-		savedPrimortal, savedPrimortalExists := ctx.GameSave.Primortals[v.primortal]
-		if !ctx.GameSave.IsSkillUnlocked(us.SkillId) && savedPrimortalExists && us.Cost <= savedPrimortal.ResearchPoints {
-			ctx.GameSave.Primortals[v.primortal].ResearchPoints -= us.Cost
-			ctx.GameSave.UnlockedSkills[us.SkillId] = struct{}{}
+		savedPrimortal, savedPrimortalExists := game.CurrentSave().Primortals[v.primortal]
+		if !game.CurrentSave().IsSkillUnlocked(us.SkillId) && savedPrimortalExists && us.Cost <= savedPrimortal.ResearchPoints {
+			game.CurrentSave().Primortals[v.primortal].ResearchPoints -= us.Cost
+			game.CurrentSave().UnlockSkill(us.SkillId)
 		}
-		saveOrNotify(ctx)
+		saveOrNotify()
 	}
-	if ctx.DebugToggles.F1().JustPressed() {
+	if game.DebugToggles().F1().JustPressed() {
 		for _, us := range v.primortal.Primortal().UnlockableSkills {
-			if ctx.GameSave.IsSkillUnlocked(us.SkillId) {
-				delete(ctx.GameSave.UnlockedSkills, us.SkillId)
-				if _, exists := ctx.GameSave.Primortals[v.primortal]; !exists {
-					ctx.GameSave.Primortals[v.primortal] = &rpg.PrimortalProgress{}
+			if game.CurrentSave().IsSkillUnlocked(us.SkillId) {
+				game.CurrentSave().RemoveUnlockedSkill(us.SkillId)
+				if _, exists := game.CurrentSave().Primortals[v.primortal]; !exists {
+					game.CurrentSave().Primortals[v.primortal] = &rpg.PrimortalProgress{}
 				}
-				ctx.GameSave.Primortals[v.primortal].ResearchPoints += us.Cost
+				game.CurrentSave().Primortals[v.primortal].ResearchPoints += us.Cost
 			}
 		}
+		saveOrNotify()
 	}
 }
 
-func saveOrNotify(ctx Context) {
-	if err := ctx.GameSave.Save(); err != nil {
+func saveOrNotify() {
+	if err := game.CurrentSave().Save(); err != nil {
 		log.Err(err).Msg("failed to save game")
-		ctx.Notify("Failed to save game!!!")
+		game.DebugNotification("Failed to save game!!!")
 	}
 }

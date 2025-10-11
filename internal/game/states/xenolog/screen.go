@@ -4,7 +4,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -26,7 +25,7 @@ type Screen struct {
 	menuStack []Menu
 }
 
-func NewScreen(ctx *game.Context) *Screen {
+func NewScreen() *Screen {
 	s := &Screen{
 		menuStack: []Menu{},
 		canvas:    shaders.NewCanvas(screenWidth, screenHeight),
@@ -37,22 +36,14 @@ func NewScreen(ctx *game.Context) *Screen {
 			bloom.DefaultBlurConfig(),
 			bloom.DefaultBlendConfig().WithIntensity(0.5)),
 	}
-	screenContext := newContext(ctx, s)
-	s.menuStack = append(s.menuStack, newHomeMenu(screenContext))
-	s.CurrentMenu().Enter(screenContext)
+	s.menuStack = append(s.menuStack, newHomeMenu(s))
+	s.CurrentMenu().Enter()
 	return s
 }
 
 type Menu interface {
-	OnTick(ctx Context, target pixel.Target, timeDelta float64)
-	Enter(ctx Context)
-}
-
-type Context struct {
-	*game.Context
-	PushMenu       func(Menu)
-	PopMenu        func()
-	SwapActiveMenu func(Menu)
+	OnTick(target pixel.Target, timeDelta float64)
+	Enter()
 }
 
 func (s *Screen) CurrentMenu() Menu {
@@ -62,37 +53,33 @@ func (s *Screen) CurrentMenu() Menu {
 	return s.menuStack[len(s.menuStack)-1]
 }
 
-func newContext(ctx *game.Context, s *Screen) Context {
-	screenContext := Context{
-		Context: ctx,
+func (s *Screen) PushMenu(menu Menu) {
+	s.menuStack = append(s.menuStack, menu)
+	s.CurrentMenu().Enter()
+}
+
+func (s *Screen) PopMenu() {
+	if s.menuStack == nil || len(s.menuStack) == 1 {
+		log.Warn().Msgf("Tried to go back to parent menu, but there was none")
+		return
 	}
-	screenContext.PushMenu = func(menu Menu) {
-		s.menuStack = append(s.menuStack, menu)
-		s.CurrentMenu().Enter(screenContext)
-	}
-	screenContext.PopMenu = func() {
-		if s.menuStack == nil || len(s.menuStack) == 1 {
-			log.Warn().Msgf("Tried to go back to parent menu, but there was none")
-			return
-		}
-		s.menuStack = s.menuStack[:len(s.menuStack)-1]
-		s.CurrentMenu().Enter(screenContext)
-	}
-	screenContext.SwapActiveMenu = func(menu Menu) {
-		s.menuStack[len(s.menuStack)-1] = menu
-		s.CurrentMenu().Enter(screenContext)
-	}
-	return screenContext
+	s.menuStack = s.menuStack[:len(s.menuStack)-1]
+	s.CurrentMenu().Enter()
+}
+
+func (s *Screen) SwapActiveMenu(menu Menu) {
+	s.menuStack[len(s.menuStack)-1] = menu
+	s.CurrentMenu().Enter()
 }
 
 func (s *Screen) Bounds() pixel.Rect {
 	return pixel.R(0, 0, float64(screenWidth), float64(screenHeight))
 }
 
-func (s *Screen) OnTick(state *State, ctx *game.Context, targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
+func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
 	s.batch.Clear()
 
-	s.menuStack[len(s.menuStack)-1].OnTick(newContext(ctx, s), s.batch, timeDelta)
+	s.menuStack[len(s.menuStack)-1].OnTick(s.batch, timeDelta)
 
 	s.canvas.Clear(screenClear)
 	s.batch.Draw(s.canvas)

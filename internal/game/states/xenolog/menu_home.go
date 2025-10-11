@@ -5,6 +5,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
@@ -22,13 +23,15 @@ var (
 )
 
 type homeMenu struct {
+	screen     *Screen
 	selectLeft bool
 	left       *selectBox
 	right      *selectBox
 }
 
-func newHomeMenu(ctx Context) *homeMenu {
+func newHomeMenu(screen *Screen) *homeMenu {
 	home := &homeMenu{
+		screen:     screen,
 		selectLeft: true,
 		left:       newSelectBox(spriteAnimech, "Animech", ""),
 		right:      newSelectBox(spritePrimortal, "Primortals", ""),
@@ -36,30 +39,30 @@ func newHomeMenu(ctx Context) *homeMenu {
 	return home
 }
 
-func (s *homeMenu) Enter(ctx Context) {
+func (s *homeMenu) Enter() {
 	s.left.subLabel = ""
-	if isAnimechUpgradeAvailable(ctx) {
+	if isAnimechUpgradeAvailable() {
 		s.left.subLabel = "Upgrade Available"
 	}
 
 	s.right.subLabel = ""
-	if isPrimortalUpgradeAvailable(ctx) {
+	if isPrimortalUpgradeAvailable() {
 		s.right.subLabel = "Upgrade Available"
 	}
 }
 
-func isAnimechUpgradeAvailable(ctx Context) bool {
-	available := ctx.GameSave.Animech.AnimechExperience
-	level := ctx.GameSave.Animech.Upgrades.GetLevel()
+func isAnimechUpgradeAvailable() bool {
+	available := game.CurrentSave().Animech.AnimechExperience
+	level := game.CurrentSave().Animech.Upgrades.GetLevel()
 	if available >= rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1) {
 		return true
 	}
 	return false
 }
 
-func isPrimortalUpgradeAvailable(ctx Context) bool {
-	for pType, save := range ctx.GameSave.Primortals {
-		next := nextUnlock(pType.Primortal(), ctx.GameSave)
+func isPrimortalUpgradeAvailable() bool {
+	for pType, save := range game.CurrentSave().Primortals {
+		next := nextUnlock(pType.Primortal(), game.CurrentSave())
 		if next != nil && save.ResearchPoints >= next.Cost {
 			return true
 		}
@@ -67,24 +70,24 @@ func isPrimortalUpgradeAvailable(ctx Context) bool {
 	return false
 }
 
-func (s *homeMenu) OnTick(ctx Context, target pixel.Target, timeDelta float64) {
+func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 	center := pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight/2))
-	if ctx.Controls.DPad().JustPressedDirection() == input.Left {
+	if game.Controls[*State]().DPad().JustPressedDirection() == input.Left {
 		s.selectLeft = true
-	} else if ctx.Controls.DPad().JustPressedDirection() == input.Right {
+	} else if game.Controls[*State]().DPad().JustPressedDirection() == input.Right {
 		s.selectLeft = false
 	}
-	if ctx.Controls.ButtonA().JustPressed() {
+	if game.Controls[*State]().ButtonA().JustPressed() {
 		if s.selectLeft {
-			ctx.PushMenu(newAnimechStatsMenu(ctx))
+			s.screen.PushMenu(newAnimechStatsMenu(s.screen))
 		} else {
-			ctx.PushMenu(newPrimortalsMenu(ctx))
+			s.screen.PushMenu(newPrimortalsMenu(s.screen))
 		}
 	}
 
 	dx := math.Floor(float64(selectBoxWidth) * 0.6)
-	s.left.render(ctx, center.Moved(pixel.V(-dx, 0)), target, s.selectLeft, timeDelta)
-	s.right.render(ctx, center.Moved(pixel.V(dx, 0)), target, !s.selectLeft, timeDelta)
+	s.left.render(center.Moved(pixel.V(-dx, 0)), target, s.selectLeft, timeDelta)
+	s.right.render(center.Moved(pixel.V(dx, 0)), target, !s.selectLeft, timeDelta)
 }
 
 var (
@@ -137,7 +140,7 @@ func newSelectBox(sprite pixelutil.BoundedDrawable, label, subLabel string) *sel
 	return s
 }
 
-func (b *selectBox) render(ctx Context, center pixel.Matrix, target pixel.Target, selected bool, timeDelta float64) {
+func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bool, timeDelta float64) {
 	b.elapsed += timeDelta
 
 	mask := uiMask
@@ -154,13 +157,13 @@ func (b *selectBox) render(ctx Context, center pixel.Matrix, target pixel.Target
 
 	if b.label != "" {
 		c := selectBoxLabelText.NewSimpleContent(b.label)
-		selectBoxLabelText.Render(ctx.Context, target, center.Moved(gfx.IVec(0, selectBoxHeight/2-selectBoxLabelMargin)), c, tbcfg.Foreground(mask))
+		selectBoxLabelText.Render(target, center.Moved(gfx.IVec(0, selectBoxHeight/2-selectBoxLabelMargin)), c, tbcfg.Foreground(mask))
 	}
 
 	if b.subLabel != "" {
-		subLabelMask := colors.Lerp(uiMask, uiMaskSelected, ctx.Utils.TimeCycleSin(selectBoxSubLabelFlashSpeed))
+		subLabelMask := colors.Lerp(uiMask, uiMaskSelected, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 		c := selectBoxSubLabelText.NewSimpleContent(b.subLabel)
-		selectBoxSubLabelText.Render(ctx.Context, target,
+		selectBoxSubLabelText.Render(target,
 			center.Moved(gfx.IVec(0, -selectBoxHeight/2-selectBoxSubLabelMargin)),
 			c,
 			tbcfg.Foreground(subLabelMask))

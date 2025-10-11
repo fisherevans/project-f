@@ -3,7 +3,9 @@ package xenolog
 import (
 	"github.com/gopxl/pixel/v2"
 
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
@@ -28,14 +30,12 @@ var (
 )
 
 type textRenderer struct {
-	ctx    Context
 	target pixel.Target
 	tb     *textbox.Instance
 }
 
-func newTextRenderer(ctx Context, target pixel.Target, tb *textbox.Instance) *textRenderer {
+func newTextRenderer(target pixel.Target, tb *textbox.Instance) *textRenderer {
 	return &textRenderer{
-		ctx:    ctx,
 		target: target,
 		tb:     tb,
 	}
@@ -44,6 +44,10 @@ func newTextRenderer(ctx Context, target pixel.Target, tb *textbox.Instance) *te
 func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tbcfg.ConfigOpt) (int, int) {
 	c := r.tb.NewComplexContent(text)
 	matrix := pixel.IM.Moved(gfx.IVec(x, y))
-	r.tb.Render(r.ctx.Context, r.target, matrix, c, append(opts, tbcfg.Foreground(mask))...)
+	r.tb.Render(r.target, matrix, c, append(opts, tbcfg.Foreground(mask))...)
 	return c.Width(), c.Height()
+}
+
+func flashingHighlight() pixel.RGBA {
+	return colors.Lerp(uiMask, uiMaskSelected, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 }

@@ -8,7 +8,7 @@ import (
 	"fisherevans.com/project/f/internal/util/colors"
 )
 
-type TickHandler func(ctx *game.Context, s *State, tick int, source Combatant, target Combatant)
+type TickHandler func(s *State, tick int, source Combatant, target Combatant)
 
 type SkillInstance struct {
 	Skill         *rpg.Skill
@@ -50,7 +50,7 @@ func (si *SkillInstance) Duration() int {
 	return si.Skill.Duration()
 }
 
-func (si *SkillInstance) OnTick(ctx *game.Context, s *State, tickId int, source Combatant, target Combatant) {
+func (si *SkillInstance) OnTick(s *State, tickId int, source Combatant, target Combatant) {
 	if si.InterruptedAt >= tickId {
 		return
 	}
@@ -81,7 +81,7 @@ func (si *SkillInstance) OnTick(ctx *game.Context, s *State, tickId int, source 
 		}
 		if effect.Damage != nil {
 			result := rpg.ComputeDamage(*effect.Damage, sourceStats, targetStats)
-			ctx.Notify("damage from %d to %d", effect.Damage.Amount, result.TargetDamage)
+			game.DebugNotification("damage from %d to %d", effect.Damage.Amount, result.TargetDamage)
 			s.AdjustHealth(-result.TargetDamage, target, nil)
 			s.AdjustHealth(-result.SourceDamage, source, nil)
 			target.GetStatuses().ReduceResult(result.TargetStatusStackReductions)

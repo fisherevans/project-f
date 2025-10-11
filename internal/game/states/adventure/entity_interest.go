@@ -3,7 +3,6 @@ package adventure
 import (
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 )
 
@@ -16,7 +15,7 @@ func (e *EntityInterest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 
 }
 
-func (e *EntityInterest) Interact(ctx *game.Context, adv *State, source Entity) {
+func (e *EntityInterest) Interact(adv *State, source Entity) {
 	var msg string
 	switch e.topic {
 	case "test-tube":
@@ -40,7 +39,7 @@ type EntityAnimatedInterest struct {
 	toggled bool
 }
 
-func (e *EntityAnimatedInterest) Update(ctx *game.Context, adv *State, timeDelta float64) {
+func (e *EntityAnimatedInterest) Update(adv *State, timeDelta float64) {
 	if e.toggled && e.OnAnimation != nil {
 		e.OnAnimation.Update(timeDelta)
 	}
@@ -58,7 +57,7 @@ func (e *EntityAnimatedInterest) RenderScene(target pixel.Target, matrix pixel.M
 	}
 }
 
-func (e *EntityAnimatedInterest) Interact(ctx *game.Context, adv *State, source Entity) {
+func (e *EntityAnimatedInterest) Interact(adv *State, source Entity) {
 	msg := e.OffMessage
 	if e.toggled {
 		msg = e.OnMessage
@@ -67,7 +66,7 @@ func (e *EntityAnimatedInterest) Interact(ctx *game.Context, adv *State, source 
 		return
 	}
 	e.toggled = true
-	adv.dialogues.Append(NewBasicDialogue(msg, func(ctx *game.Context, s *State) {
+	adv.dialogues.Append(NewBasicDialogue(msg, func(s *State) {
 		e.toggled = false
 	}))
 }

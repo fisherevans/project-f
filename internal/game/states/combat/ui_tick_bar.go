@@ -5,7 +5,6 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
@@ -35,7 +34,7 @@ var skillBarSpacing = 2
 
 var skillEaterSprite = atlas.GetSprite("combat/tick_bar/skill_eater")
 
-func (s *State) drawActiveSkills(ctx *game.Context, target pixel.Target, targetBounds pixel.Rect, matrixTopMiddle pixel.Matrix) {
+func (s *State) drawActiveSkills(target pixel.Target, targetBounds pixel.Rect, matrixTopMiddle pixel.Matrix) {
 	playerProgress := s.Battle.PendingProgress / 2.0
 	opponentProgress := playerProgress
 	if s.Battle.TickPlayerNext {
@@ -44,15 +43,15 @@ func (s *State) drawActiveSkills(ctx *game.Context, target pixel.Target, targetB
 		opponentProgress += 0.5
 	}
 	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -skillEaterSprite.Bounds().H()/2))
-	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Player, false)
-	s.drawCombatantSkills(ctx, target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Opponent, true)
+	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Player, false)
+	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Opponent, true)
 	skillEaterSprite.Draw(target, matrixTopMiddle)
 }
 
 var baseNextSkillMaskScale = 0.8
 var nextSkillFlashRation = 0.2
 
-func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, combatant Combatant, flip bool) {
+func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, combatant Combatant, flip bool) {
 	nextSkillMaskScale := baseNextSkillMaskScale*(1-nextSkillFlashRation) + baseNextSkillMaskScale*nextSkillFlashRation*s.skillFlashAlpha
 	noNextSkillAlpha := 1.0
 	currentSkill := combatant.GetCurrentSkill()
@@ -71,7 +70,7 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 		mask := pixel.RGBA{1, 1, 1, 1}
 		alpha := math.Min((skillProgress)/1, 1)*(1-nextSkillMaskScale) + nextSkillMaskScale
 		mask = colors.ScaleColor(mask, alpha)
-		s.drawSkill(ctx, target, matrixTopMiddle, currentSkill.Skill, currentSkill.InterruptedAt, mask, skillProgress > 0.5, 1.0, skillProgress, flip)
+		s.drawSkill(target, matrixTopMiddle, currentSkill.Skill, currentSkill.InterruptedAt, mask, skillProgress > 0.5, 1.0, skillProgress, flip)
 		matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -float64((currentSkill.Duration()+1)*skillBarTickSpacing)))
 		noNextSkillAlpha = math.Min(1.0, (float64(currentSkill.NextTick-1)+currentTickProgress)/float64(currentSkill.Duration())) // 100% by 1 tick away
 	}
@@ -83,7 +82,7 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 			mask = colors.ScaleColor(mask, 0.9)
 		}
 		mask = colors.ScaleColor(mask, nextSkillMaskScale)
-		s.drawSkill(ctx, target, matrixTopMiddle, &nextSkill, -1, mask, combatant.IsNextSkillCommitted(), 1.0, nextSkillProgress, flip)
+		s.drawSkill(target, matrixTopMiddle, &nextSkill, -1, mask, combatant.IsNextSkillCommitted(), 1.0, nextSkillProgress, flip)
 	} else {
 		y := noneSelectedSprite.Bounds().H() / 2
 		noNextSkillAlpha *= s.skillFlashAlphaInverse
@@ -91,7 +90,7 @@ func (s *State) drawCombatantSkills(ctx *game.Context, target pixel.Target, matr
 	}
 }
 
-func (s *State) drawSkill(ctx *game.Context, target pixel.Target, matrixTopMiddle pixel.Matrix, skill *rpg.Skill, interruptedAt int, mask pixel.RGBA, active bool, alpha float64, skillProgress float64, flip bool) {
+func (s *State) drawSkill(target pixel.Target, matrixTopMiddle pixel.Matrix, skill *rpg.Skill, interruptedAt int, mask pixel.RGBA, active bool, alpha float64, skillProgress float64, flip bool) {
 	if skill == nil {
 		return
 	}

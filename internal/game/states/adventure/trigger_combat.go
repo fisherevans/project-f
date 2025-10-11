@@ -9,7 +9,7 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 )
 
-func (adv *State) TriggerCombat(opponentIntent *rpg.PrimortalType, background string, onComplete func(*game.Context, *State)) {
+func (adv *State) TriggerCombat(opponentIntent *rpg.PrimortalType, background string, onComplete func(*State)) {
 	if adv.enteringCombat {
 		return
 	}
@@ -25,20 +25,20 @@ func (adv *State) TriggerCombat(opponentIntent *rpg.PrimortalType, background st
 	))
 	adv.actions.Add(NewSerialActions(
 		NewSleepAction(flashDuration),
-		NewSimpleAction(func(ctx *game.Context, s *State) {
+		NewSimpleAction(func(s *State) {
 			s.overlays.Add(NewFadeOverlay(
 				pixel.RGBA{A: 0},
 				pixel.RGBA{A: 1},
 				1,
 				NewBaseOverlay(swirlDuration, true, nil),
 			))
-			ctx.SetCustomShader(game.NewSwirlShader(swirlDuration))
+			game.SetCustomShader(game.NewSwirlShader(swirlDuration))
 		}),
 		NewSleepAction(swirlDuration),
-		NewSimpleAction(func(ctx *game.Context, s *State) {
+		NewSimpleAction(func(s *State) {
 			s.blockInput = false
 			s.enteringCombat = false
-			ctx.RemoveCustomShader()
+			game.RemoveCustomShader()
 			var opponent rpg.PrimortalType
 			if opponentIntent != nil {
 				opponent = *opponentIntent
@@ -52,22 +52,22 @@ func (adv *State) TriggerCombat(opponentIntent *rpg.PrimortalType, background st
 				}
 				opponent = options[rand.Intn(len(options))]
 			}
-			ctx.SetActiveStateIntent(game.CombatIntent{
+			game.SetActiveStateIntent(game.CombatIntent{
 				Run:        &rpg.Run{},
 				Opponent:   opponent,
 				Background: background,
-				OnComplete: func(ctx *game.Context, r game.CombatIntentResult) {
-					ctx.Notify("Combat complete!")
+				OnComplete: func(r game.CombatIntentResult) {
+					game.DebugNotification("Combat complete!")
 					if !r.PlayerWon {
-						ctx.SetActiveStateIntent(game.InitialState())
+						game.SetActiveStateIntent(game.InitialState())
 						return
 					}
-					ctx.SetActiveStateIntent(game.SwapStateIntent{
+					game.SetActiveStateIntent(game.SwapStateIntent{
 						State: adv,
 					})
-					ctx.GameSave.Animech.AnimechExperience += r.ResearchPoints // todo this isn't right
+					game.CurrentSave().Animech.AnimechExperience += r.ResearchPoints // todo this isn't right
 					if onComplete != nil {
-						onComplete(ctx, adv)
+						onComplete(adv)
 					}
 					// uncomment to fully recover after battle
 					//adv.animech.CurrentShield = adv.animech.GetMaxShield()

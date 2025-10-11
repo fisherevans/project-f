@@ -28,8 +28,8 @@ func NewHud() *Hud {
 	}
 }
 
-func (h *Hud) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
-	h.onTickElythiumCount(ctx, s, target, matrix, bounds, timeDelta)
+func (h *Hud) OnTick(s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
+	h.onTickElythiumCount(s, target, matrix, bounds, timeDelta)
 
 	type topRightCount struct {
 		icon   *anim.AnimatedSprite
@@ -48,7 +48,7 @@ func (h *Hud) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pi
 		},
 		{
 			icon:   h.researchIcon,
-			count:  ctx.GameSave.Animech.AnimechExperience, // todo not from a run
+			count:  game.CurrentSave().Animech.AnimechExperience, // todo not from a run
 			stroke: "#162d3d",
 			fg:     "#b2d4ed",
 		},
@@ -70,7 +70,7 @@ func (h *Hud) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pi
 		txtHNudge := -1.0 // padding between number and sprite
 		txtHNudge -= sprite.Bounds().W()
 		txtM := topRight.Moved(pixel.V(txtHNudge, txtVNudge))
-		hudCountText.Render(ctx, target, txtM, content, tbcfg.RenderFrom(gfx.TopRight))
+		hudCountText.Render(target, txtM, content, tbcfg.RenderFrom(gfx.TopRight))
 	}
 }
 
@@ -82,7 +82,7 @@ var hudCountText = textbox.NewInstance(
 		tbcfg.VAligned(tbcfg.VAlignMiddle),
 		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 
-func (h *Hud) onTickElythiumCount(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
+func (h *Hud) onTickElythiumCount(s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
 	h.elythiumCountIcon.Update(timeDelta)
 	sprite := h.elythiumCountIcon.Sprite()
 	padding := 6.0
@@ -95,5 +95,5 @@ func (h *Hud) onTickElythiumCount(ctx *game.Context, s *State, target pixel.Targ
 	txtHNudge := -1.0 // padding between number and sprite
 	txtHNudge -= sprite.Bounds().W()
 	txtM := topRight.Moved(pixel.V(txtHNudge, txtVNudge))
-	hudCountText.Render(ctx, target, txtM, content, tbcfg.RenderFrom(gfx.TopRight))
+	hudCountText.Render(target, txtM, content, tbcfg.RenderFrom(gfx.TopRight))
 }

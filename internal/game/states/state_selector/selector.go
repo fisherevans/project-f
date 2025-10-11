@@ -23,7 +23,7 @@ type Selector struct {
 	states   []game.SelectIntentDestination
 }
 
-func New(_ *game.Context, intent game.SelectIntent) game.State {
+func New(intent game.SelectIntent) game.State {
 	return &Selector{
 		states: intent.Destinations,
 	}
@@ -32,8 +32,8 @@ func New(_ *game.Context, intent game.SelectIntent) game.State {
 var titleDrawer = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
 var optionDrawer = text.New(pixel.ZV, resources.CreateFont(resources.FontNameM5x7).Atlas)
 
-func (s *Selector) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	switch ctx.Controls.DPad().JustPressedDirection() {
+func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+	switch game.Controls[*Selector]().DPad().JustPressedDirection() {
 	case input.Up:
 		s.selected--
 		if s.selected < 0 {
@@ -47,8 +47,8 @@ func (s *Selector) OnTick(ctx *game.Context, target *shaders.Canvas, targetBound
 
 	}
 
-	if ctx.Controls.ButtonA().JustPressed() {
-		ctx.SetActiveStateIntent(s.states[s.selected].Intent(ctx))
+	if game.Controls[*Selector]().ButtonA().JustPressed() {
+		game.SetActiveStateIntent(s.states[s.selected].Intent())
 		return
 	}
 
@@ -68,7 +68,7 @@ func (s *Selector) OnTick(ctx *game.Context, target *shaders.Canvas, targetBound
 	}
 	optionDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-35)))
 
-	ctx.DebugBR("enter: select")
-	ctx.DebugBR("w/s/up/down: change")
-	ctx.DebugBR("esc: cancel")
+	game.DebugBR("enter: select")
+	game.DebugBR("w/s/up/down: change")
+	game.DebugBR("esc: cancel")
 }

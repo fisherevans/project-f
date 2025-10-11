@@ -5,7 +5,6 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util/pixelutil"
@@ -45,7 +44,7 @@ func (a *AnimatedMoveableEntity) currentLight() *Light {
 	return l
 }
 
-func (a *AnimatedMoveableEntity) Update(ctx *game.Context, adv *State, timeDelta float64) {
+func (a *AnimatedMoveableEntity) Update(adv *State, timeDelta float64) {
 	animation := a.currentAnimation()
 	if animation == nil {
 		return

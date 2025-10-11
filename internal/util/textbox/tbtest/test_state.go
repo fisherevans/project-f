@@ -56,31 +56,31 @@ var (
 	content = tb.NewComplexContent("Hello, world! How are you doing today?")
 )
 
-func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 
-	if ctx.Controls.DPad().DirectionJustPressed(input.Up) {
+	if game.Controls[*State]().DPad().DirectionJustPressed(input.Up) {
 		s.expand++
 		if s.expand >= len(expands) {
 			s.expand = 0
 		}
 	}
-	ctx.DebugBR("Up: toggle expand (%s)", expands[s.expand].Name())
+	game.Ctx.DebugBR("Up: toggle expand (%s)", expands[s.expand].Name())
 
-	if ctx.Controls.DPad().DirectionJustPressed(input.Right) {
+	if game.Controls[*State]().DPad().DirectionJustPressed(input.Right) {
 		s.haligned++
 		if s.haligned >= len(halignments) {
 			s.haligned = 0
 		}
 	}
-	ctx.DebugBR("Right: toggle h alignment (%s)", halignments[s.haligned].Name())
+	game.Ctx.DebugBR("Right: toggle h alignment (%s)", halignments[s.haligned].Name())
 
-	if ctx.Controls.DPad().DirectionJustPressed(input.Left) {
+	if game.Controls[*State]().DPad().DirectionJustPressed(input.Left) {
 		s.valigned++
 		if s.valigned >= len(valignments) {
 			s.valigned = 0
 		}
 	}
-	ctx.DebugBR("Left: toggle v alignment (%s)", valignments[s.valigned].Name())
+	game.Ctx.DebugBR("Left: toggle v alignment (%s)", valignments[s.valigned].Name())
 
 	opts := []tbcfg.ConfigOpt{
 		tbcfg.WithExpandMode(expands[s.expand]),
@@ -96,11 +96,11 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 
 	atlas.GetSprite("2x2").Draw(target, pixel.IM.Moved(pixel.V(right/2, top/2)))
 
-	ctx.DebugBR("left %.1f, right %.1f, top %.1f, bottom %.1f", left, right, top, bottom)
+	game.Ctx.DebugBR("left %.1f, right %.1f, top %.1f, bottom %.1f", left, right, top, bottom)
 
 	render := func(vec pixel.Vec, origin gfx.OriginLocation) {
 		gfx.DrawRect(atlas, target, pixel.IM.Moved(vec), origin, tb.GetConfig().BoxWidth, tb.GetConfig().BoxHeight, colors.HexString("#111"))
-		tb.Render(ctx, target, pixel.IM.Moved(vec), content, append(opts, tbcfg.RenderFrom(origin))...)
+		tb.Render(target, pixel.IM.Moved(vec), content, append(opts, tbcfg.RenderFrom(origin))...)
 
 	}
 

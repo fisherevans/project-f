@@ -5,20 +5,19 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 )
 
 type TransitionController interface {
-	Update(ctx *game.Context, s *State, timeDelta float64) (isComplete bool)
+	Update(s *State, timeDelta float64) (isComplete bool)
 }
 
 type Camera interface {
 	SetLocation(location pixel.Vec)
 	CurrentLocation() pixel.Vec
-	Update(ctx *game.Context, s *State, timeDelta float64)
-	ComputeRenderDetails(ctx *game.Context, s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix)
+	Update(s *State, timeDelta float64)
+	ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix)
 }
 
 type cameraLocation struct {
@@ -33,7 +32,7 @@ func (c *cameraLocation) SetLocation(location pixel.Vec) {
 	c.location = location
 }
 
-func (c *cameraLocation) ComputeRenderDetails(ctx *game.Context, s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix) {
+func (c *cameraLocation) ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix) {
 	cameraMapX := int(math.Round(c.location.X))
 	cameraMapY := int(math.Round(c.location.Y))
 	bounds := MapBounds{
@@ -56,7 +55,7 @@ func NewStaticCamera(location pixel.Vec) *StaticCamera {
 	return &StaticCamera{cameraLocation{location: location}}
 }
 
-func (c *StaticCamera) Update(ctx *game.Context, s *State, timeDelta float64) {
+func (c *StaticCamera) Update(s *State, timeDelta float64) {
 }
 
 const EntityCameraSpeedNoLag float64 = 0
@@ -80,7 +79,7 @@ func NewFollowCamera(target EntityId, initialLocation pixel.Vec, speed float64) 
 	}
 }
 
-func (c *EntityCamera) Update(ctx *game.Context, s *State, timeDelta float64) {
+func (c *EntityCamera) Update(s *State, timeDelta float64) {
 	target, found := s.entities[c.target]
 	if !found {
 		return

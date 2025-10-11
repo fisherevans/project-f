@@ -3,8 +3,6 @@ package adventure
 import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
-
-	"fisherevans.com/project/f/internal/game"
 )
 
 type EntityId string
@@ -15,7 +13,7 @@ func (i EntityId) GetEntityId() EntityId {
 
 type Entity interface {
 	Move(adv *State, timeDelta float64) float64
-	Update(ctx *game.Context, adv *State, timeDelta float64)
+	Update(adv *State, timeDelta float64)
 	PreciseMapLocation() pixel.Vec
 	RenderMapLocation() pixel.Vec
 	IsPassable() bool
@@ -23,7 +21,7 @@ type Entity interface {
 	RenderScene(target pixel.Target, matrix pixel.Matrix)
 	RenderLight(target pixel.Target, matrix pixel.Matrix)
 	GetEntityId() EntityId
-	Interact(ctx *game.Context, adv *State, source Entity)
+	Interact(adv *State, source Entity)
 	GetRenderZPriority() int
 }
 

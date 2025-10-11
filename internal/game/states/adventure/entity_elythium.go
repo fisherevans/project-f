@@ -4,7 +4,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/util/colors"
 )
@@ -66,7 +65,7 @@ func (e *ElythiumDepositEntity) RenderLight(target pixel.Target, matrix pixel.Ma
 	e.unminedlight.Render(target, matrix)
 }
 
-func (e *ElythiumDepositEntity) Update(ctx *game.Context, adv *State, timeDelta float64) {
+func (e *ElythiumDepositEntity) Update(adv *State, timeDelta float64) {
 	if e.mined {
 		e.timeMined += timeDelta
 		if e.timeMined > 5 {
@@ -81,7 +80,7 @@ func (e *ElythiumDepositEntity) Update(ctx *game.Context, adv *State, timeDelta 
 	}
 }
 
-func (e *ElythiumDepositEntity) Interact(ctx *game.Context, adv *State, source Entity) {
+func (e *ElythiumDepositEntity) Interact(adv *State, source Entity) {
 	log.Info().Msg("Interacting with deposit")
 	if e.mined {
 		return

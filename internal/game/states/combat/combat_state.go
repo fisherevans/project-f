@@ -90,9 +90,9 @@ type State struct {
 	batch *pixel.Batch
 }
 
-func New(ctx *game.Context, i game.CombatIntent) game.State {
+func New(i game.CombatIntent) game.State {
 	return &State{
-		Player:     NewPlayer(ctx.GameSave.Animech, i.Run),
+		Player:     NewPlayer(game.CurrentSave().Animech, i.Run),
 		Opponent:   NewPrimortalOpponent(i.Opponent),
 		OnComplete: i.OnComplete,
 		Battle:     &Battle{},
@@ -111,7 +111,7 @@ func (s *State) ClearColor() color.Color {
 	return color.Black
 }
 
-func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 
 	s.backgroundSprite.Draw(target, pixel.IM.Moved(targetBounds.Center()))
@@ -124,7 +124,7 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 		s.Player.GetCurrentShield().Update(timeDelta)
 		s.Player.GetCurrentSync().Update(timeDelta)
 
-		s.Battle.Update(ctx, s, timeDelta)
+		s.Battle.Update(s, timeDelta)
 
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 || s.Opponent.GetHealth().GetCurrentInt() <= 0 {
 			s.phase = PhaseComplete
@@ -133,7 +133,7 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 
 	var remainingFx []FX
 	for _, fx := range s.fx {
-		if !fx.Update(ctx, s, timeDelta) {
+		if !fx.Update(s, timeDelta) {
 			remainingFx = append(remainingFx, fx)
 		}
 	}
@@ -145,22 +145,22 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 	s.renderCombatantSprite(s.Player.GetAnimation(), s.Player, true, timeDelta)
 	s.renderCombatantSprite(s.Opponent.GetAnimation(), s.Opponent, false, timeDelta)
 
-	s.drawActiveSkills(ctx, s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
+	s.drawActiveSkills(s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
 
 	for _, fx := range s.fx {
-		fx.Render(ctx, s.batch)
+		fx.Render(s.batch)
 	}
 
-	s.renderSkills(ctx, s.batch, targetBounds, timeDelta)
+	s.renderSkills(s.batch, targetBounds, timeDelta)
 
-	s.drawPlayerStats(ctx)
-	s.drawOpponentStats(ctx)
+	s.drawPlayerStats()
+	s.drawOpponentStats()
 
-	s.Player.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.6)))
-	s.Opponent.GetTempo().Render(ctx, s.batch, pixel.IM.Moved(pixel.V(8+game.GameWidth/2, game.GameHeight*0.6)))
+	s.Player.GetTempo().Render(s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.6)))
+	s.Opponent.GetTempo().Render(s.batch, pixel.IM.Moved(pixel.V(8+game.GameWidth/2, game.GameHeight*0.6)))
 
-	ctx.DebugBL("player status: %s", s.Player.GetStatuses().String())
-	ctx.DebugBL("opponent status: %s", s.Opponent.GetStatuses().String())
+	game.DebugBL("player status: %s", s.Player.GetStatuses().String())
+	game.DebugBL("opponent status: %s", s.Opponent.GetStatuses().String())
 
 	if s.phase == PhaseComplete {
 		overlay := "Battle complete!"
@@ -173,9 +173,9 @@ func (s *State) OnTick(ctx *game.Context, target *shaders.Canvas, targetBounds p
 			result.ResearchPoints = 1
 		}
 		content := combatantNameText.NewComplexContent(overlay)
-		combatantNameText.Render(ctx, s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, math.Floor(game.GameHeight*0.6))), content, tbcfg.RenderFrom(gfx.Centered))
-		if ctx.Controls.ButtonA().JustPressed() || ctx.Controls.ButtonB().JustPressed() {
-			s.OnComplete(ctx, result)
+		combatantNameText.Render(s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, math.Floor(game.GameHeight*0.6))), content, tbcfg.RenderFrom(gfx.Centered))
+		if game.Controls[*State]().ButtonA().JustPressed() || game.Controls[*State]().ButtonB().JustPressed() {
+			s.OnComplete(result)
 		}
 	}
 

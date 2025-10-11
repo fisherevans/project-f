@@ -7,7 +7,6 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -213,7 +212,7 @@ var (
 	}
 )
 
-func (a *AppliedStatuses) Render(ctx *game.Context, originM pixel.Matrix, target pixel.Target, timeDelta float64, origin gfx.OriginLocation) {
+func (a *AppliedStatuses) Render(originM pixel.Matrix, target pixel.Target, timeDelta float64, origin gfx.OriginLocation) {
 	dx := 0.0
 	xPadding := 2.0
 	dxDirection := -1.0

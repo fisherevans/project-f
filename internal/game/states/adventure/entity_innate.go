@@ -2,8 +2,6 @@ package adventure
 
 import (
 	"github.com/gopxl/pixel/v2"
-
-	"fisherevans.com/project/f/internal/game"
 )
 
 type InnateEntity struct {
@@ -15,7 +13,7 @@ func (i *InnateEntity) Move(adv *State, timeDelta float64) float64 {
 	return 0
 }
 
-func (i *InnateEntity) Update(ctx *game.Context, adv *State, timeDelta float64) {
+func (i *InnateEntity) Update(adv *State, timeDelta float64) {
 }
 
 func (i *InnateEntity) Location() MapLocation {
@@ -30,7 +28,7 @@ func (i *InnateEntity) RenderMapLocation() pixel.Vec {
 	return i.PreciseMapLocation()
 }
 
-func (i *InnateEntity) Interact(ctx *game.Context, adv *State, source Entity) {
+func (i *InnateEntity) Interact(adv *State, source Entity) {
 
 }
 

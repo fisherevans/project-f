@@ -30,7 +30,7 @@ var (
 	statBoxWidth               = 80
 )
 
-func (s *State) drawPlayerStats(ctx *game.Context) {
+func (s *State) drawPlayerStats() {
 	syncBar := &StatBar{
 		lines:       []StatBarLine{StatBarVisual, StatBarLabel},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 6, 1),
@@ -58,10 +58,10 @@ func (s *State) drawPlayerStats(ctx *game.Context) {
 		originLocation: StatBoxOriginTopLeft,
 	}
 
-	s.drawCombatantStatBox(ctx, s.Player.Name(), statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft)
+	s.drawCombatantStatBox(s.Player.Name(), statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft)
 }
 
-func (s *State) drawOpponentStats(ctx *game.Context) {
+func (s *State) drawOpponentStats() {
 	healthBar := &StatBar{
 		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 7, 1),
@@ -79,10 +79,10 @@ func (s *State) drawOpponentStats(ctx *game.Context) {
 		originLocation: StatBoxOriginTopRight,
 	}
 
-	s.drawCombatantStatBox(ctx, s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight)
+	s.drawCombatantStatBox(s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight)
 }
 
-func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *StatBox, statuses *AppliedStatuses, origin pixel.Vec, originLocation gfx.OriginLocation) {
+func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *AppliedStatuses, origin pixel.Vec, originLocation gfx.OriginLocation) {
 	renderScale := pixel.V(1, 1)
 	var nameContentOpts []textbox.ContentOpt
 	if originLocation == gfx.TopRight {
@@ -111,12 +111,12 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 		Moved(originLocation.Align(statBottomSprite)).
 		Moved(gfx.IVec(0, -nameBoxHeight).ScaledXY(renderScale)))
 
-	combatantNameText.Render(ctx, s.batch,
+	combatantNameText.Render(s.batch,
 		matrix.Moved(gfx.IVec(statBorderPadding+statBorderPaddingNameExtra, -statBorderPadding).ScaledXY(renderScale)),
 		nameContent,
 		tbcfg.RenderFrom(originLocation))
 
-	statBox.Draw(ctx, s.batch, matrix.Moved(gfx.IVec(statBorderPadding, -paddedNameHeight).ScaledXY(renderScale)), statBoxWidth)
+	statBox.Draw(s.batch, matrix.Moved(gfx.IVec(statBorderPadding, -paddedNameHeight).ScaledXY(renderScale)), statBoxWidth)
 
 	// todo time detla
 	statusSidePadding := 5
@@ -124,7 +124,7 @@ func (s *State) drawCombatantStatBox(ctx *game.Context, name string, statBox *St
 	statusM := matrix.
 		Moved(pixel.V(0, -float64(statBox.FrameHeight()+paddedNameHeight+statusTopPadding))).
 		Moved(originLocation.AlignFrom(gfx.Centered, float64(statusSidePadding*2), 0))
-	statuses.Render(ctx, statusM, s.batch, 0, originLocation)
+	statuses.Render(statusM, s.batch, 0, originLocation)
 }
 
 type StatBoxOriginLocation int
@@ -141,10 +141,10 @@ type StatBox struct {
 
 var statBoxContentPadding = 1
 
-func (sb *StatBox) Draw(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, frameWidth int) {
+func (sb *StatBox) Draw(target pixel.Target, matrix pixel.Matrix, frameWidth int) {
 	frameHeight := sb.FrameHeight()
 
-	ctx.DebugBR("frame height: %d", frameHeight)
+	game.DebugBR("frame height: %d", frameHeight)
 
 	switch sb.originLocation {
 	case StatBoxOriginTopLeft:
@@ -175,7 +175,7 @@ func (sb *StatBox) Draw(ctx *game.Context, target pixel.Target, matrix pixel.Mat
 		if barId != lastBarId {
 			matrix = matrix.Moved(pixel.V(0, 1))
 		}
-		bar.Draw(ctx, target, matrix, width)
+		bar.Draw(target, matrix, width)
 		matrix = matrix.Moved(pixel.V(0, float64(bar.Height())))
 	}
 }
@@ -229,7 +229,7 @@ func (sb *StatBar) Height() int {
 	return height
 }
 
-func (sb *StatBar) Draw(ctx *game.Context, target pixel.Target, matrix pixel.Matrix, width int) int {
+func (sb *StatBar) Draw(target pixel.Target, matrix pixel.Matrix, width int) int {
 	lastLineId := len(sb.lines) - 1
 	for lineId := lastLineId; lineId >= 0; lineId-- {
 		line := sb.lines[lineId]
@@ -240,13 +240,13 @@ func (sb *StatBar) Draw(ctx *game.Context, target pixel.Target, matrix pixel.Mat
 		case StatBarLabel:
 			//moveVec := sb.labelSprite.Bounds().Center()
 			labelContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%s", colors.ToHex(sb.color), sb.label)) // TODO don't compute hex
-			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(float64(2), 0)), labelContent)
+			combatantStatText.Render(target, matrix.Moved(pixel.V(float64(2), 0)), labelContent)
 			//sb.labelSprite.DrawColorMask(target, matrix.Moved(pixel.V(float64(2), float64(5)-sb.labelSprite.Bounds().H())).Moved(moveVec), sb.color)
 
 			valueContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%d{+c:%s}/%d", colors.ToHex(sb.colorBright), sb.current, colors.ToHex(sb.color), sb.max)) // TODO don't compute hex
 			valueDx := float64((width - valueContent.Width()) - 2)
 			valueDx = math.Max(valueDx, float64(labelContent.Width()+4))
-			combatantStatText.Render(ctx, target, matrix.Moved(pixel.V(valueDx, 0)), valueContent)
+			combatantStatText.Render(target, matrix.Moved(pixel.V(valueDx, 0)), valueContent)
 		case StatBarVisual:
 			maxRectWidth := width - 2
 			currentRectWidth := int(float64(maxRectWidth) * float64(sb.current) / float64(sb.max))

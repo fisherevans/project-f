@@ -24,7 +24,7 @@ type Chatter interface {
 	Content() *textbox.Content
 	State() ChatterState
 	RenderAbove() pixel.Vec
-	Update(ctx *game.Context, s *State, timeDelta float64)
+	Update(s *State, timeDelta float64)
 }
 
 type ChatterSystem struct {
@@ -47,11 +47,11 @@ var chatterBox = textbox.NewInstance(
 		tbcfg.HAligned(tbcfg.HAlignCenter),
 		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 
-func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
+func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
 	c.sortChatters()
 	incompleteChatters := c.chatters[:0] // Reuse the same slice memory
 	for _, chatter := range c.chatters {
-		chatter.Update(ctx, s, timeDelta)
+		chatter.Update(s, timeDelta)
 		if chatter.State() == ChatterComplete {
 			continue
 		}
@@ -68,8 +68,8 @@ func (c *ChatterSystem) OnTick(ctx *game.Context, s *State, target pixel.Target,
 
 		chatterArrow.Draw(target, renderMatrix)
 
-		chatter.Content().Update(ctx, timeDelta)
-		chatterBox.Render(ctx, target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content())
+		chatter.Content().Update(timeDelta)
+		chatterBox.Render(target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content())
 	}
 	c.chatters = incompleteChatters
 }
@@ -112,7 +112,7 @@ func (b *basicEntityChatter) Content() *textbox.Content {
 	return b.content
 }
 
-func (b *basicEntityChatter) Update(ctx *game.Context, s *State, timeDelta float64) {
+func (b *basicEntityChatter) Update(s *State, timeDelta float64) {
 	b.elapsedTime += timeDelta
 	if entity, ok := s.entities[b.target]; ok {
 		b.renderLocation = entity.RenderMapLocation()
