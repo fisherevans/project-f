@@ -88,6 +88,7 @@ type baseListItem[T any] struct{}
 
 func (b baseListItem[T]) RenderWasSkipped(t T, wasAbove bool) {}
 func (b baseListItem[T]) ButtonAJustPressed(t T)              {}
+func (b baseListItem[T]) ButtonStartJustPressed(t T)          {}
 func (b baseListItem[T]) SkipHighlight(t T) bool {
 	return false
 }
@@ -97,6 +98,7 @@ type listItem[T any] interface {
 	RenderWasSkipped(t T, wasAbove bool)
 	Height() int
 	ButtonAJustPressed(t T)
+	ButtonStartJustPressed(t T)
 	SkipHighlight(t T) bool
 }
 
@@ -155,6 +157,9 @@ func (s *scrollList[T]) handleInput(t T, controls *input.Controls) {
 	if controls.ButtonA().JustPressed() {
 		s.items[s.highlightedIndex].ButtonAJustPressed(t)
 	}
+	if controls.ButtonStart().JustPressed() {
+		s.items[s.highlightedIndex].ButtonStartJustPressed(t)
+	}
 }
 
 func (s *scrollList[T]) moveHighlight(t T, dir int) {
@@ -165,11 +170,18 @@ func (s *scrollList[T]) moveHighlight(t T, dir int) {
 	if newHighlight < 0 || newHighlight >= len(s.items) {
 		return
 	}
+	s.highlight(newHighlight)
+}
 
+func (s *scrollList[T]) highlight(newHighlight int) {
 	s.fromDy = s.currentDy
 	s.fromCy = s.currentCy
 	s.targetDy, s.targetCy = s.calcYs(newHighlight)
 
 	s.timeTransitioning = 0
 	s.highlightedIndex = newHighlight
+}
+
+func (s *scrollList[T]) highlightLast() {
+	s.highlight(len(s.items) - 1)
 }

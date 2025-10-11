@@ -2,9 +2,9 @@ save_id: "1"
 character_name: Isaac
 animech:
     skill_set:
-        "1": jab
-        "2": photo_surge
-        "3": mend_spores
+        "1": brace
+        "2": strike
+        "3": photo_surge
         "4": arc_dart
     experience_points: 211
     upgrades:
@@ -29,5 +29,9 @@ primortals:
         visibility: defeated
         research_points: 16
 unlocked_skills:
+    brace: {}
+    guard: {}
+    jab: {}
     mend_spores: {}
     photo_surge: {}
+    strike: {}

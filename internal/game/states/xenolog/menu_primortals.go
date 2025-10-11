@@ -43,6 +43,7 @@ func newPrimortalsMenu(screen *Screen) *primortalsMenu {
 func (*primortalsMenu) Enter() {}
 
 type primortalListItem struct {
+	*baseListItem[*primortalsMenu]
 	xenologIndex int
 }
 

@@ -2,6 +2,7 @@ package xenolog
 
 import (
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
@@ -50,4 +51,11 @@ func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tb
 
 func flashingHighlight() pixel.RGBA {
 	return colors.Lerp(uiMask, uiMaskSelected, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+}
+
+func saveOrNotify() {
+	if err := game.CurrentSave().Save(); err != nil {
+		log.Err(err).Msg("failed to save game")
+		game.DebugNotification("Failed to save game!!!")
+	}
 }

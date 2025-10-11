@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
@@ -142,12 +141,5 @@ func (v *primortalDetailMenu) handleInput() {
 			}
 		}
 		saveOrNotify()
-	}
-}
-
-func saveOrNotify() {
-	if err := game.CurrentSave().Save(); err != nil {
-		log.Err(err).Msg("failed to save game")
-		game.DebugNotification("Failed to save game!!!")
 	}
 }

@@ -4,44 +4,36 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 )
 
-type BaseItem[T any] struct{}
-
-func (i BaseItem[T]) OnHighlight(T)                             {}
-func (i BaseItem[T]) OnUnhighlight(T)                           {}
-func (i BaseItem[T]) OnButtonAJustPressed(T)                    {}
-func (i BaseItem[T]) OnButtonBJustPressed(T)                    {}
-func (i BaseItem[T]) OnDirectionJustPressed(input.Direction, T) {}
-
-type Item[T any] interface {
-	OnHighlight(T)
-	OnUnhighlight(T)
-	OnButtonAJustPressed(T)
-	OnButtonBJustPressed(T)
-	OnDirectionJustPressed(input.Direction, T)
-}
-
 type System[T any] struct {
 	highlighted Item[T]
 	lastAdded   Item[T]
 	items       map[Item[T]]*systemItem[T]
-	neighbors   map[Item[T]]map[input.Direction]Item[T]
+	neighbors   map[Item[T]]map[input.Direction]*neighbors[T]
 }
 
 func NewSystem[T any]() *System[T] {
 	return &System[T]{
 		items:     map[Item[T]]*systemItem[T]{},
-		neighbors: map[Item[T]]map[input.Direction]Item[T]{},
+		neighbors: map[Item[T]]map[input.Direction]*neighbors[T]{},
 	}
+}
+
+type neighbors[T any] struct {
+	items                     []Item[T]
+	lastTransitionedFromIndex int
 }
 
 func (s *System[T]) addNeighbor(from Item[T], direction input.Direction, to Item[T]) {
 	if s.neighbors == nil {
-		s.neighbors = map[Item[T]]map[input.Direction]Item[T]{}
+		s.neighbors = map[Item[T]]map[input.Direction]*neighbors[T]{}
 	}
 	if s.neighbors[from] == nil {
-		s.neighbors[from] = map[input.Direction]Item[T]{}
+		s.neighbors[from] = map[input.Direction]*neighbors[T]{}
 	}
-	s.neighbors[from][direction] = to
+	if s.neighbors[from][direction] == nil {
+		s.neighbors[from][direction] = &neighbors[T]{}
+	}
+	s.neighbors[from][direction].items = append(s.neighbors[from][direction].items, to)
 }
 
 func (s *System[T]) AddItem(item Item[T], t T) *NeighborRegistry[T] {
@@ -88,26 +80,52 @@ func (s *System[T]) HandleInputs(c *input.Controls, t T) {
 	if s.highlighted == nil {
 		return
 	}
+	from := s.highlighted
 	if c.ButtonA().JustPressedOrRepeated() {
-		s.highlighted.OnButtonAJustPressed(t)
+		from.OnButtonAJustPressed(t)
 	}
 	if c.ButtonB().JustPressedOrRepeated() {
-		s.highlighted.OnButtonBJustPressed(t)
+		from.OnButtonBJustPressed(t)
 	}
 	dpadPress := c.DPad().JustPressedOrRepeatedDirection()
 	if dpadPress == input.NotPressed {
 		return
 	}
-	s.highlighted.OnDirectionJustPressed(dpadPress, t)
-	neighbors := s.neighbors[s.highlighted]
-	if neighbors == nil {
-		return
+	from.OnDirectionJustPressed(dpadPress, t)
+	var to Item[T]
+	// find the new highlight item, call input handlers
+	{
+		directions := s.neighbors[from]
+		if directions == nil {
+			return
+		}
+		neighbors := directions[dpadPress]
+		if neighbors == nil {
+			return
+		}
+		if len(neighbors.items) == 0 {
+			return
+		}
+		to = neighbors.items[neighbors.lastTransitionedFromIndex]
 	}
-	neighbor := neighbors[dpadPress]
-	if neighbor == nil {
-		return
+	// remember last traversal in the case of multiple neighbors in the same direction
+	{
+		directions := s.neighbors[to]
+		if directions != nil {
+			neighbors := directions[dpadPress.Opposite()]
+			if neighbors != nil {
+				for index, neighborItem := range neighbors.items {
+					if neighborItem == from {
+						neighbors.lastTransitionedFromIndex = index
+						break
+					}
+				}
+			}
+		}
 	}
-	s.Highlight(neighbor, t)
+	// finally, highlight new node
+	s.Highlight(to, t)
+
 }
 
 func (s *System[T]) NeighborsOf(item Item[T]) *NeighborRegistry[T] {
@@ -137,11 +155,11 @@ func (r *NeighborRegistry[T]) Item() Item[T] {
 }
 
 func (r *NeighborRegistry[T]) Below(other Item[T]) *NeighborRegistry[T] {
-	return r.SetNeighbor(input.Down, other)
+	return r.SetNeighbor(input.Up, other)
 }
 
 func (r *NeighborRegistry[T]) Above(other Item[T]) *NeighborRegistry[T] {
-	return r.SetNeighbor(input.Up, other)
+	return r.SetNeighbor(input.Down, other)
 }
 
 func (r *NeighborRegistry[T]) LeftOf(other Item[T]) *NeighborRegistry[T] {
@@ -150,14 +168,4 @@ func (r *NeighborRegistry[T]) LeftOf(other Item[T]) *NeighborRegistry[T] {
 
 func (r *NeighborRegistry[T]) RightOf(other Item[T]) *NeighborRegistry[T] {
 	return r.SetNeighbor(input.Right, other)
-}
-
-func (r *NeighborRegistry[T]) GetNeighborInDirection(direction input.Direction) *NeighborRegistry[T] {
-	if r.s.neighbors[r.from] == nil {
-		return nil
-	}
-	if r.s.neighbors[r.from][direction] == nil {
-		return nil
-	}
-	return r.s.NeighborsOf(r.s.neighbors[r.from][direction])
 }

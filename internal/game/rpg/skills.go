@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"fisherevans.com/project/f/internal/game/input"
 )
 
 var Skills = map[SkillId]Skill{}
@@ -36,6 +38,36 @@ type SkillSet struct {
 	Skill2 SkillId `yaml:"2"`
 	Skill3 SkillId `yaml:"3"`
 	Skill4 SkillId `yaml:"4"`
+}
+
+func (s *SkillSet) DirectionalSkill(dir input.Direction) *SkillId {
+	switch dir {
+	case input.Up:
+		return &s.Skill1
+	case input.Right:
+		return &s.Skill2
+	case input.Down:
+		return &s.Skill3
+	case input.Left:
+		return &s.Skill4
+	default:
+		panic("invalid direction: " + dir.String())
+	}
+}
+
+func (s *SkillSet) DirectionOfSkill(skill SkillId) (input.Direction, bool) {
+	switch skill {
+	case s.Skill1:
+		return input.Up, true
+	case s.Skill2:
+		return input.Right, true
+	case s.Skill3:
+		return input.Down, true
+	case s.Skill4:
+		return input.Left, true
+	default:
+		return input.NotPressed, false
+	}
 }
 
 func (s Skill) Duration() int {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -36,6 +37,17 @@ func (g *GameSave) UnlockSkill(skill SkillId) {
 		g.ControlledUnlockedSkills = map[SkillId]struct{}{}
 	}
 	g.ControlledUnlockedSkills[skill] = struct{}{}
+}
+
+func (g *GameSave) UnlockedSkillsSorted() []SkillId {
+	ids := make([]SkillId, 0, len(g.ControlledUnlockedSkills))
+	for id := range g.ControlledUnlockedSkills {
+		ids = append(ids, id)
+	}
+	slices.SortFunc(ids, func(a, b SkillId) int {
+		return strings.Compare(a.Get().Name, b.Get().Name)
+	})
+	return ids
 }
 
 func (g *GameSave) RemoveUnlockedSkill(skill SkillId) {
