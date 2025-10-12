@@ -10,6 +10,7 @@ import (
 type Instance interface {
 	gfx.Bounded
 	Render(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation)
+	RenderMask(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation, fg, bg pixel.RGBA)
 }
 
 type Builder struct {

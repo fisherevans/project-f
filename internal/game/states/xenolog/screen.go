@@ -6,15 +6,37 @@ import (
 
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
+	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
 )
 
 var (
-	screenWidth    = 206
-	screenHeight   = 128
-	screenClear    = colors.HexString("#0476d0")
-	uiMask         = colors.HexString("#a6d8ff")
-	uiMaskSelected = colors.HexString("#ffffff")
+	screenWidth  = 206
+	screenHeight = 128
+
+	maskDark          = colors.HexString("#0053ae")
+	screenClear       = colors.HexString("#0476d0")
+	maskText          = colors.HexString("#a6d8ff")
+	maskTextHighlight = colors.HexString("#ffffff")
+
+	badgeButtonStyle = badges.ButtonColorStyle{
+		Action:    maskText,
+		Button:    maskDark,
+		Highlight: maskTextHighlight,
+	}
+	badgeASelect      = badges.Using(atlas).ButtonAction("a", "select", badgeButtonStyle)
+	badgeBBack        = badges.Using(atlas).ButtonAction("b", "back", badgeButtonStyle)
+	badgeSelectClose  = badges.Using(atlas).ButtonAction("select", "close", badgeButtonStyle)
+	badgeF1Reset      = badges.Using(atlas).ButtonAction("f1", "reset", badgeButtonStyle)
+	badgeAViewDetails = badges.Using(atlas).ButtonAction("a", "view details", badgeButtonStyle)
+	badgeAUnlock      = badges.Using(atlas).ButtonAction("a", "unlock", badgeButtonStyle)
+
+	arrowUp    = atlas.GetTilesheetSprite("common/arrows_5px", 1, 1)
+	arrowRight = atlas.GetTilesheetSprite("common/arrows_5px", 2, 1)
+	arrowDown  = atlas.GetTilesheetSprite("common/arrows_5px", 3, 1)
+	arrowLeft  = atlas.GetTilesheetSprite("common/arrows_5px", 4, 1)
+
+	dot = atlas.GetTilesheetSprite("common/symbols_5px", 1, 1)
 )
 
 type Screen struct {
@@ -22,14 +44,17 @@ type Screen struct {
 	batch  *pixel.Batch
 	bloom  *bloom.Helper
 
+	spriteShader *spriteShader
+
 	menuStack []Menu
 }
 
 func NewScreen() *Screen {
 	s := &Screen{
-		menuStack: []Menu{},
-		canvas:    shaders.NewCanvas(screenWidth, screenHeight),
-		batch:     atlas.NewBatch(),
+		menuStack:    []Menu{},
+		canvas:       shaders.NewCanvas(screenWidth, screenHeight),
+		batch:        atlas.NewBatch(),
+		spriteShader: newSpriteShader(),
 		bloom: bloom.NewHelper(
 			screenWidth, screenHeight,
 			bloom.DefaultBrightnessConfig(),
@@ -77,12 +102,14 @@ func (s *Screen) Bounds() pixel.Rect {
 }
 
 func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
+	s.spriteShader.Clear()
 	s.batch.Clear()
+	s.canvas.Clear(screenClear)
 
 	s.menuStack[len(s.menuStack)-1].OnTick(s.batch, timeDelta)
 
-	s.canvas.Clear(screenClear)
 	s.batch.Draw(s.canvas)
+	s.spriteShader.Render(s.canvas)
 	s.canvas.Draw(target, targetMatrix)
 
 	bloomed := s.bloom.ApplyBloom(s.canvas)

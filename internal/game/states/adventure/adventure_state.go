@@ -120,7 +120,7 @@ func New(i game.AdventureIntent) game.State {
 	}
 
 	a.bloom.Threshold = 1.0
-	a.bloom.HighlightColors = shaders.RGBAtoVec3(
+	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
 		colors.HexString("#f9324c"), // red coin
 		colors.HexString("#feae34"), // torch yellow
 		colors.HexString("#f77622"), // torch orange

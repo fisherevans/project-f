@@ -88,6 +88,9 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 	dx := math.Floor(float64(selectBoxWidth) * 0.6)
 	s.left.render(center.Moved(pixel.V(-dx, 0)), target, s.selectLeft, timeDelta)
 	s.right.render(center.Moved(pixel.V(dx, 0)), target, !s.selectLeft, timeDelta)
+
+	badgeSelectClose.Render(target, pixel.IM.Moved(gfx.IVec(2, 2)), gfx.BottomLeft)
+	badgeASelect.Render(target, pixel.IM.Moved(gfx.IVec(screenWidth-2, 2)), gfx.BottomRight)
 }
 
 var (
@@ -101,7 +104,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(uiMask),
+			tbcfg.Foreground(maskText),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	selectBoxSubLabelFlashSpeed = 1.0
@@ -143,9 +146,9 @@ func newSelectBox(sprite pixelutil.BoundedDrawable, label, subLabel string) *sel
 func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bool, timeDelta float64) {
 	b.elapsed += timeDelta
 
-	mask := uiMask
+	mask := maskText
 	if selected {
-		mask = uiMaskSelected
+		mask = maskTextHighlight
 	}
 
 	frameRect := pixel.R(0, 0, float64(selectBoxWidth), float64(selectBoxHeight))
@@ -161,7 +164,7 @@ func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bo
 	}
 
 	if b.subLabel != "" {
-		subLabelMask := colors.Lerp(uiMask, uiMaskSelected, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+		subLabelMask := colors.Lerp(maskText, maskTextHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 		c := selectBoxSubLabelText.NewSimpleContent(b.subLabel)
 		selectBoxSubLabelText.Render(target,
 			center.Moved(gfx.IVec(0, -selectBoxHeight/2-selectBoxSubLabelMargin)),

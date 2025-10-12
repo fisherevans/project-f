@@ -82,6 +82,11 @@ func Run() {
 		scaleX := math.Floor(windowWidth / game.GameWidth)
 		scaleY := math.Floor(windowHeight / game.GameHeight)
 		canvasScale = math.Min(scaleX, scaleY) // Use the smaller scale
+		if canvasScale < 0.5 {
+			canvasScale = 0.5
+		} else if canvasScale < 1.0 {
+			canvasScale = 1.0
+		}
 
 		// Calculate mouse position in canvas space, if needed
 		//canvasMatrix := pixel.IM.Scaled(pixel.ZV, canvasScale).Moved(window.Bounds().Center())

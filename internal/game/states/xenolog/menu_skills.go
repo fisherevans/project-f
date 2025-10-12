@@ -5,6 +5,7 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
@@ -60,18 +61,18 @@ func (p *skillListItem) Height() int {
 
 type skillsCursor struct{}
 
-func (c *skillsCursor) Render(m *skillsMenu, centerLeft int, target pixel.Target, isMoving bool) {
+func (c *skillsCursor) Render(m *skillsMenu, centerLeft int, target pixel.Target, index int, movementProgress, highlightProgress float64) {
 	smallText := newTextRenderer(target, smallTextbox)
-	smallText.render(">", 10, centerLeft, uiMaskSelected, tbcfg.RenderFrom(gfx.LeftCenter))
+	smallText.render(">", 10, centerLeft, maskTextHighlight, tbcfg.RenderFrom(gfx.LeftCenter))
 }
 
-func (p *skillListItem) Render(m *skillsMenu, topLeftY int, target pixel.Target, isHighlighted bool) {
+func (p *skillListItem) Render(m *skillsMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
 	centerY := topLeftY - p.Height()/2
 	smallText := newTextRenderer(target, smallTextbox)
 
-	mask := uiMask
-	if isHighlighted {
-		mask = uiMaskSelected
+	mask := maskText
+	if highlightProgress > 0 {
+		mask = colors.Lerp(mask, maskTextHighlight, highlightProgress)
 	}
 	smallText.render(p.skillId.Get().Name, 35, centerY, mask, tbcfg.RenderFrom(gfx.LeftCenter))
 }

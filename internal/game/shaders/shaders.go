@@ -39,10 +39,14 @@ func (c *Canvas) setFragmentShaderIfNeeded(name, src string) {
 	}
 }
 
-func RGBAtoVec3(rgbs ...pixel.RGBA) []mgl32.Vec3 {
+func RGBAtoVec3s(rgbs ...pixel.RGBA) []mgl32.Vec3 {
 	var vecs []mgl32.Vec3
 	for _, rgb := range rgbs {
-		vecs = append(vecs, mgl32.Vec3{float32(rgb.R), float32(rgb.G), float32(rgb.B)})
+		vecs = append(vecs, RGBAtoVec3(rgb))
 	}
 	return vecs
+}
+
+func RGBAtoVec3(rgb pixel.RGBA) mgl32.Vec3 {
+	return mgl32.Vec3{float32(rgb.R), float32(rgb.G), float32(rgb.B)}
 }

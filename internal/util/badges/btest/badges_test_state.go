@@ -31,10 +31,10 @@ func (s state) ClearColor() color.Color {
 func (s state) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 	m := pixel.IM.Moved(gfx.IVec(game.GameWidth*0.75, game.GameHeight-10))
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(1, 1)), gfx.BottomLeft)
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(-1, 1)), gfx.BottomRight)
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(1, -1)), gfx.TopLeft)
-	badges.Using(atlas).Of("hello", colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(-1, -1)), gfx.TopRight)
+	badges.Using(atlas).Of("hello", colors.White.RGBA, colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(1, 1)), gfx.BottomLeft)
+	badges.Using(atlas).Of("hello", colors.White.RGBA, colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(-1, 1)), gfx.BottomRight)
+	badges.Using(atlas).Of("hello", colors.White.RGBA, colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(1, -1)), gfx.TopLeft)
+	badges.Using(atlas).Of("hello", colors.White.RGBA, colors.Blurple8.RGBA, 19).Render(s.batch, m.Moved(gfx.IVec(-1, -1)), gfx.TopRight)
 	m = m.Moved(pixel.V(0, -20))
 	gfx.DrawRect(
 		atlas,
@@ -58,16 +58,16 @@ func (s state) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta
 		switch strings.ToLower(a[0]) {
 		case "a":
 			pressed = game.Controls[*State]().
-			ButtonA().IsPressed()
+				ButtonA().IsPressed()
 		case "b":
 			pressed = game.Controls[*State]().
-			ButtonB().IsPressed()
+				ButtonB().IsPressed()
 		case "select":
 			pressed = game.Controls[*State]().
-			ButtonSelect().IsPressed()
+				ButtonSelect().IsPressed()
 		case "start":
 			pressed = game.Controls[*State]().
-			ButtonStart().IsPressed()
+				ButtonStart().IsPressed()
 		}
 		badges.Using(atlas).ButtonAction(a[0], a[1]).Highlighted(pressed).Render(s.batch, m, gfx.BottomLeft)
 		m = m.Moved(pixel.V(0, 15))

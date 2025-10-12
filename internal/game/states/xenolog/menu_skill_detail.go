@@ -34,13 +34,13 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	lineHeight := 12
 	y := screenHeight - lineHeight
 
-	smallText.render(fmt.Sprintf("{+u}Skill: %s", skill.Name), 10, y, uiMask, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(uiMaskSelected))
+	smallText.render(fmt.Sprintf("{+u}Skill: %s", skill.Name), 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskTextHighlight))
 	y -= lineHeight
 
-	smallText.render(skill.Description, 10, y, uiMask, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(uiMask))
+	smallText.render(skill.Description, 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskText))
 	y -= lineHeight
 
-	smallText.render("Ticks:", 10, y, uiMask, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(uiMask))
+	smallText.render("Ticks:", 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskText))
 	y -= lineHeight
 
 	for _, tick := range skill.Ticks {
@@ -57,7 +57,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 		if len(effects) > 0 {
 			tickText = strings.Join(effects, ", ")
 		}
-		smallText.render("- "+tickText, 10, y, uiMask, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(uiMask))
+		smallText.render("- "+tickText, 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskText))
 		y -= lineHeight
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -23,7 +22,7 @@ type skillType struct {
 	frame   *frames.Instance
 	textbox *textbox.Instance
 	content *textbox.Content
-	color   pixel.RGBA
+	bg, fg  pixel.RGBA
 }
 
 func (s *skillType) Bounds() pixel.Rect {
@@ -31,26 +30,30 @@ func (s *skillType) Bounds() pixel.Rect {
 }
 
 func (s *skillType) Render(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation) {
+	s.RenderMask(target, matrix, origin, s.bg, s.fg)
+}
+
+func (s *skillType) RenderMask(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation, fg, bg pixel.RGBA) {
 	matrix = matrix.Moved(origin.AlignFrom(gfx.BottomLeft, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight)))
 	s.frame.Draw(target, pixel.R(0, 0, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight)), matrix,
 		frames.WithRenderOrigin(gfx.BottomLeft),
-		frames.WithColor(s.color))
-	s.textbox.Render(target, matrix, s.content)
+		frames.WithColor(bg))
+	s.textbox.Render(target, matrix, s.content, tbcfg.Foreground(fg))
 }
 
-func (b *Builder) Of(name string, c pixel.RGBA, width int) Instance {
+func (b *Builder) Of(name string, bg, fg pixel.RGBA, width int) Instance {
 	tb := textbox.NewInstance(
 		b.atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(width, skillTypeHeight,
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignMiddle),
-			tbcfg.Foreground(colors.ScaleColor(c, 0.25)),
 			tbcfg.RenderFrom(gfx.BottomLeft),
 		))
 	return &skillType{
 		textbox: tb,
 		content: tb.NewSimpleContent(strings.Replace(name, "k", "K", -1)),
 		frame:   frames.New("common/rounded_frame_1px", b.atlas),
-		color:   c,
+		fg:      fg,
+		bg:      bg,
 	}
 }

@@ -46,10 +46,10 @@ var (
 
 	skillPendingProgress = anim.SkillPendingProgress(atlas)
 
-	skillStatsBadge           = badges.Using(atlas).ButtonAction("select", "stats")
-	skillPendingCancelBadge   = badges.Using(atlas).ButtonAction("a", "commit")
-	skillCommittedCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel")
-	skillMenuBadge            = badges.Using(atlas).ButtonAction("start", "xenolog")
+	skillStatsBadge           = badges.Using(atlas).ButtonAction("select", "stats", badges.ButtonStyleStandard)
+	skillPendingCancelBadge   = badges.Using(atlas).ButtonAction("a", "commit", badges.ButtonStyleStandard)
+	skillCommittedCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel", badges.ButtonStyleStandard)
+	skillMenuBadge            = badges.Using(atlas).ButtonAction("start", "xenolog", badges.ButtonStyleStandard)
 )
 
 func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
