@@ -61,6 +61,13 @@ var (
 )
 
 var (
+	XenoLogDark      = registerNamedColor(HexString("#0053ae"), "xenolog_dark")
+	XenoLogClear     = registerNamedColor(HexString("#0476d0"), "xenolog_clear")
+	XenoLogText      = registerNamedColor(HexString("#a6d8ff"), "xenolog_text")
+	XenoLogHighlight = registerNamedColor(HexString("#ffffff"), "xenolog_highlight")
+)
+
+var (
 	StatusColors = map[rpg.StatusType]pixel.RGBA{
 		rpg.StatusFortified: HexString("#2275e9"),
 		rpg.StatusBurning:   HexString("#e96b22"),

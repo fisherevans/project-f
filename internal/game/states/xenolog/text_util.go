@@ -19,7 +19,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(maskText),
+			tbcfg.Foreground(colors.XenoLogText.RGBA),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	regularTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7),
@@ -27,7 +27,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(maskText),
+			tbcfg.Foreground(colors.XenoLogText.RGBA),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	titleTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard),
@@ -35,7 +35,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(maskText),
+			tbcfg.Foreground(colors.XenoLogText.RGBA),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	frame1px       = frames.New("common/rounded_frame_1px", atlas, frames.WithRenderOrigin(gfx.Centered))
@@ -48,25 +48,27 @@ var (
 
 type textRenderer struct {
 	target pixel.Target
+	matrix pixel.Matrix
 	tb     *textbox.Instance
 }
 
 func newTextRenderer(target pixel.Target, tb *textbox.Instance) *textRenderer {
 	return &textRenderer{
 		target: target,
+		matrix: pixel.IM,
 		tb:     tb,
 	}
 }
 
 func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tbcfg.ConfigOpt) (int, int) {
 	c := r.tb.NewComplexContent(text)
-	matrix := pixel.IM.Moved(gfx.IVec(x, y))
+	matrix := r.matrix.Moved(gfx.IVec(x, y))
 	r.tb.Render(r.target, matrix, c, append(opts, tbcfg.Foreground(mask))...)
 	return c.Width(), c.Height()
 }
 
 func flashingHighlight() pixel.RGBA {
-	return colors.Lerp(maskText, maskTextHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+	return colors.Lerp(colors.XenoLogText.RGBA, colors.XenoLogHighlight.RGBA, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 }
 
 func saveOrNotify() {

@@ -63,16 +63,16 @@ type skillsCursor struct{}
 
 func (c *skillsCursor) Render(m *skillsMenu, centerLeft int, target pixel.Target, index int, movementProgress, highlightProgress float64) {
 	smallText := newTextRenderer(target, smallTextbox)
-	smallText.render(">", 10, centerLeft, maskTextHighlight, tbcfg.RenderFrom(gfx.LeftCenter))
+	smallText.render(">", 10, centerLeft, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.LeftCenter))
 }
 
 func (p *skillListItem) Render(m *skillsMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
 	centerY := topLeftY - p.Height()/2
 	smallText := newTextRenderer(target, smallTextbox)
 
-	mask := maskText
+	mask := colors.XenoLogText.RGBA
 	if highlightProgress > 0 {
-		mask = colors.Lerp(mask, maskTextHighlight, highlightProgress)
+		mask = colors.Lerp(mask, colors.XenoLogHighlight.RGBA, highlightProgress)
 	}
 	smallText.render(p.skillId.Get().Name, 35, centerY, mask, tbcfg.RenderFrom(gfx.LeftCenter))
 }

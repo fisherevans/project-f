@@ -4,6 +4,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
@@ -16,10 +17,10 @@ func newSpriteShader() *spriteShader {
 		canvas: shaders.NewCanvas(screenWidth, screenHeight),
 	}
 	s.canvas.SetXbitShaderWithThresholds(
-		screenClear,
+		colors.XenoLogClear.RGBA,
 		[]shaders.ColorThreshold{
-			{Threshold: 0.15, Color: maskText},
-			{Threshold: 0.5, Color: maskTextHighlight},
+			{Threshold: 0.15, Color: colors.XenoLogText.RGBA},
+			{Threshold: 0.5, Color: colors.XenoLogHighlight.RGBA},
 		},
 		0.01,
 	)

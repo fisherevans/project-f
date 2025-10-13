@@ -121,6 +121,13 @@ func Run() {
 
 		//pixel.NewSprite(resources.SpriteAtlas, resources.SpriteAtlas.Bounds()).Draw(window, pixel.IM.Moved(pixel.V(resources.SpriteAtlasSize/2, 0)))
 
+		if window.JustPressed(pixel.KeyP) {
+			CopyCanvasToClipboard(sceneCanvas.Canvas)
+		}
+		if window.JustPressed(pixel.KeyO) {
+			CopyCanvasToClipboard(pixelGridCanvas.Canvas)
+		}
+
 		window.Update()
 	}
 }

@@ -22,7 +22,7 @@ type Primortal struct {
 	Name             string
 	Description      string
 	BaseSync         int
-	UnlockableSkills []UnlockableSkill
+	UnlockableSkills map[SkillId]UnlockableSkill
 	CombatArchetypes map[string]PrimortalCombatArchetype
 }
 
@@ -41,17 +41,17 @@ type CombatSkillPoolRandom struct {
 }
 
 type UnlockableSkill struct {
-	SkillId SkillId
-	Cost    int
+	Prerequisites []SkillId
+	Cost          int
 }
 
 func (p Primortal) register() Primortal {
 	if _, exists := Primortals[p.Type]; exists {
 		panic("duplicate primortal type: " + p.Type)
 	}
-	for _, us := range p.UnlockableSkills {
-		if taken, _ := reservedUnlockableSkill[us.SkillId]; taken {
-			panic("duplicate unlockable skill: " + us.SkillId)
+	for skillId := range p.UnlockableSkills {
+		if taken, _ := reservedUnlockableSkill[skillId]; taken {
+			panic("duplicate unlockable skill: " + skillId)
 		}
 	}
 	if p.XenoLogIndex < 0 || p.XenoLogIndex > 1000 {
@@ -70,14 +70,13 @@ func (p Primortal) register() Primortal {
 	return p
 }
 
-var DefaultUnlockableSkills = []UnlockableSkill{
-	{
-		SkillId: Skill_Strike.Id,
-		Cost:    5,
+var DefaultUnlockableSkills = map[SkillId]UnlockableSkill{
+	Skill_Strike.Id: {
+		Cost: 5,
 	},
-	{
-		SkillId: Skill_Brace.Id,
-		Cost:    5,
+	Skill_Brace.Id: {
+		Prerequisites: []SkillId{Skill_Strike.Id},
+		Cost:          5,
 	},
 }
 
@@ -106,16 +105,27 @@ var Primortal_Pumbl = Primortal{
 	Type:         "pumbl",
 	Name:         "Pumbl",
 	XenoLogIndex: 3,
-	Description:  "Little roll up rock guy. A mix between Sandshrew and Geodude.",
+	Description:  "A compact, rock-armored creature that can curl into an impenetrable sphere, using its dense body for both offense and defense.",
 	BaseSync:     30,
-	UnlockableSkills: []UnlockableSkill{
-		{
-			SkillId: Skill_ShoulderRoll.Id,
-			Cost:    2,
+	UnlockableSkills: map[SkillId]UnlockableSkill{
+		Skill_ShoulderRoll.Id: {
+			Cost: 2,
 		},
-		{
-			SkillId: Skill_CurlUp.Id,
-			Cost:    5,
+		Skill_CurlUp.Id: {
+			Prerequisites: []SkillId{Skill_ShoulderRoll.Id},
+			Cost:          5,
+		},
+		Skill_Strike.Id: {
+			Prerequisites: []SkillId{Skill_ShoulderRoll.Id},
+			Cost:          5,
+		},
+		Skill_Brace.Id: {
+			Prerequisites: []SkillId{Skill_Strike.Id},
+			Cost:          5,
+		},
+		Skill_Searline.Id: {
+			Prerequisites: []SkillId{Skill_Strike.Id},
+			Cost:          7,
 		},
 	},
 	CombatArchetypes: map[string]PrimortalCombatArchetype{
@@ -140,16 +150,15 @@ var Primortal_Scintail = Primortal{
 	Type:         "scintail",
 	Name:         "Scintail",
 	XenoLogIndex: 4,
-	Description:  "A cute lizard guy with heat fins that glow.",
+	Description:  "A nimble reptilian creature with heat-radiating dorsal fins that pulse with an inner fire, capable of unleashing searing thermal attacks.",
 	BaseSync:     25,
-	UnlockableSkills: []UnlockableSkill{
-		{
-			SkillId: Skill_Cinder.Id,
-			Cost:    3,
+	UnlockableSkills: map[SkillId]UnlockableSkill{
+		Skill_Cinder.Id: {
+			Cost: 3,
 		},
-		{
-			SkillId: Skill_Searline.Id,
-			Cost:    7,
+		Skill_Searline.Id: {
+			Prerequisites: []SkillId{Skill_Cinder.Id},
+			Cost:          7,
 		},
 	},
 	CombatArchetypes: map[string]PrimortalCombatArchetype{
@@ -175,16 +184,15 @@ var Primortal_Volteel = Primortal{
 	Type:         "volteel",
 	Name:         "Volteel",
 	XenoLogIndex: 8,
-	Description:  "An eel with stubby little feet that can stand up right.",
+	Description:  "An amphibious eel-like creature that generates and stores bioelectricity, using its stubby limbs to maneuver on land and deliver shocking attacks.",
 	BaseSync:     20,
-	UnlockableSkills: []UnlockableSkill{
-		{
-			SkillId: Skill_ArcDart.Id,
-			Cost:    2,
+	UnlockableSkills: map[SkillId]UnlockableSkill{
+		Skill_ArcDart.Id: {
+			Cost: 2,
 		},
-		{
-			SkillId: Skill_ZapWrap.Id,
-			Cost:    4,
+		Skill_ZapWrap.Id: {
+			Prerequisites: []SkillId{Skill_ArcDart.Id},
+			Cost:          4,
 		},
 	},
 	CombatArchetypes: map[string]PrimortalCombatArchetype{
@@ -211,16 +219,15 @@ var Primortal_Toxmidge = Primortal{
 	Type:         "toxmidge",
 	Name:         "Toxmidge",
 	XenoLogIndex: 9,
-	Description:  "A flying gross flying insect that squirts acid.",
+	Description:  "A menacing aerial predator that secretes highly corrosive enzymes, capable of dissolving even the toughest materials with its acidic spray.",
 	BaseSync:     15,
-	UnlockableSkills: []UnlockableSkill{
-		{
-			SkillId: Skill_AcidSting.Id,
-			Cost:    3,
+	UnlockableSkills: map[SkillId]UnlockableSkill{
+		Skill_AcidSting.Id: {
+			Cost: 3,
 		},
-		{
-			SkillId: Skill_Molt.Id,
-			Cost:    7,
+		Skill_Molt.Id: {
+			Prerequisites: []SkillId{Skill_AcidSting.Id},
+			Cost:          7,
 		},
 	},
 	CombatArchetypes: map[string]PrimortalCombatArchetype{
@@ -246,16 +253,15 @@ var Primortal_Myceli = Primortal{
 	Type:         "myceli",
 	Name:         "Myceli",
 	XenoLogIndex: 19,
-	Description:  "A fun guy with tentacle legs.",
+	Description:  "A mysterious fungal entity with a network of mycelial tendrils that can rapidly regenerate and spread spores with various effects.",
 	BaseSync:     40,
-	UnlockableSkills: []UnlockableSkill{
-		{
-			SkillId: Skill_PhotoSurge.Id,
-			Cost:    4,
+	UnlockableSkills: map[SkillId]UnlockableSkill{
+		Skill_PhotoSurge.Id: {
+			Cost: 4,
 		},
-		{
-			SkillId: Skill_MendSpores.Id,
-			Cost:    5,
+		Skill_MendSpores.Id: {
+			Prerequisites: []SkillId{Skill_PhotoSurge.Id},
+			Cost:          5,
 		},
 	},
 	CombatArchetypes: map[string]PrimortalCombatArchetype{

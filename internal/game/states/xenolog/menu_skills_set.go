@@ -131,7 +131,7 @@ func (m *skillSetMenu) render(target pixel.Target) {
 
 func (m *skillSetMenu) renderAction(label string, highlighted bool, x, y int, target pixel.Target) {
 	smallText := newTextRenderer(target, smallTextbox)
-	mask := maskText
+	mask := colors.XenoLogText.RGBA
 	if highlighted {
 		mask = colors.White.RGBA
 		label = ">> " + label + " <<"
@@ -143,9 +143,9 @@ func (m *skillSetMenu) renderCurrentSkills(x, y int, target pixel.Target) {
 	dy := 16
 	dx := screenWidth / 4
 
-	mask := maskText
+	mask := colors.XenoLogText.RGBA
 	if m.inputMode == SkillSetInputModeOver && m.nav.IsHighlighted(m.currentSkillSetItem) {
-		mask = maskTextHighlight
+		mask = colors.XenoLogHighlight.RGBA
 	}
 
 	frameW := screenWidth - 20
@@ -164,7 +164,7 @@ func (m *skillSetMenu) renderCurrentSkills(x, y int, target pixel.Target) {
 func (m *skillSetMenu) renderCurrentSkill(direction input.Direction, x, y int, target pixel.Target) {
 	skillId := game.CurrentSave().Animech.SkillSet.DirectionalSkill(direction)
 	smallText := newTextRenderer(target, smallTextbox)
-	mask := maskText
+	mask := colors.XenoLogText.RGBA
 	var label string
 	if *skillId == rpg.UnsetSkillId {
 		label = "---"
@@ -173,7 +173,7 @@ func (m *skillSetMenu) renderCurrentSkill(direction input.Direction, x, y int, t
 	}
 	if m.inputMode == SkillSetInputModeSelect && direction == m.currentSkillSelected {
 		label = "{+u}" + label + "{-u}"
-		mask = maskTextHighlight
+		mask = colors.XenoLogHighlight.RGBA
 	}
 	smallText.render(label, x, y, mask, tbcfg.RenderFrom(gfx.Centered))
 }

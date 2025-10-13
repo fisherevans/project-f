@@ -7,9 +7,10 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/badges"
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -19,27 +20,41 @@ import (
 type primortalDetailMenu struct {
 	screen    *Screen
 	primortal rpg.PrimortalType
-	selection int
+	tree      *skillTree
 }
 
 func newPrimortalDetailMenu(screen *Screen, primortal rpg.PrimortalType) *primortalDetailMenu {
-	return &primortalDetailMenu{
+	m := &primortalDetailMenu{
 		screen:    screen,
 		primortal: primortal,
 	}
+	m.tree = newSkillTree(primortal, m)
+	return m
 }
 
 var (
-	detailLineHeight   = 14
-	detailMargin       = 8
-	descriptionTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
-		tbcfg.NewConfig(screenWidth-48-detailMargin*2-primortalIconMargin*3, 8,
+	detailLineHeight            = 14
+	detailMargin                = 8
+	primortalDescriptionTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
+		tbcfg.NewConfig(screenWidth-primortalIconSize-detailMargin*2-primortalIconMargin*3, 8,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(maskText),
+			tbcfg.Foreground(colors.XenoLogText.RGBA),
 			tbcfg.RenderFrom(gfx.TopCenter)))
-	primortalIconMargin = 4
+	primortalIconSize   = 48
+	primortalIconMargin = 1
+
+	primortalSkillDetailWidth        = 64
+	primortalSkillDetailMargin       = 2
+	primortalSkillDetailTextMargin   = 5
+	primortalSkillDescriptionTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
+		tbcfg.NewConfig(primortalSkillDetailWidth-primortalSkillDetailMargin*2, 10,
+			tbcfg.WithExpandMode(tbcfg.ExpandFit),
+			tbcfg.HAligned(tbcfg.HAlignCenter),
+			tbcfg.VAligned(tbcfg.VAlignTop),
+			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.RenderFrom(gfx.TopCenter)))
 )
 
 func (*primortalDetailMenu) Enter() {}
@@ -50,9 +65,8 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	isComplete := nextUnlock(v.primortal.Primortal(), game.CurrentSave()) == nil
 
 	titleTxt := newTextRenderer(target, titleTextbox)
-	regularTxt := newTextRenderer(target, regularTextbox)
 	smallTxt := newTextRenderer(target, smallTextbox)
-	descriptionText := newTextRenderer(target, descriptionTextbox)
+	descriptionText := newTextRenderer(target, primortalDescriptionTextbox)
 	p := v.primortal.Primortal()
 	y := screenHeight - detailMargin
 
@@ -61,117 +75,132 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 		rp = savedPrimortal.ResearchPoints
 	}
 
-	dx, _ := titleTxt.render(p.Name, 10, y, maskTextHighlight, tbcfg.RenderFrom(gfx.TopLeft))
-	if isComplete {
-		smallTxt.render("[complete]", 10+dx+5, y-4, maskDark, tbcfg.RenderFrom(gfx.TopLeft))
-	}
-	y -= detailLineHeight
-
-	_, descHeight := descriptionText.render(p.Description, 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.HAligned(tbcfg.HAlignLeft))
-	y -= descHeight + detailLineHeight
-
-	titleTxt.render("Skills:", 10, y, maskTextHighlight, tbcfg.RenderFrom(gfx.TopLeft))
-	y -= detailLineHeight
-
-	dx, _ = smallTxt.render("Research Points:", 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft))
-	smallTxt.render(fmt.Sprintf("%d", rp), 10+dx+3, y, maskTextHighlight, tbcfg.RenderFrom(gfx.TopLeft))
-	y -= detailLineHeight
-
-	y -= 2
-	seenLocked := false
-	bottomRightBadge := &badgeAViewDetails
-	for id, us := range p.UnlockableSkills {
-		selected := id == v.selection
-		mask := maskText
-
-		name := "???"
-		if !seenLocked {
-			name = us.SkillId.Get().Name
-		}
-		if selected {
-			mask = maskTextHighlight
-		}
-
-		suffix := ""
-		suffixMask := maskText
-		if seenLocked {
-			suffix = "[locked]"
-			if selected {
-				bottomRightBadge = nil
-			}
-		} else if game.CurrentSave().IsSkillUnlocked(us.SkillId) {
-			suffix = "[unlocked]"
-		} else {
-			if selected {
-				bottomRightBadge = &badgeAUnlock
-			}
-			suffixMask = flashingHighlight()
-			suffix = fmt.Sprintf("> unlock for: %d RP <", us.Cost)
-			seenLocked = true
-		}
-
-		if selected {
-			scrollCursor.Draw(target, pixel.IM.Moved(gfx.IVec(10, y+1)).Moved(gfx.LeftCenter.Align(scrollCursor)))
-		}
-
-		x := 25
-		dx, _ := regularTxt.render(name, x, y, mask, tbcfg.RenderFrom(gfx.LeftCenter))
-		x += dx + 9
-
-		if suffix != "" {
-			smallTxt.render(suffix, x, y, suffixMask, tbcfg.RenderFrom(gfx.LeftCenter))
-		}
-
-		y -= detailLineHeight
-	}
-
+	// top right icon
 	icon := anim.Load(atlas, "primortals/"+string(p.Type), "default").Sprite()
 	iconMatrix := pixel.IM.Moved(gfx.TopRight.Align(icon)).Moved(gfx.IVec(screenWidth-detailMargin-primortalIconMargin, screenHeight-detailMargin-primortalIconMargin))
 	w := int(icon.Bounds().W()) + primortalIconMargin*2
 	h := int(icon.Bounds().H()) + primortalIconMargin*2
-	frame4px.Draw(target, rect(w, h), iconMatrix, frames.WithColor(maskDark))
-	frame4pxBorder.Draw(target, rect(w, h), iconMatrix, frames.WithColor(maskText))
+	frame4px.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colors.XenoLogDark.RGBA))
+	frame4pxBorder.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colors.XenoLogText.RGBA))
 	v.screen.spriteShader.DrawSprite(icon, iconMatrix)
 
+	// header
+	dx, _ := titleTxt.render(p.Name, 10, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	if isComplete {
+		smallTxt.render("[complete]", 10+dx+5, y-4, colors.XenoLogDark.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	}
+	y -= detailLineHeight
+
+	_, descHeight := descriptionText.render(p.Description, 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.HAligned(tbcfg.HAlignLeft))
+	y -= descHeight + detailLineHeight/2
+
+	titleTxt.render("Skills:", 10, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	y -= detailLineHeight
+
+	dx, _ = smallTxt.render("Research Points:", 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	smallTxt.render(fmt.Sprintf("%d", rp), 10+dx+3, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	y -= detailLineHeight
+
+	// tree
+	treeW := screenWidth - detailMargin*3 - primortalSkillDetailWidth
+	treeH := y - detailMargin
+	treeDx := (treeW - int(v.tree.frame.W())) / 2
+	treeDy := (treeH - int(v.tree.frame.H())) / 2
+	costYDeltaCompensation := -3
+	treeBottomLeft := pixel.IM.Moved(gfx.IVec(detailMargin+treeDx, detailMargin+treeDy+costYDeltaCompensation))
+	v.tree.renderTree(target, treeBottomLeft, timeDelta)
+
+	// skill details
+	skillDetailsTopLeftY := screenHeight - detailMargin*2 - primortalIconSize - primortalIconMargin*2
+	skillDetailsTopLeft := pixel.IM.Moved(gfx.IVec(
+		screenWidth-detailMargin-primortalSkillDetailWidth,
+		skillDetailsTopLeftY))
+	primortalSkillDetailHeight := skillDetailsTopLeftY - detailMargin
+	frame2pxBorder.Draw(target, rect(primortalSkillDetailWidth, primortalSkillDetailHeight), skillDetailsTopLeft,
+		frames.WithRenderOrigin(gfx.TopLeft), frames.WithColor(colors.XenoLogDark.RGBA))
+	v.renderSkillDetailsText(target, skillDetailsTopLeft, primortalSkillDetailWidth, primortalSkillDetailHeight)
+
+	// badges
 	badgeMargin := 2
-	badgeF1Reset.Render(target, pixel.IM.Moved(gfx.IVec(badgeMargin, badgeMargin)), gfx.BottomLeft)
-	if bottomRightBadge != nil {
-		(*bottomRightBadge).Render(target, pixel.IM.Moved(gfx.IVec(screenWidth-badgeMargin, badgeMargin)), gfx.BottomRight)
+	badgeF1Reset.Render(target, pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight-badgeMargin)), gfx.TopCenter)
+}
+
+func (v *primortalDetailMenu) renderSkillDetailsText(target pixel.Target, topLeft pixel.Matrix, width int, height int) {
+	topCenter := topLeft.Moved(gfx.IVec(width/2, 0))
+	bottomCenter := topLeft.Moved(gfx.IVec(width/2, -height))
+
+	txt := newTextRenderer(target, primortalSkillDescriptionTextbox)
+	txt.matrix = topCenter
+
+	skill := v.tree.selectedSkill
+	state := v.tree.nodes[skill].getState()
+	y := -primortalSkillDetailTextMargin
+
+	titleLabel := "?????"
+	desc := "unlock prior skills to unlock this one"
+	if state != skillNodeStateHidden {
+		titleLabel = skill.Get().Name
+		if state == skillNodeStateUnlockable {
+			desc = "unlock this skill to see details"
+		} else {
+			desc = skill.Get().Description
+		}
+	}
+
+	_, dy := txt.render("{+s:xenolog_dark,+u:xenolog_text}"+titleLabel, 0, y, colors.XenoLogHighlight.RGBA)
+	y -= primortalSkillDetailTextMargin + dy + 2 // extra for underline
+
+	_, dy = txt.render(desc, 0, y, colors.XenoLogText.RGBA)
+	y -= primortalSkillDetailTextMargin + dy
+
+	var aBadge *badges.ButtonAction
+	if state == skillNodeStateUnlockable {
+		progress, hasProgress := game.CurrentSave().Primortals[v.primortal]
+		unlockableSkill := v.primortal.Primortal().UnlockableSkills[skill]
+		if hasProgress && unlockableSkill.Cost <= progress.ResearchPoints {
+			label := fmt.Sprintf("cost: %d rp", unlockableSkill.Cost)
+			txt.render(label, 0, y, flashingHighlight())
+			aBadge = badgeAUnlock
+		}
+	} else if state == skillNodeStateUnlocked {
+		aBadge = badgeADetails
+	}
+	if aBadge != nil {
+		aBadge.Render(target, bottomCenter.Moved(gfx.IVec(0, 1)), gfx.Centered)
 	}
 }
 
 func (v *primortalDetailMenu) handleInput() {
-	if game.Controls[*State]().ButtonB().JustPressed() {
+	c := game.Controls[*State]()
+	if c.ButtonB().JustPressed() {
 		v.screen.PopMenu()
 	}
-	if game.Controls[*State]().DPad().DirectionJustPressedOrRepeated(input.Up) {
-		v.selection--
-		if v.selection < 0 {
-			v.selection = 0
-		}
+	if c.DPad().JustPressed() {
+		v.tree.handleInput(c.DPad().JustPressedDirection())
 	}
-	if game.Controls[*State]().DPad().DirectionJustPressedOrRepeated(input.Down) {
-		v.selection++
-		maxSelection := len(v.primortal.Primortal().UnlockableSkills) - 1
-		if v.selection > maxSelection {
-			v.selection = maxSelection
-		}
-	}
-	if game.Controls[*State]().ButtonA().JustPressed() {
-		us := v.primortal.Primortal().UnlockableSkills[v.selection]
-		savedPrimortal, savedPrimortalExists := game.CurrentSave().Primortals[v.primortal]
-		if game.CurrentSave().IsSkillUnlocked(us.SkillId) {
-			v.screen.PushMenu(newSkillDetailMenu(v.screen, us.SkillId))
-		} else if savedPrimortalExists && us.Cost <= savedPrimortal.ResearchPoints {
-			game.CurrentSave().Primortals[v.primortal].ResearchPoints -= us.Cost
-			game.CurrentSave().UnlockSkill(us.SkillId)
-			saveOrNotify()
+	if c.ButtonA().JustPressed() {
+		skillId := v.tree.selectedSkill
+		state := v.tree.nodes[skillId].getState()
+		if state == skillNodeStateUnlocked {
+			v.screen.PushMenu(newSkillDetailMenu(v.screen, skillId))
+		} else if state == skillNodeStateUnlockable {
+			progress, hasProgress := game.CurrentSave().Primortals[v.primortal]
+			unlockableSkill := v.primortal.Primortal().UnlockableSkills[skillId]
+			if hasProgress && unlockableSkill.Cost <= progress.ResearchPoints {
+				game.CurrentSave().Primortals[v.primortal].ResearchPoints -= unlockableSkill.Cost
+				game.CurrentSave().UnlockSkill(skillId)
+				saveOrNotify()
+			} else {
+				// not enough rp
+			}
+		} else {
+			// pre reqs not met
 		}
 	}
 	if game.DebugToggles().F1().JustPressed() {
-		for _, us := range v.primortal.Primortal().UnlockableSkills {
-			if game.CurrentSave().IsSkillUnlocked(us.SkillId) {
-				game.CurrentSave().RemoveUnlockedSkill(us.SkillId)
+		for skillId, us := range v.primortal.Primortal().UnlockableSkills {
+			if game.CurrentSave().IsSkillUnlocked(skillId) {
+				game.CurrentSave().RemoveUnlockedSkill(skillId)
 				if _, exists := game.CurrentSave().Primortals[v.primortal]; !exists {
 					game.CurrentSave().Primortals[v.primortal] = &rpg.PrimortalProgress{}
 				}

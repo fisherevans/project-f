@@ -135,7 +135,7 @@ func (s Skill) String() string {
 var Skill_Brace = Skill{
 	Id:          "brace",
 	Name:        "Brace",
-	Description: "todo",
+	Description: "Raise defenses after a rest",
 	Ticks: skillTicks().
 		add(tick().repeat(3)...).
 		add(stanceTick(TickStanceDefending).repeat(2)...),
@@ -144,7 +144,7 @@ var Skill_Brace = Skill{
 var Skill_Guard = Skill{
 	Id:          "guard",
 	Name:        "Guard",
-	Description: "todo",
+	Description: "Defend yourself for a short time",
 	Ticks: skillTicks().
 		add(tick()).
 		add(stanceTick(TickStanceDefending).repeat(3)...).
@@ -156,7 +156,7 @@ var Skill_Guard = Skill{
 var Skill_Jab = Skill{
 	Id:          "jab",
 	Name:        "Jab",
-	Description: "todo",
+	Description: "Quick strike that deals light damage",
 	Ticks: skillTicks().
 		add(tick().damageAmountVaried(5, 2)).
 		add(tick().repeat(2)...),
@@ -165,7 +165,7 @@ var Skill_Jab = Skill{
 var Skill_Strike = Skill{
 	Id:          "strike",
 	Name:        "Strike",
-	Description: "todo",
+	Description: "A heavy blow that leaves you exposed",
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceExposed).repeat(4)...).
 		add(tick().damageAmount(15)),
@@ -180,7 +180,7 @@ var Skill_Strike = Skill{
 var Skill_ShoulderRoll = Skill{
 	Id:          "shoulder_roll",
 	Name:        "Shoulder Roll",
-	Description: "todo",
+	Description: "Roll over your enemy repeatedly",
 	Ticks: skillTicks().
 		add(tick().repeat(4)...).
 		add(tick().damageAmount(10)),
@@ -189,7 +189,7 @@ var Skill_ShoulderRoll = Skill{
 var Skill_CurlUp = Skill{
 	Id:          "curl_up",
 	Name:        "Curl Up",
-	Description: "todo",
+	Description: "Fortify your defences",
 	Ticks: skillTicks().
 		add(tick().statusSelf(StatusFortified, 5)).
 		add(stanceTick(TickStanceDefending).repeat(3)...),
@@ -204,7 +204,7 @@ var Skill_CurlUp = Skill{
 var Skill_Cinder = Skill{
 	Id:          "cinder",
 	Name:        "Cinder",
-	Description: "todo",
+	Description: "Ignite your foe with a burning ember",
 	Ticks: skillTicks().
 		add(tick().repeat(3)...).
 		add(tick().statusOpponent(StatusBurning, 3)).
@@ -214,7 +214,7 @@ var Skill_Cinder = Skill{
 var Skill_Searline = Skill{
 	Id:          "searline",
 	Name:        "Searline",
-	Description: "todo",
+	Description: "Channel a searing beam that burns intensely",
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceVulnerable).repeat(3)...).
 		add(tick().damageAmount(3).status(&SkillTickStatus{
@@ -231,7 +231,7 @@ var Skill_Searline = Skill{
 var Skill_ArcDart = Skill{
 	Id:          "arc_dart",
 	Name:        "Arc Dart",
-	Description: "todo",
+	Description: "Launch an electrified dart that ionizes",
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceExposed).repeat(3)...).
 		add(tick()).
@@ -241,7 +241,7 @@ var Skill_ArcDart = Skill{
 var Skill_ZapWrap = Skill{
 	Id:          "zap_wrap",
 	Name:        "Zap Wrap",
-	Description: "todo",
+	Description: "Ionize your foe as you wrap around them",
 	Ticks: skillTicks().
 		add().
 		add(stanceTick(TickStanceDefending).damageAmountVaried(3, 3).repeat(3)...).
@@ -258,7 +258,7 @@ var Skill_ZapWrap = Skill{
 var Skill_Molt = Skill{
 	Id:          "molt",
 	Name:        "Molt",
-	Description: "todo",
+	Description: "Shed your exoskeleton to remove debuffs",
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceExposed).repeat(4)...).
 		add(), // TODO remove statuses
@@ -267,7 +267,7 @@ var Skill_Molt = Skill{
 var Skill_AcidSting = Skill{
 	Id:          "acid_string",
 	Name:        "Acid String",
-	Description: "todo",
+	Description: "Spray a stream of corrosive acid at your foe",
 	Ticks: skillTicks().
 		add(tick().damageAmount(2).statusOpponent(StatusPoisoned, 4)).
 		add(tick().repeat(3)...),
@@ -280,7 +280,7 @@ var Skill_AcidSting = Skill{
 var Skill_MendSpores = Skill{
 	Id:          "mend_spores",
 	Name:        "Mend Spores",
-	Description: "todo",
+	Description: "Release healing spores that restore health",
 	Ticks: skillTicks().
 		add(tick().statusSelf(StatusMending, 5)).
 		add(stanceTick(TickStanceExposed).repeat(4)...).
@@ -290,7 +290,7 @@ var Skill_MendSpores = Skill{
 var Skill_PhotoSurge = Skill{
 	Id:          "photo_surge",
 	Name:        "Photo Surge",
-	Description: "todo",
+	Description: "Deal more damage if your mending",
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceExposed).repeat(2)...).
 		add(tick().damage(&SkillTickDamage{

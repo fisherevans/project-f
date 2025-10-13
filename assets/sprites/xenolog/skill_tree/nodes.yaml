@@ -1,0 +1,22 @@
+tilesheet:
+  tileHeight: 11
+  tileWidth: 11
+animations:
+  spinning_slow:
+    sequence:
+      row: 2
+      columnFrom: 1
+      columnTo: 16
+    framesPerSecond: 4
+  spinning_medium:
+    sequence:
+      row: 2
+      columnFrom: 1
+      columnTo: 16
+    framesPerSecond: 8
+  spinning_fast:
+    sequence:
+      row: 2
+      columnFrom: 1
+      columnTo: 16
+    framesPerSecond: 12

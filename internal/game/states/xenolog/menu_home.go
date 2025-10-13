@@ -104,7 +104,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(maskText),
+			tbcfg.Foreground(colors.XenoLogText.RGBA),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	selectBoxSubLabelFlashSpeed = 1.0
@@ -146,9 +146,9 @@ func newSelectBox(sprite pixelutil.BoundedDrawable, label, subLabel string) *sel
 func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bool, timeDelta float64) {
 	b.elapsed += timeDelta
 
-	mask := maskText
+	mask := colors.XenoLogText.RGBA
 	if selected {
-		mask = maskTextHighlight
+		mask = colors.XenoLogHighlight.RGBA
 	}
 
 	frameRect := pixel.R(0, 0, float64(selectBoxWidth), float64(selectBoxHeight))
@@ -164,7 +164,7 @@ func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bo
 	}
 
 	if b.subLabel != "" {
-		subLabelMask := colors.Lerp(maskText, maskTextHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+		subLabelMask := colors.Lerp(colors.XenoLogText.RGBA, colors.XenoLogHighlight.RGBA, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 		c := selectBoxSubLabelText.NewSimpleContent(b.subLabel)
 		selectBoxSubLabelText.Render(target,
 			center.Moved(gfx.IVec(0, -selectBoxHeight/2-selectBoxSubLabelMargin)),

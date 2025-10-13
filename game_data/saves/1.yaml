@@ -27,11 +27,13 @@ primortals:
         research_points: 21
     pumbl:
         visibility: defeated
-        research_points: 16
+        research_points: 5
 unlocked_skills:
     brace: {}
+    curl_up: {}
     guard: {}
     jab: {}
     mend_spores: {}
     photo_surge: {}
+    shoulder_roll: {}
     strike: {}

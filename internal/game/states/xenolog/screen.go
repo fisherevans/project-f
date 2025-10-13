@@ -14,22 +14,17 @@ var (
 	screenWidth  = 206
 	screenHeight = 128
 
-	maskDark          = colors.HexString("#0053ae")
-	screenClear       = colors.HexString("#0476d0")
-	maskText          = colors.HexString("#a6d8ff")
-	maskTextHighlight = colors.HexString("#ffffff")
-
 	badgeButtonStyle = badges.ButtonColorStyle{
-		Action:    maskText,
-		Button:    maskDark,
-		Highlight: maskTextHighlight,
+		Action:    colors.XenoLogText.RGBA,
+		Button:    colors.XenoLogDark.RGBA,
+		Highlight: colors.XenoLogHighlight.RGBA,
 	}
-	badgeASelect      = badges.Using(atlas).ButtonAction("a", "select", badgeButtonStyle)
-	badgeBBack        = badges.Using(atlas).ButtonAction("b", "back", badgeButtonStyle)
-	badgeSelectClose  = badges.Using(atlas).ButtonAction("select", "close", badgeButtonStyle)
-	badgeF1Reset      = badges.Using(atlas).ButtonAction("f1", "reset", badgeButtonStyle)
-	badgeAViewDetails = badges.Using(atlas).ButtonAction("a", "view details", badgeButtonStyle)
-	badgeAUnlock      = badges.Using(atlas).ButtonAction("a", "unlock", badgeButtonStyle)
+	badgeASelect     = badges.Using(atlas).ButtonAction("a", "select", badgeButtonStyle)
+	badgeBBack       = badges.Using(atlas).ButtonAction("b", "back", badgeButtonStyle)
+	badgeSelectClose = badges.Using(atlas).ButtonAction("select", "close", badgeButtonStyle)
+	badgeF1Reset     = badges.Using(atlas).ButtonAction("f1", "reset", badgeButtonStyle)
+	badgeADetails    = badges.Using(atlas).ButtonAction("a", "details", badgeButtonStyle)
+	badgeAUnlock     = badges.Using(atlas).ButtonAction("a", "unlock", badgeButtonStyle)
 
 	arrowUp    = atlas.GetTilesheetSprite("common/arrows_5px", 1, 1)
 	arrowRight = atlas.GetTilesheetSprite("common/arrows_5px", 2, 1)
@@ -104,7 +99,7 @@ func (s *Screen) Bounds() pixel.Rect {
 func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
 	s.spriteShader.Clear()
 	s.batch.Clear()
-	s.canvas.Clear(screenClear)
+	s.canvas.Clear(colors.XenoLogClear.RGBA)
 
 	s.menuStack[len(s.menuStack)-1].OnTick(s.batch, timeDelta)
 

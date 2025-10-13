@@ -8,6 +8,7 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
@@ -34,13 +35,13 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	lineHeight := 12
 	y := screenHeight - lineHeight
 
-	smallText.render(fmt.Sprintf("{+u}Skill: %s", skill.Name), 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskTextHighlight))
+	smallText.render(fmt.Sprintf("{+u}Skill: %s", skill.Name), 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(colors.XenoLogHighlight.RGBA))
 	y -= lineHeight
 
-	smallText.render(skill.Description, 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskText))
+	smallText.render(skill.Description, 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(colors.XenoLogText.RGBA))
 	y -= lineHeight
 
-	smallText.render("Ticks:", 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskText))
+	smallText.render("Ticks:", 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(colors.XenoLogText.RGBA))
 	y -= lineHeight
 
 	for _, tick := range skill.Ticks {
@@ -57,7 +58,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 		if len(effects) > 0 {
 			tickText = strings.Join(effects, ", ")
 		}
-		smallText.render("- "+tickText, 10, y, maskText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(maskText))
+		smallText.render("- "+tickText, 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.Foreground(colors.XenoLogText.RGBA))
 		y -= lineHeight
 	}
 }

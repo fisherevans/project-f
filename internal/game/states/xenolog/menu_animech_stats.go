@@ -174,13 +174,13 @@ func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	y := screenHeight - lineHeight
 
 	{
-		smallText.render("LEVEL", statX, y, maskText)
-		smallText.render("BOOST", boostX, y, maskText, tbcfg.RenderFrom(gfx.TopLeft))
+		smallText.render("LEVEL", statX, y, colors.XenoLogText.RGBA)
+		smallText.render("BOOST", boostX, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
 		y -= lineHeight
 	}
 
 	for _, upgrade := range m.upgrades {
-		mask := maskText
+		mask := colors.XenoLogText.RGBA
 		if m.nav.IsHighlighted(upgrade) {
 			mask = colors.White.RGBA
 		}
@@ -201,7 +201,7 @@ func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 
 	for _, a := range m.actions {
-		mask := maskText
+		mask := colors.XenoLogText.RGBA
 		label := a.label
 		if m.nav.IsHighlighted(a) {
 			mask = colors.White.RGBA
@@ -212,12 +212,12 @@ func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 
 	expText := fmt.Sprintf("Experience required: %d/%d", m.availableExperience, m.requiredExperienceForNextLevel)
-	smallText.render(expText, 10, 10, maskText, tbcfg.RenderFrom(gfx.BottomLeft))
+	smallText.render(expText, 10, 10, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.BottomLeft))
 
 	currentLevel := game.CurrentSave().Animech.Upgrades.GetLevel()
 	levelText := fmt.Sprintf("%d", currentLevel)
 	if currentLevel != m.uncommitedLevel {
 		levelText += fmt.Sprintf("{+c:white} > %d", m.uncommitedLevel)
 	}
-	titleText.render("Level: "+levelText, screenWidth/2+20, screenHeight-10, maskText, tbcfg.RenderFrom(gfx.TopLeft))
+	titleText.render("Level: "+levelText, screenWidth/2+20, screenHeight-10, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
 }
