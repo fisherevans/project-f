@@ -2,14 +2,14 @@ save_id: "1"
 character_name: Isaac
 animech:
     skill_set:
-        "1": brace
-        "2": strike
-        "3": photo_surge
-        "4": arc_dart
+        "1": guard
+        "2": searline
+        "3": jab
+        "4": shoulder_roll
     experience_points: 211
     upgrades:
-        shield_level: 7
-        sync_level: 0
+        shield_level: 5
+        sync_level: 2
 loadouts:
     - name: Default
       skill_set:
@@ -24,16 +24,14 @@ inventory:
 primortals:
     myceli:
         visibility: defeated
-        research_points: 21
+        research_points: 30
     pumbl:
         visibility: defeated
-        research_points: 5
+        research_points: 3
 unlocked_skills:
     brace: {}
-    curl_up: {}
     guard: {}
     jab: {}
-    mend_spores: {}
-    photo_surge: {}
+    searline: {}
     shoulder_roll: {}
     strike: {}

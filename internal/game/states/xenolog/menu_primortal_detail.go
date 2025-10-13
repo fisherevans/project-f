@@ -82,7 +82,7 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	h := int(icon.Bounds().H()) + primortalIconMargin*2
 	frame4px.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colors.XenoLogDark.RGBA))
 	frame4pxBorder.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colors.XenoLogText.RGBA))
-	v.screen.spriteShader.DrawSprite(icon, iconMatrix)
+	v.screen.spriteFilterBuffer.DrawSprite(icon, iconMatrix)
 
 	// header
 	dx, _ := titleTxt.render(p.Name, 10, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))

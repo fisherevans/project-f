@@ -202,82 +202,16 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 
-	switch game.DebugToggles().F2().Presses() % 4 {
-	case 0, 1:
-		s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
-		s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
-		s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
-		if game.DebugToggles().F2().Presses()%4 == 1 {
-			s.lightMapCanvas.Clear(lightMapClear)
-			game.DebugBL("lighting mode: on (ambient only)")
-		} else {
-			game.DebugBL("lighting mode: on")
-		}
-		s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
-		s.litSceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-	case 2:
-		s.sceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-		game.DebugBL("lighting mode: off")
-	case 3:
-		s.lightMapCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-		game.DebugBL("lighting mode: debug")
-	}
+	s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
+	s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+	s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
+	s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+	s.litSceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 
 	// BLOOM
 
-	switch game.DebugToggles().F1().Presses() % 4 {
-	case 0:
-		bloomed := s.bloom.ApplyBloom(s.sceneCanvas)
-		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-		game.DebugBL("bloom mode: on")
-	case 1:
-		game.DebugBL("bloom mode: off")
-	case 2, 3:
-		oldPasses := s.bloom.Passes
-		if game.DebugToggles().F1().Presses()%4 == 3 {
-			s.bloom.Passes = 0
-			game.DebugBL("bloom mode: debug - no blur")
-		} else {
-			game.DebugBL("bloom mode: debug")
-		}
-		bloomed := s.bloom.GenerateBloomCanvas(s.sceneCanvas)
-		s.bloom.Passes = oldPasses
-		target.Clear(pixel.RGBA{})
-		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
-	}
-
-	if game.Window().Pressed(pixel.KeyI) {
-		s.bloom.Intensity -= 0.01
-	}
-	if game.Window().Pressed(pixel.KeyO) {
-		s.bloom.Intensity += 0.01
-	}
-	if s.bloom.Intensity < 0 {
-		s.bloom.Intensity = 0
-	}
-
-	if game.Window().Pressed(pixel.KeyK) {
-		s.bloom.BloomBias -= 0.01
-	}
-	if game.Window().Pressed(pixel.KeyL) {
-		s.bloom.BloomBias += 0.01
-	}
-	if s.bloom.BloomBias < 0 {
-		s.bloom.BloomBias = 0
-	}
-
-	if game.Window().Pressed(pixel.KeyComma) {
-		s.bloom.SceneBias -= 0.01
-	}
-	if game.Window().Pressed(pixel.KeyPeriod) {
-		s.bloom.SceneBias += 0.01
-	}
-	if s.bloom.SceneBias < 0 {
-		s.bloom.SceneBias = 0
-	}
-	game.DebugBL("blend intensity: %.2f", s.bloom.Intensity)
-	game.DebugBL("blend bloom bias: %.2f", s.bloom.BloomBias)
-	game.DebugBL("blend scene bias: %.2f", s.bloom.SceneBias)
+	bloomed := s.bloom.ApplyBloom(s.sceneCanvas)
+	bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 
 	// HUD + CHAT
 

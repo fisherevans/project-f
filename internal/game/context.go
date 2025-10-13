@@ -155,3 +155,7 @@ func PopDebugLines() map[DebugArea][]string {
 func PopNotifications(time float64) []string {
 	return ctx.PopNotifications(time)
 }
+
+func TimeElapsed() float64 {
+	return ctx.elapsed
+}

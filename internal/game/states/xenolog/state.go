@@ -25,6 +25,7 @@ var atlas = resources.CreateAtlas(resources.AtlasFilter{
 
 var (
 	deviceBackgroundSprite = atlas.GetSprite("xenolog/device")
+	moveDuration           = 0.4
 )
 
 type State struct {
@@ -38,7 +39,7 @@ type State struct {
 func New(i game.XenologIntent) game.State {
 	return &State{
 		background: i.Background,
-		transition: interp.NewTimedProgress(.4, interp.Smootherstep),
+		transition: interp.NewTimedProgress(moveDuration, interp.Smootherstep),
 		screen:     NewScreen(),
 	}
 }
