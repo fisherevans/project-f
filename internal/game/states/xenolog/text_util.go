@@ -60,6 +60,11 @@ func newTextRenderer(target pixel.Target, tb *textbox.Instance) *textRenderer {
 	}
 }
 
+func (r textRenderer) withMatrix(m pixel.Matrix) *textRenderer {
+	r.matrix = m
+	return &r
+}
+
 func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tbcfg.ConfigOpt) (int, int) {
 	c := r.tb.NewComplexContent(text)
 	matrix := r.matrix.Moved(gfx.IVec(x, y))

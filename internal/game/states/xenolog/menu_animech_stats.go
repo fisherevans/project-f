@@ -106,30 +106,6 @@ func newAnimechStatsMenu(s *Screen) *animechStatsMenu {
 					m.nav.Highlight(m.upgrades[0], m)
 				},
 			},
-			{
-				label: "[RE-SPEC]",
-				handler: func(m *animechStatsMenu) {
-					for _, upgrade := range m.upgrades {
-						upgrade.uncommitedLevelIncrease = 0
-					}
-					for game.CurrentSave().Animech.Upgrades.SyncLevel > 0 {
-						game.CurrentSave().Animech.Upgrades.SyncLevel--
-						game.CurrentSave().Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
-					}
-					for game.CurrentSave().Animech.Upgrades.ShieldLevel > 0 {
-						game.CurrentSave().Animech.Upgrades.ShieldLevel--
-						game.CurrentSave().Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
-					}
-					m.nav.Highlight(m.upgrades[0], m)
-				},
-			},
-			{
-				label: "[EDIT SKILL SET]",
-				handler: func(m *animechStatsMenu) {
-					s.PushMenu(newSkillSetMenu(s))
-					// todo this is weird
-				},
-			},
 		},
 	}
 	for _, upgrade := range menu.upgrades {

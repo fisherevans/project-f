@@ -33,7 +33,7 @@ vec4 sampleTexture() { return texture(uTexture, uv()) * vColor; }
 // Subtle scan line effect for stable state (can both lighten and darken)
 float subtleScanline(vec2 uv, float time) {
     // Variable scroll speed using sin wave for unpredictability
-    float scrollSpeed = sin(time * 0.1) * 0.15 + 0.2; // Varies between 0.05 and 0.35 (much slower)
+    float scrollSpeed = sin(time * 0.1) * 0.15 + 0.1; // Varies between 0.05 and 0.35 (much slower)
     float scrollOffset = time * scrollSpeed * 0.08;
     
     // Create scan lines that scroll down the screen

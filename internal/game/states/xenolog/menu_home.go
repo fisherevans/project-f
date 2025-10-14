@@ -79,7 +79,7 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 	if game.Controls[*State]().ButtonA().JustPressed() {
 		if s.selectLeft {
-			s.screen.PushMenu(newAnimechStatsMenu(s.screen))
+			s.screen.PushMenu(newAnimechMenu(s.screen))
 		} else {
 			s.screen.PushMenu(newPrimortalsMenu(s.screen))
 		}

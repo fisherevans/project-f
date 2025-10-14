@@ -9,74 +9,32 @@ import (
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
-	"fisherevans.com/project/f/internal/util/navigtion"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
 var (
 	skillSetRowHeight = 14
-)
-
-type skillSetInputMode int
-
-const (
-	SkillSetInputModeOver skillSetInputMode = iota
-	SkillSetInputModeSelect
+	skillSetArrows    = map[input.Direction]pixelutil.BoundedDrawable{
+		input.NotPressed: atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 1, 1),
+		input.Up:         atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 2, 1),
+		input.Right:      atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 3, 1),
+		input.Down:       atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 4, 1),
+		input.Left:       atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 5, 1),
+	}
 )
 
 type skillSetMenu struct {
 	screen               *Screen
-	inputMode            skillSetInputMode
 	currentSkillSelected input.Direction
-	nav                  *navigtion.System[*skillSetMenu]
-	currentSkillSetItem  *navigtion.SimpleItem[*skillSetMenu]
-	actions              []*skillSetAction
 }
 
 func newSkillSetMenu(screen *Screen) *skillSetMenu {
 	m := &skillSetMenu{
-		screen: screen,
-		nav:    navigtion.NewSystem[*skillSetMenu](),
-		currentSkillSetItem: navigtion.NewSimpleItem[*skillSetMenu]().
-			WithButtonAHandler(func(m *skillSetMenu) {
-				m.inputMode = SkillSetInputModeSelect
-			}),
+		screen:               screen,
 		currentSkillSelected: input.Up,
-		actions: []*skillSetAction{
-			newSkillSetAction("Save Preset", func(s *skillSetMenu) {
-				game.DebugNotification("todo - save")
-			}),
-			newSkillSetAction("Load Preset", func(s *skillSetMenu) {
-				game.DebugNotification("todo - load")
-			}),
-		},
-	}
-	m.nav.AddItem(m.currentSkillSetItem, m)
-	m.nav.SetLastItem(nil)
-	for _, a := range m.actions {
-		m.nav.AddNextToLast(input.Right, m, a).Below(m.currentSkillSetItem)
 	}
 	return m
-}
-
-type skillSetAction struct {
-	navigtion.BaseItem[*skillSetMenu]
-	label   string
-	handler func(s *skillSetMenu)
-}
-
-func newSkillSetAction(label string, handler func(s *skillSetMenu)) *skillSetAction {
-	return &skillSetAction{
-		label:   label,
-		handler: handler,
-	}
-}
-
-func (a *skillSetAction) OnButtonAJustPressed(s *skillSetMenu) {
-	if a.handler == nil {
-		return
-	}
-	a.handler(s)
 }
 
 func (*skillSetMenu) Enter() {}
@@ -87,93 +45,68 @@ func (m *skillSetMenu) OnTick(target pixel.Target, timeDelta float64) {
 }
 
 func (m *skillSetMenu) handleInput() {
-	switch m.inputMode {
-	case SkillSetInputModeOver:
-		if game.Controls[*State]().ButtonB().JustPressed() {
-			m.screen.PopMenu()
-		}
-		m.nav.HandleInputs(game.Controls[*State](), m)
-	case SkillSetInputModeSelect:
-		if game.Controls[*State]().ButtonB().JustPressed() {
-			m.inputMode = SkillSetInputModeOver
-		}
-		if game.Controls[*State]().DPad().JustPressed() {
-			m.currentSkillSelected = game.Controls[*State]().DPad().GetDirection()
-		}
-		if game.Controls[*State]().ButtonA().JustPressed() {
-			original := *game.CurrentSave().Animech.SkillSet.DirectionalSkill(m.currentSkillSelected)
-			m.screen.PushMenu(newSkillsMenu(m.screen, original, func(newSkill rpg.SkillId) {
-				if newSkill == original {
-					return
-				}
-				swapDirection, doSwap := game.CurrentSave().Animech.SkillSet.DirectionOfSkill(newSkill)
-				if doSwap {
-					toSwap := game.CurrentSave().Animech.SkillSet.DirectionalSkill(swapDirection)
-					*toSwap = original
-				}
-				toSet := game.CurrentSave().Animech.SkillSet.DirectionalSkill(m.currentSkillSelected)
-				*toSet = newSkill
-				saveOrNotify()
-			}))
-		}
+	if game.Controls[*State]().ButtonB().JustPressed() {
+		m.screen.PopMenu()
+	}
+	if game.Controls[*State]().DPad().JustPressed() {
+		m.currentSkillSelected = game.Controls[*State]().DPad().GetDirection()
+	}
+	if game.Controls[*State]().ButtonA().JustPressed() {
+		original := *game.CurrentSave().Animech.SkillSet.DirectionalSkill(m.currentSkillSelected)
+		m.screen.PushMenu(newSkillsMenu(m.screen, original, func(newSkill rpg.SkillId) {
+			if newSkill == original {
+				return
+			}
+			swapDirection, doSwap := game.CurrentSave().Animech.SkillSet.DirectionOfSkill(newSkill)
+			if doSwap {
+				toSwap := game.CurrentSave().Animech.SkillSet.DirectionalSkill(swapDirection)
+				*toSwap = original
+			}
+			toSet := game.CurrentSave().Animech.SkillSet.DirectionalSkill(m.currentSkillSelected)
+			*toSet = newSkill
+			saveOrNotify()
+		}))
 	}
 }
 
 func (m *skillSetMenu) render(target pixel.Target) {
-	m.renderCurrentSkills(screenWidth/2, screenHeight/3*2, target)
-	dx := screenWidth / (len(m.actions) + 1)
-	x := dx
-	for _, action := range m.actions {
-		m.renderAction(action.label, m.nav.IsHighlighted(action), x, 10, target)
-		x += dx
-	}
-}
-
-func (m *skillSetMenu) renderAction(label string, highlighted bool, x, y int, target pixel.Target) {
-	smallText := newTextRenderer(target, smallTextbox)
-	mask := colors.XenoLogText.RGBA
-	if highlighted {
-		mask = colors.White.RGBA
-		label = ">> " + label + " <<"
-	}
-	smallText.render(label, x, y, mask, tbcfg.RenderFrom(gfx.Centered))
-}
-
-func (m *skillSetMenu) renderCurrentSkills(x, y int, target pixel.Target) {
-	dy := 16
-	dx := screenWidth / 4
-
-	mask := colors.XenoLogText.RGBA
-	if m.inputMode == SkillSetInputModeOver && m.nav.IsHighlighted(m.currentSkillSetItem) {
-		mask = colors.XenoLogHighlight.RGBA
-	}
-
-	frameW := screenWidth - 20
-	frameH := dy * 4
-	frameRect := pixel.R(0, 0, float64(frameW), float64(frameH))
-	selectBoxFrame.Draw(target, frameRect, pixel.IM.Moved(gfx.IVec(x, y)), frames.WithColor(mask))
-
-	m.renderAction("Edit", m.nav.IsHighlighted(m.currentSkillSetItem), x, y-frameH/2-10, target)
+	x := screenWidth / 2
+	y := screenHeight / 3 * 2
+	dy := 14
+	dx := 55
 
 	m.renderCurrentSkill(input.Up, x, y+dy, target)
 	m.renderCurrentSkill(input.Right, x+dx, y, target)
 	m.renderCurrentSkill(input.Down, x, y-dy, target)
 	m.renderCurrentSkill(input.Left, x-dx, y, target)
+
+	skillSetArrows[m.currentSkillSelected].Draw(target, pixel.IM.Moved(gfx.IVec(x, y)))
 }
 
 func (m *skillSetMenu) renderCurrentSkill(direction input.Direction, x, y int, target pixel.Target) {
 	skillId := game.CurrentSave().Animech.SkillSet.DirectionalSkill(direction)
-	smallText := newTextRenderer(target, smallTextbox)
-	mask := colors.XenoLogText.RGBA
+	regularTxt := newTextRenderer(target, regularTextbox)
+
+	fgMask := colors.XenoLogText.RGBA
+	bgMask := colors.XenoLogClear.RGBA
+	borderMask := colors.XenoLogDark.RGBA
+	if m.currentSkillSelected == direction {
+		fgMask = colors.XenoLogDark.RGBA
+		bgMask = colors.XenoLogHighlight.RGBA
+		borderMask = colors.XenoLogDark.RGBA
+	}
+
 	var label string
 	if *skillId == rpg.UnsetSkillId {
 		label = "---"
 	} else {
 		label = skillId.Get().Name
 	}
-	if m.inputMode == SkillSetInputModeSelect && direction == m.currentSkillSelected {
-		label = "{+u}" + label + "{-u}"
-		mask = colors.XenoLogHighlight.RGBA
-	}
-	smallText.render(label, x, y, mask, tbcfg.RenderFrom(gfx.Centered))
+	frameR := pixel.R(0, 0, 86, 15)
+	frame2px.Draw(target, frameR, pixel.IM.Moved(gfx.IVec(x, y)),
+		frames.WithColor(bgMask), frames.WithRenderOrigin(gfx.Centered))
+	frame2pxBorder.Draw(target, frameR, pixel.IM.Moved(gfx.IVec(x, y)),
+		frames.WithColor(borderMask), frames.WithRenderOrigin(gfx.Centered))
+	regularTxt.render(label, x, y, fgMask, tbcfg.RenderFrom(gfx.Centered))
+
 }

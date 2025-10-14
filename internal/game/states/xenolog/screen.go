@@ -9,10 +9,12 @@ import (
 	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
 var (
@@ -146,4 +148,19 @@ func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Ta
 
 	bloomed := s.bloom.ApplyBloom(s.screenEffectShader)
 	bloomed.Draw(target, targetMatrix)
+}
+
+func arrowSprite(dir input.Direction) pixelutil.BoundedDrawable {
+	switch dir {
+	case input.Up:
+		return arrowUp
+	case input.Right:
+		return arrowRight
+	case input.Down:
+		return arrowDown
+	case input.Left:
+		return arrowLeft
+	default:
+		panic("invalid direction")
+	}
 }
