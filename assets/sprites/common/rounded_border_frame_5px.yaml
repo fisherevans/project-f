@@ -1,0 +1,5 @@
+frame:
+  defaults:
+    cutMargin: 5
+    padding: 5
+    frameMode: stretch

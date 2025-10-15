@@ -224,12 +224,12 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	game.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
 
-	if game.Controls[*State]().ButtonStart().JustPressed() {
+	if game.Controls[*State]().ButtonSelect().JustPressed() {
 		game.SetActiveStateIntent(game.MenuIntent{
 			Background: s,
 		})
 	}
-	if game.Controls[*State]().ButtonSelect().JustPressed() {
+	if game.Controls[*State]().ButtonStart().JustPressed() {
 		game.SetActiveStateIntent(game.XenologIntent{
 			Background: s,
 		})

@@ -78,7 +78,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		Moved(pixel.V(0, -dy))
 	s.screen.OnTick(s, screenMatrix, target, timeDelta)
 
-	if game.Controls[*State]().ButtonSelect().JustPressed() {
+	if game.Controls[*State]().ButtonStart().JustPressed() {
 		s.exiting = !s.exiting
 		s.transition.Reverse()
 	}

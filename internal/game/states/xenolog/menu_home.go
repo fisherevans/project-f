@@ -71,12 +71,12 @@ func isPrimortalUpgradeAvailable() bool {
 }
 
 func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
-	center := pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight/2))
 	if game.Controls[*State]().DPad().JustPressedDirection() == input.Left {
 		s.selectLeft = true
 	} else if game.Controls[*State]().DPad().JustPressedDirection() == input.Right {
 		s.selectLeft = false
 	}
+
 	if game.Controls[*State]().ButtonA().JustPressed() {
 		if s.selectLeft {
 			s.screen.PushMenu(newAnimechMenu(s.screen))
@@ -85,18 +85,18 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 		}
 	}
 
+	center := pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight/2+3))
 	dx := math.Floor(float64(selectBoxWidth) * 0.6)
 	s.left.render(center.Moved(pixel.V(-dx, 0)), target, s.selectLeft, timeDelta)
 	s.right.render(center.Moved(pixel.V(dx, 0)), target, !s.selectLeft, timeDelta)
 
-	badgeSelectClose.Render(target, pixel.IM.Moved(gfx.IVec(2, 2)), gfx.BottomLeft)
+	badgeStartClose.Render(target, pixel.IM.Moved(gfx.IVec(2, 2)), gfx.BottomLeft)
 	badgeASelect.Render(target, pixel.IM.Moved(gfx.IVec(screenWidth-2, 2)), gfx.BottomRight)
 }
 
 var (
 	selectBoxHeight = 82
 	selectBoxWidth  = 74
-	selectBoxFrame  = frames.New("xenolog/wide_frame", atlas, frames.WithRenderOrigin(gfx.Centered))
 
 	selectBoxLabelMargin = 3
 	selectBoxLabelText   = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard),
@@ -152,7 +152,8 @@ func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bo
 	}
 
 	frameRect := pixel.R(0, 0, float64(selectBoxWidth), float64(selectBoxHeight))
-	selectBoxFrame.Draw(target, frameRect, center, frames.WithColor(mask))
+	frame5px.Draw(target, frameRect, center, frames.WithColor(colors.XenoLogDark.RGBA))
+	frame5pxBorder.Draw(target, frameRect, center, frames.WithColor(mask))
 
 	bottomCenter := center.Moved(gfx.IVec(0, -selectBoxHeight/2))
 	spriteCenter := bottomCenter.Moved(gfx.BottomCenter.Align(b.sprite))

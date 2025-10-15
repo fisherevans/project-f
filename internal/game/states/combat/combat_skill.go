@@ -72,7 +72,7 @@ func (si *SkillInstance) OnTick(s *State, tickId int, source Combatant, target C
 			}
 			if doApply {
 				applyTo.GetStatuses().Add(effect.Status.Status, effect.Status.Stacks)
-				word := effect.Status.Status.Label()
+				word := effect.Status.Status.PastTense()
 				color, colorExists := colors.StatusColors[effect.Status.Status]
 				if word != "" && colorExists {
 					s.AddFX(NewWordFX(word, color, applyTo))

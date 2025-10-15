@@ -44,12 +44,15 @@ var (
 	frame2pxBorder = frames.New("common/rounded_border_frame_2px", atlas, frames.WithRenderOrigin(gfx.Centered))
 	frame4px       = frames.New("common/rounded_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
 	frame4pxBorder = frames.New("common/rounded_border_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
+	frame5px       = frames.New("common/rounded_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
+	frame5pxBorder = frames.New("common/rounded_border_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
 )
 
 type textRenderer struct {
 	target pixel.Target
 	matrix pixel.Matrix
 	tb     *textbox.Instance
+	opts   []tbcfg.ConfigOpt
 }
 
 func newTextRenderer(target pixel.Target, tb *textbox.Instance) *textRenderer {
@@ -60,15 +63,20 @@ func newTextRenderer(target pixel.Target, tb *textbox.Instance) *textRenderer {
 	}
 }
 
-func (r textRenderer) withMatrix(m pixel.Matrix) *textRenderer {
+func (r *textRenderer) withMatrix(m pixel.Matrix) *textRenderer {
 	r.matrix = m
-	return &r
+	return r
+}
+
+func (r *textRenderer) withOpts(opts ...tbcfg.ConfigOpt) *textRenderer {
+	r.opts = append(r.opts, opts...)
+	return r
 }
 
 func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tbcfg.ConfigOpt) (int, int) {
 	c := r.tb.NewComplexContent(text)
 	matrix := r.matrix.Moved(gfx.IVec(x, y))
-	r.tb.Render(r.target, matrix, c, append(opts, tbcfg.Foreground(mask))...)
+	r.tb.Render(r.target, matrix, c, append(r.opts, append(opts, tbcfg.Foreground(mask))...)...)
 	return c.Width(), c.Height()
 }
 

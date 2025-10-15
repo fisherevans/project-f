@@ -45,7 +45,7 @@ func (m Main) Render(s *State, matrix pixel.Matrix, target pixel.Target, targetB
 			m.items.SelectedEntry.Value.Action(s)
 		}
 	}
-	if game.Controls[*State]().ButtonStart().JustPressed() {
+	if game.Controls[*State]().ButtonSelect().JustPressed() {
 		game.SetActiveStateIntent(game.SwapStateIntent{
 			State: s.background,
 		})

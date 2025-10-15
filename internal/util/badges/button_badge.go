@@ -35,6 +35,7 @@ type ButtonAction struct {
 	buttonContent, actionContent *textbox.Content
 	style                        ButtonColorStyle
 	highlighted                  bool
+	flipped                      bool
 }
 
 func (s *ButtonAction) Bounds() pixel.Rect {
@@ -45,27 +46,52 @@ func (s *ButtonAction) Render(target pixel.Target, matrix pixel.Matrix, origin g
 	buttonContentW := s.buttonContent.Width()
 	actionContentW := s.actionContent.Width()
 	buttonFrameW := buttonBadgeSpacing + buttonTextPadding + buttonContentW + buttonTextPadding + buttonBadgeSpacing
-	fullFrameW := buttonFrameW + buttonBadgeSpacing + actionContentW + buttonTextPadding + buttonBadgeSpacing
+	actionFrameW := buttonBadgeSpacing + actionContentW + buttonTextPadding + buttonBadgeSpacing
+	fullFrameW := buttonFrameW + actionFrameW
 	matrix = matrix.Moved(origin.AlignFrom(gfx.BottomLeft, float64(fullFrameW), float64(buttonBadgeHeight)))
+
+	var buttonFrameX, buttonTextX, actionTextX int
+	if s.flipped {
+		// Action on left, button on right
+		buttonFrameX = actionFrameW
+		actionTextX = buttonBadgeSpacing + buttonTextPadding
+		buttonTextX = actionFrameW + buttonBadgeSpacing + buttonTextPadding
+	} else {
+		// Button on left, action on right (default)
+		buttonFrameX = 0
+		buttonTextX = buttonBadgeSpacing + buttonTextPadding
+		actionTextX = buttonFrameW + buttonBadgeSpacing + buttonTextPadding - 1
+	}
+
+	// Draw action background (full width, slightly lower)
 	s.frame.Draw(target, pixel.R(0, 0, float64(fullFrameW), float64(buttonBadgeHeight-2)),
 		matrix.Moved(gfx.IVec(0, 1)),
 		frames.WithRenderOrigin(gfx.BottomLeft),
 		frames.WithColor(s.style.Action))
+
+	// Draw highlight if needed
 	if s.highlighted {
 		s.frame.Draw(target, pixel.R(0, 0, float64(buttonFrameW+2), float64(buttonBadgeHeight+2)),
-			matrix.Moved(pixel.V(-1, -1)),
+			matrix.Moved(pixel.V(float64(buttonFrameX)-1, -1)),
 			frames.WithRenderOrigin(gfx.BottomLeft),
 			frames.WithColor(s.style.Highlight))
 	}
-	s.frame.Draw(target, pixel.R(0, 0, float64(buttonFrameW), float64(buttonBadgeHeight)), matrix,
+
+	// Draw button frame
+	s.frame.Draw(target, pixel.R(0, 0, float64(buttonFrameW), float64(buttonBadgeHeight)),
+		matrix.Moved(gfx.IVec(buttonFrameX, 0)),
 		frames.WithRenderOrigin(gfx.BottomLeft),
 		frames.WithColor(s.style.Button))
+
+	// Render button text
 	s.textbox.Render(target,
-		matrix.Moved(gfx.IVec(buttonBadgeSpacing+buttonTextPadding, buttonBadgeSpacing)),
+		matrix.Moved(gfx.IVec(buttonTextX, buttonBadgeSpacing)),
 		s.buttonContent,
 		tbcfg.Foreground(s.style.Action))
+
+	// Render action text
 	s.textbox.Render(target,
-		matrix.Moved(gfx.IVec(buttonFrameW+buttonBadgeSpacing, buttonBadgeSpacing)),
+		matrix.Moved(gfx.IVec(actionTextX, buttonBadgeSpacing)),
 		s.actionContent,
 		tbcfg.Foreground(s.style.Button))
 }
@@ -89,5 +115,10 @@ func (b *Builder) ButtonAction(button, action string, style ButtonColorStyle) *B
 
 func (b *ButtonAction) Highlighted(highlighted bool) *ButtonAction {
 	b.highlighted = highlighted
+	return b
+}
+
+func (b *ButtonAction) Flipped() *ButtonAction {
+	b.flipped = !b.flipped
 	return b
 }

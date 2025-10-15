@@ -13,6 +13,7 @@ import (
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
+	"fisherevans.com/project/f/internal/util/sprites"
 )
 
 type CombatStatus struct {
@@ -44,18 +45,19 @@ type AppliedStatuses struct {
 }
 
 func NewAppliedStatuses() *AppliedStatuses {
+	statusIcons := sprites.StatusIcons(atlas)
 	return &AppliedStatuses{
 		Statuses: []*CombatStatus{
 			{
 				Status:    rpg.StatusFortified,
-				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 5, 1)),
+				Animation: anim.NewStaticAnimation(statusIcons[rpg.StatusFortified]),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
 					// nothing, effects happen when receiving damage
 				},
 			},
 			{
 				Status:    rpg.StatusPoisoned,
-				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 1, 1)),
+				Animation: anim.NewStaticAnimation(statusIcons[rpg.StatusPoisoned]),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
 					pct := 0.01
 					switch cs.Level() {
@@ -85,7 +87,7 @@ func NewAppliedStatuses() *AppliedStatuses {
 			},
 			{
 				Status:    rpg.StatusBurning,
-				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 2, 1)),
+				Animation: anim.NewStaticAnimation(statusIcons[rpg.StatusBurning]),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
 					dmg := cs.AccumulativeExposure / 10
 					if dmg < 1 {
@@ -98,7 +100,7 @@ func NewAppliedStatuses() *AppliedStatuses {
 			},
 			{
 				Status:    rpg.StatusIonized,
-				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 3, 1)),
+				Animation: anim.NewStaticAnimation(statusIcons[rpg.StatusIonized]),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
 					// nothing, effects happen when applying damage
 				},
@@ -118,7 +120,7 @@ func NewAppliedStatuses() *AppliedStatuses {
 			},
 			{
 				Status:    rpg.StatusMending,
-				Animation: anim.NewStaticAnimation(atlas.GetTilesheetSprite("combat/status_icons", 4, 1)),
+				Animation: anim.NewStaticAnimation(statusIcons[rpg.StatusMending]),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
 					healthPerTick := func(l rpg.StatusLevel) int {
 						switch l {

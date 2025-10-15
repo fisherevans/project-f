@@ -10,16 +10,18 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-type skillsMenu struct {
+type skillSwapMenu struct {
 	screen     *Screen
-	list       *scrollList[*skillsMenu]
+	original   rpg.SkillId
+	list       *scrollList[*skillSwapMenu]
 	onComplete func(id rpg.SkillId)
 }
 
-func newSkillsMenu(screen *Screen, highlighted rpg.SkillId, onComplete func(id rpg.SkillId)) *skillsMenu {
-	menu := &skillsMenu{
-		screen: screen,
-		list: newScrollList[*skillsMenu](scrollListOptions{
+func newSkillSwapMenu(screen *Screen, original rpg.SkillId, onComplete func(id rpg.SkillId)) *skillSwapMenu {
+	menu := &skillSwapMenu{
+		screen:   screen,
+		original: original,
+		list: newScrollList[*skillSwapMenu](scrollListOptions{
 			targetHeight:        screenHeight,
 			transitionTime:      0.15,
 			verticalItemMargin:  1,
@@ -31,7 +33,7 @@ func newSkillsMenu(screen *Screen, highlighted rpg.SkillId, onComplete func(id r
 		menu.list.Add(&skillListItem{
 			skillId: skillId,
 		})
-		if skillId == highlighted {
+		if skillId == original {
 			menu.list.highlightLast()
 		}
 	}
@@ -39,19 +41,19 @@ func newSkillsMenu(screen *Screen, highlighted rpg.SkillId, onComplete func(id r
 	return menu
 }
 
-func (*skillsMenu) Enter() {}
+func (*skillSwapMenu) Enter() {}
 
 type skillListItem struct {
-	baseListItem[*skillsMenu]
+	baseListItem[*skillSwapMenu]
 	skillId rpg.SkillId
 }
 
-func (p *skillListItem) ButtonAJustPressed(m *skillsMenu) {
+func (p *skillListItem) ButtonAJustPressed(m *skillSwapMenu) {
 	m.onComplete(p.skillId)
 	m.screen.PopMenu()
 }
 
-func (p *skillListItem) ButtonStartJustPressed(m *skillsMenu) {
+func (p *skillListItem) ButtonStartJustPressed(m *skillSwapMenu) {
 	m.screen.PushMenu(newSkillDetailMenu(m.screen, p.skillId))
 }
 
@@ -61,12 +63,12 @@ func (p *skillListItem) Height() int {
 
 type skillsCursor struct{}
 
-func (c *skillsCursor) Render(m *skillsMenu, centerLeft int, target pixel.Target, index int, movementProgress, highlightProgress float64) {
+func (c *skillsCursor) Render(m *skillSwapMenu, centerLeft int, target pixel.Target, index int, movementProgress, highlightProgress float64) {
 	smallText := newTextRenderer(target, smallTextbox)
 	smallText.render(">", 10, centerLeft, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.LeftCenter))
 }
 
-func (p *skillListItem) Render(m *skillsMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
+func (p *skillListItem) Render(m *skillSwapMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
 	centerY := topLeftY - p.Height()/2
 	smallText := newTextRenderer(target, smallTextbox)
 
@@ -77,7 +79,7 @@ func (p *skillListItem) Render(m *skillsMenu, topLeftY int, target pixel.Target,
 	smallText.render(p.skillId.Get().Name, 35, centerY, mask, tbcfg.RenderFrom(gfx.LeftCenter))
 }
 
-func (m *skillsMenu) OnTick(target pixel.Target, timeDelta float64) {
+func (m *skillSwapMenu) OnTick(target pixel.Target, timeDelta float64) {
 	if game.Controls[*State]().ButtonB().JustPressed() {
 		m.screen.PopMenu()
 	}

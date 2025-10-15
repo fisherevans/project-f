@@ -2,6 +2,7 @@ package xenolog
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gopxl/pixel/v2"
 
@@ -49,8 +50,14 @@ func newPrimortalsMenu(screen *Screen) *primortalsMenu {
 	}
 	menu.list.Add(menu.title)
 	for i := 1; i <= rpg.MaxXenoLogEntryIndex; i++ {
+		primortalId := rpg.XenoLogEntries[i]
+		lastSeen := time.Time{}
+		if progress, hasProgress := game.CurrentSave().Primortals[primortalId]; hasProgress {
+			lastSeen = progress.LastSeen
+		}
 		menu.list.Add(&primortalListItem{
 			xenologIndex: i,
+			lastSeen:     lastSeen,
 		})
 	}
 	menu.list.Add(menu.footer)
@@ -181,6 +188,7 @@ func (p *primortalListFooter) Render(m *primortalsMenu, topLeftY int, target pix
 type primortalListItem struct {
 	baseListItem[*primortalsMenu]
 	xenologIndex int
+	lastSeen     time.Time
 }
 
 func (p *primortalListItem) RenderWasSkipped(m *primortalsMenu, wasAbove bool) {

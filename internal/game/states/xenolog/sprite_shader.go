@@ -35,6 +35,10 @@ func (s *spriteShader) DrawSprite(drawable pixelutil.BoundedDrawable, matrix pix
 	drawable.Draw(s.canvas, matrix)
 }
 
+func (s *spriteShader) Target() pixel.Target {
+	return s.canvas
+}
+
 func (s *spriteShader) Render(target pixel.Target) {
 	s.canvas.Draw(target, pixel.IM.Moved(s.canvas.Bounds().Center()))
 }

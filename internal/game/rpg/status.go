@@ -15,7 +15,7 @@ const (
 	StatusMending StatusType = "mending"
 )
 
-func (s StatusType) Label() string {
+func (s StatusType) PastTense() string {
 	switch s {
 	case StatusFortified:
 		return "Fortified"
@@ -27,6 +27,38 @@ func (s StatusType) Label() string {
 		return "Ionized"
 	case StatusMending:
 		return "Mending"
+	}
+	return ""
+}
+
+func (s StatusType) CurrentTense() string {
+	switch s {
+	case StatusFortified:
+		return "Fortified"
+	case StatusBurning:
+		return "Burning"
+	case StatusPoisoned:
+		return "Poisoned"
+	case StatusIonized:
+		return "Ionized"
+	case StatusMending:
+		return "Mending"
+	}
+	return ""
+}
+
+func (s StatusType) Description() string {
+	switch s {
+	case StatusFortified:
+		return "Reduces incoming damage"
+	case StatusBurning:
+		return "Deals damage over time, increasing with exposure"
+	case StatusPoisoned:
+		return "Deals percentage-based damage over time"
+	case StatusIonized:
+		return "Amplifies damage received"
+	case StatusMending:
+		return "Restores health over time"
 	}
 	return ""
 }
