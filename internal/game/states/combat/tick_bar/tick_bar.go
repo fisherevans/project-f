@@ -13,15 +13,7 @@ import (
 	"fisherevans.com/project/f/internal/util/sprites"
 )
 
-type Config struct {
-	Width       int
-	TickSpacing int
-}
-
 type Renderer struct {
-	atlas  *resources.Atlas
-	config Config
-
 	activeFrame  *frames.Instance
 	pendingFrame *frames.Instance
 
@@ -38,14 +30,11 @@ type Renderer struct {
 	stanceIcons map[rpg.CombatStance]pixelutil.BoundedDrawable
 }
 
-func NewRenderer(atlas *resources.Atlas, config Config) *Renderer {
-	r := &Renderer{
-		atlas:  atlas,
-		config: config,
-	}
+func NewRenderer(atlas *resources.Atlas) *Renderer {
+	r := &Renderer{}
 
-	r.activeFrame = frames.New("combat/tick_bar/skill_active_frame", r.atlas)
-	r.pendingFrame = frames.New("combat/tick_bar/skill_pending_frame", r.atlas)
+	r.activeFrame = frames.New("combat/tick_bar/skill_active_frame", atlas)
+	r.pendingFrame = frames.New("combat/tick_bar/skill_pending_frame", atlas)
 
 	r.tickBubbleDisplayNone = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 1, 1)
 	r.tickBubbleDisplayNormal = atlas.GetTilesheetSprite("combat/tick_bar/bubbles", 2, 1)
@@ -63,6 +52,9 @@ func NewRenderer(atlas *resources.Atlas, config Config) *Renderer {
 }
 
 type DrawOptions struct {
+	width       int
+	tickSpacing int
+
 	interruptedAt int
 	mask          pixel.RGBA
 	active        bool
@@ -71,8 +63,10 @@ type DrawOptions struct {
 	flip          bool
 }
 
-func NewDrawOptions() DrawOptions {
+func NewDrawOptions(width, tickSpacing int) DrawOptions {
 	return DrawOptions{
+		width:         width,
+		tickSpacing:   tickSpacing,
 		interruptedAt: -1,
 		mask:          colors.White.RGBA,
 		active:        true,
@@ -126,8 +120,8 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 		mask = colors.ScaleColor(mask, 0.5)
 	}
 	rect := pixel.R(0, 0,
-		float64(r.config.Width),
-		float64(r.config.TickSpacing*(skill.Duration()+1)))
+		float64(opt.width),
+		float64(opt.tickSpacing*(skill.Duration()+1)))
 	matrixBottomLeft := matrixTopMiddle.Moved(pixel.V(-rect.W()/2, -rect.H()))
 
 	frame := r.pendingFrame
@@ -145,7 +139,7 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 		tick := skill.Ticks[i]
 		inStance := tick.StanceType != rpg.TickStanceNone
 
-		tickSpriteCenterMatrix := matrixBottomLeft.Moved(pixel.V(float64(r.config.Width/2), float64(r.config.TickSpacing/2+r.config.TickSpacing*(skill.Duration()-i))))
+		tickSpriteCenterMatrix := matrixBottomLeft.Moved(pixel.V(float64(opt.width/2), float64(opt.tickSpacing/2+opt.tickSpacing*(skill.Duration()-i))))
 		result.TickDotCenterMatrices = append(result.TickDotCenterMatrices, tickSpriteCenterMatrix)
 
 		// if we're entering a stance, draw the full VBar, box, and icon
@@ -160,7 +154,7 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 			}
 			vbarSprite := r.tickBubbleDisplayVBar
 			vbarVerticalMargin := 1
-			height := (r.config.TickSpacing * stanceDuration) + int(vbarSprite.Bounds().H()) - vbarVerticalMargin*2
+			height := (opt.tickSpacing * stanceDuration) + int(vbarSprite.Bounds().H()) - vbarVerticalMargin*2
 			scale := float64(height) / vbarSprite.Bounds().H()
 			vbarSprite.DrawColorMask(target, pixel.IM.ScaledXY(pixel.V(0, vbarSprite.Bounds().H()/2), pixel.V(1, scale)).Moved(pixel.V(0, float64(-vbarVerticalMargin))).Chained(tickSpriteCenterMatrix), mask)
 
@@ -174,7 +168,7 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 			artificialSkillProgress := opt.skillProgress + 0.25 // artificial progress to preempt overlay sprites above
 			if artificialSkillProgress > float64(i) {
 				stanceProgress := math.Min(artificialSkillProgress-float64(i), float64(stanceDuration))
-				dy := float64(r.config.TickSpacing) * math.Max(0, stanceProgress-1)
+				dy := float64(opt.tickSpacing) * math.Max(0, stanceProgress-1)
 				dy = math.Min(dy, float64(height))
 				stanceDelta = pixel.V(0, -dy)
 			}
@@ -257,6 +251,6 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 	return result
 }
 
-func (r *Renderer) HeightOf(skill rpg.Skill) int {
-	return r.config.TickSpacing * (skill.Duration() + 1)
+func (r *Renderer) HeightOf(skill rpg.Skill, opt DrawOptions) int {
+	return opt.tickSpacing * (skill.Duration() + 1)
 }

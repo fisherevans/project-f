@@ -43,17 +43,18 @@ func (s *System[T]) AddItem(item Item[T], t T) *NeighborRegistry[T] {
 	if s.highlighted == nil {
 		s.Highlight(item, t)
 	}
+	s.lastAdded = item
 	return s.NeighborsOf(item)
 }
 
 func (s *System[T]) AddNextToLast(direction input.Direction, t T, items ...Item[T]) *NeighborRegistry[T] {
 	var r *NeighborRegistry[T]
 	for _, item := range items {
+		last := s.lastAdded
 		r = s.AddItem(item, t)
-		if s.lastAdded != nil {
-			r.SetNeighbor(direction.Opposite(), s.lastAdded)
+		if last != nil {
+			r.SetNeighbor(direction.Opposite(), last)
 		}
-		s.lastAdded = item
 	}
 	return r
 }
@@ -86,6 +87,9 @@ func (s *System[T]) HandleInputs(c *input.Controls, t T) {
 	}
 	if c.ButtonB().JustPressedOrRepeated() {
 		from.OnButtonBJustPressed(t)
+	}
+	if c.ButtonSelect().JustPressedOrRepeated() {
+		from.OnButtonSelectJustPressed(t)
 	}
 	dpadPress := c.DPad().JustPressedOrRepeatedDirection()
 	if dpadPress == input.NotPressed {

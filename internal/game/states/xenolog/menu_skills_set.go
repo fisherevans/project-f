@@ -87,27 +87,47 @@ func (m *skillSetMenu) render(target pixel.Target) {
 	arrowDy := 14
 	arrowDx := 55
 	arrowSkillWidth := 90
-	m.renderCurrentSkill(input.Up, arrowSkillWidth, x, y+arrowDy, target)
-	m.renderCurrentSkill(input.Right, arrowSkillWidth, x+arrowDx, y, target)
-	m.renderCurrentSkill(input.Down, arrowSkillWidth, x, y-arrowDy, target)
-	m.renderCurrentSkill(input.Left, arrowSkillWidth, x-arrowDx, y, target)
+	renderDir := func(dir input.Direction) {
+		switch dir {
+		case input.Up:
+			m.renderSkill(dir, arrowSkillWidth, x, y+arrowDy, target)
+		case input.Right:
+			m.renderSkill(dir, arrowSkillWidth, x+arrowDx, y, target)
+		case input.Down:
+			m.renderSkill(dir, arrowSkillWidth, x, y-arrowDy, target)
+		case input.Left:
+			m.renderSkill(dir, arrowSkillWidth, x-arrowDx, y, target)
+		}
+	}
+	// render the selected direction last
+	selectedDir := input.NotPressed
+	for _, dir := range input.Directions {
+		if dir == m.currentSkillSelected {
+			selectedDir = dir
+			continue
+		}
+		renderDir(dir)
+	}
+	renderDir(selectedDir)
 	skillSetArrows[m.currentSkillSelected].Draw(target, pixel.IM.Moved(gfx.IVec(x, y)))
 
 	y -= arrowDy + 12
 	m.renderSkillDetail(target, pixel.IM.Moved(gfx.IVec(x, y)))
 }
 
-func (m *skillSetMenu) renderCurrentSkill(direction input.Direction, width, x, y int, target pixel.Target) {
+func (m *skillSetMenu) renderSkill(direction input.Direction, width, x, y int, target pixel.Target) {
 	skillId := game.CurrentSave().Animech.SkillSet.DirectionalSkill(direction)
 	regularTxt := newTextRenderer(target, regularTextbox)
 
 	fgMask := colors.XenoLogText.RGBA
-	bgMask := colors.XenoLogClear.RGBA
-	borderMask := colors.XenoLogDark.RGBA
+	bgMask := colors.XenoLogDark.RGBA
+	borderMask := colors.XenoLogClear.RGBA
+	boldBorder := false
 	if m.currentSkillSelected == direction {
 		fgMask = colors.XenoLogDark.RGBA
-		bgMask = colors.XenoLogHighlight.RGBA
+		bgMask = flashingHighlight()
 		borderMask = colors.XenoLogDark.RGBA
+		//boldBorder = true
 	}
 
 	var label string
@@ -117,6 +137,11 @@ func (m *skillSetMenu) renderCurrentSkill(direction input.Direction, width, x, y
 		label = skillId.Get().Name
 	}
 	frameR := pixel.R(0, 0, float64(width), 15)
+	if boldBorder {
+		boldFrameR := pixel.R(0, 0, frameR.W()+2, frameR.H()+2)
+		frame2px.Draw(target, boldFrameR, pixel.IM.Moved(gfx.IVec(x, y)),
+			frames.WithColor(borderMask), frames.WithRenderOrigin(gfx.Centered))
+	}
 	frame2px.Draw(target, frameR, pixel.IM.Moved(gfx.IVec(x, y)),
 		frames.WithColor(bgMask), frames.WithRenderOrigin(gfx.Centered))
 	frame2pxBorder.Draw(target, frameR, pixel.IM.Moved(gfx.IVec(x, y)),

@@ -5,38 +5,78 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/states/combat/tick_bar"
+	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
+)
+
+var (
+	paneW       = 64
+	onDarkStyle = badges.ButtonColorStyle{
+		Action:    colors.XenoLogText.RGBA,
+		Button:    colors.XenoLogClear.RGBA,
+		Highlight: colors.XenoLogHighlight.RGBA,
+	}
+	badgeBCancelOnDark       = badges.Using(atlas).ButtonAction("B", "cancel", onDarkStyle)
+	badgeSelectDetailsOnDark = badges.Using(atlas).ButtonAction("select", "details", onDarkStyle).Flipped()
 )
 
 type skillSwapMenu struct {
 	screen     *Screen
 	original   rpg.SkillId
+	swapWith   rpg.SkillId
 	list       *scrollList[*skillSwapMenu]
 	onComplete func(id rpg.SkillId)
+
+	cursorStartIndex int
 }
 
 func newSkillSwapMenu(screen *Screen, original rpg.SkillId, onComplete func(id rpg.SkillId)) *skillSwapMenu {
 	menu := &skillSwapMenu{
-		screen:   screen,
-		original: original,
-		list: newScrollList[*skillSwapMenu](scrollListOptions{
-			targetHeight:        screenHeight,
-			transitionTime:      0.15,
-			verticalItemMargin:  1,
-			verticalListPadding: 8,
-		}),
+		screen:     screen,
+		original:   original,
+		swapWith:   original,
 		onComplete: onComplete,
 	}
+	menu.list = newScrollList[*skillSwapMenu](menu, scrollListOptions{
+		targetHeight:              screenHeight,
+		transitionTime:            0.15,
+		verticalItemMargin:        1,
+		verticalListPaddingTop:    10,
+		verticalListPaddingBottom: 4,
+	})
+	menu.list.Add(&skillListItemTitle{})
+	menu.list.Add(&skillListItemAction{
+		label: "filter: none",
+	})
+	menu.list.Add(&skillListItemAction{
+		label: "sort: abc",
+	})
+	menu.list.Add(&skillListItem{
+		skillId: original,
+	})
+	menu.list.highlightLast()
+	menu.cursorStartIndex = menu.list.highlightedIndex
+	menu.list.anchorThreshold = menu.cursorStartIndex
+	menu.list.Add(&skillListItemSpacer{})
 	for _, skillId := range game.CurrentSave().UnlockedSkillsSorted() {
+		if skillId == original {
+			continue
+		}
 		menu.list.Add(&skillListItem{
 			skillId: skillId,
 		})
-		if skillId == original {
-			menu.list.highlightLast()
-		}
 	}
+	menu.list.Add(&skillListItemSpacer{})
+	menu.list.Add(&skillListItemAction{
+		label: "back to top",
+		handler: func(m *skillSwapMenu) {
+			m.list.highlight(m.cursorStartIndex)
+		},
+	})
 	menu.list.cursor = &skillsCursor{}
 	return menu
 }
@@ -53,19 +93,20 @@ func (p *skillListItem) ButtonAJustPressed(m *skillSwapMenu) {
 	m.screen.PopMenu()
 }
 
-func (p *skillListItem) ButtonStartJustPressed(m *skillSwapMenu) {
+func (p *skillListItem) ButtonSelectJustPressed(m *skillSwapMenu) {
 	m.screen.PushMenu(newSkillDetailMenu(m.screen, p.skillId))
+}
+
+func (p *skillListItem) OnHighlight(m *skillSwapMenu) {
+	m.swapWith = p.skillId
+}
+
+func (p *skillListItem) OnUnhighlight(m *skillSwapMenu) {
+	m.swapWith = rpg.UnsetSkillId
 }
 
 func (p *skillListItem) Height() int {
 	return 12
-}
-
-type skillsCursor struct{}
-
-func (c *skillsCursor) Render(m *skillSwapMenu, centerLeft int, target pixel.Target, index int, movementProgress, highlightProgress float64) {
-	smallText := newTextRenderer(target, smallTextbox)
-	smallText.render(">", 10, centerLeft, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.LeftCenter))
 }
 
 func (p *skillListItem) Render(m *skillSwapMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
@@ -76,12 +117,163 @@ func (p *skillListItem) Render(m *skillSwapMenu, topLeftY int, target pixel.Targ
 	if highlightProgress > 0 {
 		mask = colors.Lerp(mask, colors.XenoLogHighlight.RGBA, highlightProgress)
 	}
-	smallText.render(p.skillId.Get().Name, 35, centerY, mask, tbcfg.RenderFrom(gfx.LeftCenter))
+	smallText.render(p.skillId.Get().Name, screenWidth/2, centerY, mask, tbcfg.RenderFrom(gfx.Centered))
+}
+
+type skillListItemSpacer struct {
+	baseListItem[*skillSwapMenu]
+}
+
+func (p *skillListItemSpacer) Height() int {
+	return 6
+}
+
+func (p *skillListItemSpacer) Render(m *skillSwapMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
+	w := 35
+	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(screenWidth/2, topLeftY-2)), gfx.TopCenter, w, 1, colors.XenoLogDark.RGBA)
+}
+
+func (p *skillListItemSpacer) DoSkipHighlight(m *skillSwapMenu) bool {
+	return true
+}
+
+type skillListItemTitle struct {
+	baseListItem[*skillSwapMenu]
+}
+
+func (p *skillListItemTitle) Height() int {
+	return 19
+}
+
+func (p *skillListItemTitle) DoSkipHighlight(m *skillSwapMenu) bool {
+	return true
+}
+
+func (p *skillListItemTitle) Render(m *skillSwapMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
+	titleText := newTextRenderer(target, titleTextbox)
+	titleText.render("Swap Skill", screenWidth/2, topLeftY-2, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+}
+
+type skillListItemAction struct {
+	baseListItem[*skillSwapMenu]
+	label   string
+	handler func(p *skillSwapMenu)
+}
+
+func (p *skillListItemAction) Height() int {
+	return 11
+}
+
+func (p *skillListItemAction) ButtonAJustPressed(m *skillSwapMenu) {
+	if p.handler == nil {
+		game.DebugNotification("todo - implement sort and filter")
+		return
+	}
+	p.handler(m)
+}
+
+func (p *skillListItemAction) Render(m *skillSwapMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
+	box := smallTextbox.NewSimpleContent(p.label)
+	topCenter := pixel.IM.Moved(gfx.IVec(screenWidth/2, topLeftY-2))
+
+	bgMask, fgMask := colors.XenoLogDark.RGBA, colors.XenoLogText.RGBA
+	if m.list.highlightedItem() == p {
+		bgMask, fgMask = flashingHighlight(), colors.XenoLogDark.RGBA
+	}
+	padding := 3
+	frameR := pixel.R(0, 0, float64(box.Width()+padding*2), 7)
+	frame1px.Draw(target, frameR, topCenter, frames.WithColor(bgMask), frames.WithRenderOrigin(gfx.TopCenter))
+	smallTextbox.Render(target, topCenter.Moved(gfx.IVec(0, -1)), box, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(fgMask))
+}
+
+type skillsCursor struct{}
+
+func (c *skillsCursor) Render(m *skillSwapMenu, centerLeft int, target pixel.Target, index int, movementProgress float64, highlightProgress float64, movingDown bool) {
+	mask := colors.XenoLogHighlight.RGBA
+
+	if index < m.cursorStartIndex {
+		// Above threshold - hidden, unless transitioning while moving up
+		if index == m.cursorStartIndex-1 && !movingDown {
+			mask = colors.Lerp(mask, colors.XenoLogClear.RGBA, highlightProgress)
+		} else {
+			mask = colors.XenoLogClear.RGBA
+		}
+	} else if index == m.cursorStartIndex && movingDown {
+		// Just crossed threshold going down - fade in
+		mask = colors.Lerp(colors.XenoLogClear.RGBA, mask, highlightProgress)
+	}
+
+	smallText := newTextRenderer(target, smallTextbox)
+	dx := screenWidth / 3 / 2
+	smallText.render(">", screenWidth/2-dx, centerLeft, mask, tbcfg.RenderFrom(gfx.LeftCenter))
+	smallText.render("<", screenWidth/2+dx, centerLeft, mask, tbcfg.RenderFrom(gfx.RightCenter))
 }
 
 func (m *skillSwapMenu) OnTick(target pixel.Target, timeDelta float64) {
 	if game.Controls[*State]().ButtonB().JustPressed() {
 		m.screen.PopMenu()
 	}
-	m.list.Render(m, game.Controls[*State](), target, timeDelta)
+	m.renderSkillPane(target, true, "original", m.original)
+	newSkill := m.swapWith
+	if newSkill == m.original {
+		newSkill = rpg.UnsetSkillId
+	}
+	m.renderSkillPane(target, false, "new skill", newSkill)
+
+	// list
+	m.list.Render(game.Controls[*State](), target, timeDelta)
+}
+
+func (m *skillSwapMenu) renderSkillPane(target pixel.Target, isLeft bool, label string, skillId rpg.SkillId) {
+	smallText := newTextRenderer(target, smallTextbox)
+
+	var centerX, paneX, borderX int
+	var origin gfx.OriginLocation
+
+	tickBarOpt := tick_bar.NewDrawOptions(8, 13)
+	if isLeft {
+		centerX = paneW / 2
+		paneX = 0
+		borderX = paneW
+		origin = gfx.BottomLeft
+	} else {
+		centerX = screenWidth - paneW/2
+		paneX = screenWidth
+		borderX = screenWidth - paneW
+		origin = gfx.BottomRight
+		tickBarOpt = tickBarOpt.Flip(true)
+	}
+
+	// Background pane
+	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(paneX, 0)), origin, paneW, screenHeight, colors.XenoLogDark.RGBA)
+
+	// Border line
+	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(borderX, 0)), gfx.BottomLeft, 1, screenHeight, colors.XenoLogHighlight.RGBA)
+
+	// arrow
+	arrowBoxSize := 11.0
+	arrowBoxR := pixel.R(0, 0, arrowBoxSize, arrowBoxSize)
+	arrowBoxCenter := pixel.IM.Moved(gfx.IVec(borderX, screenHeight-18))
+	frame2px.Draw(target, arrowBoxR, arrowBoxCenter, frames.WithColor(colors.XenoLogDark.RGBA), frames.WithRenderOrigin(gfx.Centered))
+	frame2pxBorder.Draw(target, arrowBoxR, arrowBoxCenter, frames.WithColor(colors.XenoLogClear.RGBA), frames.WithRenderOrigin(gfx.Centered))
+	arrowRight.DrawColorMask(target, arrowBoxCenter.Moved(gfx.IVec(1, 1)), colors.XenoLogText.RGBA)
+
+	// Skill info
+	smallText.render(label, centerX, screenHeight-4, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+
+	skillNameY := screenHeight - 15
+	if skillId == rpg.UnsetSkillId {
+		smallText.render("-------", centerX, skillNameY, colors.XenoLogClear.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+		return
+	}
+
+	skill := skillId.Get()
+	smallText.render(skill.Name, centerX, skillNameY, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+	tickBarRenderer.Draw(m.screen.spriteFilterBuffer.Target(), pixel.IM.Moved(gfx.IVec(centerX, screenHeight-26)), &skill, tickBarOpt)
+
+	if isLeft {
+		badgeBCancelOnDark.Render(target, gfx.Moved(3, 2), gfx.BottomLeft)
+	} else {
+		badgeSelectDetailsOnDark.Render(target, gfx.Moved(screenWidth-3, 2), gfx.BottomRight)
+	}
 }

@@ -14,10 +14,12 @@ import (
 
 var skillEaterSprite = atlas.GetSprite("combat/tick_bar/skill_eater")
 
-var tickBarRenderer = tick_bar.NewRenderer(atlas, tick_bar.Config{
-	Width:       8,
-	TickSpacing: 12,
-})
+var tickBarRenderer = tick_bar.NewRenderer(atlas)
+
+var (
+	tickBarWidth = 8
+	tickSpacing  = 12
+)
 
 func (s *State) drawActiveSkills(target pixel.Target, targetBounds pixel.Rect, matrixTopMiddle pixel.Matrix) {
 	playerProgress := s.Battle.PendingProgress / 2.0
@@ -55,7 +57,7 @@ func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.M
 		mask := pixel.RGBA{1, 1, 1, 1}
 		alpha := math.Min((skillProgress)/1, 1)*(1-nextSkillMaskScale) + nextSkillMaskScale
 		mask = colors.ScaleColor(mask, alpha)
-		tickBarOpts := tick_bar.NewDrawOptions().
+		tickBarOpts := tick_bar.NewDrawOptions(tickBarWidth, tickSpacing).
 			InterruptedAt(currentSkill.InterruptedAt).
 			Mask(mask).
 			Active(skillProgress > 0.5).
@@ -75,7 +77,7 @@ func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.M
 			mask = colors.ScaleColor(mask, 0.9)
 		}
 		mask = colors.ScaleColor(mask, nextSkillMaskScale)
-		tickBarOpts := tick_bar.NewDrawOptions().
+		tickBarOpts := tick_bar.NewDrawOptions(tickBarWidth, tickSpacing).
 			InterruptedAt(-1).
 			Mask(mask).
 			Active(combatant.IsNextSkillCommitted()).

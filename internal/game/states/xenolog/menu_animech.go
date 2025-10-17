@@ -27,6 +27,7 @@ type animechMenu struct {
 	nav           *navigtion.System[*animechMenu]
 	statsActions  []*animechMenuAction
 	skillsActions []*animechMenuAction
+	skillItems    map[input.Direction]*navigtion.SimpleItem[*animechMenu]
 }
 
 func newAnimechMenu(s *Screen) *animechMenu {
@@ -68,16 +69,39 @@ func newAnimechMenu(s *Screen) *animechMenu {
 				}),
 			},
 		},
-		nav: navigtion.NewSystem[*animechMenu](),
+		skillItems: map[input.Direction]*navigtion.SimpleItem[*animechMenu]{},
+		nav:        navigtion.NewSystem[*animechMenu](),
 	}
 	for _, a := range menu.statsActions {
 		menu.nav.AddNextToLast(input.Right, menu, a)
 	}
+	for id, dir := range []input.Direction{input.Left, input.Down, input.Right, input.Up} {
+		menu.skillItems[dir] = newSkillInput(dir)
+		if id == 0 {
+			menu.nav.AddItem(menu.skillItems[dir], menu)
+		} else {
+			menu.nav.AddNextToLast(input.Up, menu, menu.skillItems[dir])
+		}
+	}
+	menu.nav.SetLastItem(menu.statsActions[len(menu.statsActions)-1])
 	for _, a := range menu.skillsActions {
-		menu.nav.AddNextToLast(input.Right, menu, a)
+		menu.nav.AddNextToLast(input.Right, menu, a).Below(menu.skillItems[input.Left])
 	}
 	menu.nav.SetLastItem(nil)
 	return menu
+}
+
+func newSkillInput(dir input.Direction) *navigtion.SimpleItem[*animechMenu] {
+	onPress := func(a *animechMenu) {
+		skillId := *game.CurrentSave().Animech.SkillSet.DirectionalSkill(dir)
+		if skillId == rpg.UnsetSkillId {
+			return
+		}
+		a.screen.PushMenu(newSkillDetailMenu(a.screen, skillId))
+	}
+	return navigtion.NewSimpleItem[*animechMenu]().
+		WithButtonAHandler(onPress).
+		WithButtonSelectHandler(onPress)
 }
 
 type animechMenuAction struct {
@@ -142,10 +166,10 @@ func (m *animechMenu) drawActions(target pixel.Target, topCenter pixel.Matrix, a
 	topLeft := topCenter.Moved(gfx.IVec(-animechFrameWidth/2, -framePadding))
 	actionBottomLeft := topLeft.Moved(gfx.IVec(int((float64(animechFrameWidth)-totalWidth)/2), -actionHeight))
 	for _, b := range buttons {
-		bgMask, borderMask, textMask := colors.XenoLogDark.RGBA, colors.XenoLogText.RGBA, colors.XenoLogText.RGBA
+		bgMask, borderMask, textMask := colors.XenoLogDark.RGBA, colors.XenoLogClear.RGBA, colors.XenoLogText.RGBA
 		if b.highlighted {
 			bgMask = flashingHighlight()
-			borderMask, textMask = colors.XenoLogHighlight.RGBA, colors.XenoLogDark.RGBA
+			borderMask, textMask = colors.XenoLogDark.RGBA, colors.XenoLogDark.RGBA
 		}
 		frame2px.Draw(target, b.rect, actionBottomLeft,
 			frames.WithRenderOrigin(gfx.BottomLeft), frames.WithColor(bgMask))
@@ -222,10 +246,16 @@ func (m *animechMenu) renderSkills(target pixel.Target, topCenter pixel.Matrix) 
 
 	skillHeight := 15
 	renderSkill := func(dir input.Direction, name string) {
-		borderMask := colors.XenoLogDark.RGBA
-		bgMask := colors.XenoLogClear.RGBA
+		borderMask := colors.XenoLogClear.RGBA
+		bgMask := colors.XenoLogDark.RGBA
 		fgMask := colors.XenoLogText.RGBA
 		arrowMask := colors.XenoLogHighlight.RGBA
+		if m.nav.IsHighlighted(m.skillItems[dir]) {
+			borderMask = colors.XenoLogDark.RGBA
+			bgMask = flashingHighlight()
+			fgMask = colors.XenoLogDark.RGBA
+			arrowMask = colors.XenoLogClear.RGBA
+		}
 		skillWidth := animechFrameWidth - 8
 		frameR := pixel.R(0, 0, float64(skillWidth), float64(skillHeight))
 		frame2px.Draw(target, frameR, topCenter.Moved(gfx.IVec(0, y)), frames.WithColor(bgMask), frames.WithRenderOrigin(gfx.TopCenter))

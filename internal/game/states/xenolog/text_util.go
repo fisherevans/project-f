@@ -42,6 +42,8 @@ var (
 	frame1pxBorder = frames.New("common/rounded_border_frame_1px", atlas, frames.WithRenderOrigin(gfx.Centered))
 	frame2px       = frames.New("common/rounded_frame_2px", atlas, frames.WithRenderOrigin(gfx.Centered))
 	frame2pxBorder = frames.New("common/rounded_border_frame_2px", atlas, frames.WithRenderOrigin(gfx.Centered))
+	frame3px       = frames.New("common/rounded_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
+	frame3pxBorder = frames.New("common/rounded_border_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
 	frame4px       = frames.New("common/rounded_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
 	frame4pxBorder = frames.New("common/rounded_border_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))
 	frame5px       = frames.New("common/rounded_frame_4px", atlas, frames.WithRenderOrigin(gfx.Centered))

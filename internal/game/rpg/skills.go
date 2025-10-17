@@ -191,7 +191,7 @@ var Skill_CurlUp = Skill{
 	Name:        "Curl Up",
 	Description: "Fortify your defences",
 	Ticks: skillTicks().
-		add(tick().statusSelf(StatusFortified, 5)).
+		add(tick().statusSelf(StatusWarded, 5)).
 		add(stanceTick(TickStanceDefending).repeat(3)...),
 }.register()
 

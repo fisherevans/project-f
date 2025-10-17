@@ -4,7 +4,7 @@ type StatusType string
 
 const (
 	// kinetic
-	StatusFortified StatusType = "fortified"
+	StatusWarded StatusType = "warded"
 	// thermal
 	StatusBurning StatusType = "burning"
 	// corrosive
@@ -17,8 +17,8 @@ const (
 
 func (s StatusType) PastTense() string {
 	switch s {
-	case StatusFortified:
-		return "Fortified"
+	case StatusWarded:
+		return "Warded"
 	case StatusBurning:
 		return "Burned"
 	case StatusPoisoned:
@@ -33,8 +33,8 @@ func (s StatusType) PastTense() string {
 
 func (s StatusType) CurrentTense() string {
 	switch s {
-	case StatusFortified:
-		return "Fortified"
+	case StatusWarded:
+		return "Warded"
 	case StatusBurning:
 		return "Burning"
 	case StatusPoisoned:
@@ -49,7 +49,7 @@ func (s StatusType) CurrentTense() string {
 
 func (s StatusType) Description() string {
 	switch s {
-	case StatusFortified:
+	case StatusWarded:
 		return "Reduces incoming damage"
 	case StatusBurning:
 		return "Deals damage over time, increasing with exposure"

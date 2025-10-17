@@ -49,8 +49,8 @@ func NewAppliedStatuses() *AppliedStatuses {
 	return &AppliedStatuses{
 		Statuses: []*CombatStatus{
 			{
-				Status:    rpg.StatusFortified,
-				Animation: anim.NewStaticAnimation(statusIcons[rpg.StatusFortified]),
+				Status:    rpg.StatusWarded,
+				Animation: anim.NewStaticAnimation(statusIcons[rpg.StatusWarded]),
 				Apply: func(s *State, appliedTo Combatant, cs *CombatStatus) {
 					// nothing, effects happen when receiving damage
 				},

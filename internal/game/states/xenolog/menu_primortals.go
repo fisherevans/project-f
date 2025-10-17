@@ -29,11 +29,11 @@ var (
 )
 
 type primortalsMenu struct {
-	screen                     *Screen
-	list                       *scrollList[*primortalsMenu]
-	upgradeAbove, upgradeBelow bool
-	title                      *primortalListTitle
-	footer                     *primortalListFooter
+	screen                                 *Screen
+	list                                   *scrollList[*primortalsMenu]
+	upgradeAbove, upgradeBelow, wasSkipped bool
+	title                                  *primortalListTitle
+	footer                                 *primortalListFooter
 }
 
 func newPrimortalsMenu(screen *Screen) *primortalsMenu {
@@ -41,13 +41,14 @@ func newPrimortalsMenu(screen *Screen) *primortalsMenu {
 		screen: screen,
 		title:  newPrimortalListTitle(),
 		footer: newPrimortalListFooter(),
-		list: newScrollList[*primortalsMenu](scrollListOptions{
-			targetHeight:        screenHeight,
-			transitionTime:      0.15,
-			verticalItemMargin:  1,
-			verticalListPadding: 8,
-		}),
 	}
+	menu.list = newScrollList[*primortalsMenu](menu, scrollListOptions{
+		targetHeight:              screenHeight,
+		transitionTime:            0.15,
+		verticalItemMargin:        1,
+		verticalListPaddingTop:    8,
+		verticalListPaddingBottom: 8,
+	})
 	menu.list.Add(menu.title)
 	for i := 1; i <= rpg.MaxXenoLogEntryIndex; i++ {
 		primortalId := rpg.XenoLogEntries[i]
@@ -192,6 +193,10 @@ type primortalListItem struct {
 }
 
 func (p *primortalListItem) RenderWasSkipped(m *primortalsMenu, wasAbove bool) {
+	if p.xenologIndex == 9 {
+		game.DebugBL("skipped")
+	}
+	m.wasSkipped = true
 	if p.upgradeAvailable() {
 		if wasAbove {
 			m.upgradeAbove = true
@@ -212,7 +217,7 @@ func (p *primortalListItem) Height() int {
 	return 18
 }
 
-func (p *primortalListItem) SkipHighlight(m *primortalsMenu) bool {
+func (p *primortalListItem) IsHighlightable(m *primortalsMenu) bool {
 	_, exists := rpg.XenoLogEntries[p.xenologIndex]
 	return !exists
 }
@@ -288,7 +293,7 @@ func (p *primortalListItem) upgradeAvailableForPrimortal(pId rpg.PrimortalType) 
 
 type primortalCursor struct{}
 
-func (c *primortalCursor) Render(m *primortalsMenu, centerLeftY int, target pixel.Target, index int, movementProgress, highlightProgress float64) {
+func (c *primortalCursor) Render(m *primortalsMenu, centerLeftY int, target pixel.Target, index int, movementProgress float64, highlightProgress float64, movingDown bool) {
 	x := primortalListMargin + primortalListLeftWidth/2
 	mask := colors.XenoLogHighlight.RGBA
 	if movementProgress < 0 {
@@ -305,8 +310,8 @@ func (m *primortalsMenu) OnTick(target pixel.Target, timeDelta float64) {
 		m.screen.PopMenu()
 	}
 
-	m.upgradeAbove, m.upgradeBelow = false, false
-	m.list.Render(m, game.Controls[*State](), target, timeDelta)
+	m.upgradeAbove, m.upgradeBelow, m.wasSkipped = false, false, false
+	m.list.Render(game.Controls[*State](), target, timeDelta)
 
 	scrollVPadding := 12
 	scrollProgression, scrollRatio := m.list.ScrollPosition()
@@ -339,6 +344,7 @@ func (m *primortalsMenu) OnTick(target pixel.Target, timeDelta float64) {
 		dx, _ := smallText.render("UPGRADE Below", screenWidth-tooltipMargin, tooltipMargin, flashingHighlight(), tbcfg.RenderFrom(gfx.BottomRight))
 		arrowDown.Draw(target, pixel.IM.Moved(gfx.IVec(screenWidth-dx-tooltipMargin*2, tooltipMargin)).Moved(gfx.BottomRight.Align(arrowDown)))
 	}
+	game.DebugBL("upgrade above: %v, upgrade below: %v, skipped :%v", m.upgradeAbove, m.upgradeBelow, m.wasSkipped)
 }
 
 func (m *primortalsMenu) ScrollToNextUpgrade() {

@@ -15,29 +15,35 @@ var (
 )
 
 type scrollListOptions struct {
-	targetHeight        int
-	verticalItemMargin  int
-	verticalListPadding int
-	transitionTime      float64
+	targetHeight              int
+	verticalItemMargin        int
+	verticalListPaddingTop    int
+	verticalListPaddingBottom int
+	transitionTime            float64
 }
 
 type scrollList[T any] struct {
+	t T
 	scrollListOptions
 	items  []listItem[T]
 	cursor listCursor[T]
 
-	initialized      bool
-	highlightedIndex int
+	initialized          bool
+	lastHighlightedIndex int
+	highlightedIndex     int
+	anchorThreshold      int // When highlighting at or before this index, anchor to top of list (-1 to disable)
 
 	timeTransitioning           float64
 	fromDy, currentDy, targetDy float64
 	fromCy, currentCy, targetCy float64
 }
 
-func newScrollList[T any](opt scrollListOptions, items ...listItem[T]) *scrollList[T] {
+func newScrollList[T any](t T, opt scrollListOptions, items ...listItem[T]) *scrollList[T] {
 	return &scrollList[T]{
+		t:                 t,
 		scrollListOptions: opt,
 		items:             items,
+		anchorThreshold:   -1,
 	}
 }
 
@@ -49,24 +55,24 @@ func (s *scrollList[T]) Add(item listItem[T]) {
 	s.items = append(s.items, item)
 }
 
-func (s *scrollList[T]) Render(t T, controls *input.Controls, target pixel.Target, timeDelta float64) {
+func (s *scrollList[T]) Render(controls *input.Controls, target pixel.Target, timeDelta float64) {
 	if !s.initialized {
 		s.ensureVisibleNow()
 		s.initialized = true
 	}
-	s.handleInput(t, controls)
+	s.handleInput(controls)
 	s.updateScroll(timeDelta)
-	s.drawList(t, target)
+	s.drawList(target)
 }
 
-func (s *scrollList[T]) drawList(t T, target pixel.Target) {
-	baseY := float64(s.targetHeight-s.verticalListPadding) + math.Round(s.currentDy)
+func (s *scrollList[T]) drawList(target pixel.Target) {
+	baseY := float64(s.targetHeight-s.verticalListPaddingTop) + math.Round(s.currentDy)
 
 	topLeftY := int(baseY)
 	nextTopLeftY := topLeftY
 
-	visibleTop := s.targetHeight + s.verticalListPadding
-	visibleBottom := -s.verticalItemMargin
+	visibleTop := s.targetHeight + s.verticalListPaddingTop
+	visibleBottom := -s.verticalListPaddingBottom
 
 	for index := 0; index < len(s.items); index++ {
 		item := s.items[index]
@@ -75,10 +81,10 @@ func (s *scrollList[T]) drawList(t T, target pixel.Target) {
 
 		// Off-screen handling
 		if topLeftY > visibleTop {
-			item.RenderWasSkipped(t, true)
+			item.RenderWasSkipped(s.t, true)
 			continue
 		} else if topLeftY < visibleBottom {
-			item.RenderWasSkipped(t, false)
+			item.RenderWasSkipped(s.t, false)
 			continue
 		}
 
@@ -86,15 +92,16 @@ func (s *scrollList[T]) drawList(t T, target pixel.Target) {
 		if index == s.highlightedIndex {
 			progress = math.Min(s.timeTransitioning/s.transitionTime, 1.0)
 		}
-		item.Render(t, topLeftY, target, progress)
+		item.Render(s.t, topLeftY, target, progress)
 	}
 	if s.cursor != nil {
 		highlightProgress := math.Min(s.timeTransitioning/s.transitionTime, 1.0)
 		movementProgress := 1.0
+		movingDown := s.highlightedIndex > s.lastHighlightedIndex
 		if s.currentCy != s.targetCy {
 			movementProgress = highlightProgress
 		}
-		s.cursor.Render(t, int(s.currentCy), target, s.highlightedIndex, movementProgress, highlightProgress)
+		s.cursor.Render(s.t, int(s.currentCy), target, s.highlightedIndex, movementProgress, highlightProgress, movingDown)
 	}
 }
 
@@ -103,23 +110,27 @@ type baseListItem[T any] struct{}
 func (b baseListItem[T]) RenderWasSkipped(t T, wasAbove bool)           {}
 func (b baseListItem[T]) DirectionJustPressed(t T, dir input.Direction) {}
 func (b baseListItem[T]) ButtonAJustPressed(t T)                        {}
-func (b baseListItem[T]) ButtonStartJustPressed(t T)                    {}
-func (b baseListItem[T]) SkipHighlight(t T) bool {
+func (b baseListItem[T]) ButtonSelectJustPressed(t T)                   {}
+func (b baseListItem[T]) DoSkipHighlight(t T) bool {
 	return false
 }
+func (b baseListItem[T]) OnHighlight(t T)   {}
+func (b baseListItem[T]) OnUnhighlight(t T) {}
 
 type listItem[T any] interface {
 	Render(t T, topLeftY int, target pixel.Target, highlightedProgress float64)
 	RenderWasSkipped(t T, wasAbove bool)
+	OnHighlight(t T)
+	OnUnhighlight(t T)
 	Height() int
 	DirectionJustPressed(t T, dir input.Direction)
 	ButtonAJustPressed(t T)
-	ButtonStartJustPressed(t T)
-	SkipHighlight(t T) bool
+	ButtonSelectJustPressed(t T)
+	DoSkipHighlight(t T) bool
 }
 
 type listCursor[T any] interface {
-	Render(t T, centerLeftY int, target pixel.Target, index int, movementProgress, highlightProgress float64)
+	Render(t T, centerLeftY int, target pixel.Target, index int, movementProgress float64, highlightProgress float64, movingDown bool)
 }
 
 // ScrollPosition returns two values:
@@ -164,19 +175,31 @@ func (s *scrollList[T]) totalHeight() float64 {
 }
 
 func (s *scrollList[T]) calcYs(index int) (float64, float64) {
+	// For items at/before threshold, anchor to top
+	if s.anchorThreshold >= 0 && index <= s.anchorThreshold {
+		rowHeightAbove := 0
+		for i := 0; i < index; i++ {
+			rowHeightAbove += s.items[i].Height() + s.verticalItemMargin
+		}
+		topY := screenHeight - s.verticalListPaddingTop - rowHeightAbove
+		bottomY := topY - s.items[index].Height()
+		targetCy := float64(topY+bottomY) / 2.0
+		return 0, targetCy
+	}
+
 	// Keep selected row visible without unnecessary movement
 	rowHeightAbove := 0
 	for i := 0; i < index; i++ {
 		rowHeightAbove += s.items[i].Height() + s.verticalItemMargin
 	}
-	topY := int(math.Round(s.currentDy)) + screenHeight - s.verticalListPadding - rowHeightAbove
+	topY := int(math.Round(s.currentDy)) + screenHeight - s.verticalListPaddingTop - rowHeightAbove
 	bottomY := topY - s.items[index].Height()
 	halfRowHeight := float64(topY-bottomY) / 2.0
 
 	targetDy := s.currentDy
 	var targetCy float64
-	topBound := screenHeight - s.verticalListPadding
-	lowerBound := s.verticalListPadding
+	topBound := screenHeight - s.verticalListPaddingTop
+	lowerBound := s.verticalListPaddingBottom
 	if tooHigh := topY - topBound; tooHigh > 0 {
 		targetDy -= float64(tooHigh)
 		targetCy = float64(topBound) - halfRowHeight
@@ -204,30 +227,30 @@ func (s *scrollList[T]) updateScroll(timeDelta float64) {
 	s.currentCy = interp.Lerp(s.fromCy, s.targetCy, progress)
 }
 
-func (s *scrollList[T]) handleInput(t T, controls *input.Controls) {
+func (s *scrollList[T]) handleInput(controls *input.Controls) {
 	if dir := controls.DPad().JustPressedOrRepeatedDirection(); dir != input.NotPressed {
-		s.items[s.highlightedIndex].DirectionJustPressed(t, dir)
+		s.items[s.highlightedIndex].DirectionJustPressed(s.t, dir)
 		if dir == input.Up {
-			s.moveHighlight(t, -1)
+			s.moveHighlight(-1)
 		} else if dir == input.Down {
-			s.moveHighlight(t, 1)
+			s.moveHighlight(1)
 		}
 	}
 	if controls.ButtonA().JustPressed() {
-		s.items[s.highlightedIndex].ButtonAJustPressed(t)
+		s.items[s.highlightedIndex].ButtonAJustPressed(s.t)
 	}
-	if controls.ButtonStart().JustPressed() {
-		s.items[s.highlightedIndex].ButtonStartJustPressed(t)
+	if controls.ButtonSelect().JustPressed() {
+		s.items[s.highlightedIndex].ButtonSelectJustPressed(s.t)
 	}
 }
 
-func (s *scrollList[T]) moveHighlight(t T, dir int) {
+func (s *scrollList[T]) moveHighlight(dir int) {
 	if s.highlightedIndex+dir < 0 || s.highlightedIndex+dir >= len(s.items) {
 		log.Warn().Msgf("tried to move highlight by %d, but it was out of bounds", dir)
 		return
 	}
 	newHighlight := s.highlightedIndex + dir
-	for newHighlight >= 0 && newHighlight < len(s.items) && s.items[newHighlight].SkipHighlight(t) {
+	for newHighlight >= 0 && newHighlight < len(s.items) && s.items[newHighlight].DoSkipHighlight(s.t) {
 		newHighlight += dir
 	}
 	if newHighlight < 0 || newHighlight >= len(s.items) {
@@ -242,7 +265,10 @@ func (s *scrollList[T]) highlight(newHighlight int) {
 	s.targetDy, s.targetCy = s.calcYs(newHighlight)
 
 	s.timeTransitioning = 0
+	s.highlightedItem().OnUnhighlight(s.t)
+	s.lastHighlightedIndex = s.highlightedIndex
 	s.highlightedIndex = newHighlight
+	s.highlightedItem().OnHighlight(s.t)
 }
 
 func (s *scrollList[T]) highlightLast() {

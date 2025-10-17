@@ -21,12 +21,6 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-var tickBarRendererCfg = tick_bar.Config{
-	Width:       8,  // 8
-	TickSpacing: 16, // 12
-}
-var tickBarRenderer = tick_bar.NewRenderer(atlas, tickBarRendererCfg)
-
 type tickStanceState string
 
 const (
@@ -46,7 +40,7 @@ var statuses = []rpg.StatusType{
 	rpg.StatusBurning,
 	rpg.StatusIonized,
 	rpg.StatusMending,
-	rpg.StatusFortified,
+	rpg.StatusWarded,
 	rpg.StatusPoisoned,
 }
 
@@ -68,6 +62,8 @@ var (
 			tbcfg.RenderFrom(gfx.LeftCenter)))
 	stanceIcons = sprites.StanceIcons(atlas)
 	statusIcons = sprites.StatusIcons(atlas)
+
+	tickBarRenderer = tick_bar.NewRenderer(atlas)
 )
 
 type skillDetailMenu struct {
@@ -91,18 +87,20 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	titleTxt := newTextRenderer(target, titleTextbox)
 	smallTxt := newTextRenderer(target, smallTextboxSkillDetail).withOpts(tbcfg.RenderFrom(gfx.LeftCenter), tbcfg.HAligned(tbcfg.HAlignLeft))
 
-	tickBarHeight := tickBarRenderer.HeightOf(skill)
+	tickSpacing := 16
+	tbOpt := tick_bar.NewDrawOptions(8, tickSpacing)
+	tickBarHeight := tickBarRenderer.HeightOf(skill, tbOpt)
 	tickBarX := 25
 	tickBarY := screenHeight - (screenHeight-tickBarHeight)/2
 	tickCenters := tickBarRenderer.Draw(
 		v.screen.spriteFilterBuffer.Target(),
 		pixel.IM.Moved(gfx.IVec(tickBarX, tickBarY)),
 		&skill,
-		tick_bar.NewDrawOptions()).TickDotCenterMatrices
+		tbOpt).TickDotCenterMatrices
 
 	arrowLeft6px.DrawColorMask(target, tickCenters[v.selection].Moved(gfx.IVec(10, 0)), flashingHighlight())
 	for i := 0; i < len(tickCenters)-1; i++ {
-		leftCenter := tickCenters[i].Moved(gfx.IVec(8, -tickBarRendererCfg.TickSpacing/2))
+		leftCenter := tickCenters[i].Moved(gfx.IVec(8, -tickSpacing/2))
 		noneTickSprite.DrawColorMask(target, leftCenter, colors.XenoLogDark.RGBA)
 		noneTickSprite.DrawColorMask(target, leftCenter.Moved(gfx.IVec(2, 0)), colors.XenoLogDark.RGBA)
 	}
@@ -178,9 +176,13 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 
 	for _, status := range statuses {
 		if effects.statuses[status] {
+			sprite := spriteContent(statusIcons[status]).mask(colors.XenoLogHighlight.RGBA)
+			if status == rpg.StatusMending {
+				sprite = sprite.moved(0, -1)
+			}
 			c := []lineContents{
 				stringContent(fmt.Sprintf("{+c:xenolog_highlight}%s", status.PastTense())),
-				spriteContent(statusIcons[status]).mask(colors.XenoLogHighlight.RGBA),
+				sprite,
 				stringContent("{+c:xenolog_clear}(status)"),
 			}
 			printTickDetail(newPrintLine(c...))
@@ -202,13 +204,13 @@ func (v *skillDetailMenu) renderPrintLine(pl printLine, target pixel.Target, sma
 			mask = *c.color
 		}
 		if c.text != "" {
-			dx, _ := smallTxt.render(c.text, thisX, *yPtr, mask)
+			dx, _ := smallTxt.render(c.text, thisX+c.dx, *yPtr+c.dy, mask)
 			thisX += dx + 3
 		}
 		if c.image != nil {
 			imgDx := c.image.Bounds().W() / 2
 			imgDy := int((c.image.Bounds().H() - 5) / 2)
-			c.image.DrawColorMask(v.screen.spriteFilterBuffer.Target(), pixel.IM.Moved(gfx.IVec(thisX+int(imgDx), *yPtr+imgDy)), mask)
+			c.image.DrawColorMask(v.screen.spriteFilterBuffer.Target(), pixel.IM.Moved(gfx.IVec(thisX+int(imgDx)+c.dx, *yPtr+imgDy+c.dy)), mask)
 			thisX += int(c.image.Bounds().W()) + 2
 		}
 	}
@@ -218,7 +220,7 @@ func (v *skillDetailMenu) renderPrintLine(pl printLine, target pixel.Target, sma
 
 func (v *skillDetailMenu) handleInput() {
 	controls := game.Controls[*State]()
-	if controls.ButtonB().JustPressed() {
+	if controls.ButtonB().JustPressed() || controls.ButtonSelect().JustPressed() {
 		v.screen.PopMenu()
 	}
 	if controls.DPad().JustPressed() {
@@ -253,9 +255,10 @@ func (pl printLine) withMargin() printLine {
 }
 
 type lineContents struct {
-	text  string
-	image pixelutil.BoundedDrawable
-	color *pixel.RGBA
+	text   string
+	image  pixelutil.BoundedDrawable
+	dx, dy int
+	color  *pixel.RGBA
 }
 
 func stringContent(text string) lineContents {
@@ -268,6 +271,11 @@ func spriteContent(sprite pixelutil.BoundedDrawable) lineContents {
 
 func (v lineContents) mask(color pixel.RGBA) lineContents {
 	v.color = &color
+	return v
+}
+
+func (v lineContents) moved(dx, dy int) lineContents {
+	v.dx, v.dy = dx, dy
 	return v
 }
 
@@ -337,7 +345,7 @@ func damageScaleByEffects(scalers map[rpg.StatusType]map[rpg.StatusLevel]float64
 		var levelStrings []string
 		levelScales, ok := scalers[status]
 		if !ok {
-			return
+			continue
 		}
 		for _, level := range statusLevels {
 			scale, ok := levelScales[level]
@@ -345,13 +353,19 @@ func damageScaleByEffects(scalers map[rpg.StatusType]map[rpg.StatusLevel]float64
 				continue
 			}
 			e.addStatus(status)
-			levelStrings = append(levelStrings, fmt.Sprintf("%.f%%", scale*100))
+			levelStrings = append(levelStrings, "{+c:xenolog_highlight}"+FormatFloat(scale)+"x{-c}")
 		}
 		if len(levelStrings) > 0 {
-			e.addDamageLine(newPrintLine(stringContent(fmt.Sprintf("Deals %s more damage if %s {+u}%s",
-				strings.Join(levelStrings, "/"),
+			e.addDamageLine(newPrintLine(stringContent(fmt.Sprintf("If %s {+u}%s{-u}:",
 				theyIs,
-				status.CurrentTense()))), toSelf)
+				status.CurrentTense(),
+			))), false) // always false, since it's talking about modifying the last line
+			e.addDamageLine(newPrintLine(
+				spriteContent(arrowRight).mask(colors.XenoLogClear.RGBA).moved(0, 1),
+				stringContent(fmt.Sprintf("Deal %s more damage",
+					strings.Join(levelStrings, "/"),
+				)),
+			), false) // always false, since it's talking about modifying the last line
 		}
 	}
 }

@@ -9,6 +9,7 @@ type Item[T any] interface {
 	OnUnhighlight(T)
 	OnButtonAJustPressed(T)
 	OnButtonBJustPressed(T)
+	OnButtonSelectJustPressed(T)
 	OnDirectionJustPressed(input.Direction, T)
 }
 
@@ -18,14 +19,16 @@ func (i BaseItem[T]) OnHighlight(T)                             {}
 func (i BaseItem[T]) OnUnhighlight(T)                           {}
 func (i BaseItem[T]) OnButtonAJustPressed(T)                    {}
 func (i BaseItem[T]) OnButtonBJustPressed(T)                    {}
+func (i BaseItem[T]) OnButtonSelectJustPressed(T)               {}
 func (i BaseItem[T]) OnDirectionJustPressed(input.Direction, T) {}
 
 type SimpleItem[T any] struct {
-	OnHighlightHandler   func(T)
-	OnUnhighlightHandler func(T)
-	OnButtonAHandler     func(T)
-	OnButtonBHandler     func(T)
-	OnDirectionHandler   func(input.Direction, T)
+	OnHighlightHandler    func(T)
+	OnUnhighlightHandler  func(T)
+	OnButtonAHandler      func(T)
+	OnButtonBHandler      func(T)
+	OnButtonSelectHandler func(T)
+	OnDirectionHandler    func(input.Direction, T)
 }
 
 func NewSimpleItem[T any]() *SimpleItem[T] {
@@ -49,6 +52,11 @@ func (i *SimpleItem[T]) WithButtonAHandler(f func(T)) *SimpleItem[T] {
 
 func (i *SimpleItem[T]) WithButtonBHandler(f func(T)) *SimpleItem[T] {
 	i.OnButtonBHandler = f
+	return i
+}
+
+func (i *SimpleItem[T]) WithButtonSelectHandler(f func(T)) *SimpleItem[T] {
+	i.OnButtonSelectHandler = f
 	return i
 }
 
@@ -78,6 +86,12 @@ func (i *SimpleItem[T]) OnButtonAJustPressed(t T) {
 func (i *SimpleItem[T]) OnButtonBJustPressed(t T) {
 	if i.OnButtonBHandler != nil {
 		i.OnButtonBHandler(t)
+	}
+}
+
+func (i *SimpleItem[T]) OnButtonSelectJustPressed(t T) {
+	if i.OnButtonSelectHandler != nil {
+		i.OnButtonSelectHandler(t)
 	}
 }
 

@@ -22,7 +22,7 @@ type ionizedModifier struct {
 }
 
 var (
-	statusFortifiedMultipliersIncoming = map[StatusLevel]float64{
+	statusWardedMultipliersIncoming = map[StatusLevel]float64{
 		StatusLevel1: 0.75,
 		StatusLevel2: 0.5,
 		StatusLevel3: 0.25,
@@ -88,8 +88,8 @@ func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantS
 
 	log.Info().Msgf("after tempo: %f", targetDamage)
 
-	if fortifiedLevel, isFortified := target.StatusLevels[StatusFortified]; isFortified {
-		if mult, ok := statusFortifiedMultipliersIncoming[fortifiedLevel]; ok {
+	if wardedLevel, isWarded := target.StatusLevels[StatusWarded]; isWarded {
+		if mult, ok := statusWardedMultipliersIncoming[wardedLevel]; ok {
 			targetDamage *= mult
 		}
 	}

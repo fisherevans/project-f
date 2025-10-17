@@ -2,14 +2,14 @@ save_id: "1"
 character_name: Isaac
 animech:
     skill_set:
-        "1": curl_up
-        "2": guard
-        "3": mend_spores
-        "4": acid_string
-    experience_points: 1089
+        "1": acid_string
+        "2": mend_spores
+        "3": strike
+        "4": shoulder_roll
+    experience_points: 214
     upgrades:
-        shield_level: 0
-        sync_level: 0
+        shield_level: 4
+        sync_level: 3
 loadouts:
     - name: Default
       skill_set:
@@ -28,19 +28,18 @@ primortals:
         last_seen: 2025-10-14T20:48:49Z
     pumbl:
         visibility: defeated
-        research_points: 5
+        research_points: 3
         last_seen: 2025-10-14T20:47:49Z
     toxmidge:
         visibility: defeated
-        research_points: 3
+        research_points: 6
         last_seen: 2025-10-13T20:47:49Z
 unlocked_skills:
-    acid_string: {}
-    brace: {}
     curl_up: {}
     guard: {}
     jab: {}
     mend_spores: {}
     photo_surge: {}
+    searline: {}
     shoulder_roll: {}
     strike: {}
