@@ -4,14 +4,19 @@ import (
 	"fmt"
 
 	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/text"
-	"golang.org/x/image/font/basicfont"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/runtime/warming"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
+
+var atlas = resources.DefaultAtlas()
 
 func init() {
 	game.RegisterStateFactory(New)
@@ -19,8 +24,9 @@ func init() {
 
 type Selector struct {
 	game.BaseState
-	selected int
-	states   []game.SelectIntentDestination
+	initialized bool
+	selected    int
+	states      []game.SelectIntentDestination
 }
 
 func New(intent game.SelectIntent) game.State {
@@ -29,8 +35,13 @@ func New(intent game.SelectIntent) game.State {
 	}
 }
 
-var titleDrawer = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII))
-var optionDrawer = text.New(pixel.ZV, resources.CreateFont(resources.FontNameM5x7).Atlas)
+var titleTextbox = textbox.NewInstance(
+	atlas.GetFont(resources.FontNameAddStandard),
+	tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
+
+var optionTextbox = textbox.NewInstance(
+	atlas.GetFont(resources.FontNameFF),
+	tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
 
 func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	switch game.Controls[*Selector]().DPad().JustPressedDirection() {
@@ -52,11 +63,15 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 		return
 	}
 
-	titleDrawer.Clear()
-	titleDrawer.WriteString("Select a State:")
-	titleDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)))
+	if !s.initialized {
+		s.initialized = true
+		warming.Warmup(target)
+		target.Clear(colors.Black.RGBA)
+	}
 
-	optionDrawer.Clear()
+	titleContent := titleTextbox.NewSimpleContent("Select a State:")
+	titleTextbox.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)), titleContent)
+
 	for index, option := range s.states {
 		str := fmt.Sprintf("%s", option.Name)
 		if index == s.selected {
@@ -64,9 +79,9 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 		} else {
 			str = "   " + str
 		}
-		optionDrawer.WriteString(fmt.Sprintf("%s\n", str))
+		optionContent := optionTextbox.NewSimpleContent(str)
+		optionTextbox.Render(target, gfx.Moved(10, int(targetBounds.H())-35-15*index), optionContent)
 	}
-	optionDrawer.Draw(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-35)))
 
 	game.DebugBR("enter: select")
 	game.DebugBR("w/s/up/down: change")

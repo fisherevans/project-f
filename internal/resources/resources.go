@@ -3,12 +3,14 @@ package resources
 import (
 	_ "embed"
 	"encoding/json"
-	"fisherevans.com/project/f/assets"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"io/fs"
 	"path/filepath"
 	"strings"
+
+	"github.com/rs/zerolog/log"
+
+	"fisherevans.com/project/f/assets"
 )
 
 const (

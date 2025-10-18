@@ -12,7 +12,6 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/combat/tick_bar"
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
@@ -58,7 +57,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignLeft),
 			tbcfg.VAligned(tbcfg.VAlignMiddle),
-			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.Foreground(colorText),
 			tbcfg.RenderFrom(gfx.LeftCenter)))
 	stanceIcons = sprites.StanceIcons(atlas)
 	statusIcons = sprites.StatusIcons(atlas)
@@ -101,25 +100,25 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	arrowLeft6px.DrawColorMask(target, tickCenters[v.selection].Moved(gfx.IVec(10, 0)), flashingHighlight())
 	for i := 0; i < len(tickCenters)-1; i++ {
 		leftCenter := tickCenters[i].Moved(gfx.IVec(8, -tickSpacing/2))
-		noneTickSprite.DrawColorMask(target, leftCenter, colors.XenoLogDark.RGBA)
-		noneTickSprite.DrawColorMask(target, leftCenter.Moved(gfx.IVec(2, 0)), colors.XenoLogDark.RGBA)
+		noneTickSprite.DrawColorMask(target, leftCenter, colorDark)
+		noneTickSprite.DrawColorMask(target, leftCenter.Moved(gfx.IVec(2, 0)), colorDark)
 	}
 
 	x := 51
 	y := screenHeight - 14
 
-	smallTxt.render("skill details", x, y, colors.XenoLogDark.RGBA, tbcfg.RenderFrom(gfx.LeftCenter))
+	smallTxt.render("skill details", x, y, colorDark, tbcfg.RenderFrom(gfx.LeftCenter))
 	y -= 9
-	titleTxt.render(skill.Name, x, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.LeftCenter))
+	titleTxt.render(skill.Name, x, y, colorHighlight, tbcfg.RenderFrom(gfx.LeftCenter))
 	y -= 14
-	_, h := smallTxt.render(skill.Description, x, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.LeftCenter))
+	_, h := smallTxt.render(skill.Description, x, y, colorText, tbcfg.RenderFrom(gfx.LeftCenter))
 
 	y -= h + 4
 
 	tickFrameR := pixel.R(0, 0, float64(tickFrameW), float64(tickFrameH))
 	tickFrameTopLeft := pixel.IM.Moved(gfx.IVec(x-4, y))
-	frame2px.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(colors.XenoLogDark.RGBA), frames.WithRenderOrigin(gfx.TopLeft))
-	frame2pxBorder.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(colors.XenoLogText.RGBA), frames.WithRenderOrigin(gfx.TopLeft))
+	frame2px.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(colorDark), frames.WithRenderOrigin(gfx.TopLeft))
+	frame2pxBorder.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(colorText), frames.WithRenderOrigin(gfx.TopLeft))
 
 	y -= 7
 	printTickDetail := func(pl printLine) {
@@ -166,7 +165,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 		if effects.stances[stance] {
 			c := []lineContents{
 				stringContent(fmt.Sprintf("{+c:xenolog_highlight}%s", stance.String())),
-				spriteContent(stanceIcons[stance]).mask(colors.XenoLogHighlight.RGBA),
+				spriteContent(stanceIcons[stance]).mask(colorHighlight),
 				stringContent("{+c:xenolog_clear}(stance)"),
 			}
 			printTickDetail(newPrintLine(c...))
@@ -176,7 +175,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 
 	for _, status := range statuses {
 		if effects.statuses[status] {
-			sprite := spriteContent(statusIcons[status]).mask(colors.XenoLogHighlight.RGBA)
+			sprite := spriteContent(statusIcons[status]).mask(colorHighlight)
 			if status == rpg.StatusMending {
 				sprite = sprite.moved(0, -1)
 			}
@@ -199,7 +198,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 func (v *skillDetailMenu) renderPrintLine(pl printLine, target pixel.Target, smallTxt *textRenderer, x int, yPtr *int) {
 	thisX := x
 	for _, c := range pl.contents {
-		mask := colors.XenoLogText.RGBA
+		mask := colorText
 		if c.color != nil {
 			mask = *c.color
 		}
@@ -221,7 +220,7 @@ func (v *skillDetailMenu) renderPrintLine(pl printLine, target pixel.Target, sma
 func (v *skillDetailMenu) handleInput() {
 	controls := game.Controls[*State]()
 	if controls.ButtonB().JustPressed() || controls.ButtonSelect().JustPressed() {
-		v.screen.PopMenu()
+		v.screen.PopMenuAnimated()
 	}
 	if controls.DPad().JustPressed() {
 		delta := 0
@@ -361,7 +360,7 @@ func damageScaleByEffects(scalers map[rpg.StatusType]map[rpg.StatusLevel]float64
 				status.CurrentTense(),
 			))), false) // always false, since it's talking about modifying the last line
 			e.addDamageLine(newPrintLine(
-				spriteContent(arrowRight).mask(colors.XenoLogClear.RGBA).moved(0, 1),
+				spriteContent(arrowRight).mask(colorClear).moved(0, 1),
 				stringContent(fmt.Sprintf("Deal %s more damage",
 					strings.Join(levelStrings, "/"),
 				)),

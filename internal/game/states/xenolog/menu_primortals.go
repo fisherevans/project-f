@@ -23,9 +23,9 @@ var (
 	primortalListRightWidth = 6
 	primortalListRowPadding = 7
 
-	badgeBack       = badges.Using(atlas).Of("back", colors.XenoLogDark.RGBA, colors.XenoLogText.RGBA, 30)
-	badgeNextUnlock = badges.Using(atlas).Of("scroll to next unlock", colors.XenoLogDark.RGBA, colors.XenoLogText.RGBA, 80)
-	badgeBackToTop  = badges.Using(atlas).Of("back to top", colors.XenoLogDark.RGBA, colors.XenoLogText.RGBA, 50)
+	badgeBack       = badges.Using(atlas).Of("back", colorDark, colorText, 30)
+	badgeNextUnlock = badges.Using(atlas).Of("scroll to next unlock", colorDark, colorText, 80)
+	badgeBackToTop  = badges.Using(atlas).Of("back to top", colorDark, colorText, 50)
 )
 
 type primortalsMenu struct {
@@ -100,15 +100,15 @@ func (p *horizontalActionItem) DirectionJustPressed(m *primortalsMenu, dir input
 func (p *horizontalActionItem) Render(m *primortalsMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
 	x := primortalListMargin + primortalListLeftWidth + 2
 
-	badgeBg := colors.XenoLogDark.RGBA
-	badgeFg := colors.XenoLogText.RGBA
+	badgeBg := colorDark
+	badgeFg := colorText
 
 	for id, action := range p.actions {
 		bg, fg := badgeBg, badgeFg
 		selected := id == p.selection
 		if selected {
-			bg = colors.Lerp(badgeBg, colors.XenoLogHighlight.RGBA, highlightProgress)
-			fg = colors.Lerp(badgeFg, colors.XenoLogClear.RGBA, highlightProgress)
+			bg = colors.Lerp(badgeBg, colorHighlight, highlightProgress)
+			fg = colors.Lerp(badgeFg, colorClear, highlightProgress)
 		}
 		action.badge.RenderMask(target, pixel.IM.Moved(gfx.IVec(x, topLeftY)), gfx.TopLeft, fg, bg)
 		x += int(action.badge.Bounds().W()) + 5
@@ -127,7 +127,7 @@ func newPrimortalListTitle() *primortalListTitle {
 				{
 					badge: badgeBack,
 					handler: func(m *primortalsMenu) {
-						m.screen.PopMenu()
+						m.screen.PopMenuAnimated()
 					},
 				},
 				{
@@ -150,9 +150,9 @@ func (p *primortalListTitle) Render(m *primortalsMenu, topLeftY int, target pixe
 	smallTxt := newTextRenderer(target, smallTextbox)
 
 	x := primortalListMargin + primortalListLeftWidth
-	_, dy := titleText.render("XenoLog", x, topLeftY, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	_, dy := titleText.render("XenoLog", x, topLeftY, colorHighlight, tbcfg.RenderFrom(gfx.TopLeft))
 	topLeftY -= dy + 3
-	_, dy = smallTxt.render("A catalogue of your Primortal discoveries", x, topLeftY, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	_, dy = smallTxt.render("A catalogue of your Primortal discoveries", x, topLeftY, colorText, tbcfg.RenderFrom(gfx.TopLeft))
 	topLeftY -= dy + 3
 
 	topLeftY -= 2
@@ -209,7 +209,7 @@ func (p *primortalListItem) RenderWasSkipped(m *primortalsMenu, wasAbove bool) {
 func (p *primortalListItem) ButtonAJustPressed(m *primortalsMenu) {
 	pType, exists := rpg.XenoLogEntries[p.xenologIndex]
 	if exists {
-		m.screen.PushMenu(newPrimortalDetailMenu(m.screen, pType))
+		m.screen.PushMenuAnimated(newPrimortalDetailMenu(m.screen, pType))
 	}
 }
 
@@ -217,7 +217,7 @@ func (p *primortalListItem) Height() int {
 	return 18
 }
 
-func (p *primortalListItem) IsHighlightable(m *primortalsMenu) bool {
+func (p *primortalListItem) DoSkipHighlight(m *primortalsMenu) bool {
 	_, exists := rpg.XenoLogEntries[p.xenologIndex]
 	return !exists
 }
@@ -227,11 +227,11 @@ func (p *primortalListItem) Render(m *primortalsMenu, topLeftY int, target pixel
 	txt := newTextRenderer(target, regularTextbox)
 	smallTxt := newTextRenderer(target, smallTextbox)
 
-	mask := colors.XenoLogText.RGBA
-	borderMask := colors.XenoLogDark.RGBA
+	mask := colorText
+	borderMask := colorDark
 	if highlightProgress > 0 {
-		mask = colors.Lerp(mask, colors.XenoLogHighlight.RGBA, highlightProgress)
-		borderMask = colors.Lerp(borderMask, colors.XenoLogText.RGBA, highlightProgress)
+		mask = colors.Lerp(mask, colorHighlight, highlightProgress)
+		borderMask = colors.Lerp(borderMask, colorText, highlightProgress)
 	}
 
 	fr := rect(screenWidth-primortalListMargin*2-primortalListLeftWidth-primortalListRightWidth, p.Height()-1-primortalListMargin)
@@ -254,14 +254,14 @@ func (p *primortalListItem) Render(m *primortalsMenu, topLeftY int, target pixel
 
 	primortal := pId.Primortal()
 	name := primortal.Name
-	isComplete := nextUnlock(primortal, game.CurrentSave()) == nil
+	isComplete := cheapestAvailableUnlock(primortal, game.CurrentSave()) == nil
 	upgradeAvailable := p.upgradeAvailableForPrimortal(pId)
 
 	dx, _ = txt.render(name, leftX, centerY, mask, tbcfg.RenderFrom(gfx.LeftCenter))
 
 	rightX := screenWidth - primortalListMargin - primortalListRowPadding - primortalListRightWidth
 	if isComplete {
-		smallTxt.render("[COMPLETE]", rightX, centerY, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.RightCenter))
+		smallTxt.render("[COMPLETE]", rightX, centerY, colorText, tbcfg.RenderFrom(gfx.RightCenter))
 	} else if upgradeAvailable {
 		upgradeRightX := rightX
 		arrowPadding := 3
@@ -275,16 +275,14 @@ func (p *primortalListItem) Render(m *primortalsMenu, topLeftY int, target pixel
 
 func (p *primortalListItem) upgradeAvailable() bool {
 	if pId, ok := rpg.XenoLogEntries[p.xenologIndex]; ok {
-		if p.upgradeAvailableForPrimortal(pId) {
-			return true
-		}
+		return p.upgradeAvailableForPrimortal(pId)
 	}
 	return false
 }
 
 func (p *primortalListItem) upgradeAvailableForPrimortal(pId rpg.PrimortalType) bool {
 	if save, exists := game.CurrentSave().Primortals[pId]; exists {
-		if next := nextUnlock(pId.Primortal(), game.CurrentSave()); next != nil && save.ResearchPoints >= next.Cost {
+		if next := cheapestAvailableUnlock(pId.Primortal(), game.CurrentSave()); next != nil && save.ResearchPoints >= next.Cost {
 			return true
 		}
 	}
@@ -295,19 +293,19 @@ type primortalCursor struct{}
 
 func (c *primortalCursor) Render(m *primortalsMenu, centerLeftY int, target pixel.Target, index int, movementProgress float64, highlightProgress float64, movingDown bool) {
 	x := primortalListMargin + primortalListLeftWidth/2
-	mask := colors.XenoLogHighlight.RGBA
+	mask := colorHighlight
 	if movementProgress < 0 {
-		mask = colors.Lerp(colors.XenoLogDark.RGBA, colors.XenoLogHighlight.RGBA, movementProgress)
+		mask = colors.Lerp(colorDark, colorHighlight, movementProgress)
 	}
 	if index == 0 || index == len(m.list.items)-1 {
-		mask = colors.Lerp(mask, colors.XenoLogClear.RGBA, movementProgress)
+		mask = colors.Lerp(mask, colorClear, movementProgress)
 	}
 	scrollCursor.DrawColorMask(target, pixel.IM.Moved(gfx.IVec(x, centerLeftY+1)), mask)
 }
 
 func (m *primortalsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	if game.Controls[*State]().ButtonB().JustPressed() {
-		m.screen.PopMenu()
+		m.screen.PopMenuAnimated()
 	}
 
 	m.upgradeAbove, m.upgradeBelow, m.wasSkipped = false, false, false
@@ -322,25 +320,25 @@ func (m *primortalsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	scrollTopRight := pixel.IM.Moved(gfx.IVec(screenWidth-primortalListMargin, screenHeight-primortalListMargin-scrollVPadding))
 	frame1px.Draw(target, rect(scrollWidth, scrollFrameHeight),
 		scrollTopRight,
-		frames.WithColor(colors.XenoLogDark.RGBA), frames.WithRenderOrigin(gfx.TopRight))
+		frames.WithColor(colorDark), frames.WithRenderOrigin(gfx.TopRight))
 	frame2px.Draw(target, rect(scrollWidth, scrollIndicatorHeight),
 		scrollTopRight.Moved(gfx.IVec(0, -indicatorDy)),
-		frames.WithColor(colors.XenoLogText.RGBA), frames.WithRenderOrigin(gfx.TopRight))
+		frames.WithColor(colorText), frames.WithRenderOrigin(gfx.TopRight))
 
 	smallText := newTextRenderer(target, smallTextbox)
 	frb := rect(62+2, tooltipMargin+10)
 	fr := rect(int(frb.W()+1), int(frb.H()+1))
 	if m.upgradeAbove {
 		fm := pixel.IM.Moved(gfx.IVec(screenWidth+2, screenHeight+2))
-		frame2px.Draw(target, fr, fm, frames.WithColor(colors.XenoLogDark.RGBA), frames.WithRenderOrigin(gfx.TopRight))
-		frame2pxBorder.Draw(target, frb, fm, frames.WithColor(colors.XenoLogText.RGBA), frames.WithRenderOrigin(gfx.TopRight))
+		frame2px.Draw(target, fr, fm, frames.WithColor(colorDark), frames.WithRenderOrigin(gfx.TopRight))
+		frame2pxBorder.Draw(target, frb, fm, frames.WithColor(colorText), frames.WithRenderOrigin(gfx.TopRight))
 		dx, _ := smallText.render("UPGRADE Above", screenWidth-tooltipMargin, screenHeight-tooltipMargin, flashingHighlight(), tbcfg.RenderFrom(gfx.TopRight))
 		arrowUp.Draw(target, pixel.IM.Moved(gfx.IVec(screenWidth-dx-tooltipMargin*2, screenHeight-tooltipMargin)).Moved(gfx.TopRight.Align(arrowUp)))
 	}
 	if m.upgradeBelow {
 		fm := pixel.IM.Moved(gfx.IVec(screenWidth+2, -2))
-		frame2px.Draw(target, fr, fm, frames.WithColor(colors.XenoLogDark.RGBA), frames.WithRenderOrigin(gfx.BottomRight))
-		frame2pxBorder.Draw(target, frb, fm, frames.WithColor(colors.XenoLogText.RGBA), frames.WithRenderOrigin(gfx.BottomRight))
+		frame2px.Draw(target, fr, fm, frames.WithColor(colorDark), frames.WithRenderOrigin(gfx.BottomRight))
+		frame2pxBorder.Draw(target, frb, fm, frames.WithColor(colorText), frames.WithRenderOrigin(gfx.BottomRight))
 		dx, _ := smallText.render("UPGRADE Below", screenWidth-tooltipMargin, tooltipMargin, flashingHighlight(), tbcfg.RenderFrom(gfx.BottomRight))
 		arrowDown.Draw(target, pixel.IM.Moved(gfx.IVec(screenWidth-dx-tooltipMargin*2, tooltipMargin)).Moved(gfx.BottomRight.Align(arrowDown)))
 	}
@@ -356,11 +354,30 @@ func (m *primortalsMenu) ScrollToNextUpgrade() {
 	}
 }
 
-func nextUnlock(primortal rpg.Primortal, save *rpg.GameSave) *rpg.UnlockableSkill {
+func cheapestAvailableUnlock(primortal rpg.Primortal, save *rpg.GameSave) *rpg.UnlockableSkill {
+	var cheapestUnlock *rpg.UnlockableSkill
+	cheapestCost := int(^uint(0) >> 1) // max int
+
 	for skillId, us := range primortal.UnlockableSkills {
-		if !save.IsSkillUnlocked(skillId) {
-			return &us
+		if save.IsSkillUnlocked(skillId) {
+			continue
+		}
+
+		// Check if prerequisites are met
+		prerequisitesMet := true
+		for _, prereqId := range us.Prerequisites {
+			if !save.IsSkillUnlocked(prereqId) {
+				prerequisitesMet = false
+				break
+			}
+		}
+
+		if prerequisitesMet && us.Cost < cheapestCost {
+			cheapestCost = us.Cost
+			usCopy := us
+			cheapestUnlock = &usCopy
 		}
 	}
-	return nil
+
+	return cheapestUnlock
 }

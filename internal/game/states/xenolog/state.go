@@ -13,15 +13,7 @@ import (
 	"fisherevans.com/project/f/internal/util/interp"
 )
 
-var atlas = resources.CreateAtlas(resources.AtlasFilter{
-	FontNames: []string{
-		resources.FontNameM5x7,
-		resources.FontNameM3x6,
-		resources.FontNameAddStandard,
-		resources.FontNameFF,
-		resources.FontName3x5,
-	},
-})
+var atlas = resources.DefaultAtlas()
 
 var (
 	deviceBackgroundSprite = atlas.GetSprite("xenolog/device")
@@ -37,11 +29,12 @@ type State struct {
 }
 
 func New(i game.XenologIntent) game.State {
-	return &State{
+	s := &State{
 		background: i.Background,
 		transition: interp.NewTimedProgress(moveDuration, interp.Smootherstep),
-		screen:     NewScreen(),
 	}
+	s.screen = NewScreen(s)
+	return s
 }
 
 func (s *State) ClearColor() color.Color {
@@ -79,7 +72,11 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.screen.OnTick(s, screenMatrix, target, timeDelta)
 
 	if game.Controls[*State]().ButtonStart().JustPressed() {
-		s.exiting = !s.exiting
-		s.transition.Reverse()
+		s.Close()
 	}
+}
+
+func (s *State) Close() {
+	s.exiting = !s.exiting
+	s.transition.Reverse()
 }

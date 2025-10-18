@@ -37,23 +37,42 @@ func newAnimechMenu(s *Screen) *animechMenu {
 			{
 				label: "re-spec",
 				SimpleItem: navigtion.NewSimpleItem[*animechMenu]().WithButtonAHandler(func(m *animechMenu) {
-					respec()
-					saveOrNotify()
-					game.DebugNotification("Removed all level ups")
+					if game.CurrentSave().Animech.Upgrades.GetLevel() <= 1 {
+						return
+					}
+					modal := newConfirmationModal(
+						m.screen,
+						"Re-spec Animech?",
+						"This will reset all of your stat boosts. You get the experience back.",
+						func() {
+							respec()
+							saveOrNotify()
+							game.DebugNotification("Removed all level ups")
+						})
+					m.screen.PushMenu(modal, false)
 				}),
+				disabled: func(m *animechMenu) bool {
+					return game.CurrentSave().Animech.Upgrades.GetLevel() <= 1
+				},
 			},
 			{
 				label: "level up",
 				SimpleItem: navigtion.NewSimpleItem[*animechMenu]().WithButtonAHandler(func(m *animechMenu) {
-					m.screen.PushMenu(newAnimechStatsMenu(m.screen))
+					if !isAnimechUpgradeAvailable() {
+						return
+					}
+					m.screen.PushMenuAnimated(newAnimechStatsMenu(m.screen))
 				}),
+				disabled: func(m *animechMenu) bool {
+					return !isAnimechUpgradeAvailable()
+				},
 			},
 		},
 		skillsActions: []*animechMenuAction{
 			{
 				label: "edit",
 				SimpleItem: navigtion.NewSimpleItem[*animechMenu]().WithButtonAHandler(func(m *animechMenu) {
-					s.PushMenu(newSkillSetMenu(s))
+					s.PushMenuAnimated(newSkillSetMenu(s))
 				}),
 			},
 			{
@@ -70,24 +89,30 @@ func newAnimechMenu(s *Screen) *animechMenu {
 			},
 		},
 		skillItems: map[input.Direction]*navigtion.SimpleItem[*animechMenu]{},
-		nav:        navigtion.NewSystem[*animechMenu](),
 	}
+	menu.nav = navigtion.NewSystem[*animechMenu](menu)
 	for _, a := range menu.statsActions {
-		menu.nav.AddNextToLast(input.Right, menu, a)
+		menu.nav.AddNextToLast(input.Right, a)
 	}
 	for id, dir := range []input.Direction{input.Left, input.Down, input.Right, input.Up} {
 		menu.skillItems[dir] = newSkillInput(dir)
 		if id == 0 {
-			menu.nav.AddItem(menu.skillItems[dir], menu)
+			menu.nav.AddItem(menu.skillItems[dir])
 		} else {
-			menu.nav.AddNextToLast(input.Up, menu, menu.skillItems[dir])
+			menu.nav.AddNextToLast(input.Up, menu.skillItems[dir])
 		}
 	}
 	menu.nav.SetLastItem(menu.statsActions[len(menu.statsActions)-1])
 	for _, a := range menu.skillsActions {
-		menu.nav.AddNextToLast(input.Right, menu, a).Below(menu.skillItems[input.Left])
+		menu.nav.AddNextToLast(input.Right, a).Below(menu.skillItems[input.Left])
 	}
 	menu.nav.SetLastItem(nil)
+	for _, i := range append(menu.statsActions, menu.skillsActions...) {
+		if i.disabled == nil || !i.disabled(menu) {
+			menu.nav.Highlight(i)
+			break
+		}
+	}
 	return menu
 }
 
@@ -97,7 +122,7 @@ func newSkillInput(dir input.Direction) *navigtion.SimpleItem[*animechMenu] {
 		if skillId == rpg.UnsetSkillId {
 			return
 		}
-		a.screen.PushMenu(newSkillDetailMenu(a.screen, skillId))
+		a.screen.PushMenuAnimated(newSkillDetailMenu(a.screen, skillId))
 	}
 	return navigtion.NewSimpleItem[*animechMenu]().
 		WithButtonAHandler(onPress).
@@ -106,7 +131,8 @@ func newSkillInput(dir input.Direction) *navigtion.SimpleItem[*animechMenu] {
 
 type animechMenuAction struct {
 	*navigtion.SimpleItem[*animechMenu]
-	label string
+	label    string
+	disabled func(m *animechMenu) bool
 }
 
 func (m *animechMenu) Enter() {}
@@ -122,7 +148,7 @@ func (m *animechMenu) OnTick(target pixel.Target, timeDelta float64) {
 func (m *animechMenu) handleInputs() {
 	controls := game.Controls[*State]()
 	if controls.ButtonB().JustPressed() {
-		m.screen.PopMenu()
+		m.screen.PopMenuAnimated()
 		return
 	}
 	m.nav.HandleInputs(controls, m)
@@ -144,6 +170,7 @@ func (m *animechMenu) drawActions(target pixel.Target, topCenter pixel.Matrix, a
 		label       *textbox.Content
 		rect        pixel.Rect
 		highlighted bool
+		disabled    bool
 	}
 	framePadding := 7
 	actionPadding := 5.0
@@ -161,15 +188,24 @@ func (m *animechMenu) drawActions(target pixel.Target, topCenter pixel.Matrix, a
 		}
 		b.rect = pixel.R(0, 0, float64(b.label.Width()+textPadding*2), float64(actionHeight))
 		totalWidth += b.rect.W()
+		if action.disabled != nil {
+			b.disabled = action.disabled(m)
+		}
 		buttons = append(buttons, b)
 	}
 	topLeft := topCenter.Moved(gfx.IVec(-animechFrameWidth/2, -framePadding))
 	actionBottomLeft := topLeft.Moved(gfx.IVec(int((float64(animechFrameWidth)-totalWidth)/2), -actionHeight))
 	for _, b := range buttons {
-		bgMask, borderMask, textMask := colors.XenoLogDark.RGBA, colors.XenoLogClear.RGBA, colors.XenoLogText.RGBA
-		if b.highlighted {
+		bgMask, borderMask, textMask := colorDark, colorClear, colorText
+		if b.disabled {
+			bgMask = colorClear
+			borderMask, textMask = colorDark, colorDark
+			if b.highlighted {
+				borderMask = colorText
+			}
+		} else if b.highlighted {
 			bgMask = flashingHighlight()
-			borderMask, textMask = colors.XenoLogDark.RGBA, colors.XenoLogDark.RGBA
+			borderMask, textMask = colorDark, colorDark
 		}
 		frame2px.Draw(target, b.rect, actionBottomLeft,
 			frames.WithRenderOrigin(gfx.BottomLeft), frames.WithColor(bgMask))
@@ -184,7 +220,7 @@ func (m *animechMenu) drawActions(target pixel.Target, topCenter pixel.Matrix, a
 func (m *animechMenu) renderStats(target pixel.Target, topCenter pixel.Matrix) {
 	a := game.CurrentSave().Animech
 	level := a.Upgrades.GetLevel()
-	m.drawFrame(target, topCenter, fmt.Sprintf("Level %d", level), colors.XenoLogHighlight.RGBA, colors.XenoLogText.RGBA)
+	m.drawFrame(target, topCenter, fmt.Sprintf("Level %d", level), colorHighlight, colorText)
 	m.drawActions(target, topCenter.Moved(gfx.IVec(0, -animechFrameHeight+3)), m.statsActions)
 
 	smallTxt := newTextRenderer(target, smallTextbox).withMatrix(topCenter)
@@ -193,13 +229,13 @@ func (m *animechMenu) renderStats(target pixel.Target, topCenter pixel.Matrix) {
 	y := -animechFrameTopPadding
 
 	y -= 7
-	smallTxt.render("Stats", 0, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+	smallTxt.render("Stats", 0, y, colorText, tbcfg.RenderFrom(gfx.TopCenter))
 
 	renderStat := func(name string, value int) {
 		arrowDx := 0
-		arrowRight.DrawColorMask(target, topCenter.Moved(gfx.IVec(arrowDx, y)), colors.XenoLogDark.RGBA)
-		smallTxt.render(name, arrowDx-7, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.RightCenter))
-		regularTxt.render(fmt.Sprintf("%d", value), arrowDx+6, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.LeftCenter))
+		arrowRight.DrawColorMask(target, topCenter.Moved(gfx.IVec(arrowDx, y+1)), colorDark)
+		smallTxt.render(name, arrowDx-7, y, colorText, tbcfg.RenderFrom(gfx.RightCenter))
+		regularTxt.render(fmt.Sprintf("%d", value), arrowDx+6, y, colorHighlight, tbcfg.RenderFrom(gfx.LeftCenter))
 	}
 
 	y -= 14
@@ -208,27 +244,27 @@ func (m *animechMenu) renderStats(target pixel.Target, topCenter pixel.Matrix) {
 	renderStat("sync", a.GetMaxSync())
 
 	y -= 13
-	smallTxt.render("Experience Points:", 0, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+	smallTxt.render("Experience Points:", 0, y, colorText, tbcfg.RenderFrom(gfx.TopCenter))
 	y -= 7
-	regularTxt.render(comma(a.AnimechExperience), 0, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+	regularTxt.render(comma(a.AnimechExperience), 0, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
 
 	y -= 19
 	xpNeeded := rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1) - a.AnimechExperience
 	if xpNeeded <= 0 {
 		w, _ := smallTxt.render("upgrade available", 0, y, flashingHighlight(), tbcfg.RenderFrom(gfx.Centered))
-		arrowMask := colors.Lerp(flashingHighlight(), colors.XenoLogClear.RGBA, 0.5)
+		arrowMask := colors.Lerp(flashingHighlight(), colorClear, 0.5)
 		arrowX := w/2 + 5
 		// +1's due to odd sprite sizes + origin rendering
 		arrowRight.DrawColorMask(target, topCenter.Moved(gfx.IVec(-arrowX, y+1)), arrowMask)
 		arrowLeft.DrawColorMask(target, topCenter.Moved(gfx.IVec(arrowX+1, y+1)), arrowMask)
 	} else {
 		label := fmt.Sprintf("{+c:xenolog_highlight,+u}%d{+c:xenolog_text,-u} XP 'til level up", xpNeeded)
-		smallTxt.render(label, 0, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.Centered))
+		smallTxt.render(label, 0, y, colorText, tbcfg.RenderFrom(gfx.Centered))
 	}
 }
 
 func (m *animechMenu) renderSkills(target pixel.Target, topCenter pixel.Matrix) {
-	m.drawFrame(target, topCenter, "Skill Set", colors.XenoLogHighlight.RGBA, colors.XenoLogText.RGBA)
+	m.drawFrame(target, topCenter, "Skill Set", colorHighlight, colorText)
 	m.drawActions(target, topCenter.Moved(gfx.IVec(0, -animechFrameHeight+3)), m.skillsActions)
 	s := game.CurrentSave().Animech.SkillSet
 
@@ -246,15 +282,15 @@ func (m *animechMenu) renderSkills(target pixel.Target, topCenter pixel.Matrix) 
 
 	skillHeight := 15
 	renderSkill := func(dir input.Direction, name string) {
-		borderMask := colors.XenoLogClear.RGBA
-		bgMask := colors.XenoLogDark.RGBA
-		fgMask := colors.XenoLogText.RGBA
-		arrowMask := colors.XenoLogHighlight.RGBA
+		borderMask := colorClear
+		bgMask := colorDark
+		fgMask := colorText
+		arrowMask := colorHighlight
 		if m.nav.IsHighlighted(m.skillItems[dir]) {
-			borderMask = colors.XenoLogDark.RGBA
+			borderMask = colorDark
 			bgMask = flashingHighlight()
-			fgMask = colors.XenoLogDark.RGBA
-			arrowMask = colors.XenoLogClear.RGBA
+			fgMask = colorDark
+			arrowMask = colorClear
 		}
 		skillWidth := animechFrameWidth - 8
 		frameR := pixel.R(0, 0, float64(skillWidth), float64(skillHeight))

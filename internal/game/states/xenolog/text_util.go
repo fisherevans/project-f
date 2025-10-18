@@ -15,11 +15,11 @@ import (
 
 var (
 	smallTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
-		tbcfg.NewConfig(screenWidth, 10,
+		tbcfg.NewConfig(screenWidth-30, 10,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.Foreground(colorText),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	regularTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7),
@@ -27,7 +27,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.Foreground(colorText),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	titleTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard),
@@ -35,7 +35,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.Foreground(colorText),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	frame1px       = frames.New("common/rounded_frame_1px", atlas, frames.WithRenderOrigin(gfx.Centered))
@@ -83,7 +83,11 @@ func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tb
 }
 
 func flashingHighlight() pixel.RGBA {
-	return colors.Lerp(colors.XenoLogText.RGBA, colors.XenoLogHighlight.RGBA, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+	return colors.Lerp(colorText, colorHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+}
+
+func flashingHighlightSlow() pixel.RGBA {
+	return colors.Lerp(colorText, colorHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed/2))
 }
 
 func saveOrNotify() {

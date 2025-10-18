@@ -36,6 +36,7 @@ var (
 	skillNodeSpriteHighlightCursor       = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 5, 1)
 	skillNodeSpriteUnlocked              = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 6, 1)
 	skillNodeSpriteUnlockable            = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 7, 1)
+	particleSprite                       = atlas.GetSprite("1x1")
 )
 
 type skillTree struct {
@@ -156,13 +157,14 @@ func buildSkillTreeNodes(t *skillTree, primortal rpg.Primortal) map[rpg.SkillId]
 	// Pass 1: create nodes, record parent IDs, and fill the DAG map once.
 	for skillId, us := range primortal.UnlockableSkills {
 		n := &skillNode{
-			tree:    t,
-			id:      skillId,
+			tree: t,
+			id:   skillId,
+			//timeInState: 1000, // skip animation on load
 			parents: make(map[rpg.SkillId]*skillNode),
 			animations: []*skillNodeAnimation{
-				newSkillNodeAnimation("slow", colors.XenoLogDark.RGBA),
-				newSkillNodeAnimation("medium", colors.XenoLogHighlight.RGBA),
-				newSkillNodeAnimation("fast", colors.XenoLogText.RGBA),
+				newSkillNodeAnimation("slow", colorDark),
+				newSkillNodeAnimation("medium", colorHighlight),
+				newSkillNodeAnimation("fast", colorText),
 			},
 		}
 		nodes[skillId] = n
@@ -198,7 +200,10 @@ type skillNode struct {
 	x, y    int
 	parents map[rpg.SkillId]*skillNode
 
-	animations []*skillNodeAnimation
+	lastState   skillNodeState
+	timeInState float64
+	animations  []*skillNodeAnimation
+	particles   []*effectParticle
 }
 
 type skillNodeAnimation struct {
@@ -216,7 +221,7 @@ func newSkillNodeAnimation(speed string, mask pixel.RGBA) *skillNodeAnimation {
 }
 
 func (n *skillNode) RenderEdges(target pixel.Target, treeOrigin pixel.Matrix) {
-	lineMask := colors.XenoLogDark.RGBA
+	lineMask := colorDark
 	for _, parent := range n.parents {
 		from := treeOrigin.Project(pixel.V(float64(parent.x), float64(parent.y)))
 		to := treeOrigin.Project(pixel.V(float64(n.x), float64(n.y)))
@@ -226,9 +231,16 @@ func (n *skillNode) RenderEdges(target pixel.Target, treeOrigin pixel.Matrix) {
 
 func (n *skillNode) RenderNode(target pixel.Target, treeOrigin pixel.Matrix, timeDelta float64) {
 	state := n.getState()
+	if state != n.lastState {
+		n.timeInState = 0
+		n.lastState = state
+	}
+	n.timeInState += timeDelta
+	fadeIn := max(min(n.timeInState/1.0, 1.0), 0)
+
 	isHighlighted := n.tree.selectedSkill == n.id
 	matrix := treeOrigin.Moved(gfx.IVec(n.x, n.y))
-	mask := colors.XenoLogText.RGBA
+	mask := colorText
 
 	us := n.tree.menu.primortal.Primortal().UnlockableSkills[n.id]
 	progress, hasProgress := game.CurrentSave().Primortals[n.tree.menu.primortal]
@@ -237,16 +249,32 @@ func (n *skillNode) RenderNode(target pixel.Target, treeOrigin pixel.Matrix, tim
 	if canUnlock {
 		mask = flashingHighlight()
 		for _, a := range n.animations {
+			aMask := colors.WithAlpha(a.mask, fadeIn)
+			if !isHighlighted {
+				aMask = colors.WithAlpha(aMask, 0.5)
+			}
 			a.animation.Update(timeDelta)
-			a.animation.Sprite().DrawColorMask(target, matrix, a.mask)
+			a.animation.Sprite().DrawColorMask(target, matrix, aMask)
 		}
 	}
 
 	if isHighlighted {
-		skillNodeSpriteHighlightCursor.DrawColorMask(target, matrix, colors.XenoLogHighlight.RGBA)
+		skillNodeSpriteHighlightCursor.DrawColorMask(target, matrix, colorHighlight)
 	}
 
 	skillNodeSprite(state, isHighlighted).DrawColorMask(target, matrix, mask)
+
+	var remaining []*effectParticle
+	for _, p := range n.particles {
+		p.Update(timeDelta)
+		if p.IsSpawned() {
+			particleSprite.DrawColorMask(target, matrix.Moved(p.Position()), p.Color())
+		}
+		if !p.IsDead() {
+			remaining = append(remaining, p)
+		}
+	}
+	n.particles = remaining
 
 	var label string
 	if state == skillNodeStateUnlockable {
@@ -259,9 +287,13 @@ func (n *skillNode) RenderNode(target pixel.Target, treeOrigin pixel.Matrix, tim
 		}
 	}
 	if label != "" {
+		labelMask := colors.WithAlpha(mask, fadeIn)
+		if !isHighlighted {
+			labelMask = colors.WithAlpha(labelMask, 0.5)
+		}
 		txt := newTextRenderer(target, smallTextbox)
 		txt.matrix = treeOrigin
-		txt.render("{+o:xenolog_clear}"+label, n.x, n.y+6, mask, tbcfg.RenderFrom(gfx.BottomCenter))
+		txt.render("{+o:xenolog_clear}"+label, n.x, n.y+6, labelMask, tbcfg.RenderFrom(gfx.BottomCenter))
 	}
 }
 
@@ -278,6 +310,12 @@ func (n *skillNode) getState() skillNodeState {
 		}
 	}
 	return skillNodeStateUnlockable
+}
+
+func (n *skillNode) generateParticles() {
+	for range 50 {
+		n.particles = append(n.particles, newRandomEffectParticle())
+	}
 }
 
 func skillNodeSprite(state skillNodeState, isHighlighted bool) pixelutil.BoundedDrawable {
@@ -300,4 +338,69 @@ func skillNodeSprite(state skillNodeState, isHighlighted bool) pixelutil.Bounded
 
 func skillNodeAnimUnlockable(speed string) *anim.AnimatedSprite {
 	return anim.Load(atlas, "xenolog/skill_tree/nodes", fmt.Sprintf("spinning_%s", speed))
+}
+
+var (
+	effectParticleGravity = pixel.V(0, -5)
+)
+
+type effectParticle struct {
+	age                  float64
+	maxAge               float64
+	startColor, endColor pixel.RGBA
+	velocity             pixel.Vec
+	position             pixel.Vec
+}
+
+func newRandomEffectParticle() *effectParticle {
+	possibleStartColors := []pixel.RGBA{
+		colorDark,
+		colorHighlight,
+		colorText,
+	}
+	startColor := possibleStartColors[rand.Intn(len(possibleStartColors))]
+	speed := rand.Float64() * 15
+	angle := rand.Float64() * 2 * math.Pi
+	velocity := pixel.V(math.Sin(angle)*speed, math.Cos(angle)*speed)
+	age := rand.Float64() - 0.5
+	if age > 0 {
+		age = 0
+	}
+	maxAge := 1.0 + rand.Float64()*2.0
+	return newEffectParticle(startColor, colors.WithAlpha(colorClear, 0), velocity, age, maxAge)
+}
+
+func newEffectParticle(startColor, endColor pixel.RGBA, velocity pixel.Vec, age, maxAge float64) *effectParticle {
+	return &effectParticle{
+		velocity:   velocity,
+		age:        age,
+		maxAge:     maxAge,
+		startColor: startColor,
+		endColor:   endColor,
+	}
+}
+
+func (p *effectParticle) Update(timeDelta float64) {
+	p.age += timeDelta
+	if !p.IsSpawned() {
+		return
+	}
+	p.position = p.position.Add(p.velocity.Scaled(timeDelta))
+	p.velocity = p.velocity.Add(effectParticleGravity.Scaled(timeDelta))
+}
+
+func (p *effectParticle) Color() pixel.RGBA {
+	return colors.Lerp(p.startColor, p.endColor, min(1.0, p.age/p.maxAge))
+}
+
+func (p *effectParticle) IsSpawned() bool {
+	return p.age > 0
+}
+
+func (p *effectParticle) IsDead() bool {
+	return p.age >= p.maxAge
+}
+
+func (p *effectParticle) Position() pixel.Vec {
+	return p.position
 }

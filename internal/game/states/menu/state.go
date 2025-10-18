@@ -13,15 +13,7 @@ import (
 	"fisherevans.com/project/f/internal/util/gfx"
 )
 
-var atlas = resources.CreateAtlas(resources.AtlasFilter{
-	FontNames: []string{
-		resources.FontNameM5x7,
-		resources.FontNameM3x6,
-		resources.FontNameAddStandard,
-		resources.FontNameFF,
-		resources.FontName3x5,
-	},
-})
+var atlas = resources.DefaultAtlas()
 
 var (
 	margin         = 6.0
@@ -60,7 +52,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.transition = math.Min(1, s.transition+timeDelta*(1.0/transitionTime))
 
-	fadeColor := colors.WithAlpha(colors.Black.RGBA, 0.7*s.transition)
+	fadeColor := colors.WithAlphaTodoFix(colors.Black.RGBA, 0.7*s.transition)
 	gfx.DrawRect(atlas, s.batch, pixel.IM, gfx.BottomLeft, game.GameWidth, game.GameHeight, fadeColor)
 
 	matrix := pixel.IM.Moved(pixel.V(-100.0*(1.0-s.transition), 0))

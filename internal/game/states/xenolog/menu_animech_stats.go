@@ -4,15 +4,20 @@ import (
 	"fmt"
 
 	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/navigtion"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
+)
+
+var (
+	animechStatePanePadding = 6
+	animechStatePaneWidth   = 62
+	animechStatePaneHeight  = 100
 )
 
 type animechStatsMenu struct {
@@ -31,22 +36,17 @@ type upgradedState struct {
 	label                   string
 	uncommitedLevelIncrease int
 	level                   *int
+	base                    int
 	boostAtLevel            func(level int) int
 }
 
-func (u *upgradedState) OnDirectionJustPressed(dir input.Direction, m *animechStatsMenu) {
-	if dir == input.Left {
-		u.uncommitedLevelIncrease--
-		if u.uncommitedLevelIncrease < 0 {
-			u.uncommitedLevelIncrease = 0
-		}
-		m.updateUncommitedUpgrades()
+func (u *upgradedState) OnButtonAJustPressed(m *animechStatsMenu) {
+	if m.availableExperience >= m.requiredExperienceForNextLevel {
+		u.uncommitedLevelIncrease++
 	}
-	if dir == input.Right {
-		if m.availableExperience >= m.requiredExperienceForNextLevel {
-			u.uncommitedLevelIncrease++
-		}
-		m.updateUncommitedUpgrades()
+	m.updateUncommitedUpgrades()
+	if m.availableExperience < m.requiredExperienceForNextLevel {
+		m.nav.Highlight(m.actions[0])
 	}
 }
 
@@ -66,23 +66,25 @@ func (a *action) OnButtonAJustPressed(m *animechStatsMenu) {
 func newAnimechStatsMenu(s *Screen) *animechStatsMenu {
 	menu := &animechStatsMenu{
 		screen: s,
-		nav:    navigtion.NewSystem[*animechStatsMenu](),
 		upgrades: []*upgradedState{
 			{
 				label:        "Sync",
 				level:        &game.CurrentSave().Animech.Upgrades.SyncLevel,
+				base:         rpg.BaseAnimechSync,
 				boostAtLevel: rpg.AnimechUpgradeAdditionalSync,
 			},
 			{
 				label:        "Shield",
 				level:        &game.CurrentSave().Animech.Upgrades.ShieldLevel,
+				base:         rpg.BaseAnimechShield,
 				boostAtLevel: rpg.AnimechUpgradeAdditionalShield,
 			},
 		},
 		actions: []*action{
 			{
-				label: "[COMMIT]",
+				label: "commit",
 				handler: func(m *animechStatsMenu) {
+					from := game.CurrentSave().Animech.Upgrades.GetLevel()
 					for _, upgrade := range m.upgrades {
 						for l := 0; l < upgrade.uncommitedLevelIncrease; l++ {
 							game.CurrentSave().Animech.AnimechExperience -= rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
@@ -90,29 +92,28 @@ func newAnimechStatsMenu(s *Screen) *animechStatsMenu {
 						}
 						upgrade.uncommitedLevelIncrease = 0
 					}
-					m.nav.Highlight(m.upgrades[0], m)
-					if err := game.CurrentSave().Save(); err != nil {
-						log.Error().Err(err).Msg("failed to save game")
-						game.DebugNotification("Failed to save game")
-					}
+					to := game.CurrentSave().Animech.Upgrades.GetLevel()
+					saveOrNotify()
+					m.screen.SwapActiveMenuAnimated(newAnimechLevelUpAnimation(m.screen, from, to))
 				},
 			},
 			{
-				label: "[RESET]",
+				label: "reset",
 				handler: func(m *animechStatsMenu) {
 					for _, upgrade := range m.upgrades {
 						upgrade.uncommitedLevelIncrease = 0
 					}
-					m.nav.Highlight(m.upgrades[0], m)
+					m.nav.Highlight(m.upgrades[0])
 				},
 			},
 		},
 	}
+	menu.nav = navigtion.NewSystem[*animechStatsMenu](menu)
 	for _, upgrade := range menu.upgrades {
-		menu.nav.AddNextToLast(input.Down, menu, upgrade)
+		menu.nav.AddNextToLast(input.Down, upgrade)
 	}
 	for _, action := range menu.actions {
-		menu.nav.AddNextToLast(input.Down, menu, action)
+		menu.nav.AddNextToLast(input.Down, action)
 	}
 	return menu
 }
@@ -133,67 +134,150 @@ func (m *animechStatsMenu) updateUncommitedUpgrades() {
 
 func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	if game.Controls[*State]().ButtonB().JustPressed() {
-		m.screen.PopMenu()
+		m.screen.PopMenuAnimated()
 	} else {
 		m.nav.HandleInputs(game.Controls[*State](), m)
 	}
 	m.updateUncommitedUpgrades()
 
 	smallText := newTextRenderer(target, smallTextbox)
+	regularTxt := newTextRenderer(target, regularTextbox)
 	titleText := newTextRenderer(target, titleTextbox)
 
-	lineHeight := 14
+	// stat panels
+	y := screenHeight - animechStatePanePadding
+	paceCenterX := animechStatePaneWidth/2 + animechStatePanePadding
+	m.renderStats(target, pixel.IM.Moved(gfx.IVec(paceCenterX, y)), true)
+	m.renderStats(target, pixel.IM.Moved(gfx.IVec(screenWidth-paceCenterX, y)), false)
 
-	statX := 20
-	boostX := 45
-
-	y := screenHeight - lineHeight
-
-	{
-		smallText.render("LEVEL", statX, y, colors.XenoLogText.RGBA)
-		smallText.render("BOOST", boostX, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
-		y -= lineHeight
-	}
+	// middle
+	x := screenWidth / 2
+	titleText.render("Level Up", x, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	y -= 16
 
 	for _, upgrade := range m.upgrades {
-		mask := colors.XenoLogText.RGBA
+		uncommitedUpgradeLevel := upgrade.base + upgrade.uncommitedLevelIncrease
+		boostNow := upgrade.boostAtLevel(uncommitedUpgradeLevel)
+		boostNext := upgrade.boostAtLevel(uncommitedUpgradeLevel + 1)
+		boostText := fmt.Sprintf("+%d", boostNext-boostNow)
+
+		if m.availableExperience < m.requiredExperienceForNextLevel {
+			boostText = "---"
+		}
+
+		textMask, frameBg, frameBorder := colorText, colorDark, colorClear
 		if m.nav.IsHighlighted(upgrade) {
-			mask = colors.White.RGBA
+			textMask = colorDark
+			frameBorder = colorDark
+			frameBg = colorText
+			if m.availableExperience >= m.requiredExperienceForNextLevel {
+				frameBg = flashingHighlight()
+			}
 		}
-		level := *upgrade.level + upgrade.uncommitedLevelIncrease
-		levelFormat := ""
-		if upgrade.uncommitedLevelIncrease > 0 {
-			levelFormat = "{+u:white}"
-		}
-		if upgrade.uncommitedLevelIncrease > 0 {
-			smallText.render("<", statX-10, y, mask)
-		}
-		smallText.render(fmt.Sprintf("%s%d", levelFormat, level), statX, y, mask)
-		if m.availableExperience >= m.requiredExperienceForNextLevel {
-			smallText.render(">", statX+10, y, mask)
-		}
-		smallText.render(fmt.Sprintf("+%d %s", upgrade.boostAtLevel(level), upgrade.label), boostX, y, mask, tbcfg.RenderFrom(gfx.TopLeft))
-		y -= lineHeight
+
+		frameR := pixel.R(0, 0, 54, 25)
+		frame2px.Draw(target, frameR, gfx.Moved(x, y), frames.WithColor(frameBg), frames.WithRenderOrigin(gfx.TopCenter))
+		frame2pxBorder.Draw(target, frameR, gfx.Moved(x, y), frames.WithColor(frameBorder), frames.WithRenderOrigin(gfx.TopCenter))
+
+		y -= 4
+
+		smallText.render("boost "+upgrade.label, x, y, textMask, tbcfg.RenderFrom(gfx.TopCenter))
+		y -= 7
+
+		regularTxt.render(boostText, x, y, textMask, tbcfg.RenderFrom(gfx.TopCenter))
+		y -= 15
 	}
 
 	for _, a := range m.actions {
-		mask := colors.XenoLogText.RGBA
-		label := a.label
+		mask, frameBg, frameBorder := colorText, colorDark, colorClear
 		if m.nav.IsHighlighted(a) {
-			mask = colors.White.RGBA
-			label = ">> " + label + " <<"
+			mask = colorDark
+			frameBg, frameBorder = flashingHighlight(), colorDark
 		}
-		smallText.render(label, 50, y, mask)
-		y -= lineHeight
+		frameR := pixel.R(0, 0, 40, 13)
+		frame2px.Draw(target, frameR, gfx.Moved(x, y), frames.WithColor(frameBg), frames.WithRenderOrigin(gfx.TopCenter))
+		frame2pxBorder.Draw(target, frameR, gfx.Moved(x, y), frames.WithColor(frameBorder), frames.WithRenderOrigin(gfx.TopCenter))
+
+		y -= 4
+
+		smallText.render(a.label, x, y, mask, tbcfg.RenderFrom(gfx.TopCenter))
+		y -= 10
 	}
 
-	expText := fmt.Sprintf("Experience required: %d/%d", m.availableExperience, m.requiredExperienceForNextLevel)
-	smallText.render(expText, 10, 10, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.BottomLeft))
-
-	currentLevel := game.CurrentSave().Animech.Upgrades.GetLevel()
-	levelText := fmt.Sprintf("%d", currentLevel)
-	if currentLevel != m.uncommitedLevel {
-		levelText += fmt.Sprintf("{+c:white} > %d", m.uncommitedLevel)
+	y -= 3
+	smallText.render("experience", x, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	y -= 8
+	expText := fmt.Sprintf("%d{+c:xenolog_text} / %d", m.availableExperience, m.requiredExperienceForNextLevel)
+	expColor := colorHighlight
+	if m.availableExperience < m.requiredExperienceForNextLevel {
+		expColor = colorDark
 	}
-	titleText.render("Level: "+levelText, screenWidth/2+20, screenHeight-10, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	w, _ := regularTxt.render(expText, x, y, expColor, tbcfg.RenderFrom(gfx.TopCenter))
+
+	dx := w/2 + 6
+	y -= 3
+	smallText.render("available", x-dx, y, colorDark, tbcfg.RenderFrom(gfx.TopRight))
+	smallText.render("required", x+dx, y, colorDark, tbcfg.RenderFrom(gfx.TopLeft))
+}
+
+func (m *animechStatsMenu) renderStats(target pixel.Target, topCenter pixel.Matrix, base bool) {
+	a := game.CurrentSave().Animech
+	level := a.Upgrades.GetLevel()
+	titleMask, borderMask := colorText, colorText
+	if !base {
+		if level != m.uncommitedLevel {
+			titleMask = flashingHighlight()
+			borderMask = colorHighlight
+		}
+		level = m.uncommitedLevel
+	}
+	m.drawFrame(target, topCenter, fmt.Sprintf("Level %d", level), titleMask, borderMask)
+
+	smallTxt := newTextRenderer(target, smallTextbox).withMatrix(topCenter)
+	regularTxt := newTextRenderer(target, regularTextbox).withMatrix(topCenter)
+
+	y := -animechFrameTopPadding
+
+	y -= 7
+	smallTxt.render("Stats", 0, y, colorText, tbcfg.RenderFrom(gfx.TopCenter))
+
+	renderStat := func(name string, value int, upgraded bool) {
+		nameMask, arrowMask, statMask := colorText, colorClear, colorText
+		if upgraded {
+			nameMask, arrowMask, statMask = colorHighlight, colorHighlight, titleMask
+		}
+		arrowDx := 1
+		smallTxt.render(name, arrowDx-7, y, nameMask, tbcfg.RenderFrom(gfx.RightCenter))
+		arrowRight.DrawColorMask(target, topCenter.Moved(gfx.IVec(arrowDx, y+1)), arrowMask)
+		regularTxt.render(fmt.Sprintf("%d", value), arrowDx+6, y, statMask, tbcfg.RenderFrom(gfx.LeftCenter))
+	}
+
+	y -= 16
+
+	for _, upgrade := range m.upgrades {
+		statLevel := *upgrade.level
+		upgraded := false
+		if !base {
+			statLevel += upgrade.uncommitedLevelIncrease
+			upgraded = upgrade.uncommitedLevelIncrease > 0
+		}
+		renderStat(upgrade.label, upgrade.base+upgrade.boostAtLevel(statLevel), upgraded)
+		y -= 15
+	}
+}
+
+func (m *animechStatsMenu) drawFrame(target pixel.Target, topCenter pixel.Matrix, title string, titleMask, frameBorderMask pixel.RGBA) {
+	frame4px.Draw(target, pixel.R(0, 0,
+		float64(animechStatePaneWidth), float64(animechStatePaneHeight)),
+		topCenter,
+		frames.WithColor(colorDark),
+		frames.WithRenderOrigin(gfx.TopCenter))
+	frame4pxBorder.Draw(target, pixel.R(0, 0,
+		float64(animechStatePaneWidth), float64(animechStatePaneHeight)),
+		topCenter,
+		frames.WithColor(frameBorderMask),
+		frames.WithRenderOrigin(gfx.TopCenter))
+	titleTxt := newTextRenderer(target, titleTextbox).withMatrix(topCenter)
+	titleTxt.render(title, 0, -4, titleMask, tbcfg.RenderFrom(gfx.TopCenter))
+
 }

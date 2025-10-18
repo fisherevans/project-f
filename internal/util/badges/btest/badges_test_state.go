@@ -19,9 +19,7 @@ type state struct {
 }
 
 var (
-	atlas = resources.CreateAtlas(resources.AtlasFilter{
-		FontNames: []string{resources.FontNameFF},
-	})
+	atlas = resources.DefaultAtlas()
 )
 
 func (s state) ClearColor() color.Color {

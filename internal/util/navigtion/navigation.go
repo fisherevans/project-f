@@ -5,14 +5,16 @@ import (
 )
 
 type System[T any] struct {
+	t           T
 	highlighted Item[T]
 	lastAdded   Item[T]
 	items       map[Item[T]]*systemItem[T]
 	neighbors   map[Item[T]]map[input.Direction]*neighbors[T]
 }
 
-func NewSystem[T any]() *System[T] {
+func NewSystem[T any](t T) *System[T] {
 	return &System[T]{
+		t:         t,
 		items:     map[Item[T]]*systemItem[T]{},
 		neighbors: map[Item[T]]map[input.Direction]*neighbors[T]{},
 	}
@@ -36,22 +38,22 @@ func (s *System[T]) addNeighbor(from Item[T], direction input.Direction, to Item
 	s.neighbors[from][direction].items = append(s.neighbors[from][direction].items, to)
 }
 
-func (s *System[T]) AddItem(item Item[T], t T) *NeighborRegistry[T] {
+func (s *System[T]) AddItem(item Item[T]) *NeighborRegistry[T] {
 	s.items[item] = &systemItem[T]{
 		Item: item,
 	}
 	if s.highlighted == nil {
-		s.Highlight(item, t)
+		s.Highlight(item)
 	}
 	s.lastAdded = item
 	return s.NeighborsOf(item)
 }
 
-func (s *System[T]) AddNextToLast(direction input.Direction, t T, items ...Item[T]) *NeighborRegistry[T] {
+func (s *System[T]) AddNextToLast(direction input.Direction, items ...Item[T]) *NeighborRegistry[T] {
 	var r *NeighborRegistry[T]
 	for _, item := range items {
 		last := s.lastAdded
-		r = s.AddItem(item, t)
+		r = s.AddItem(item)
 		if last != nil {
 			r.SetNeighbor(direction.Opposite(), last)
 		}
@@ -63,13 +65,13 @@ func (s *System[T]) SetLastItem(item Item[T]) {
 	s.lastAdded = item
 }
 
-func (s *System[T]) Highlight(item Item[T], t T) {
+func (s *System[T]) Highlight(item Item[T]) {
 	if s.highlighted != nil {
-		s.highlighted.OnUnhighlight(t)
+		s.highlighted.OnUnhighlight(s.t)
 	}
 	s.highlighted = item
 	if s.highlighted != nil {
-		s.highlighted.OnHighlight(t)
+		s.highlighted.OnHighlight(s.t)
 	}
 }
 
@@ -128,7 +130,7 @@ func (s *System[T]) HandleInputs(c *input.Controls, t T) {
 		}
 	}
 	// finally, highlight new node
-	s.Highlight(to, t)
+	s.Highlight(to)
 
 }
 

@@ -10,7 +10,6 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -40,10 +39,10 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.Foreground(colorText),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 	primortalIconSize   = 48
-	primortalIconMargin = 1
+	primortalIconMargin = 2
 
 	primortalSkillDetailWidth        = 64
 	primortalSkillDetailMargin       = 2
@@ -53,7 +52,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.Foreground(colorText),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 )
 
@@ -62,7 +61,7 @@ func (*primortalDetailMenu) Enter() {}
 func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	v.handleInput()
 
-	isComplete := nextUnlock(v.primortal.Primortal(), game.CurrentSave()) == nil
+	isComplete := cheapestAvailableUnlock(v.primortal.Primortal(), game.CurrentSave()) == nil
 
 	titleTxt := newTextRenderer(target, titleTextbox)
 	smallTxt := newTextRenderer(target, smallTextbox)
@@ -80,25 +79,25 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	iconMatrix := pixel.IM.Moved(gfx.TopRight.Align(icon)).Moved(gfx.IVec(screenWidth-detailMargin-primortalIconMargin, screenHeight-detailMargin-primortalIconMargin))
 	w := int(icon.Bounds().W()) + primortalIconMargin*2
 	h := int(icon.Bounds().H()) + primortalIconMargin*2
-	frame4px.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colors.XenoLogDark.RGBA))
-	frame4pxBorder.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colors.XenoLogText.RGBA))
-	v.screen.spriteFilterBuffer.DrawSprite(icon, iconMatrix)
+	frame4px.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colorDark))
+	frame4pxBorder.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colorText))
+	icon.Draw(v.screen.spriteFilterBuffer.Target(), iconMatrix)
 
 	// header
-	dx, _ := titleTxt.render(p.Name, 10, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	dx, _ := titleTxt.render(p.Name, 10, y, colorHighlight, tbcfg.RenderFrom(gfx.TopLeft))
 	if isComplete {
-		smallTxt.render("[complete]", 10+dx+5, y-4, colors.XenoLogDark.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+		smallTxt.render("[complete]", 10+dx+5, y-4, colorDark, tbcfg.RenderFrom(gfx.TopLeft))
 	}
 	y -= detailLineHeight
 
-	_, descHeight := descriptionText.render(p.Description, 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.HAligned(tbcfg.HAlignLeft))
+	_, descHeight := descriptionText.render(p.Description, 10, y, colorText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.HAligned(tbcfg.HAlignLeft))
 	y -= descHeight + detailLineHeight/2
 
-	titleTxt.render("Skills:", 10, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	titleTxt.render("Skills:", 10, y, colorHighlight, tbcfg.RenderFrom(gfx.TopLeft))
 	y -= detailLineHeight
 
-	dx, _ = smallTxt.render("Research Points:", 10, y, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
-	smallTxt.render(fmt.Sprintf("%d", rp), 10+dx+3, y, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopLeft))
+	dx, _ = smallTxt.render("Research Points:", 10, y, colorText, tbcfg.RenderFrom(gfx.TopLeft))
+	smallTxt.render(fmt.Sprintf("%d", rp), 10+dx+3, y, colorHighlight, tbcfg.RenderFrom(gfx.TopLeft))
 	y -= detailLineHeight
 
 	// tree
@@ -117,7 +116,7 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 		skillDetailsTopLeftY))
 	primortalSkillDetailHeight := skillDetailsTopLeftY - detailMargin
 	frame2pxBorder.Draw(target, rect(primortalSkillDetailWidth, primortalSkillDetailHeight), skillDetailsTopLeft,
-		frames.WithRenderOrigin(gfx.TopLeft), frames.WithColor(colors.XenoLogDark.RGBA))
+		frames.WithRenderOrigin(gfx.TopLeft), frames.WithColor(colorDark))
 	v.renderSkillDetailsText(target, skillDetailsTopLeft, primortalSkillDetailWidth, primortalSkillDetailHeight)
 
 	// badges
@@ -147,10 +146,10 @@ func (v *primortalDetailMenu) renderSkillDetailsText(target pixel.Target, topLef
 		}
 	}
 
-	_, dy := txt.render("{+s:xenolog_dark,+u:xenolog_text}"+titleLabel, 0, y, colors.XenoLogHighlight.RGBA)
+	_, dy := txt.render("{+s:xenolog_dark,+u:xenolog_text}"+titleLabel, 0, y, colorHighlight)
 	y -= primortalSkillDetailTextMargin + dy + 2 // extra for underline
 
-	_, dy = txt.render(desc, 0, y, colors.XenoLogText.RGBA)
+	_, dy = txt.render(desc, 0, y, colorText)
 	y -= primortalSkillDetailTextMargin + dy
 
 	var aBadge *badges.ButtonAction
@@ -173,7 +172,7 @@ func (v *primortalDetailMenu) renderSkillDetailsText(target pixel.Target, topLef
 func (v *primortalDetailMenu) handleInput() {
 	c := game.Controls[*State]()
 	if c.ButtonB().JustPressed() {
-		v.screen.PopMenu()
+		v.screen.PopMenuAnimated()
 	}
 	if c.DPad().JustPressed() {
 		v.tree.handleInput(c.DPad().JustPressedDirection())
@@ -182,7 +181,7 @@ func (v *primortalDetailMenu) handleInput() {
 		skillId := v.tree.selectedSkill
 		state := v.tree.nodes[skillId].getState()
 		if state == skillNodeStateUnlocked {
-			v.screen.PushMenu(newSkillDetailMenu(v.screen, skillId))
+			v.screen.PushMenuAnimated(newSkillDetailMenu(v.screen, skillId))
 		} else if state == skillNodeStateUnlockable {
 			progress, hasProgress := game.CurrentSave().Primortals[v.primortal]
 			unlockableSkill := v.primortal.Primortal().UnlockableSkills[skillId]
@@ -190,6 +189,21 @@ func (v *primortalDetailMenu) handleInput() {
 				game.CurrentSave().Primortals[v.primortal].ResearchPoints -= unlockableSkill.Cost
 				game.CurrentSave().UnlockSkill(skillId)
 				saveOrNotify()
+				v.tree.nodes[skillId].generateParticles()
+				//modal := newMenuModal(v.screen,
+				//	skillId.Get().Name+" Unlocked!",
+				//	fmt.Sprintf("You spent %d research points to unlock %s.", unlockableSkill.Cost, skillId.Get().Name),
+				//	modalOption{
+				//		label: "View Skill",
+				//		onSelect: func() {
+				//			v.screen.PushMenuAnimated(newSkillDetailMenu(v.screen, skillId))
+				//		},
+				//	},
+				//	modalOption{
+				//		label: "Okay",
+				//	},
+				//)
+				//v.screen.PushMenu(modal, false)
 			} else {
 				// not enough rp
 			}

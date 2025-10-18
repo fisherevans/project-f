@@ -47,15 +47,7 @@ import (
 
 var ticksPerSecond = 2.25
 
-var atlas = resources.CreateAtlas(resources.AtlasFilter{
-	FontNames: []string{
-		resources.FontNameM5x7,
-		resources.FontNameM3x6,
-		resources.FontNameAddStandard,
-		resources.FontNameFF,
-		resources.FontName3x5,
-	},
-})
+var atlas = resources.DefaultAtlas()
 
 func init() {
 	atlas.Dump("temp", "combat")

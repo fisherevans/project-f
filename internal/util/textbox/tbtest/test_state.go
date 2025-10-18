@@ -49,9 +49,7 @@ func (s *State) ClearColor() color.Color {
 }
 
 var (
-	atlas = resources.CreateAtlas(resources.AtlasFilter{
-		FontNames: []string{resources.FontNameFF},
-	})
+	atlas   = resources.DefaultAtlas()
 	tb      = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(100, 50, tbcfg.Foreground(colors.SkillTypeKinetic.RGBA)))
 	content = tb.NewComplexContent("Hello, world! How are you doing today?")
 )

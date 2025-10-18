@@ -62,7 +62,7 @@ var baseFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas)
 	AlignedTo(pixel.Center)
 
 func (fx *baseFx) renderFx(color pixel.RGBA, text string, target pixel.Target) {
-	color = colors.WithAlpha(color, 1.0-(fx.Age/fxMaxAge))
+	color = colors.WithAlphaTodoFix(color, 1.0-(fx.Age/fxMaxAge))
 
 	baseFxText.Clear()
 	baseFxText.Dot = pixel.ZV

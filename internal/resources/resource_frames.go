@@ -2,13 +2,22 @@ package resources
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"image"
+
+	"github.com/rs/zerolog/log"
 )
 
 var (
 	frames = map[string]*SpriteFrame{}
 )
+
+func GetFrameNames() []string {
+	names := make([]string, 0, len(frames))
+	for name := range frames {
+		names = append(names, name)
+	}
+	return names
+}
 
 func GetFrame(id string) *SpriteFrame {
 	frame, exists := frames[id]

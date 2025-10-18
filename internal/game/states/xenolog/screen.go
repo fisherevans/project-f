@@ -22,9 +22,9 @@ var (
 	screenHeight = 128
 
 	badgeButtonStyle = badges.ButtonColorStyle{
-		Action:    colors.XenoLogText.RGBA,
-		Button:    colors.XenoLogDark.RGBA,
-		Highlight: colors.XenoLogHighlight.RGBA,
+		Action:    colorText,
+		Button:    colorDark,
+		Highlight: colorHighlight,
 	}
 	badgeASelect    = badges.Using(atlas).ButtonAction("A", "select", badgeButtonStyle)
 	badgeBBack      = badges.Using(atlas).ButtonAction("B", "back", badgeButtonStyle)
@@ -40,9 +40,15 @@ var (
 	arrowLeft6px = atlas.GetTilesheetSprite("common/arrows_6px", 4, 1)
 
 	dot = atlas.GetTilesheetSprite("common/symbols_5px", 1, 1)
+
+	colorDark      = colors.XenoLogDark.RGBA
+	colorClear     = colors.XenoLogClear.RGBA
+	colorText      = colors.XenoLogText.RGBA
+	colorHighlight = colors.XenoLogHighlight.RGBA
 )
 
 type Screen struct {
+	state  *State
 	canvas *shaders.Canvas
 	batch  *pixel.Batch
 	bloom  *bloom.Helper
@@ -54,11 +60,13 @@ type Screen struct {
 	screenTransitionElapsed   float64
 	screenTransitionMiddleOut bool
 
-	menuStack []Menu
+	menuStack        []Menu
+	doDrawLastScreen bool
 }
 
-func NewScreen() *Screen {
+func NewScreen(state *State) *Screen {
 	s := &Screen{
+		state:              state,
 		menuStack:          []Menu{},
 		canvas:             shaders.NewCanvas(screenWidth, screenHeight),
 		batch:              atlas.NewBatch(),
@@ -86,10 +94,12 @@ type Menu interface {
 	Enter()
 }
 
-func (s *Screen) snapshotLastScreen(middleOut bool) {
-	s.screenTransitionElapsed = 0
+func (s *Screen) onMenuChange(middleOut bool, doAnimate bool) {
+	if doAnimate {
+		s.screenTransitionElapsed = 0
+	}
 	s.screenTransitionMiddleOut = middleOut
-	s.lastMenuImage.Clear(colors.XenoLogClear.RGBA)
+	s.lastMenuImage.Clear(colorClear)
 	s.canvas.Draw(s.lastMenuImage, pixel.IM.Moved(s.canvas.Bounds().Center()))
 }
 
@@ -100,24 +110,36 @@ func (s *Screen) CurrentMenu() Menu {
 	return s.menuStack[len(s.menuStack)-1]
 }
 
-func (s *Screen) PushMenu(menu Menu) {
-	s.snapshotLastScreen(true)
+func (s *Screen) PushMenuAnimated(menu Menu) {
+	s.PushMenu(menu, true)
+}
+
+func (s *Screen) PopMenuAnimated() {
+	s.PopMenu(true)
+}
+
+func (s *Screen) SwapActiveMenuAnimated(menu Menu) {
+	s.SwapActiveMenu(menu, true)
+}
+
+func (s *Screen) PushMenu(menu Menu, doAnimate bool) {
+	s.onMenuChange(true, doAnimate)
 	s.menuStack = append(s.menuStack, menu)
 	s.CurrentMenu().Enter()
 }
 
-func (s *Screen) PopMenu() {
+func (s *Screen) PopMenu(doAnimate bool) {
 	if s.menuStack == nil || len(s.menuStack) == 1 {
 		log.Warn().Msgf("Tried to go back to parent menu, but there was none")
 		return
 	}
-	s.snapshotLastScreen(false)
+	s.onMenuChange(false, doAnimate)
 	s.menuStack = s.menuStack[:len(s.menuStack)-1]
 	s.CurrentMenu().Enter()
 }
 
-func (s *Screen) SwapActiveMenu(menu Menu) {
-	s.snapshotLastScreen(true)
+func (s *Screen) SwapActiveMenu(menu Menu, doAnimate bool) {
+	s.onMenuChange(true, doAnimate)
 	s.menuStack[len(s.menuStack)-1] = menu
 	s.CurrentMenu().Enter()
 }
@@ -140,7 +162,12 @@ func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Ta
 	s.menuStack[len(s.menuStack)-1].OnTick(s.batch, timeDelta)
 
 	// canvas clear after OnTick so that snapshotLastScreen can grab the last image
-	s.canvas.Clear(colors.XenoLogClear.RGBA)
+	s.canvas.Clear(colorClear)
+
+	if s.doDrawLastScreen {
+		s.doDrawLastScreen = false
+		s.lastMenuImage.Draw(s.canvas, pixel.IM.Moved(s.canvas.Bounds().Center()))
+	}
 
 	s.batch.Draw(s.canvas)
 	s.spriteFilterBuffer.Render(s.canvas)
@@ -149,6 +176,10 @@ func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Ta
 
 	bloomed := s.bloom.ApplyBloom(s.screenEffectShader)
 	bloomed.Draw(target, targetMatrix)
+}
+
+func (s *Screen) drawLastScreen() {
+	s.doDrawLastScreen = true
 }
 
 func arrowSprite(dir input.Direction) pixelutil.BoundedDrawable {

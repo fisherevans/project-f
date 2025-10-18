@@ -23,15 +23,7 @@ const (
 var (
 	cameraRenderDistanceX = int(math.Ceil(float64(game.GameWidth) / resources.MapTileSize.Float() / 2.0))
 	cameraRenderDistanceY = int(math.Ceil(float64(game.GameHeight) / resources.MapTileSize.Float() / 2.0))
-	atlas                 = resources.CreateAtlas(resources.AtlasFilter{
-		FontNames: []string{
-			resources.FontNameM5x7,
-			resources.FontNameM3x6,
-			resources.FontNameAddStandard,
-			resources.FontNameFF,
-			resources.FontName3x5,
-		},
-	})
+	atlas                 = resources.DefaultAtlas()
 )
 
 func init() {
@@ -135,7 +127,7 @@ func New(i game.AdventureIntent) game.State {
 }
 
 var clearColor = colors.HexString("#1a2d3b")
-var lightMapClear = colors.HexString("#7e899e")
+var lightMapClear = colors.HexString("#bccceb") //#7e899e")
 
 func (s *State) ClearColor() color.Color {
 	return clearColor

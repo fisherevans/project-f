@@ -7,8 +7,10 @@ import (
 	"io/fs"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 
@@ -40,6 +42,14 @@ func (m SpriteMetadata) init(img image.Image) {
 	}
 }
 
+func GetSpriteNames() []string {
+	var names []string
+	for name := range spriteResources {
+		names = append(names, name)
+	}
+	return names
+}
+
 func LoadSprite(name string) *pixel.Sprite {
 	sprite, exists := spriteResources[name]
 	if !exists {
@@ -47,6 +57,16 @@ func LoadSprite(name string) *pixel.Sprite {
 	}
 	pd := pixel.PictureDataFromImage(sprite.data)
 	return pixel.NewSprite(pd, pd.Bounds())
+}
+
+func warmSprites() {
+	canvas := opengl.NewCanvas(pixel.R(0, 0, 1000, 1000))
+	start := time.Now()
+	for name := range spriteResources {
+		sprite := LoadSprite(name)
+		sprite.Draw(canvas, pixel.IM)
+	}
+	log.Info().Msgf("Warming sprites took %v", time.Since(start))
 }
 
 func loadSpriteResource(path string, name string, data []byte) error {

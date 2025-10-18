@@ -46,6 +46,12 @@ func (c *Canvas) SetXbitShaderWithThresholds(black pixel.RGBA, colors []ColorThr
 	c.SetXbitShader(palette, thresholds, epsilon)
 }
 
+func (c *Canvas) SetXbitShaderThresholds(thresholds []float32) {
+	for i := 0; i < len(thresholds); i++ {
+		c.SetUniform(fmt.Sprintf("uThresholds[%d]", i), thresholds[i])
+	}
+}
+
 func (c *Canvas) SetXbitShader(palette []pixel.RGBA, thresholds []float32, epsilon float32) {
 	if len(palette) < 1 || len(palette) > 16 {
 		log.Warn().Msgf("palette must have 1-16 colors, got %d", len(palette))

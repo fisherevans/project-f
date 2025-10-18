@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+
 	"github.com/golang/freetype/truetype"
 	"github.com/gopxl/pixel/v2/ext/text"
 	"github.com/rs/zerolog/log"
@@ -22,11 +23,6 @@ func loadFont(path string, resourceName string, data []byte) error {
 }
 
 const (
-	FontNameDogica      = "dogica"
-	FontNameDogicaBold  = "dogica_bold"
-	FontNameMunro       = "munro"
-	FontNameMunroNarrow = "munro_narrow"
-	FontNameMunroMicro  = "munro_small"
 	FontNameM5x7        = "m5x7"
 	FontNameM3x6        = "m3x6"
 	FontNameAddStandard = "addstandard"
@@ -58,26 +54,6 @@ func (f FontMetadata) GetFullLineHeight() int {
 }
 
 var fontMetadata = map[string]FontMetadata{
-	FontNameDogica: {
-		RenderSize: 8,
-		// TODO
-	},
-	FontNameDogicaBold: {
-		RenderSize: 8,
-		// TODO
-	},
-	FontNameMunro: {
-		RenderSize: 10,
-		// TODO
-	},
-	FontNameMunroNarrow: {
-		RenderSize: 10,
-		// TODO
-	},
-	FontNameMunroMicro: {
-		RenderSize: 10,
-		// TODO
-	},
 	FontNameM5x7: {
 		RenderSize:   16,
 		LetterHeight: 7,

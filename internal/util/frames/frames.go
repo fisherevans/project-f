@@ -25,6 +25,7 @@ func New(name string, atlas *resources.Atlas, opts ...Opt) *Instance {
 }
 
 func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matrix, opts ...Opt) {
+	// TODO add check that we're drawing to batch and warn if it's not
 	// Split the rect into 9 sub-rectangles
 	top := float64(i.CutMargin[resources.FrameTop])
 	left := float64(i.CutMargin[resources.FrameLeft])
@@ -62,20 +63,27 @@ func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matri
 		panic("invalid origin")
 	}
 
-	subRects := map[resources.FrameSide]pixel.Rect{
-		resources.FrameTopLeft:     pixel.R(rect.Min.X, rect.Max.Y-top, rect.Min.X+left, rect.Max.Y),
-		resources.FrameTop:         pixel.R(rect.Min.X+left, rect.Max.Y-top, rect.Max.X-right, rect.Max.Y),
-		resources.FrameTopRight:    pixel.R(rect.Max.X-right, rect.Max.Y-top, rect.Max.X, rect.Max.Y),
-		resources.FrameLeft:        pixel.R(rect.Min.X, rect.Min.Y+bottom, rect.Min.X+left, rect.Max.Y-top),
-		resources.FrameMiddle:      pixel.R(rect.Min.X+left, rect.Min.Y+bottom, rect.Max.X-right, rect.Max.Y-top),
-		resources.FrameRight:       pixel.R(rect.Max.X-right, rect.Min.Y+bottom, rect.Max.X, rect.Max.Y-top),
-		resources.FrameBottomLeft:  pixel.R(rect.Min.X, rect.Min.Y, rect.Min.X+left, rect.Min.Y+bottom),
-		resources.FrameBottom:      pixel.R(rect.Min.X+left, rect.Min.Y, rect.Max.X-right, rect.Min.Y+bottom),
-		resources.FrameBottomRight: pixel.R(rect.Max.X-right, rect.Min.Y, rect.Max.X, rect.Min.Y+bottom),
+	type frameSide struct {
+		side resources.FrameSide
+		rect pixel.Rect
+	}
+	frameSides := []frameSide{
+		{side: resources.FrameTopLeft, rect: pixel.R(rect.Min.X, rect.Max.Y-top, rect.Min.X+left, rect.Max.Y)},
+		{side: resources.FrameTop, rect: pixel.R(rect.Min.X+left, rect.Max.Y-top, rect.Max.X-right, rect.Max.Y)},
+		{side: resources.FrameTopRight, rect: pixel.R(rect.Max.X-right, rect.Max.Y-top, rect.Max.X, rect.Max.Y)},
+		{side: resources.FrameLeft, rect: pixel.R(rect.Min.X, rect.Min.Y+bottom, rect.Min.X+left, rect.Max.Y-top)},
+		{side: resources.FrameMiddle, rect: pixel.R(rect.Min.X+left, rect.Min.Y+bottom, rect.Max.X-right, rect.Max.Y-top)},
+		{side: resources.FrameRight, rect: pixel.R(rect.Max.X-right, rect.Min.Y+bottom, rect.Max.X, rect.Max.Y-top)},
+		{side: resources.FrameBottomLeft, rect: pixel.R(rect.Min.X, rect.Min.Y, rect.Min.X+left, rect.Min.Y+bottom)},
+		{side: resources.FrameBottom, rect: pixel.R(rect.Min.X+left, rect.Min.Y, rect.Max.X-right, rect.Min.Y+bottom)},
+		{side: resources.FrameBottomRight, rect: pixel.R(rect.Max.X-right, rect.Min.Y, rect.Max.X, rect.Min.Y+bottom)},
 	}
 
-	// DrawColorMask() each sub-rectangl, options.colore
-	for side, subRect := range subRects {
+	// DrawColorMask() each sub-rectangle
+	drawCount := 0
+	for _, s := range frameSides {
+		side := s.side
+		subRect := s.rect
 		sprite := i.atlas.GetFrameSprite(i.name, side)
 
 		frameMode, ok := i.FrameModes[side]
@@ -97,11 +105,12 @@ func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matri
 				drawMatrix = matrix.Moved(subRect.Center())
 			}
 			sprite.DrawColorMask(target, drawMatrix, options.color)
+			drawCount++
 		case resources.FrameModeRepeat:
 			drawRepeated(target, matrix, sprite, subRect, options)
+			drawCount++
 		}
 	}
-
 }
 
 type frameOptions struct {

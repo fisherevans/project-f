@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	defaultAtlas       *Atlas
 	maxSpriteAtlasSize Pixels = 4096
 )
 
@@ -26,6 +27,37 @@ type Atlas struct {
 	tilesheetSprites map[TilesheetSpriteId]pixelutil.BoundedDrawable
 	frameSprites     map[FrameSpriteId]pixelutil.BoundedDrawable
 	fonts            map[string]FontInstance
+}
+
+func DefaultAtlas() *Atlas {
+	if defaultAtlas == nil {
+		defaultAtlas = CreateAtlas(AtlasFilter{
+			FontNames: []string{
+				FontNameM3x6,
+				FontNameM5x7,
+				FontNameAddStandard,
+				FontNameFF,
+				FontName3x5,
+			},
+		})
+	}
+	return defaultAtlas
+}
+
+func (a *Atlas) GetAllSprites() map[string]pixelutil.BoundedDrawable {
+	return a.sprites
+}
+
+func (a *Atlas) GetAllTilesheetSprites() map[TilesheetSpriteId]pixelutil.BoundedDrawable {
+	return a.tilesheetSprites
+}
+
+func (a *Atlas) GetAllFrameSprites() map[FrameSpriteId]pixelutil.BoundedDrawable {
+	return a.frameSprites
+}
+
+func (a *Atlas) GetAllFonts() map[string]FontInstance {
+	return a.fonts
 }
 
 func (a *Atlas) GetSprite(name string) pixelutil.BoundedDrawable {

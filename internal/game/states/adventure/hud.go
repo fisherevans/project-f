@@ -46,12 +46,12 @@ func (h *Hud) OnTick(s *State, target pixel.Target, matrix pixel.Matrix, bounds 
 			stroke: "#3d1632",
 			fg:     "#edb2dc",
 		},
-		{
-			icon:   h.researchIcon,
-			count:  game.CurrentSave().Animech.AnimechExperience, // todo not from a run
-			stroke: "#162d3d",
-			fg:     "#b2d4ed",
-		},
+		//{
+		//	icon:   h.researchIcon,
+		//	count:  game.CurrentSave().Animech.AnimechExperience, // todo not from a run
+		//	stroke: "#162d3d",
+		//	fg:     "#b2d4ed",
+		//},
 	}
 
 	rowPadding := 2.0

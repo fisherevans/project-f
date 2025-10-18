@@ -16,9 +16,9 @@ import (
 var (
 	paneW       = 64
 	onDarkStyle = badges.ButtonColorStyle{
-		Action:    colors.XenoLogText.RGBA,
-		Button:    colors.XenoLogClear.RGBA,
-		Highlight: colors.XenoLogHighlight.RGBA,
+		Action:    colorText,
+		Button:    colorClear,
+		Highlight: colorHighlight,
 	}
 	badgeBCancelOnDark       = badges.Using(atlas).ButtonAction("B", "cancel", onDarkStyle)
 	badgeSelectDetailsOnDark = badges.Using(atlas).ButtonAction("select", "details", onDarkStyle).Flipped()
@@ -90,11 +90,11 @@ type skillListItem struct {
 
 func (p *skillListItem) ButtonAJustPressed(m *skillSwapMenu) {
 	m.onComplete(p.skillId)
-	m.screen.PopMenu()
+	m.screen.PopMenuAnimated()
 }
 
 func (p *skillListItem) ButtonSelectJustPressed(m *skillSwapMenu) {
-	m.screen.PushMenu(newSkillDetailMenu(m.screen, p.skillId))
+	m.screen.PushMenuAnimated(newSkillDetailMenu(m.screen, p.skillId))
 }
 
 func (p *skillListItem) OnHighlight(m *skillSwapMenu) {
@@ -113,9 +113,9 @@ func (p *skillListItem) Render(m *skillSwapMenu, topLeftY int, target pixel.Targ
 	centerY := topLeftY - p.Height()/2
 	smallText := newTextRenderer(target, smallTextbox)
 
-	mask := colors.XenoLogText.RGBA
+	mask := colorText
 	if highlightProgress > 0 {
-		mask = colors.Lerp(mask, colors.XenoLogHighlight.RGBA, highlightProgress)
+		mask = colors.Lerp(mask, colorHighlight, highlightProgress)
 	}
 	smallText.render(p.skillId.Get().Name, screenWidth/2, centerY, mask, tbcfg.RenderFrom(gfx.Centered))
 }
@@ -130,7 +130,7 @@ func (p *skillListItemSpacer) Height() int {
 
 func (p *skillListItemSpacer) Render(m *skillSwapMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
 	w := 35
-	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(screenWidth/2, topLeftY-2)), gfx.TopCenter, w, 1, colors.XenoLogDark.RGBA)
+	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(screenWidth/2, topLeftY-2)), gfx.TopCenter, w, 1, colorDark)
 }
 
 func (p *skillListItemSpacer) DoSkipHighlight(m *skillSwapMenu) bool {
@@ -151,7 +151,7 @@ func (p *skillListItemTitle) DoSkipHighlight(m *skillSwapMenu) bool {
 
 func (p *skillListItemTitle) Render(m *skillSwapMenu, topLeftY int, target pixel.Target, highlightProgress float64) {
 	titleText := newTextRenderer(target, titleTextbox)
-	titleText.render("Swap Skill", screenWidth/2, topLeftY-2, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+	titleText.render("Swap Skill", screenWidth/2, topLeftY-2, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
 }
 
 type skillListItemAction struct {
@@ -176,9 +176,9 @@ func (p *skillListItemAction) Render(m *skillSwapMenu, topLeftY int, target pixe
 	box := smallTextbox.NewSimpleContent(p.label)
 	topCenter := pixel.IM.Moved(gfx.IVec(screenWidth/2, topLeftY-2))
 
-	bgMask, fgMask := colors.XenoLogDark.RGBA, colors.XenoLogText.RGBA
+	bgMask, fgMask := colorDark, colorText
 	if m.list.highlightedItem() == p {
-		bgMask, fgMask = flashingHighlight(), colors.XenoLogDark.RGBA
+		bgMask, fgMask = flashingHighlight(), colorDark
 	}
 	padding := 3
 	frameR := pixel.R(0, 0, float64(box.Width()+padding*2), 7)
@@ -189,18 +189,18 @@ func (p *skillListItemAction) Render(m *skillSwapMenu, topLeftY int, target pixe
 type skillsCursor struct{}
 
 func (c *skillsCursor) Render(m *skillSwapMenu, centerLeft int, target pixel.Target, index int, movementProgress float64, highlightProgress float64, movingDown bool) {
-	mask := colors.XenoLogHighlight.RGBA
+	mask := colorHighlight
 
 	if index < m.cursorStartIndex {
 		// Above threshold - hidden, unless transitioning while moving up
 		if index == m.cursorStartIndex-1 && !movingDown {
-			mask = colors.Lerp(mask, colors.XenoLogClear.RGBA, highlightProgress)
+			mask = colors.Lerp(mask, colorClear, highlightProgress)
 		} else {
-			mask = colors.XenoLogClear.RGBA
+			mask = colorClear
 		}
 	} else if index == m.cursorStartIndex && movingDown {
 		// Just crossed threshold going down - fade in
-		mask = colors.Lerp(colors.XenoLogClear.RGBA, mask, highlightProgress)
+		mask = colors.Lerp(colorClear, mask, highlightProgress)
 	}
 
 	smallText := newTextRenderer(target, smallTextbox)
@@ -211,7 +211,7 @@ func (c *skillsCursor) Render(m *skillSwapMenu, centerLeft int, target pixel.Tar
 
 func (m *skillSwapMenu) OnTick(target pixel.Target, timeDelta float64) {
 	if game.Controls[*State]().ButtonB().JustPressed() {
-		m.screen.PopMenu()
+		m.screen.PopMenuAnimated()
 	}
 	m.renderSkillPane(target, true, "original", m.original)
 	newSkill := m.swapWith
@@ -245,30 +245,30 @@ func (m *skillSwapMenu) renderSkillPane(target pixel.Target, isLeft bool, label 
 	}
 
 	// Background pane
-	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(paneX, 0)), origin, paneW, screenHeight, colors.XenoLogDark.RGBA)
+	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(paneX, 0)), origin, paneW, screenHeight, colorDark)
 
 	// Border line
-	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(borderX, 0)), gfx.BottomLeft, 1, screenHeight, colors.XenoLogHighlight.RGBA)
+	gfx.DrawRect(atlas, target, pixel.IM.Moved(gfx.IVec(borderX, 0)), gfx.BottomLeft, 1, screenHeight, colorHighlight)
 
 	// arrow
 	arrowBoxSize := 11.0
 	arrowBoxR := pixel.R(0, 0, arrowBoxSize, arrowBoxSize)
 	arrowBoxCenter := pixel.IM.Moved(gfx.IVec(borderX, screenHeight-18))
-	frame2px.Draw(target, arrowBoxR, arrowBoxCenter, frames.WithColor(colors.XenoLogDark.RGBA), frames.WithRenderOrigin(gfx.Centered))
-	frame2pxBorder.Draw(target, arrowBoxR, arrowBoxCenter, frames.WithColor(colors.XenoLogClear.RGBA), frames.WithRenderOrigin(gfx.Centered))
-	arrowRight.DrawColorMask(target, arrowBoxCenter.Moved(gfx.IVec(1, 1)), colors.XenoLogText.RGBA)
+	frame2px.Draw(target, arrowBoxR, arrowBoxCenter, frames.WithColor(colorDark), frames.WithRenderOrigin(gfx.Centered))
+	frame2pxBorder.Draw(target, arrowBoxR, arrowBoxCenter, frames.WithColor(colorClear), frames.WithRenderOrigin(gfx.Centered))
+	arrowRight.DrawColorMask(target, arrowBoxCenter.Moved(gfx.IVec(1, 1)), colorText)
 
 	// Skill info
-	smallText.render(label, centerX, screenHeight-4, colors.XenoLogText.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+	smallText.render(label, centerX, screenHeight-4, colorText, tbcfg.RenderFrom(gfx.TopCenter))
 
 	skillNameY := screenHeight - 15
 	if skillId == rpg.UnsetSkillId {
-		smallText.render("-------", centerX, skillNameY, colors.XenoLogClear.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+		smallText.render("-------", centerX, skillNameY, colorClear, tbcfg.RenderFrom(gfx.TopCenter))
 		return
 	}
 
 	skill := skillId.Get()
-	smallText.render(skill.Name, centerX, skillNameY, colors.XenoLogHighlight.RGBA, tbcfg.RenderFrom(gfx.TopCenter))
+	smallText.render(skill.Name, centerX, skillNameY, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
 	tickBarRenderer.Draw(m.screen.spriteFilterBuffer.Target(), pixel.IM.Moved(gfx.IVec(centerX, screenHeight-26)), &skill, tickBarOpt)
 
 	if isLeft {

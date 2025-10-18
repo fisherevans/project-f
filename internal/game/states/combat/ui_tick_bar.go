@@ -118,7 +118,7 @@ func drawSkill(target pixel.Target, matrixTopMiddle pixel.Matrix, skill *rpg.Ski
 	if skill == nil {
 		return
 	}
-	mask = colors.WithAlpha(mask, alpha)
+	mask = colors.WithAlphaTodoFix(mask, alpha)
 	if interruptedAt >= 0 {
 		mask = colors.ScaleColor(mask, 0.5)
 	}
@@ -202,7 +202,7 @@ func drawSkill(target pixel.Target, matrixTopMiddle pixel.Matrix, skill *rpg.Ski
 				iconMatrix = iconMatrix.Moved(stanceDelta)
 				stanceMask := mask
 				if interruptedAt >= 0 {
-					stanceMask = colors.WithAlpha(mask, 0.2)
+					stanceMask = colors.WithAlphaTodoFix(mask, 0.2)
 				}
 				{
 					thisMatrix := iconMatrix.Chained(tickSpriteCenterMatrix)

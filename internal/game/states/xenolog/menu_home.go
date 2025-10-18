@@ -52,17 +52,14 @@ func (s *homeMenu) Enter() {
 }
 
 func isAnimechUpgradeAvailable() bool {
-	available := game.CurrentSave().Animech.AnimechExperience
-	level := game.CurrentSave().Animech.Upgrades.GetLevel()
-	if available >= rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1) {
-		return true
-	}
-	return false
+	a := game.CurrentSave().Animech
+	level := a.Upgrades.GetLevel()
+	return a.AnimechExperience >= rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1)
 }
 
 func isPrimortalUpgradeAvailable() bool {
 	for pType, save := range game.CurrentSave().Primortals {
-		next := nextUnlock(pType.Primortal(), game.CurrentSave())
+		next := cheapestAvailableUnlock(pType.Primortal(), game.CurrentSave())
 		if next != nil && save.ResearchPoints >= next.Cost {
 			return true
 		}
@@ -79,10 +76,14 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 
 	if game.Controls[*State]().ButtonA().JustPressed() {
 		if s.selectLeft {
-			s.screen.PushMenu(newAnimechMenu(s.screen))
+			s.screen.PushMenuAnimated(newAnimechMenu(s.screen))
 		} else {
-			s.screen.PushMenu(newPrimortalsMenu(s.screen))
+			s.screen.PushMenuAnimated(newPrimortalsMenu(s.screen))
 		}
+	}
+
+	if game.Controls[*State]().ButtonB().JustPressed() {
+		s.screen.state.Close()
 	}
 
 	center := pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight/2+3))
@@ -104,7 +105,7 @@ var (
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colors.XenoLogText.RGBA),
+			tbcfg.Foreground(colorText),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	selectBoxSubLabelFlashSpeed = 1.0
@@ -146,13 +147,13 @@ func newSelectBox(sprite pixelutil.BoundedDrawable, label, subLabel string) *sel
 func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bool, timeDelta float64) {
 	b.elapsed += timeDelta
 
-	mask := colors.XenoLogText.RGBA
+	mask := colorText
 	if selected {
-		mask = colors.XenoLogHighlight.RGBA
+		mask = colorHighlight
 	}
 
 	frameRect := pixel.R(0, 0, float64(selectBoxWidth), float64(selectBoxHeight))
-	frame5px.Draw(target, frameRect, center, frames.WithColor(colors.XenoLogDark.RGBA))
+	frame5px.Draw(target, frameRect, center, frames.WithColor(colorDark))
 	frame5pxBorder.Draw(target, frameRect, center, frames.WithColor(mask))
 
 	bottomCenter := center.Moved(gfx.IVec(0, -selectBoxHeight/2))
@@ -165,7 +166,7 @@ func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bo
 	}
 
 	if b.subLabel != "" {
-		subLabelMask := colors.Lerp(colors.XenoLogText.RGBA, colors.XenoLogHighlight.RGBA, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+		subLabelMask := colors.Lerp(colorText, colorHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 		c := selectBoxSubLabelText.NewSimpleContent(b.subLabel)
 		selectBoxSubLabelText.Render(target,
 			center.Moved(gfx.IVec(0, -selectBoxHeight/2-selectBoxSubLabelMargin)),

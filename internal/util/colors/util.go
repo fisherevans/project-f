@@ -171,11 +171,21 @@ func MixColor(a, b pixel.RGBA) pixel.RGBA {
 	}
 }
 
-func WithAlpha(c pixel.RGBA, a float64) pixel.RGBA {
+func WithAlphaTodoFix(c pixel.RGBA, a float64) pixel.RGBA {
 	return pixel.RGBA{
 		R: c.R,
 		G: c.G,
 		B: c.B,
+		A: a,
+	}
+}
+
+func WithAlpha(c pixel.RGBA, a float64) pixel.RGBA {
+	unalpha := 1.0 / c.A
+	return pixel.RGBA{
+		R: c.R * unalpha * a,
+		G: c.G * unalpha * a,
+		B: c.B * unalpha * a,
 		A: a,
 	}
 }
