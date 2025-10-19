@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/util"
@@ -58,8 +59,11 @@ var MapLayers = util.Concat(
 )
 
 type Map struct {
-	Layers   map[MapLayerName]*Layer `json:"layers"`
-	Entities map[string]*Entity      `json:"entities"`
+	Layers             map[MapLayerName]*Layer
+	Entities           map[string]*Entity
+	AmbientZones       []AmbientZone
+	SceneClearColor    pixel.RGBA
+	LightingClearColor pixel.RGBA
 }
 
 func (m *Map) AddEntity(id string, e *Entity) {
@@ -126,4 +130,17 @@ func (e *Entity) GetStringMetadata(key, defaultValue string) string {
 
 func (e *Entity) String() string {
 	return fmt.Sprintf("Entity{id:%d,x:%d,y:%d,sprite_gid:%x,sprite:[%s],props:%v}", e.ID, e.X, e.Y, e.SpriteGID, e.SpriteId.String(), e.Properties)
+}
+
+type AmbientZone struct {
+	X, Y     int // bottom-left in TILES
+	W, H     int
+	Color    pixel.RGBA
+	GlowSize float64
+}
+
+func (z AmbientZone) Moved(dx int, dy int) AmbientZone {
+	z.X += dx
+	z.Y += dy
+	return z
 }

@@ -17,6 +17,8 @@ import (
 )
 
 func initializeMap(a *State, m *resources.Map) {
+	a.sceneClear = m.SceneClearColor
+	a.lightClear = m.LightingClearColor
 	var minX, maxX, minY, maxY int
 	for _, layer := range m.Layers {
 		for _, tile := range layer.Tiles {
@@ -40,6 +42,9 @@ func initializeMap(a *State, m *resources.Map) {
 			X: x + dx,
 			Y: y + dy,
 		}
+	}
+	for _, az := range m.AmbientZones {
+		a.ambientZones = append(a.ambientZones, az.Moved(dx, dy))
 	}
 	a.mapWidth, a.mapHeight = maxX-minX+1, maxY-minY+1
 	for _, layerName := range util.Concat(resources.MapLayersUnder, resources.MapLayersOver) {

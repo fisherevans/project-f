@@ -7,6 +7,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"golang.org/x/image/colornames"
 
 	"fisherevans.com/project/f/internal/game"
@@ -43,9 +44,13 @@ const (
 type State struct {
 	game.BaseState
 
+	sceneClear pixel.RGBA
+	lightClear pixel.RGBA
+
 	mapWidth, mapHeight int
 	baseRenderLayers    []renderLayer
 	overlayRenderLayers []renderLayer
+	ambientZones        []resources.AmbientZone
 
 	camera Camera
 	player *Player
@@ -126,11 +131,8 @@ func New(i game.AdventureIntent) game.State {
 	return a
 }
 
-var clearColor = colors.HexString("#1a2d3b")
-var lightMapClear = colors.HexString("#bccceb") //#7e899e")
-
 func (s *State) ClearColor() color.Color {
-	return clearColor
+	return s.sceneClear
 }
 
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
@@ -162,6 +164,8 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
 
+	// todo limit rendering out of bounds tiles
+
 	for _, thisRenderLayer := range s.baseRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
 	}
@@ -185,7 +189,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	// LIGHTING
 
 	s.lightMapBatch.Clear()
-	s.lightMapCanvas.Clear(lightMapClear)
+	s.DrawAmbient(s.lightMapCanvas, cameraMatrix, renderBounds, imdraw.New(nil))
 	s.litSceneCanvas.Clear(colornames.Black)
 	for _, entity := range s.locationSortedEntities() {
 		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())

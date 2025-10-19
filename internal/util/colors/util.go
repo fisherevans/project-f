@@ -32,6 +32,14 @@ func registerNamedColor(rgba pixel.RGBA, name ColorName) NamedColor {
 	return namedColor
 }
 
+func FromString(s string) pixel.RGBA {
+	if strings.HasPrefix(s, "#") {
+		return HexString(s)
+	} else {
+		return ColorFromName(ColorName(s)).RGBA
+	}
+}
+
 func ColorFromName(name ColorName) NamedColor {
 	if color, exists := colorsByName[name]; exists {
 		return color

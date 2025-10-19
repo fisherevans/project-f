@@ -27,11 +27,13 @@ type Selector struct {
 	initialized bool
 	selected    int
 	states      []game.SelectIntentDestination
+	vm          *resources.ScriptEnvironment
 }
 
 func New(intent game.SelectIntent) game.State {
 	return &Selector{
 		states: intent.Destinations,
+		vm:     resources.NewScriptEnvironment(nil),
 	}
 }
 
@@ -48,17 +50,28 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 	case input.Up:
 		s.selected--
 		if s.selected < 0 {
-			s.selected += len(s.states)
+			s.selected = 0
 		}
 	case input.Down:
 		s.selected++
-		if s.selected >= len(s.states) {
-			s.selected -= len(s.states)
+		if s.selected > len(s.states) {
+			s.selected = len(s.states)
 		}
 
 	}
 
 	if game.Controls[*Selector]().ButtonA().JustPressed() {
+		if s.selected == len(s.states) {
+			s, err := s.vm.ScriptReference("test")
+			if err != nil {
+				panic(err)
+			}
+			err = s.OnUpdate(1, 1)
+			if err != nil {
+				panic(err)
+			}
+			return
+		}
 		game.SetActiveStateIntent(s.states[s.selected].Intent())
 		return
 	}
@@ -82,6 +95,15 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 		optionContent := optionTextbox.NewSimpleContent(str)
 		optionTextbox.Render(target, gfx.Moved(10, int(targetBounds.H())-35-15*index), optionContent)
 	}
+
+	thingText := "test thing"
+	if s.selected == len(s.states) {
+		thingText = "> " + thingText
+	} else {
+		thingText = "   " + thingText
+	}
+	thingContent := optionTextbox.NewSimpleContent(thingText)
+	optionTextbox.Render(target, gfx.Moved(10, int(targetBounds.H())-35-15*len(s.states)), thingContent)
 
 	game.DebugBR("enter: select")
 	game.DebugBR("w/s/up/down: change")

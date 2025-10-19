@@ -1,9 +1,10 @@
 package adventure
 
 import (
+	"github.com/gopxl/pixel/v2"
+
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"github.com/gopxl/pixel/v2"
 )
 
 type renderLayer struct {
