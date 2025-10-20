@@ -5,9 +5,11 @@ import (
 	"math"
 	"sort"
 
+	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/image/colornames"
 
 	"fisherevans.com/project/f/internal/game"
@@ -81,6 +83,9 @@ type State struct {
 
 	hudBatch *pixel.Batch
 	mobs     []*ShadowMob
+
+	eventDispatcher *events.Dispatcher
+	worldState      events.MutableObject
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -114,7 +119,10 @@ func New(i game.AdventureIntent) game.State {
 		litSceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
 
 		hudBatch: atlas.NewBatch(),
+
+		eventDispatcher: events.NewDispatcher(),
 	}
+	a.worldState = a.eventDispatcher.NewObject()
 
 	a.bloom.Threshold = 1.0
 	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
@@ -153,6 +161,10 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	}
 
 	s.actions.ExecuteActions(s, timeDelta)
+
+	for _, e := range s.eventDispatcher.Flush(s.worldState) {
+		log.Info().Msgf("event: %#v", e)
+	}
 
 	s.camera.Update(s, timeDelta)
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)

@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 )
 
@@ -18,7 +19,7 @@ func (p *Player) Update(adv *State, timeDelta float64) {
 	if p.IsMoving() {
 		if game.Controls[*State]().DPad().IsPressed() {
 			p.intentDirection = game.Controls[*State]().
-			DPad().GetDirection()
+				DPad().GetDirection()
 		}
 		if game.Controls[*State]().ButtonB().IsPressed() {
 			if p.MoveState == MoveStateWalking {
@@ -42,7 +43,7 @@ func (p *Player) Update(adv *State, timeDelta float64) {
 	// trigger movement if player is pressing a direction
 	if game.Controls[*State]().DPad().IsPressed() {
 		direction := game.Controls[*State]().
-		DPad().GetDirection()
+			DPad().GetDirection()
 		p.FacingDirection = direction
 		if p.intentDirection != direction {
 			p.intentDirection = direction
@@ -67,6 +68,12 @@ func (p *Player) Update(adv *State, timeDelta float64) {
 		if entityExists {
 			targetEntity := adv.entities[targetEntityId]
 			targetEntity.Interact(adv, p)
+			data := adv.eventDispatcher.NewObject()
+			data.Set("targetId", string(targetEntityId))
+			adv.eventDispatcher.Dispatch(events.Event{
+				Type: events.EventTypeInteract,
+				Data: data,
+			})
 			return
 		}
 		doDash := false

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="200" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="169">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="200" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="169">
  <properties>
   <property name="lighting_clear_color" value="#5a5f8b"/>
   <property name="scene_clear_color" value="#20212f"/>
@@ -1430,7 +1430,11 @@
   <object id="138" gid="6123" x="592.161" y="1006.97" width="16" height="16"/>
   <object id="139" gid="6123" x="335.979" y="1325.5" width="16" height="16"/>
   <object id="140" gid="6123" x="352.097" y="1326.35" width="16" height="16"/>
-  <object id="143" gid="6123" x="751.74" y="1295.3" width="16" height="16"/>
+  <object id="143" gid="6123" x="751.74" y="1295.3" width="16" height="16">
+   <properties>
+    <property name="script_ref" value="test"/>
+   </properties>
+  </object>
   <object id="144" type="Ev" gid="5616" x="1312.72" y="1344.08" width="16" height="16"/>
   <object id="145" gid="5495" x="752.526" y="1262.34" width="16" height="16">
    <properties>

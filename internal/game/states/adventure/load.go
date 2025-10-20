@@ -423,5 +423,17 @@ func initializeMap(a *State, m *resources.Map) {
 		default:
 			log.Warn().Msgf("Unknown entity type: %s", entity)
 		}
+		if scriptRef := entity.GetStringMetadata("script_ref", ""); scriptRef != "" {
+			program := resources.GetScript(scriptRef)
+			if program == nil {
+				log.Fatal().Msgf("Unable to find script: %s", scriptRef)
+			}
+			eventHandler, err := a.eventDispatcher.NewGojaEventHandler(program)
+			if err != nil {
+				log.Fatal().Msgf("Unable to create event handler: %s", err)
+			}
+			a.eventDispatcher.RegisterAndInit(string(entityId), eventHandler, a.worldState)
+			log.Info().Msgf("Registered event handler %s for %s", scriptRef, entityId)
+		}
 	}
 }

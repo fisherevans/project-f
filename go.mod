@@ -10,7 +10,6 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/gopxl/glhf/v2 v2.0.0
 	github.com/gopxl/pixel/v2 v2.3.0
-	github.com/icza/mjpeg v0.0.0-20230330134156-38318e5ab8f4
 	github.com/lafriks/go-tiled v0.13.0
 	github.com/rs/zerolog v1.33.0
 	golang.design/x/clipboard v0.7.1
@@ -20,9 +19,6 @@ require (
 
 require (
 	github.com/dlclark/regexp2 v1.11.4 // indirect
-	github.com/gen2brain/x264-go v0.3.1 // indirect
-	github.com/gen2brain/x264-go/x264c v0.0.0-20241022182000-732e1bdb7da2 // indirect
-	github.com/gen2brain/x264-go/yuv v0.0.0-20221204084822-82ee2951dea2 // indirect
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect

@@ -44,7 +44,7 @@ var (
 		{
 			FileRoot:      "scripts",
 			FileExtension: "js",
-			FileLoader:    loadScriptResource,
+			FileLoader:    loadScript,
 		},
 	}
 )
