@@ -14,8 +14,7 @@ type MovementRestriction interface {
 	OnEntryComplete(*State, EntityId)
 }
 
-type BasicMovementRestriction struct {
-}
+type BasicMovementRestriction struct{}
 
 func (m BasicMovementRestriction) EntryAllowed(*State, EntityId) bool {
 	return false

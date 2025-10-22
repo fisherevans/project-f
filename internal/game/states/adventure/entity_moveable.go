@@ -3,6 +3,7 @@ package adventure
 import (
 	"slices"
 
+	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
@@ -44,7 +45,9 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	m.ConstantMovement += moveDelta
 	m.MoveProgression += moveDelta
 	if m.MoveProgression >= 0.5 && !m.IsPassable() {
-		adv.unoccupy(m.CurrentLocation, m.Id)
+		if adv.unoccupy(m.CurrentLocation, m.Id) {
+			m.emitZoneEvents(adv, m.CurrentLocation, false)
+		}
 	}
 	if m.MoveProgression >= 1.0 {
 		m.CurrentLocation = m.TargetLocation
@@ -55,10 +58,24 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 		if newTile, newTileExists := adv.movementRestrictions[m.CurrentLocation]; newTileExists {
 			newTile.OnEntryComplete(adv, m.Id)
 		}
+		m.emitZoneEvents(adv, m.CurrentLocation, true)
 		remainingTime := remaining / moveSpeed // movement is complete, but there is more time in the tick to move
 		return remainingTime
 	}
 	return 0
+}
+
+func (m *MoveableEntity) emitZoneEvents(adv *State, loc MapLocation, isEntering bool) {
+	if string(m.Id) == "tiled-7" {
+		//log.Info().Msgf("Zone event: tiled-7")
+	}
+	for _, zoneId := range adv.zones.ZonesAt(loc) {
+		adv.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
+			EntityId:   string(m.Id),
+			ZoneId:     zoneId,
+			IsEntering: isEntering,
+		})
+	}
 }
 
 func (m *MoveableEntity) GetLocationInDirection(dir input.Direction) MapLocation {

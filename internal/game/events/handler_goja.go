@@ -2,187 +2,213 @@ package events
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+	"unicode"
 
 	"github.com/dop251/goja"
 	"github.com/rs/zerolog/log"
 )
 
-func NewGojaEventHandler(program *goja.Program) (EventHandler, error) {
+type handlerFn[T any] func(ctx EntityContext, world WorldStateReader, state any, event *T) *HandlerOutput
+
+type gojaEventHandler struct {
+	vm      *goja.Runtime
+	program *goja.Program
+
+	fnInit                 func(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput
+	fnOnInteract           handlerFn[EventOnInteract]
+	fnOnDialogueComplete   handlerFn[EventDialogueComplete]
+	fnOnChatterComplete    handlerFn[EventChatterComplete]
+	fnOnTimerComplete      handlerFn[EventTimerComplete]
+	fnOnEntityZoneActivity handlerFn[EventEntityZoneActivity]
+}
+
+func (e *gojaEventHandler) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
+	if e.fnInit != nil {
+		return e.fnInit(ctx, world, state)
+	}
+	return nil
+}
+
+func (e *gojaEventHandler) OnInteract(ctx EntityContext, world WorldStateReader, state any, event *EventOnInteract) *HandlerOutput {
+	if e.fnOnInteract == nil {
+		return nil
+	}
+	return e.fnOnInteract(ctx, world, state, event)
+}
+
+func (e *gojaEventHandler) OnDialogueComplete(ctx EntityContext, world WorldStateReader, state any, event *EventDialogueComplete) *HandlerOutput {
+	if e.fnOnDialogueComplete == nil {
+		return nil
+	}
+	return e.fnOnDialogueComplete(ctx, world, state, event)
+}
+
+func (e *gojaEventHandler) OnChatterComplete(ctx EntityContext, world WorldStateReader, state any, event *EventChatterComplete) *HandlerOutput {
+	if e.fnOnChatterComplete == nil {
+		return nil
+	}
+	return e.fnOnChatterComplete(ctx, world, state, event)
+}
+
+func (e *gojaEventHandler) OnTimerComplete(ctx EntityContext, world WorldStateReader, state any, event *EventTimerComplete) *HandlerOutput {
+	if e.fnOnTimerComplete == nil {
+		return nil
+	}
+	return e.fnOnTimerComplete(ctx, world, state, event)
+}
+
+func (e *gojaEventHandler) OnEntityZoneActivity(ctx EntityContext, world WorldStateReader, state any, event *EventEntityZoneActivity) *HandlerOutput {
+	if e.fnOnEntityZoneActivity == nil {
+		return nil
+	}
+	return e.fnOnEntityZoneActivity(ctx, world, state, event)
+}
+
+func NewGojaEventHandler(id string, program *goja.Program) (EventHandler, error) {
 	handler := &gojaEventHandler{
-		vm:      goja.New(),
+		vm:      newGojaVM(),
 		program: program,
 	}
-	globalFunctions := map[string]func(call goja.FunctionCall) goja.Value{
-		"log": func(call goja.FunctionCall) goja.Value {
-			for _, arg := range call.Arguments {
-				log.Info().Msgf("[JS] %s", arg.String())
-			}
-			return goja.Undefined()
+	globalVariables := map[string]any{
+		"log": gojaLogs{
+			caller: id,
 		},
 	}
-	for name, fn := range globalFunctions {
-		if err := handler.vm.Set(name, fn); err != nil {
+	for name, v := range globalVariables {
+		if err := handler.vm.Set(name, v); err != nil {
 			return nil, fmt.Errorf("failed to set global function %s: %v", name, err)
 		}
 	}
 	if _, err := handler.vm.RunProgram(program); err != nil {
 		return nil, fmt.Errorf("error compiling goja script: %w", err)
 	}
+
+	// Register Init function
 	if v := handler.vm.Get("Init"); v != nil {
 		if fn, ok := goja.AssertFunction(v); ok {
-			handler.fnInit = handler.wrapInitFunction(fn)
+			handler.fnInit = wrapInitFunction(handler, fn)
 		}
 	}
-	eventHandlerFns := map[string]*eventHandlerFn{
-		"OnInteract": &handler.fnOnInteract,
-	}
-	for jsFnName, ptr := range eventHandlerFns {
-		if v := handler.vm.Get(jsFnName); v != nil {
+
+	for name, register := range gojaHandlerMapping {
+		if v := handler.vm.Get(name); v != nil {
 			if fn, ok := goja.AssertFunction(v); ok {
-				*ptr = handler.wrapEventHandlerFunction(fn)
+				register(handler, fn)
 			}
 		}
 	}
+
 	return handler, nil
 }
 
-type eventHandlerFn func(self, world, state, event ReadableObject) *HandlerOutput
-
-type gojaEventHandler struct {
-	vm      *goja.Runtime
-	program *goja.Program
-
-	fnInit       func(self, world, state ReadableObject) *HandlerOutput
-	fnOnInteract eventHandlerFn
-}
-
-func (e *gojaEventHandler) Init(self, world, state ReadableObject) *HandlerOutput {
-	if e.fnInit == nil {
-		return nil
-	}
-	return e.fnInit(self, world, state)
-}
-
-func (e *gojaEventHandler) OnInteract(self, world, state, event ReadableObject) *HandlerOutput {
-	if e.fnOnInteract == nil {
-		return nil
-	}
-	return e.fnOnInteract(self, world, state, event)
-}
-
-func (e *gojaEventHandler) wrapInitFunction(fn goja.Callable) func(self, world, state ReadableObject) *HandlerOutput {
-	return func(self, world, state ReadableObject) *HandlerOutput {
-		// Convert Go objects to goja values
-		selfVal := e.toGojaValue(self)
-		worldVal := e.toGojaValue(world)
-		stateVal := e.toGojaValue(state)
-
-		// Call the JavaScript function
-		result, err := fn(goja.Undefined(), selfVal, worldVal, stateVal)
+func wrapInitFunction(e *gojaEventHandler, fn goja.Callable) func(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
+	return func(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
+		fnState := goja.Undefined()
+		if state != nil {
+			fnState = state.(goja.Value)
+		}
+		result, err := fn(
+			goja.Undefined(),
+			e.vm.ToValue(ctx),
+			e.vm.ToValue(world),
+			fnState,
+		)
 		if err != nil {
 			log.Error().Err(err).Msg("Init function failed")
 			return nil
 		}
-
-		// Convert result back to HandlerOutput
-		return e.parseHandlerOutput(result)
+		return e.parseOutput(result)
 	}
 }
 
-func (e *gojaEventHandler) wrapEventHandlerFunction(fn goja.Callable) eventHandlerFn {
-	return func(self, world, state, event ReadableObject) *HandlerOutput {
-		// Convert Go objects to goja values
-		selfVal := e.toGojaValue(self)
-		worldVal := e.toGojaValue(world)
-		stateVal := e.toGojaValue(state)
-		eventVal := e.toGojaValue(event)
-
-		// Call the JavaScript function
-		result, err := fn(goja.Undefined(), selfVal, worldVal, stateVal, eventVal)
+func wrapHandlerFn[T any](e *gojaEventHandler, fn goja.Callable) handlerFn[T] {
+	return func(ctx EntityContext, world WorldStateReader, state any, event *T) *HandlerOutput {
+		fnState := goja.Undefined()
+		if state != nil {
+			fnState = state.(goja.Value)
+		}
+		// State is now mutable - JS can modify it directly
+		result, err := fn(
+			goja.Undefined(),
+			e.vm.ToValue(ctx),
+			e.vm.ToValue(world),
+			fnState,
+			e.vm.ToValue(event),
+		)
 		if err != nil {
 			log.Error().Err(err).Msg("Event handler function failed")
 			return nil
 		}
-
-		// Convert result back to HandlerOutput
-		return e.parseHandlerOutput(result)
+		return e.parseOutput(result)
 	}
 }
 
-func (e *gojaEventHandler) parseHandlerOutput(result goja.Value) *HandlerOutput {
-	if result == nil || goja.IsUndefined(result) || goja.IsNull(result) {
+// parseEffects converts JS return value to []Effect
+// Uses JSON marshaling for fully automatic conversion
+func (e *gojaEventHandler) parseOutput(result goja.Value) *HandlerOutput {
+	if isNil(result) {
 		return nil
 	}
-
 	obj := result.ToObject(e.vm)
-	if obj == nil {
-		log.Warn().Msg("Handler output is not an object")
-		return nil
+	output := &HandlerOutput{
+		Effects: e.parseEffects(obj.Get("effects")),
 	}
-
-	output := &HandlerOutput{}
-
-	// Parse state
-	if stateVal := obj.Get("state"); stateVal != nil && !goja.IsUndefined(stateVal) && !goja.IsNull(stateVal) {
-		exported := stateVal.Export()
-		if stateMap, ok := exported.(map[string]interface{}); ok {
-			newState := NewObject()
-			for k, v := range stateMap {
-				newState.Set(k, v)
-			}
-			output.State = newState
-		} else {
-			log.Warn().Msgf("Handler output 'state' field is not an object: %v", stateVal)
-		}
+	if state := obj.Get("state"); !isNil(state) {
+		output.State = state
 	}
-
-	// Parse effects
-	if effectsVal := obj.Get("effects"); effectsVal != nil && !goja.IsUndefined(effectsVal) && !goja.IsNull(effectsVal) {
-		if effectsObj := effectsVal.ToObject(e.vm); effectsObj != nil {
-			if exported := effectsVal.Export(); exported != nil {
-				if effectsSlice, ok := exported.([]interface{}); ok {
-					for i, effectInterface := range effectsSlice {
-						if effectMap, ok := effectInterface.(map[string]interface{}); ok {
-							effect := Effect{}
-							if typeVal, ok := effectMap["type"].(string); ok {
-								effect.Type = EffectType(typeVal)
-							} else {
-								log.Warn().Msgf("Effect[%d] 'type' field is not a string or missing: %v", i, effectMap["type"])
-								continue
-							}
-							if dataVal, ok := effectMap["data"]; ok {
-								if dataObj, ok := dataVal.(map[string]interface{}); ok {
-									effect.Data = dataObj
-								} else {
-									log.Warn().Msgf("Effect[%d] 'data' field is not an object: %v", i, dataVal)
-								}
-							}
-							output.Effects = append(output.Effects, effect)
-						} else {
-							log.Warn().Msgf("Effect[%d] is not an object: %v", i, effectInterface)
-						}
-					}
-				} else {
-					log.Warn().Msgf("Handler output 'effects' field is not an array: %v", exported)
-				}
-			}
-		} else {
-			log.Warn().Msgf("Handler output 'effects' field could not be converted to object: %v", effectsVal)
-		}
-	}
-
 	return output
 }
 
-// toGojaValue converts a ReadableObject to a goja.Value
-func (e *gojaEventHandler) toGojaValue(obj ReadableObject) goja.Value {
-	if obj == nil {
-		return goja.Undefined()
+func isNil(v goja.Value) bool {
+	return v == nil || goja.IsNull(v) || goja.IsUndefined(v)
+}
+
+// camelCaseMapper converts Go TitleCase field names to JavaScript camelCase
+type camelCaseMapper struct{}
+
+func (camelCaseMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
+	// Use JSON tag if available
+	if tag := f.Tag.Get("json"); tag != "" && tag != "-" {
+		if idx := strings.Index(tag, ","); idx != -1 {
+			tag = tag[:idx]
+		}
+		return tag
 	}
-	// Check if it's a mapState and convert to JS object
-	if ms, ok := obj.(*mapState); ok {
-		return e.vm.ToValue(ms.ToMap())
+
+	name := f.Name
+	if name == "" {
+		return ""
 	}
-	// Otherwise, convert it normally
-	return e.vm.ToValue(obj)
+	runes := []rune(name)
+	runes[0] = unicode.ToLower(runes[0])
+	return string(runes)
+}
+
+func (camelCaseMapper) MethodName(_ reflect.Type, m reflect.Method) string {
+	// Keep methods as-is (Id(), Position(), etc.)
+	return m.Name
+}
+
+func newGojaVM() *goja.Runtime {
+	vm := goja.New()
+	vm.SetFieldNameMapper(camelCaseMapper{})
+	return vm
+}
+
+type gojaLogs struct {
+	caller string
+}
+
+func (l gojaLogs) Info(fmt string, args ...any) {
+	log.Info().Str("caller", l.caller).Msgf(fmt, args...)
+}
+
+func (l gojaLogs) Warn(fmt string, args ...any) {
+	log.Warn().Str("caller", l.caller).Msgf(fmt, args...)
+}
+
+func (l gojaLogs) Error(fmt string, args ...any) {
+	log.Error().Str("caller", l.caller).Msgf(fmt, args...)
 }

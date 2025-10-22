@@ -1,43 +1,59 @@
 // entity.js
 // @ts-check
 function Init(self, world, state) {
-    state = state || {
-        counter: 0
-    }
-    log("state in init: " + JSON.stringify(state))
     return {
-        state: state
+        state: state || {
+            counter: 0
+        },
     }
 }
 
 function OnInteract(self, world, state, event) {
-    if (event.targetId !== self.id || state.complete)  {
-        return
+    if (event.targetId !== self.Id()) {
+        return;
     }
-    log("state in interact: " + JSON.stringify(state))
-    log("state.counter before increment: " + state.counter)
+
+    if (self.Mode() === "mined") {
+        return;
+    }
+
     state.counter++
-    log("counter at " + state.counter)
-    const effects = [];
-    if(state.counter > 5) {
-        state.complete = true
-        log("target hit")
-        effects.push({
-            type: "dialogue",
-            data: {
-                text: "You have interacted with me 5 times!",
-            }
-        });
-        effects.push({
-            type: "set_world_var",
-            data: {
-                key: "counter_hit",
-                value: true,
-            }
-        });
-    }
+    log.Info("Node mined " + state.counter + " times!")
+
     return {
         state: state,
-        effects: effects
+        effects: [
+            {
+                timer: {
+                    timerId: "reset",
+                    durationSeconds: 3,
+                },
+                mutateEntity: {
+                    entityId: self.Id(),
+                    newMode: "mined",
+                },
+                yieldElythium: {
+                    amount: 3,
+                }
+            }
+        ]
+    };
+}
+
+function OnTimerComplete(self, world, state, event) {
+    if (event.createdBy !== self.Id() || event.timerId !== "reset") {
+        return;
     }
+    log.Info("Node reset")
+    return {
+        state: state,
+        effects: [
+            {
+                mutateEntity: {
+                    entityId: self.Id(),
+                    newMode: "",
+                }
+            }
+        ]
+    };
 }

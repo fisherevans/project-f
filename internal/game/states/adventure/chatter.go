@@ -3,6 +3,7 @@ package adventure
 import (
 	"sort"
 
+	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -25,6 +26,7 @@ type Chatter interface {
 	State() ChatterState
 	RenderAbove() pixel.Vec
 	Update(s *State, timeDelta float64)
+	Id() string
 }
 
 type ChatterSystem struct {
@@ -53,6 +55,13 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matri
 	for _, chatter := range c.chatters {
 		chatter.Update(s, timeDelta)
 		if chatter.State() == ChatterComplete {
+			e := events.EventChatterComplete{
+				ChatterId: chatter.Id(),
+			}
+			if basic, ok := chatter.(*basicEntityChatter); ok { // todo messy
+				e.EntityId = string(basic.target)
+			}
+			s.eventDispatcher.Dispatch(e)
 			continue
 		}
 		incompleteChatters = append(incompleteChatters, chatter)
@@ -90,11 +99,16 @@ func (c *ChatterSystem) sortChatters() {
 }
 
 type basicEntityChatter struct {
+	id             string
 	content        *textbox.Content
 	target         EntityId
 	renderLocation pixel.Vec
 	displayTime    float64
 	elapsedTime    float64
+}
+
+func (b *basicEntityChatter) Id() string {
+	return b.id
 }
 
 func (b *basicEntityChatter) State() ChatterState {
@@ -119,10 +133,11 @@ func (b *basicEntityChatter) Update(s *State, timeDelta float64) {
 	}
 }
 
-func newBasicEntityChatter(target EntityId, displayTime float64, message string) Chatter {
+func newBasicEntityChatter(target EntityId, displayTime float64, message string, id string) Chatter {
 	content := chatterBox.NewSimpleContent(message)
 	//content.SetTypingSpeed(0.01)
 	return &basicEntityChatter{
+		id:          id,
 		displayTime: displayTime,
 		content:     content,
 		target:      target,

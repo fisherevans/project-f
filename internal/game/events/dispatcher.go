@@ -1,99 +1,98 @@
 package events
 
 import (
-	"github.com/dop251/goja"
+	"reflect"
+
 	"github.com/rs/zerolog/log"
 )
 
 type registeredEventHandler struct {
-	Id      string
-	self    MutableObject
+	ctx     EntityContext
 	Handler EventHandler
-	State   MutableObject
+	State   any
+}
+
+func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []DispatchedEffect {
+	if output == nil {
+		return nil
+	}
+	if output.State != nil {
+		r.State = output.State
+	}
+	var effects []DispatchedEffect
+	for _, effect := range output.Effects {
+		if err := effect.Validate(); err != nil {
+			log.Err(err).
+				Interface("effect", effect).
+				Str("source", r.ctx.Id()).
+				Msg("Invalid effect")
+		} else {
+			effects = append(effects, DispatchedEffect{
+				Source: r.ctx,
+				Effect: effect,
+			})
+		}
+	}
+	return effects
 }
 
 type Dispatcher struct {
 	registeredHandlers []*registeredEventHandler
-	queuedEvents       []Event
+	queuedEvents       []any
 }
 
 func NewDispatcher() *Dispatcher {
 	return &Dispatcher{}
 }
 
-func (d *Dispatcher) NewGojaEventHandler(program *goja.Program) (EventHandler, error) {
-	return NewGojaEventHandler(program)
-}
-
-func (d *Dispatcher) Register(id string, handler EventHandler, state MutableObject) {
-	if state == nil {
-		state = d.NewObject()
+func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
+	if ctx == nil {
+		log.Fatal().Msg("Event handler context is nil")
 	}
 	if handler == nil {
-		log.Fatal().Msgf("Event handler for %s is nil", id)
+		log.Fatal().Msgf("Event handler for %s is nil", ctx.Id())
 	}
-	self := d.NewObject()
-	self.Set("id", id)
 	d.registeredHandlers = append(d.registeredHandlers, &registeredEventHandler{
-		Id:      id,
-		self:    self,
+		ctx:     ctx,
 		Handler: handler,
-		State:   state,
+		State:   nil,
 	})
 }
 
-func (d *Dispatcher) RegisterAndInit(id string, handler EventHandler, worldState ReadableObject) {
-	if handler == nil {
-		log.Fatal().Msgf("Event handler for %s is nil", id)
-	}
-	
-	self := d.NewObject()
-	self.Set("id", id)
-	
-	// Call Init with nil state so JS can initialize it
-	output := handler.Init(self, worldState, nil)
-	
-	state := d.NewObject()
-	if output != nil && output.State != nil {
-		state = output.State
-	}
-	
-	d.registeredHandlers = append(d.registeredHandlers, &registeredEventHandler{
-		Id:      id,
-		self:    self,
-		Handler: handler,
-		State:   state,
-	})
-}
-
-func (d *Dispatcher) Dispatch(event Event) {
+func (d *Dispatcher) Dispatch(event any) {
 	d.queuedEvents = append(d.queuedEvents, event)
 }
 
-func (d *Dispatcher) Flush(worldState ReadableObject) []Effect {
-	var effects []Effect
+func (d *Dispatcher) Flush(worldState WorldStateReader) []DispatchedEffect {
+	var effects []DispatchedEffect
 	for _, event := range d.queuedEvents {
+		eventPtr := event
+		if reflect.TypeOf(event).Kind() != reflect.Ptr {
+			// Create a pointer to the value
+			v := reflect.ValueOf(event)
+			ptr := reflect.New(v.Type())
+			ptr.Elem().Set(v)
+			eventPtr = ptr.Interface()
+		}
 		for _, registeredHandler := range d.registeredHandlers {
-			output, err := dispatchEvent(
-				registeredHandler.Handler,
-				registeredHandler.self,
-				worldState,
-				registeredHandler.State,
-				event)
-			if err != nil {
-				log.Error().Err(err).Msgf("failed to dispatch event %s to %s", event.Type, registeredHandler.Id)
-				continue
-			}
-			if output == nil {
-				continue
-			}
-			// Update state if returned, otherwise keep existing state
-			if output.State != nil {
-				registeredHandler.State = output.State
-			}
-			effects = append(effects, output.Effects...)
+			output := dispatchEvent(registeredHandler.Handler, registeredHandler.ctx, worldState, registeredHandler.State, eventPtr)
+			effects = append(effects, registeredHandler.handleOutput(output)...)
 		}
 	}
 	d.queuedEvents = nil
 	return effects
+}
+
+func (d *Dispatcher) Init(worldState WorldStateReader) []DispatchedEffect {
+	var effects []DispatchedEffect
+	for _, registeredHandler := range d.registeredHandlers {
+		output := registeredHandler.Handler.Init(registeredHandler.ctx, worldState, registeredHandler.State)
+		effects = append(effects, registeredHandler.handleOutput(output)...)
+	}
+	return effects
+}
+
+type DispatchedEffect struct {
+	Source EntityContext
+	Effect
 }

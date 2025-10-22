@@ -9,7 +9,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/image/colornames"
 
 	"fisherevans.com/project/f/internal/game"
@@ -52,7 +51,7 @@ type State struct {
 	mapWidth, mapHeight int
 	baseRenderLayers    []renderLayer
 	overlayRenderLayers []renderLayer
-	ambientZones        []resources.AmbientZone
+	ambientLightAreas   []resources.AmbientLightArea
 
 	camera Camera
 	player *Player
@@ -65,6 +64,8 @@ type State struct {
 	chatters             *ChatterSystem
 	dialogues            *DialogueSystem
 	overlays             *OverlaySystem
+	timers               *timers
+	zones                *zones
 
 	hud *Hud
 
@@ -85,7 +86,7 @@ type State struct {
 	mobs     []*ShadowMob
 
 	eventDispatcher *events.Dispatcher
-	worldState      events.MutableObject
+	worldState      events.WorldState
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -100,6 +101,8 @@ func New(i game.AdventureIntent) game.State {
 		chatters:             NewChatterSystem(),
 		dialogues:            NewDialogueSystem(),
 		overlays:             NewOverlaySystem(),
+		timers:               newTimers(),
+		zones:                newZones(),
 
 		hud: NewHud(),
 
@@ -122,7 +125,7 @@ func New(i game.AdventureIntent) game.State {
 
 		eventDispatcher: events.NewDispatcher(),
 	}
-	a.worldState = a.eventDispatcher.NewObject()
+	a.worldState = events.NewWorldState()
 
 	a.bloom.Threshold = 1.0
 	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
@@ -162,9 +165,9 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.actions.ExecuteActions(s, timeDelta)
 
-	for _, e := range s.eventDispatcher.Flush(s.worldState) {
-		log.Info().Msgf("event: %#v", e)
-	}
+	s.timers.Update(timeDelta, s.eventDispatcher)
+
+	s.processEffects(s.eventDispatcher.Flush(s.worldState))
 
 	s.camera.Update(s, timeDelta)
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)

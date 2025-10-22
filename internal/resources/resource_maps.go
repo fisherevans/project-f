@@ -61,7 +61,8 @@ var MapLayers = util.Concat(
 type Map struct {
 	Layers             map[MapLayerName]*Layer
 	Entities           map[string]*Entity
-	AmbientZones       []AmbientZone
+	AmbientLightAreas  []AmbientLightArea
+	Zones              []Zone
 	SceneClearColor    pixel.RGBA
 	LightingClearColor pixel.RGBA
 }
@@ -96,7 +97,8 @@ type Entity struct {
 	X          int            `json:"x"`
 	Y          int            `json:"y"`
 	Properties map[string]any `json:"properties"`
-	SpriteId   TilesheetSpriteId
+	SpriteId   *TilesheetSpriteId
+	Class      string
 	SpriteGID  int `json:"sprite_gid,omitempty"`
 }
 
@@ -132,15 +134,34 @@ func (e *Entity) String() string {
 	return fmt.Sprintf("Entity{id:%d,x:%d,y:%d,sprite_gid:%x,sprite:[%s],props:%v}", e.ID, e.X, e.Y, e.SpriteGID, e.SpriteId.String(), e.Properties)
 }
 
-type AmbientZone struct {
-	X, Y     int // bottom-left in TILES
-	W, H     int
+type RectangleEntity struct {
+	X, Y int // bottom-left in TILES
+	W, H int
+}
+
+func (z RectangleEntity) Moved(dx int, dy int) RectangleEntity {
+	z.X += dx
+	z.Y += dy
+	return z
+}
+
+type AmbientLightArea struct {
+	RectangleEntity
 	Color    pixel.RGBA
 	GlowSize float64
 }
 
-func (z AmbientZone) Moved(dx int, dy int) AmbientZone {
-	z.X += dx
-	z.Y += dy
+func (z AmbientLightArea) Moved(dx int, dy int) AmbientLightArea {
+	z.RectangleEntity = z.RectangleEntity.Moved(dx, dy)
+	return z
+}
+
+type Zone struct {
+	RectangleEntity
+	ZoneId string
+}
+
+func (z Zone) Moved(dx int, dy int) Zone {
+	z.RectangleEntity = z.RectangleEntity.Moved(dx, dy)
 	return z
 }

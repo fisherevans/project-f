@@ -68,7 +68,7 @@ func (n *NPC) Interact(adv *State, source Entity) {
 	n.Talking = true
 	n.TalkingTowards = source.GetEntityId()
 	duration := 5.
-	adv.chatters.Add(newBasicEntityChatter(n.Id, duration, util.OneOffDialogues.Random()))
+	adv.chatters.Add(newBasicEntityChatter(n.Id, duration, util.OneOffDialogues.Random(), ""))
 	adv.actions.Add(NewDelayAction(NewSimpleAction(func(_ *State) {
 		game.DebugNotification("npc %s is no longer talking", n.Id)
 		n.Talking = false

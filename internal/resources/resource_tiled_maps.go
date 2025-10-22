@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
@@ -41,7 +40,10 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 	}
 
 	loggedTiles := map[string]bool{}
-	tileToSpriteId := func(tileId uint32, tileset *tiled.Tileset) TilesheetSpriteId {
+	tileToSpriteId := func(tileId uint32, tileset *tiled.Tileset) *TilesheetSpriteId {
+		if tileset == nil {
+			return nil
+		}
 		tileSetX := int(tileId) % tileset.Columns
 		tileSetY := int(tileId) / tileset.Columns
 		id := TilesheetSpriteId{
@@ -52,9 +54,9 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 		tiledName := fmt.Sprintf("%s/%d", tileset.Name, tileId)
 		if !loggedTiles[tiledName] {
 			loggedTiles[tiledName] = true
-			log.Debug().Msgf("Tiled %#v // GID: %d", id, tileId)
+			//log.Debug().Msgf("Tiled %#v // GID: %d", id, tileId)
 		}
-		return id
+		return &id
 	}
 
 	for _, tiledLayer := range tiledMap.Layers {
@@ -71,7 +73,7 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 			gameTile := &Tile{
 				X:        tileId % tiledMap.Width,
 				Y:        tiledMap.Height - (tileId / tiledMap.Width),
-				SpriteId: tileToSpriteId(tiledTile.ID, tiledTile.Tileset),
+				SpriteId: *tileToSpriteId(tiledTile.ID, tiledTile.Tileset),
 			}
 			gameLayer.Tiles = append(gameLayer.Tiles, gameTile)
 		}
@@ -86,19 +88,30 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 					metadata[property.Name] = property.Value // TODO non string types?
 				}
 
+				class := object.Class
+				if class == "" {
+					class = object.Type
+				}
+
 				e := &Entity{
 					ID:         int(object.ID),
 					X:          int((object.X + float64(tiledMap.TileWidth)/2) / float64(tiledMap.TileWidth)),
 					Y:          tiledMap.Height - int((object.Y-float64(tiledMap.TileHeight)/2)/float64(tiledMap.TileHeight)),
 					Properties: metadata,
 					SpriteGID:  int(object.GID),
+					Class:      class,
 				}
 
 				if tiledTile, err := tiledMap.TileGIDToTile(object.GID); err == nil {
 					e.SpriteId = tileToSpriteId(tiledTile.ID, tiledTile.Tileset)
 				}
 
-				gameMap.Entities[fmt.Sprintf("tiled-%d", object.ID)] = e
+				entityId := object.Properties.GetString("entity_id")
+				if entityId == "" {
+					entityId = fmt.Sprintf("tiled-%d", object.ID)
+				}
+
+				gameMap.Entities[entityId] = e
 			}
 		} else if objectGroup.Name == "ambient_light" {
 			for _, o := range objectGroup.Objects {
@@ -107,25 +120,29 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 					log.Warn().Msgf("ambient light %d missing color", o.ID)
 					continue
 				}
-				j, _ := json.MarshalIndent(o, "", "  ")
-				fmt.Println(string(j))
-				height := int(o.Height/float64(tiledMap.TileWidth)) - 1
-				z := AmbientZone{
-					Color: colors.FromString(cHex),
-					X:     int(o.X / float64(tiledMap.TileWidth)),
-					Y:     tiledMap.Height - int(o.Y/float64(tiledMap.TileHeight)) - height,
-					W:     int(o.Width/float64(tiledMap.TileWidth)) - 1,
-					H:     height,
+				area := AmbientLightArea{
+					Color:           colors.FromString(cHex),
+					RectangleEntity: newRectangleEntity(tiledMap, o),
 				}
 				glowSizeString := o.Properties.GetString("glow_size")
 				if glowSizeString != "" {
-					z.GlowSize, err = strconv.ParseFloat(glowSizeString, 64)
+					area.GlowSize, err = strconv.ParseFloat(glowSizeString, 64)
 					if err != nil {
 						log.Fatal().Err(err).Msgf("failed to parse glow size %s", glowSizeString)
 					}
 				}
-				fmt.Printf("%#v\n", z)
-				gameMap.AmbientZones = append(gameMap.AmbientZones, z)
+				gameMap.AmbientLightAreas = append(gameMap.AmbientLightAreas, area)
+			}
+		} else if objectGroup.Name == "zones" {
+			for _, o := range objectGroup.Objects {
+				z := Zone{
+					RectangleEntity: newRectangleEntity(tiledMap, o),
+					ZoneId:          o.Properties.GetString("zone_id"),
+				}
+				if z.ZoneId == "" {
+					log.Fatal().Msgf("zone missing zone_id: %#v", o)
+				}
+				gameMap.Zones = append(gameMap.Zones, z)
 			}
 		} else {
 			log.Warn().Msgf("Skipping unknown object group %s", objectGroup.Name)
@@ -138,4 +155,14 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 	}
 	maps[resourceName] = gameMap
 	return nil
+}
+
+func newRectangleEntity(tiledMap *tiled.Map, o *tiled.Object) RectangleEntity {
+	height := int(o.Height/float64(tiledMap.TileWidth)) - 1
+	return RectangleEntity{
+		X: int(o.X / float64(tiledMap.TileWidth)),
+		Y: tiledMap.Height - int(o.Y/float64(tiledMap.TileHeight)) - height,
+		W: int(o.Width/float64(tiledMap.TileWidth)) - 1,
+		H: height,
+	}
 }

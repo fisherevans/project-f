@@ -10,7 +10,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/gopxl/glhf/v2 v2.0.0
 	github.com/gopxl/pixel/v2 v2.3.0
-	github.com/lafriks/go-tiled v0.13.0
+	github.com/lafriks/go-tiled v0.14.0
 	github.com/rs/zerolog v1.33.0
 	golang.design/x/clipboard v0.7.1
 	golang.org/x/image v0.28.0

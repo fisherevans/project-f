@@ -29,7 +29,7 @@ func (e *EntityTeleport) Interact(adv *State, source Entity) {
 	}
 
 	if adv.hud.ElythiumCount < e.RequiredElythium {
-		adv.dialogues.Append(NewBasicDialogue(fmt.Sprintf("You need %d Elythium to travel home!", e.RequiredElythium), nil))
+		adv.dialogues.Append(NewBasicDialogue(fmt.Sprintf("You need %d Elythium to travel home!", e.RequiredElythium), nil, ""))
 		return
 	}
 
@@ -42,7 +42,7 @@ func (e *EntityTeleport) Interact(adv *State, source Entity) {
 	adv.dialogues.Append(NewBasicDialogue("You've managed to escape!", func(s *State) {
 		adv.hud.ElythiumCount -= e.RequiredElythium
 		adv.teleport(player, destination)
-	}))
+	}, ""))
 }
 
 type EntityAnimatedTeleport struct {
@@ -84,5 +84,5 @@ func (e *EntityAnimatedTeleport) Interact(adv *State, source Entity) {
 	e.toggled = true
 	adv.dialogues.Append(NewBasicDialogue(msg, func(s *State) {
 		e.toggled = false
-	}))
+	}, ""))
 }

@@ -68,11 +68,8 @@ func (p *Player) Update(adv *State, timeDelta float64) {
 		if entityExists {
 			targetEntity := adv.entities[targetEntityId]
 			targetEntity.Interact(adv, p)
-			data := adv.eventDispatcher.NewObject()
-			data.Set("targetId", string(targetEntityId))
-			adv.eventDispatcher.Dispatch(events.Event{
-				Type: events.EventTypeInteract,
-				Data: data,
+			adv.eventDispatcher.Dispatch(events.EventOnInteract{
+				TargetId: string(targetEntityId),
 			})
 			return
 		}

@@ -9,8 +9,15 @@ type InnateEntity struct {
 	MapLocation
 }
 
+func (i *InnateEntity) RenderScene(target pixel.Target, matrix pixel.Matrix) {
+}
+
 func (i *InnateEntity) Move(adv *State, timeDelta float64) float64 {
 	return 0
+}
+
+func (i *InnateEntity) IsMoving() bool {
+	return false
 }
 
 func (i *InnateEntity) Update(adv *State, timeDelta float64) {

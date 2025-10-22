@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -13,26 +14,36 @@ func (i EntityId) GetEntityId() EntityId {
 
 type Entity interface {
 	Move(adv *State, timeDelta float64) float64
+	IsMoving() bool
 	Update(adv *State, timeDelta float64)
 	PreciseMapLocation() pixel.Vec
 	RenderMapLocation() pixel.Vec
-	IsPassable() bool
 	Location() MapLocation
 	RenderScene(target pixel.Target, matrix pixel.Matrix)
 	RenderLight(target pixel.Target, matrix pixel.Matrix)
 	GetEntityId() EntityId
 	Interact(adv *State, source Entity)
 	GetRenderZPriority() int
+
+	GetMode() string
+	SetMode(mode string)
+	IsPassable() bool
+	SetIsPassable(p bool)
 }
 
 type BaseEntity struct {
 	Id              EntityId
 	Passable        bool
 	RenderZPriority int
+	Mode            string
 }
 
 func (b *BaseEntity) IsPassable() bool {
 	return b.Passable
+}
+
+func (b *BaseEntity) SetIsPassable(p bool) {
+	b.Passable = p
 }
 
 func (b *BaseEntity) GetEntityId() EntityId {
@@ -41,6 +52,14 @@ func (b *BaseEntity) GetEntityId() EntityId {
 
 func (b *BaseEntity) GetRenderZPriority() int {
 	return b.RenderZPriority
+}
+
+func (b *BaseEntity) GetMode() string {
+	return b.Mode
+}
+
+func (b *BaseEntity) SetMode(mode string) {
+	b.Mode = mode
 }
 
 func (s *State) AddEntity(e Entity) bool {
@@ -103,4 +122,31 @@ func (s *State) requirePlayerEntity(id EntityId) (*Player, bool) {
 	}
 	player, isPlayer := e.(*Player)
 	return player, isPlayer
+}
+
+type eventEntityWrapper struct {
+	entity Entity
+}
+
+func newEventEntityWrapper(entity Entity) *eventEntityWrapper {
+	return &eventEntityWrapper{
+		entity: entity,
+	}
+}
+
+func (w eventEntityWrapper) Id() string {
+	return string(w.entity.GetEntityId())
+}
+
+func (w eventEntityWrapper) Mode() string {
+	return w.entity.GetMode()
+}
+
+func (w eventEntityWrapper) Position() *events.EntityPosition {
+	loc := w.entity.Location()
+	return &events.EntityPosition{
+		X:        loc.X,
+		Y:        loc.Y,
+		IsMoving: w.entity.IsMoving(),
+	}
 }

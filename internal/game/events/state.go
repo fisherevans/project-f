@@ -1,45 +1,84 @@
 package events
 
-type ReadableObject interface {
-	Get(key string) (any, bool)
+import (
+	"github.com/dop251/goja"
+	"github.com/rs/zerolog/log"
+)
+
+type WorldStateReader interface {
+	Get(key string) any
+	Has(key string) bool
+	ToGojaValue(vm *goja.Runtime) goja.Value
 }
 
-type MutableObject interface {
-	ReadableObject
+type WorldState interface {
+	WorldStateReader
 	Set(key string, value any)
+	SetFromGojaValue(vm *goja.Runtime, value goja.Value)
+	Delete(key string)
 }
 
-func (d *Dispatcher) NewObject() MutableObject {
-	return &mapState{
-		data: make(map[string]any),
-	}
-}
-
-func NewObject() MutableObject {
-	return &mapState{
-		data: make(map[string]any),
-	}
+func NewWorldState() WorldState {
+	return &mapState{}
 }
 
 type mapState struct {
 	data map[string]any
 }
 
-func (s *mapState) Get(key string) (any, bool) {
-	if s.data == nil {
-		return nil, false
+func (s *mapState) Has(key string) bool {
+	_, exists := s.getMap()[key]
+	return exists
+}
+
+func (s *mapState) Get(key string) any {
+	val, _ := s.getMap()[key]
+	return val
+}
+
+func (s *mapState) ToGojaValue(vm *goja.Runtime) goja.Value {
+	if s == nil {
+		return vm.NewObject()
 	}
-	val, exists := s.data[key]
-	return val, exists
+	if len(s.data) == 0 {
+		return vm.NewObject()
+	}
+	// Create a new JS object and copy properties
+	// This makes it mutable in JS
+	obj := vm.NewObject()
+	for k, v := range s.data {
+		if err := obj.Set(k, v); err != nil {
+			log.Warn().Err(err).Msgf("Failed to set property %s", k)
+		}
+	}
+	return obj
+}
+
+func (s *mapState) SetFromGojaValue(vm *goja.Runtime, value goja.Value) {
+	if value == nil {
+		s.data = nil
+		return
+	}
+	exported := value.Export()
+	exportedMap, ok := exported.(map[string]interface{})
+	if !ok {
+		log.Error().Msgf("received a non-map object value from goja: %#v", exported)
+		return
+	}
+	s.data = exportedMap
 }
 
 func (s *mapState) Set(key string, value any) {
+	s.getMap()[key] = value
+}
+
+func (s *mapState) Delete(key string) {
+	delete(s.getMap(), key)
+}
+
+func (s *mapState) getMap() map[string]any {
 	if s.data == nil {
 		s.data = make(map[string]any)
 	}
-	s.data[key] = value
-}
-
-func (s *mapState) ToMap() map[string]any {
 	return s.data
 }

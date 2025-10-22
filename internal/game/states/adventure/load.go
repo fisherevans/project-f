@@ -43,8 +43,11 @@ func initializeMap(a *State, m *resources.Map) {
 			Y: y + dy,
 		}
 	}
-	for _, az := range m.AmbientZones {
-		a.ambientZones = append(a.ambientZones, az.Moved(dx, dy))
+	for _, az := range m.AmbientLightAreas {
+		a.ambientLightAreas = append(a.ambientLightAreas, az.Moved(dx, dy))
+	}
+	for _, z := range m.Zones {
+		a.zones.RegisterZone(z.Moved(dx, dy))
 	}
 	a.mapWidth, a.mapHeight = maxX-minX+1, maxY-minY+1
 	for _, layerName := range util.Concat(resources.MapLayersUnder, resources.MapLayersOver) {
@@ -79,37 +82,44 @@ func initializeMap(a *State, m *resources.Map) {
 		}
 	}
 	for stringEntityId, entity := range m.Entities {
+		if entity == nil {
+			log.Fatal().Str("entityId", stringEntityId).Msg("entity cannot be nil")
+		}
 		entityId := EntityId(stringEntityId)
 		location := adjustedLocation(entity.X, entity.Y)
+		if a.registerDynamicEntity(entityId, location, entity) {
+			log.Info().Msgf("added dynamic entity '%s'", stringEntityId)
+			continue
+		}
 		entityType := entity.GetStringMetadata("type", "")
-		switch entity.SpriteId {
-		case tiles.Torch, tiles.TorchRight, tiles.TorchLeft:
-			entityType = "torch"
-		case tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR:
-			entityType = "light"
-		case tiles.GlowRed,
-			tiles.GlowOrange,
-			tiles.GlowAqua,
-			tiles.GlowPurple,
-			tiles.GlowPink,
-			tiles.GlowTBD:
-			entityType = "glow"
-		case tiles.RedCoin:
-			entityType = "red_coin"
-		case tiles.Knight:
-			entityType = "interest"
-		case tiles.PDAEnabled:
-			entityType = "pda"
-		case tiles.LevelUp:
-			entityType = "level_up"
-		case tiles.Elythium:
-			entityType = "elythium"
-		case tiles.Rocket:
-			entityType = "rocket"
-		case tiles.ShadowMob:
-			entityType = "shadow"
-		case tiles.DummyFightRobot:
-			entityType = "dummy_robot"
+		if entity.SpriteId != nil {
+			switch *entity.SpriteId {
+			case tiles.Torch, tiles.TorchRight, tiles.TorchLeft:
+				entityType = "torch"
+			case tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR:
+				entityType = "light"
+			case tiles.GlowRed,
+				tiles.GlowOrange,
+				tiles.GlowAqua,
+				tiles.GlowPurple,
+				tiles.GlowPink,
+				tiles.GlowTBD:
+				entityType = "glow"
+			case tiles.RedCoin:
+				entityType = "red_coin"
+			case tiles.Knight:
+				entityType = "interest"
+			case tiles.PDAEnabled:
+				entityType = "pda"
+			case tiles.LevelUp:
+				entityType = "level_up"
+			case tiles.Rocket:
+				entityType = "rocket"
+			case tiles.ShadowMob:
+				entityType = "shadow"
+			case tiles.DummyFightRobot:
+				entityType = "dummy_robot"
+			}
 		}
 		switch entityType {
 		case "player":
@@ -154,6 +164,7 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			a.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
 			a.AddEntity(a.player)
+			a.worldState.Set("player_id", string(entityId))
 		case "blob":
 			npc := &NPC{
 				AnimatedMoveableEntity: AnimatedMoveableEntity{
@@ -265,7 +276,7 @@ func initializeMap(a *State, m *resources.Map) {
 					},
 				},
 			}
-			switch entity.SpriteId {
+			switch *entity.SpriteId {
 			case tiles.Torch:
 				t.Animations = []*anim.AnimatedSprite{anim.Torch(atlas)}
 			case tiles.TorchRight:
@@ -320,13 +331,13 @@ func initializeMap(a *State, m *resources.Map) {
 				},
 				Animations: []*anim.AnimatedSprite{anim.NewStaticAnimation(entity.SpriteId.From(atlas))},
 			}
-			if entity.SpriteId == tiles.LightFork {
+			if *entity.SpriteId == tiles.LightFork {
 				t.RenderZPriority = 10
 			}
 			a.AddEntity(t)
 		case "glow":
 			colorMask := colors.HexString("#fff")
-			switch entity.SpriteId {
+			switch *entity.SpriteId {
 			case tiles.GlowRed:
 				colorMask = colors.HexString("#e05050")
 
@@ -354,7 +365,7 @@ func initializeMap(a *State, m *resources.Map) {
 					},
 				},
 			}
-			if entity.SpriteId == tiles.LightFork {
+			if *entity.SpriteId == tiles.LightFork {
 				t.RenderZPriority = 10
 			}
 			a.AddEntity(t)
@@ -372,9 +383,6 @@ func initializeMap(a *State, m *resources.Map) {
 				OffMessage:   "There's nothing new here...",
 				toggled:      true,
 			})
-		case "elythium":
-			a.AddEntity(NewElythiumDepositEntity(entityId, location))
-
 		case "shadow":
 			a.AddMob(NewShadowMob(entityId, location))
 		case "rocket":
@@ -421,19 +429,8 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			a.AddEntity(t)
 		default:
-			log.Warn().Msgf("Unknown entity type: %s", entity)
-		}
-		if scriptRef := entity.GetStringMetadata("script_ref", ""); scriptRef != "" {
-			program := resources.GetScript(scriptRef)
-			if program == nil {
-				log.Fatal().Msgf("Unable to find script: %s", scriptRef)
-			}
-			eventHandler, err := a.eventDispatcher.NewGojaEventHandler(program)
-			if err != nil {
-				log.Fatal().Msgf("Unable to create event handler: %s", err)
-			}
-			a.eventDispatcher.RegisterAndInit(string(entityId), eventHandler, a.worldState)
-			log.Info().Msgf("Registered event handler %s for %s", scriptRef, entityId)
+			log.Warn().Msgf("Unknown entity type: %s / %s", entityId, entityType)
 		}
 	}
+	a.processEffects(a.eventDispatcher.Init(a.worldState))
 }

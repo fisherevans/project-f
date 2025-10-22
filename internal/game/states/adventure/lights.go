@@ -4,7 +4,9 @@ import (
 	"math"
 	"math/rand"
 
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 )
 
 var light = atlas.GetSprite("lights/white_5x5")
@@ -119,4 +121,55 @@ func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
 			Scaled(pixel.ZV, renderDetails.SizeScale).
 			Chained(matrix),
 		renderDetails.ColorMask)
+}
+
+func NewDynamicLight(color string, size float64, modifier string) *Light {
+	l := &Light{
+		RenderDetails: LightRenderDetails{
+			SizeScale: size,
+			ColorMask: colors.FromString(color),
+		},
+		Modifiers: []LightModifier{
+			&LightModifierPulse{
+				PeriodSeconds:       4,
+				SizeIntensity:       0.1,
+				BrightnessIntensity: 0.4,
+			},
+		},
+	}
+	pulse := func(periodSeconds float64) LightModifier {
+		return &LightModifierPulse{
+			PeriodSeconds:       periodSeconds,
+			SizeIntensity:       0.1,
+			BrightnessIntensity: 0.4,
+		}
+	}
+	flicker := func(freqSeconds float64) LightModifier {
+		return &LightModifierFlicker{
+			Jitter: &LightModifierJitterUpdate{
+				FrequencySeconds:   freqSeconds,
+				FrequencyVariation: freqSeconds * 0.333,
+			},
+			SizeVariation:       0.1,
+			BrightnessVariation: 0.1,
+		}
+	}
+	switch modifier {
+	case "":
+	case "pulse_slow":
+		l.Modifiers = append(l.Modifiers, pulse(6))
+	case "pulse_medium", "pulse":
+		l.Modifiers = append(l.Modifiers, pulse(4))
+	case "pulse_fast":
+		l.Modifiers = append(l.Modifiers, pulse(2))
+	case "flicker_slow":
+		l.Modifiers = append(l.Modifiers, flicker(0.35))
+	case "flicker_medium", "flicker":
+		l.Modifiers = append(l.Modifiers, flicker(0.15))
+	case "flicker_fast":
+		l.Modifiers = append(l.Modifiers, flicker(0.075))
+	default:
+		log.Error().Str("modifier", modifier).Msg("unknown light modifier")
+	}
+	return l
 }

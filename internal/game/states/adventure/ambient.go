@@ -17,7 +17,7 @@ func (s *State) DrawAmbient(target *opengl.Canvas, cameraMatrix pixel.Matrix, re
 
 	imd.SetMatrix(cameraMatrix)
 
-	for _, zone := range s.ambientZones {
+	for _, zone := range s.ambientLightAreas {
 		// Calculate glow size in tiles for bounds checking
 		glowTiles := int(zone.GlowSize)
 

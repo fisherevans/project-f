@@ -26,7 +26,7 @@ func (e *EntityInterest) Interact(adv *State, source Entity) {
 	if msg == "" {
 		return
 	}
-	adv.dialogues.Append(NewBasicDialogue(msg, nil))
+	adv.dialogues.Append(NewBasicDialogue(msg, nil, ""))
 }
 
 type EntityAnimatedInterest struct {
@@ -68,5 +68,5 @@ func (e *EntityAnimatedInterest) Interact(adv *State, source Entity) {
 	e.toggled = true
 	adv.dialogues.Append(NewBasicDialogue(msg, func(s *State) {
 		e.toggled = false
-	}))
+	}, ""))
 }

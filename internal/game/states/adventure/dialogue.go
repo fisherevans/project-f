@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -81,6 +82,9 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 			if a || bJustPressed {
 				ds.queuedDialogues = ds.queuedDialogues[1:]
 				dialogue.OnDismiss(s)
+				s.eventDispatcher.Dispatch(events.EventDialogueComplete{
+					DialogueId: dialogue.Id(),
+				})
 			}
 		} else if dialogue.Content().IsPageFullyDisplayed() {
 			dialogue.Content().NextPage()
@@ -104,24 +108,31 @@ func (ds *DialogueSystem) flushPending() {
 }
 
 type Dialogue interface {
+	Id() string
 	Message() string
 	Content() *textbox.Content
 	OnDismiss(*State)
 }
 
 type basicDialogue struct {
+	id        string
 	message   string
 	content   *textbox.Content
 	onDismiss func(*State)
 }
 
-func NewBasicDialogue(message string, onDismiss func(state *State)) Dialogue {
+func NewBasicDialogue(message string, onDismiss func(state *State), id string) Dialogue {
 	content := dialogueBox.NewComplexContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
+		id:        id,
 		message:   message,
 		content:   content,
 		onDismiss: onDismiss,
 	}
+}
+
+func (b basicDialogue) Id() string {
+	return b.id
 }
 
 func (b basicDialogue) Message() string {

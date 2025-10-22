@@ -61,7 +61,7 @@ func (e *EntityCombatTest) Update(adv *State, timeDelta float64) {
 	e.InnateEntity.Update(adv, timeDelta)
 	e.TimeTillNextQuip -= timeDelta
 	if e.TimeTillNextQuip <= 0 {
-		adv.chatters.Add(newBasicEntityChatter(e.Id, 4, dummyQuips[rand.Intn(len(dummyQuips))]))
+		adv.chatters.Add(newBasicEntityChatter(e.Id, 4, dummyQuips[rand.Intn(len(dummyQuips))], ""))
 		e.TimeTillNextQuip = 10 + rand.Float64()*10
 	}
 }
@@ -78,7 +78,7 @@ func (e *EntityCombatTest) Interact(adv *State, source Entity) {
 	log.Info().Msgf("message: %s", message)
 	adv.dialogues.Append(NewBasicDialogue(message, func(s *State) {
 		adv.TriggerCombat(&rpg.Primortal_Dummy.Type, "combat/background_space_base", func(s *State) {
-			adv.dialogues.Append(NewBasicDialogue("Well, butter my bolts... you actually did it.", nil))
+			adv.dialogues.Append(NewBasicDialogue("Well, butter my bolts... you actually did it.", nil, ""))
 		})
-	}))
+	}, ""))
 }
