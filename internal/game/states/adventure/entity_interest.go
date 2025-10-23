@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game/anim"
@@ -9,6 +10,7 @@ import (
 type EntityInterest struct {
 	InnateEntity
 	topic string
+	Passable
 }
 
 func (e *EntityInterest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
@@ -26,11 +28,16 @@ func (e *EntityInterest) Interact(adv *State, source Entity) {
 	if msg == "" {
 		return
 	}
-	adv.dialogues.Append(NewBasicDialogue(msg, nil, ""))
+	adv.AddSystemEffect(events.Effect{
+		Dialogue: &events.EffectDialogue{
+			Text: msg,
+		},
+	})
 }
 
 type EntityAnimatedInterest struct {
 	InnateEntity
+	Passable
 	OnAnimation  *anim.AnimatedSprite
 	OffAnimation *anim.AnimatedSprite
 	OnMessage    string
@@ -66,7 +73,18 @@ func (e *EntityAnimatedInterest) Interact(adv *State, source Entity) {
 		return
 	}
 	e.toggled = true
-	adv.dialogues.Append(NewBasicDialogue(msg, func(s *State) {
-		e.toggled = false
-	}, ""))
+
+	adv.AddSerialSystemEffects(
+		events.Effect{
+			Dialogue: &events.EffectDialogue{
+				Text: msg,
+			},
+		},
+		events.Effect{
+			Function: &events.EffectFunction{
+				Fn: func() {
+					e.toggled = false
+				},
+			},
+		})
 }

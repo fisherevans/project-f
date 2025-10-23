@@ -1,0 +1,25 @@
+tilesheet:
+  tileWidth: 36
+  tileHeight: 36
+animations:
+  closed:
+    sequence:
+      row: 1
+      columnFrom: 1
+      columnTo: 6
+    framesPerSecond: 12
+    repeat: false
+  open:
+    sequence:
+      row: 1
+      columnFrom: 6
+      columnTo: 1
+    framesPerSecond: 12
+    repeat: false
+  waves:
+    sequence:
+      row: 2
+      columnFrom: 1
+      columnTo: 3
+    framesPerSecond: 4
+    randomize: true

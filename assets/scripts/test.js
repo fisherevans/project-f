@@ -1,59 +1,61 @@
-// entity.js
 // @ts-check
-function Init(self, world, state) {
-    return {
-        state: state || {
-            counter: 0
-        },
-    }
-}
+/** @type {import('./global').EntityHandler} */
+const handler = {
+    Init(self, world, state) {
+        return {
+            state: state || {
+                counter: 0
+            },
+        };
+    },
 
-function OnInteract(self, world, state, event) {
-    if (event.targetId !== self.Id()) {
-        return;
-    }
+    OnInteract(self, world, state, event) {
+        if (event.targetId !== self.Id()) {
+            return null;
+        }
 
-    if (self.Mode() === "mined") {
-        return;
-    }
+        if (self.Mode() === "mined") {
+            return null;
+        }
 
-    state.counter++
-    log.Info("Node mined " + state.counter + " times!")
+        state.counter++;
+        log.Info("Node mined " + state.counter + " times!");
 
-    return {
-        state: state,
-        effects: [
-            {
-                timer: {
-                    timerId: "reset",
-                    durationSeconds: 3,
-                },
-                mutateEntity: {
-                    entityId: self.Id(),
-                    newMode: "mined",
-                },
-                yieldElythium: {
-                    amount: 3,
+        return {
+            state: state,
+            effects: [
+                {
+                    timer: {
+                        timerId: "reset",
+                        durationSeconds: 3,
+                    },
+                    mutateEntity: {
+                        entityId: self.Id(),
+                        mode: "mined",
+                    },
+                    yieldElythium: {
+                        amount: 3,
+                    }
                 }
-            }
-        ]
-    };
-}
+            ]
+        };
+    },
 
-function OnTimerComplete(self, world, state, event) {
-    if (event.createdBy !== self.Id() || event.timerId !== "reset") {
-        return;
-    }
-    log.Info("Node reset")
-    return {
-        state: state,
-        effects: [
-            {
-                mutateEntity: {
-                    entityId: self.Id(),
-                    newMode: "",
+    OnTimerComplete(self, world, state, event) {
+        if (event.createdBy !== self.Id() || event.timerId !== "reset") {
+            return null;
+        }
+        log.Info("Node reset");
+        return {
+            state: state,
+            effects: [
+                {
+                    mutateEntity: {
+                        entityId: self.Id(),
+                        mode: "",
+                    }
                 }
-            }
-        ]
-    };
-}
+            ]
+        };
+    }
+};

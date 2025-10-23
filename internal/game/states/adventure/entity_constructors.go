@@ -56,12 +56,14 @@ func constructNPCEntity(entityId EntityId, location MapLocation, mapEntity *reso
 		AnimatedMoveableEntity: AnimatedMoveableEntity{
 			MoveableEntity: MoveableEntity{
 				BaseEntity: BaseEntity{
-					Id: entityId,
+					Id:           entityId,
+					Interactable: true,
 				},
 				CurrentLocation: location,
 				MoveSpeeds: map[MoveState]float64{
 					MoveStateWalking: 2,
 				},
+				Passable: newPassablePreventIngress(true),
 			},
 			Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
 				MoveStateIdle:    anim.AshaIdle(atlas),
@@ -79,12 +81,7 @@ func constructNPCEntity(entityId EntityId, location MapLocation, mapEntity *reso
 }
 
 func constructScriptEntity(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
-	e := &InnateEntity{
-		BaseEntity: BaseEntity{
-			Id: entityId,
-		},
-		MapLocation: location,
-	}
+	e := NewDynamicEntity(entityId, location)
 	return e, nil
 }
 
@@ -168,7 +165,7 @@ func newSourceEventHandler(id EntityId, source string) events.EventHandler {
 	}
 	eventHandler, err := events.NewGojaEventHandler(string(id), program)
 	if err != nil {
-		log.Fatal().Msgf("Unable to create event handler: %s", err)
+		log.Fatal().Msgf("Unable to create event handler from source for %s: %s", string(id), err)
 	}
 	return eventHandler
 }
@@ -180,7 +177,7 @@ func newReferenceEventHandler(id EntityId, name string) events.EventHandler {
 	}
 	eventHandler, err := events.NewGojaEventHandler(string(id), program)
 	if err != nil {
-		log.Fatal().Msgf("Unable to create event handler: %s", err)
+		log.Fatal().Msgf("Unable to create event handler from reference for %s (ref: %s): %s", string(id), name, err)
 	}
 	return eventHandler
 }

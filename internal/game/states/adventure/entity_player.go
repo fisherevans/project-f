@@ -64,30 +64,31 @@ func (p *Player) Update(adv *State, timeDelta float64) {
 		if interactLocation == nil {
 			return
 		}
-		targetEntityId, entityExists := adv.occupiedBy(interactLocation.Location)
-		if entityExists {
-			targetEntity := adv.entities[targetEntityId]
-			targetEntity.Interact(adv, p)
+		for _, entityIdAtLocation := range adv.GetTileState(interactLocation.Location).EntitiesWithin {
+			entityAtLocation := adv.entities[entityIdAtLocation]
+			entityAtLocation.Interact(adv, p)
 			adv.eventDispatcher.Dispatch(events.EventOnInteract{
-				TargetId: string(targetEntityId),
+				TargetId: string(entityIdAtLocation),
 			})
-			return
 		}
-		doDash := false
-		for {
-			movementTile, movementExists := adv.movementRestrictions[interactLocation.Location]
-			if !movementExists || movementTile.EntryAllowed(adv, p.Id) {
-				if doDash {
-					p.TriggerMovement(adv, interactLocation.Location, MoveStateDashing)
-				}
-				break
-			}
-			if movementTile.CanDashOver() {
-				doDash = true
-				interactLocation.NextTile()
-				continue
-			}
-			break
+		if true {
+			return // todo solve dash
 		}
+		//doDash := false
+		//for {
+		//	movementTile, movementExists := adv.movementRestrictions[interactLocation.Location]
+		//	if !movementExists || movementTile.EntryAllowed(adv, p.Id) {
+		//		if doDash {
+		//			p.TriggerMovement(adv, interactLocation.Location, MoveStateDashing)
+		//		}
+		//		break
+		//	}
+		//	if movementTile.CanDashOver() {
+		//		doDash = true
+		//		interactLocation.NextTile()
+		//		continue
+		//	}
+		//	break
+		//}
 	}
 }

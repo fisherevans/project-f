@@ -12,7 +12,10 @@ import (
 )
 
 type Overlay interface {
-	OnTick(s *State, target *pixel.Batch, timeDelta float64) bool
+	Id() string
+	OnTick(s *State, target *pixel.Batch, timeDelta float64)
+	SetIsActive(bool)
+	GetIsActive() bool
 }
 
 type OverlaySystem struct {
@@ -30,44 +33,63 @@ func (o *OverlaySystem) Add(overlay Overlay) {
 func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.Batch, timeDelta float64) {
 	var remaining []Overlay
 	for _, overlay := range o.overlays {
-		if !overlay.OnTick(s, target, timeDelta) {
+		overlay.OnTick(s, target, timeDelta)
+		if overlay.GetIsActive() {
 			remaining = append(remaining, overlay)
 		}
 	}
 	o.overlays = remaining
 }
 
-type BaseOverlay struct {
-	DurationSeconds float64
-	AutoComplete    bool
-	OnComplete      func(s *State)
-
-	IsComplete bool
-
-	elapsedSeconds float64
-	lastComplete   bool
-}
-
-func NewBaseOverlay(durationSeconds float64, autoComplete bool, onComplete func(s *State)) *BaseOverlay {
-	return &BaseOverlay{
-		DurationSeconds: durationSeconds,
-		AutoComplete:    autoComplete,
-		OnComplete:      onComplete,
-	}
-}
-
-func (o *BaseOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) bool {
-	o.elapsedSeconds += timeDelta
-	if o.elapsedSeconds >= o.DurationSeconds && o.AutoComplete {
-		o.IsComplete = true
-	}
-	if o.IsComplete && !o.lastComplete {
-		o.lastComplete = true
-		if o.OnComplete != nil {
-			o.OnComplete(s)
+func (o *OverlaySystem) Deactivate(id string) {
+	for _, overlay := range o.overlays {
+		if overlay.Id() == id {
+			overlay.SetIsActive(false)
 		}
 	}
-	return o.IsComplete
+}
+
+type BaseOverlay struct {
+	OverlayId       string
+	DurationSeconds float64
+	AutoDeactivate  bool
+
+	IsComplete bool
+	IsActive   bool
+
+	elapsedSeconds float64
+}
+
+func NewBaseOverlay(id string, durationSeconds float64, autoDeactivate bool) *BaseOverlay {
+	return &BaseOverlay{
+		OverlayId:       id,
+		DurationSeconds: durationSeconds,
+		AutoDeactivate:  autoDeactivate,
+		IsActive:        true,
+	}
+}
+
+func (o *BaseOverlay) Id() string {
+	return o.OverlayId
+}
+
+func (o *BaseOverlay) GetIsActive() bool {
+	return o.IsActive
+}
+
+func (o *BaseOverlay) SetIsActive(v bool) {
+	o.IsActive = v
+}
+
+func (o *BaseOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) {
+	o.elapsedSeconds += timeDelta
+	if !o.IsComplete && o.elapsedSeconds >= o.DurationSeconds {
+		o.IsComplete = true
+		s.planExecutor.MarkFadeComplete(o.Id())
+		if o.AutoDeactivate {
+			o.IsActive = false
+		}
+	}
 }
 
 func (o *BaseOverlay) Progress() float64 {
@@ -95,8 +117,8 @@ func NewFadeOverlay(fromColor pixel.RGBA, toColor pixel.RGBA, transitions int, b
 	}
 }
 
-func (f *FadeOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) bool {
-	isComplete := f.BaseOverlay.OnTick(s, target, timeDelta)
+func (f *FadeOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) {
+	f.BaseOverlay.OnTick(s, target, timeDelta)
 
 	// draw color with multiple transitions support
 	p := f.Progress()
@@ -124,6 +146,4 @@ func (f *FadeOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) b
 	f.imd.Rectangle(0) // draw filled rectangle
 	f.imd.Draw(target)
 	//gfx.DrawRect(atlas, target, pixel.IM, gfx.BottomLeft, game.GameWidth, game.GameHeight, fadeColor)
-
-	return isComplete
 }

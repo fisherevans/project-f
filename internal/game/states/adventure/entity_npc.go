@@ -3,7 +3,7 @@ package adventure
 import (
 	"math/rand"
 
-	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util"
 )
@@ -65,12 +65,33 @@ func (n *NPC) Interact(adv *State, source Entity) {
 	if n.Talking {
 		return
 	}
-	n.Talking = true
-	n.TalkingTowards = source.GetEntityId()
-	duration := 5.
-	adv.chatters.Add(newBasicEntityChatter(n.Id, duration, util.OneOffDialogues.Random(), ""))
-	adv.actions.Add(NewDelayAction(NewSimpleAction(func(_ *State) {
-		game.DebugNotification("npc %s is no longer talking", n.Id)
-		n.Talking = false
-	}), duration))
+	playerId := string(adv.player.Id)
+	bFalse := false
+	adv.AddSystemEffect(events.Effect{
+		Plan: &events.EffectPlan{
+			Steps: []events.PlanStep{
+				{
+					Serial: []events.Effect{
+						{
+							MutateNPC: &events.EffectMutateNPC{
+								EntityId:          string(n.Id),
+								TalkingAtEntityId: &playerId,
+							},
+							Chatter: &events.EffectChatter{
+								EntityId:        string(n.Id),
+								DurationSeconds: 5,
+								Message:         util.OneOffDialogues.Random(),
+							},
+						},
+						{
+							MutateNPC: &events.EffectMutateNPC{
+								EntityId:  string(n.Id),
+								IsTalking: &bFalse,
+							},
+						},
+					},
+				},
+			},
+		},
+	})
 }

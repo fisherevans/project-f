@@ -1,0 +1,18 @@
+tilesheet:
+  tileWidth: 32
+  tileHeight: 32
+animations:
+  on:
+    sequence:
+      row: 1
+      columnFrom: 6
+      columnTo: 1
+    framesPerSecond: 18
+    repeat: false
+  off:
+    sequence:
+      row: 1
+      columnFrom: 1
+      columnTo: 6
+    framesPerSecond: 18
+    repeat: false

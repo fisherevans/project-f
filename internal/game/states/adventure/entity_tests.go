@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
-
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"github.com/gopxl/pixel/v2"
 )
 
 type EntityMenuTest struct {
 	InnateEntity
+	Passable
 }
 
 func (e *EntityMenuTest) RenderScene(target pixel.Target, matrix pixel.Matrix) {
@@ -28,18 +28,20 @@ func (e *EntityMenuTest) Interact(adv *State, source Entity) {
 type EntityCombatTest struct {
 	InnateEntity
 	TimeTillNextQuip float64
+	Passable
 }
 
 func NewEntityCombatTest(id EntityId, location MapLocation) Entity {
 	return &EntityCombatTest{
 		InnateEntity: InnateEntity{
 			BaseEntity: BaseEntity{
-				Id:       id,
-				Passable: false,
+				Id:           id,
+				Interactable: true,
 			},
 			MapLocation: location,
 		},
 		TimeTillNextQuip: 10,
+		Passable:         newPassablePreventIngress(true),
 	}
 }
 
@@ -75,10 +77,30 @@ func (e *EntityCombatTest) Interact(adv *State, source Entity) {
 		}
 		message += s
 	}
-	log.Info().Msgf("message: %s", message)
-	adv.dialogues.Append(NewBasicDialogue(message, func(s *State) {
-		adv.TriggerCombat(&rpg.Primortal_Dummy.Type, "combat/background_space_base", func(s *State) {
-			adv.dialogues.Append(NewBasicDialogue("Well, butter my bolts... you actually did it.", nil, ""))
-		})
-	}, ""))
+	adv.AddSystemEffect(events.Effect{
+		Plan: &events.EffectPlan{
+			Steps: []events.PlanStep{
+				{
+					Serial: []events.Effect{
+						{
+							Dialogue: &events.EffectDialogue{
+								Text: message,
+							},
+						},
+						{
+							TriggerCombat: &events.EffectTriggerCombat{
+								Opponent:   &rpg.Primortal_Dummy.Type,
+								Background: "combat/background_space_base",
+							},
+						},
+						{
+							Dialogue: &events.EffectDialogue{
+								Text: "Well, butter my bolts... you actually did it.",
+							},
+						},
+					},
+				},
+			},
+		},
+	})
 }

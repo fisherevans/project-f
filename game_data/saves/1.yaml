@@ -3,13 +3,13 @@ character_name: Isaac
 animech:
     skill_set:
         "1": photo_surge
-        "2": brace
-        "3": guard
+        "2": strike
+        "3": jab
         "4": mend_spores
-    experience_points: 214
+    experience_points: 864
     upgrades:
         shield_level: 0
-        sync_level: 7
+        sync_level: 3
 loadouts:
     - name: Default
       skill_set:
@@ -44,3 +44,16 @@ unlocked_skills:
     photo_surge: {}
     shoulder_roll: {}
     strike: {}
+system_settings:
+    lighting:
+        lighting_composition: full
+        lighting_mode: Blended
+        bloom_mode: Blended
+    combat:
+        combat_speed: 1
+    retro_frame:
+        disable_pixel_grid: false
+        scanline_darken: 0.015
+        grid_darken_x: 0.025
+        grid_darken_y: 0.07499999999999998
+        subpixel_tint: 0.04999999999999984

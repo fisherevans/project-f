@@ -42,3 +42,10 @@ func (i *InnateEntity) Interact(adv *State, source Entity) {
 func (i *InnateEntity) RenderLight(target pixel.Target, matrix pixel.Matrix) {
 
 }
+
+func (i *InnateEntity) TeleportTo(s *State, location MapLocation) bool {
+	s.GetTileState(i.Location()).RemoveEntity(i.GetEntityId())
+	s.GetTileState(location).AddEntity(i.GetEntityId())
+	i.MapLocation = location
+	return true
+}

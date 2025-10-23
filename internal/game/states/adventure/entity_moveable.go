@@ -22,6 +22,7 @@ const (
 
 type MoveableEntity struct {
 	BaseEntity
+	Passable
 	CurrentLocation  MapLocation
 	TargetLocation   MapLocation
 	MoveState        MoveState
@@ -44,8 +45,8 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	moveDelta := timeDelta * moveSpeed
 	m.ConstantMovement += moveDelta
 	m.MoveProgression += moveDelta
-	if m.MoveProgression >= 0.5 && !m.IsPassable() {
-		if adv.unoccupy(m.CurrentLocation, m.Id) {
+	if m.MoveProgression >= 0.5 {
+		if adv.GetTileState(m.CurrentLocation).RemoveEntity(m.GetEntityId()) {
 			m.emitZoneEvents(adv, m.CurrentLocation, false)
 		}
 	}
@@ -55,9 +56,6 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 		m.MoveState = MoveStateIdle
 		remaining := m.MoveProgression - 1.0
 		m.MoveProgression = 0
-		if newTile, newTileExists := adv.movementRestrictions[m.CurrentLocation]; newTileExists {
-			newTile.OnEntryComplete(adv, m.Id)
-		}
 		m.emitZoneEvents(adv, m.CurrentLocation, true)
 		remainingTime := remaining / moveSpeed // movement is complete, but there is more time in the tick to move
 		return remainingTime
@@ -66,9 +64,6 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 }
 
 func (m *MoveableEntity) emitZoneEvents(adv *State, loc MapLocation, isEntering bool) {
-	if string(m.Id) == "tiled-7" {
-		//log.Info().Msgf("Zone event: tiled-7")
-	}
 	for _, zoneId := range adv.zones.ZonesAt(loc) {
 		adv.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
 			EntityId:   string(m.Id),
@@ -88,6 +83,17 @@ func (m *MoveableEntity) GetFacingLocation() MapLocation {
 
 var validMovementMoveStates = []MoveState{MoveStateWalking, MoveStateRunning, MoveStateDashing}
 
+func (m *MoveableEntity) isValidMovement(s *State, from, to MapLocation) bool {
+	movementDirection := from.DirectionTowards(to)
+	if !s.CanEntityLeave(m.GetEntityId(), movementDirection, from) {
+		return false
+	}
+	if !s.CanEntityEnter(m.GetEntityId(), movementDirection, to) {
+		return false
+	}
+	return true
+}
+
 func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, desiredMoveState MoveState) bool {
 	if newLocation == m.CurrentLocation {
 		return false
@@ -98,14 +104,12 @@ func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, de
 	if m.IsMoving() {
 		return false
 	}
-	if !m.IsPassable() && !adv.attemptToOccupy(newLocation, m.Id) {
+	if !m.isValidMovement(adv, m.Location(), newLocation) {
 		return false
 	}
+	adv.GetTileState(newLocation).AddEntity(m.GetEntityId())
 	m.TargetLocation = newLocation
 	m.MoveState = desiredMoveState
-	if newTile, newTileExists := adv.movementRestrictions[newLocation]; newTileExists {
-		newTile.OnEntryBegin(adv, m.Id)
-	}
 	return true
 }
 
@@ -170,19 +174,14 @@ func (m *MoveableEntity) GetCurrentSpeed() float64 {
 	return speed
 }
 
-func (m *MoveableEntity) TeleportTo(s *State, location MapLocation) {
+func (m *MoveableEntity) TeleportTo(s *State, newLocation MapLocation) bool {
 	if m.MoveState != MoveStateIdle {
 		log.Warn().Msgf("cannot teleport '%s' while moving '%d'", m.Id, m.MoveState)
-		return
+		return false
 	}
-	if !m.IsPassable() {
-		m.CurrentLocation = location
-	}
-	currentLocation := m.CurrentLocation
-	if !s.attemptToOccupy(location, m.Id) {
-		log.Warn().Msgf("cannot teleport '%s' to '%s' because it is occupied", m.Id, location)
-		return
-	}
-	m.CurrentLocation = location
-	s.unoccupy(currentLocation, m.Id)
+	oldLocation := m.Location()
+	s.GetTileState(newLocation).AddEntity(m.GetEntityId())
+	s.GetTileState(oldLocation).RemoveEntity(m.GetEntityId())
+	m.CurrentLocation = newLocation
+	return true
 }

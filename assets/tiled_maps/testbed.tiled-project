@@ -11,15 +11,6 @@
     ],
     "propertyTypes": [
         {
-            "id": 2,
-            "name": "Enum0",
-            "storageType": "string",
-            "type": "enum",
-            "values": [
-            ],
-            "valuesAsFlags": false
-        },
-        {
             "color": "#ff0010c1",
             "drawFill": true,
             "id": 1,

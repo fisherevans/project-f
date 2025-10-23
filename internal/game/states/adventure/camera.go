@@ -9,10 +9,6 @@ import (
 	"fisherevans.com/project/f/internal/util"
 )
 
-type TransitionController interface {
-	Update(s *State, timeDelta float64) (isComplete bool)
-}
-
 type Camera interface {
 	SetLocation(location pixel.Vec)
 	CurrentLocation() pixel.Vec

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game/input"
@@ -26,6 +27,10 @@ func (l MapLocation) Moved(dx int, dy int) MapLocation {
 		X: l.X + dx,
 		Y: l.Y + dy,
 	}
+}
+
+func (l MapLocation) DirectionTowards(other MapLocation) input.Direction {
+	return DirectionTowards(gfx.IVec(l.X, l.Y), gfx.IVec(other.X, other.Y))
 }
 
 type MapBounds struct {

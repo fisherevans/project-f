@@ -4,6 +4,8 @@ import (
 	"math"
 	"math/rand"
 
+	"fisherevans.com/project/f/internal/game/events"
+	"fisherevans.com/project/f/internal/game/input"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -89,17 +91,44 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 		TriggerRadius: 0.8,
 		OnTrigger: func(s *State, m *ShadowMob) {
 			if game.DebugToggles().F5().ToggleState() {
-				s.TriggerCombat(nil, "combat/background_sylvoria", func(s *State) {
-					for i, mob := range s.mobs {
-						if mob == m {
-							s.mobs[i] = s.mobs[len(s.mobs)-1]
-							s.mobs = s.mobs[:len(s.mobs)-1]
-							break
-						}
-					}
-					s.actions.Add(NewDelayAction(NewSimpleAction(func(s *State) {
-						s.mobs = append(s.mobs, m)
-					}), 15))
+				s.AddSystemEffect(events.Effect{
+					Plan: &events.EffectPlan{
+						Steps: []events.PlanStep{
+							{
+								Serial: []events.Effect{
+									{
+										TriggerCombat: &events.EffectTriggerCombat{
+											Opponent:   nil,
+											Background: "combat/background_sylvoria",
+										},
+									},
+									{
+										Timer: &events.EffectTimer{
+											DurationSeconds: 15,
+										},
+										Function: &events.EffectFunction{
+											Fn: func() {
+												for i, mob := range s.mobs {
+													if mob == m {
+														s.mobs[i] = s.mobs[len(s.mobs)-1]
+														s.mobs = s.mobs[:len(s.mobs)-1]
+														break
+													}
+												}
+											},
+										},
+									},
+									{
+										Function: &events.EffectFunction{
+											Fn: func() {
+												s.mobs = append(s.mobs, m)
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				})
 			} else {
 				game.DebugNotification("Mob caught you! Toggle F5")
@@ -424,11 +453,8 @@ func (m *ShadowMob) sampleCircleAgainstTiles(s *State, center pixel.Vec, radius 
 }
 
 func (s *State) canMobTraverse(x, y int) bool {
-	mr := s.movementRestrictions[MapLocation{X: x, Y: y}]
-	if mr == nil {
-		return true
-	}
-	return mr.EntryAllowed(s, EntityId(0))
+	// todo mob entity id? direction?
+	return s.CanEntityEnter(EntityId(""), input.Down, MapLocation{X: x, Y: y})
 }
 
 // tileCircleIntersects checks if a circle at `center` with squared radius `rr` intersects a unit tile centered at (tx,ty), extents [tx-0.5,tx+0.5] x [ty-0.5,ty+0.5].

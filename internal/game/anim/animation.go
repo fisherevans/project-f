@@ -2,6 +2,7 @@ package anim
 
 import (
 	"fmt"
+	"math/rand/v2"
 
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/pixelutil"
@@ -11,6 +12,7 @@ type AnimatedSprite struct {
 	frames          []frame
 	framesPerSecond float64
 	randomized      bool
+	repeat          bool
 	progression     float64
 	currentFrame    int
 }
@@ -58,19 +60,23 @@ func FromTilesheetRowPartial(atlas *resources.Atlas, tilesheet string, row, colF
 			Weight: 1,
 		})
 	}
-	return FromTilesheetTiles(atlas, tilesheet, framesPerSecond, false, tiles)
+	return FromTilesheetTiles(atlas, tilesheet, framesPerSecond, false, true, tiles)
 }
 
-func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecond float64, randomized bool, tiles []*resources.SpriteTilesheetAnimationTile) *AnimatedSprite {
+func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecond float64, randomized, repeat bool, tiles []*resources.SpriteTilesheetAnimationTile) *AnimatedSprite {
 	animated := &AnimatedSprite{
 		framesPerSecond: framesPerSecond,
 		randomized:      randomized,
+		repeat:          repeat,
 	}
 	for _, tile := range tiles {
 		animated.frames = append(animated.frames, frame{
 			drawable: atlas.GetTilesheetSprite(tilesheet, tile.Column, tile.Row),
 			weight:   tile.Weight,
 		})
+	}
+	if repeat == false {
+		animated.currentFrame = len(animated.frames) - 1
 	}
 	return animated
 }
@@ -105,22 +111,37 @@ func Load(atlas *resources.Atlas, tilesheetName string, animationName string) *A
 		if from == 0 && to == 0 {
 			to = tilesheet.Columns
 		}
-		if from <= 0 || from > to || to > tilesheet.Columns {
+		if from > tilesheet.Columns || to > tilesheet.Columns {
 			panic(msgf("invalid column range %d-%d", from, to))
 		}
-		if len(metadata.Sequence.FrameWeights) == 0 {
+		// Build column sequence (supports forward and backward)
+		var columns []int
+		if from <= to {
 			for i := from; i <= to; i++ {
+				columns = append(columns, i)
+			}
+		} else {
+			for i := from; i >= to; i-- {
+				columns = append(columns, i)
+			}
+		}
+
+		// Fill default frame weights if not specified
+		if len(metadata.Sequence.FrameWeights) == 0 {
+			for range columns {
 				metadata.Sequence.FrameWeights = append(metadata.Sequence.FrameWeights, 1)
 			}
 		}
-		if len(metadata.Sequence.FrameWeights) != to-from+1 {
-			panic(msgf("invalid frame weights length %d", len(metadata.Sequence.FrameWeights)))
+		if len(metadata.Sequence.FrameWeights) != len(columns) {
+			panic(msgf("invalid frame weights length %d, expected %d", len(metadata.Sequence.FrameWeights), len(columns)))
 		}
-		for i := from; i <= to; i++ {
+
+		// Create tiles using frame index for weights
+		for frameIndex, column := range columns {
 			tiles = append(tiles, &resources.SpriteTilesheetAnimationTile{
-				Column: i,
+				Column: column,
 				Row:    metadata.Sequence.Row,
-				Weight: metadata.Sequence.FrameWeights[i-from],
+				Weight: metadata.Sequence.FrameWeights[frameIndex],
 			})
 		}
 	}
@@ -151,8 +172,16 @@ func Load(atlas *resources.Atlas, tilesheetName string, animationName string) *A
 	}
 	//j, _ := json.MarshalIndent(tiles, "", "  ")
 	//fmt.Printf("tilesheet animation: %s/%s:\n%s\n", tilesheetName, animationName, j)
-	a := FromTilesheetTiles(atlas, tilesheetName, metadata.FramesPerSecond, metadata.Randomize, tiles)
-	if metadata.PingPong {
+	randomize := false
+	if metadata.Randomize != nil {
+		randomize = *metadata.Randomize
+	}
+	repeat := true
+	if metadata.Repeat != nil {
+		repeat = *metadata.Repeat
+	}
+	a := FromTilesheetTiles(atlas, tilesheetName, metadata.FramesPerSecond, randomize, repeat, tiles)
+	if metadata.PingPong != nil && *metadata.PingPong {
 		a = a.ApplyPingPong()
 	}
 	return a
@@ -174,8 +203,18 @@ func (a *AnimatedSprite) Update(timeDelta float64) {
 		if a.progression < dur {
 			break
 		}
+		nextFrame := a.currentFrame + 1
 		a.progression -= dur
-		a.currentFrame = (a.currentFrame + 1) % len(a.frames)
+		if a.randomized {
+			nextFrame = rand.IntN(len(a.frames))
+		} else if nextFrame >= len(a.frames) {
+			if a.repeat {
+				nextFrame = 0
+			} else {
+				nextFrame = len(a.frames) - 1
+			}
+		}
+		a.currentFrame = nextFrame
 	}
 }
 

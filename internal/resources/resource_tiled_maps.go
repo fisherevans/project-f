@@ -87,28 +87,29 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 				for _, property := range object.Properties {
 					metadata[property.Name] = property.Value // TODO non string types?
 				}
-
 				class := object.Class
 				if class == "" {
 					class = object.Type
 				}
+				// For tile entities, center them by adding half their size
+				offsetX := object.Width / 2
+				offsetY := object.Height / 2
 
 				e := &Entity{
 					ID:         int(object.ID),
-					X:          int((object.X + float64(tiledMap.TileWidth)/2) / float64(tiledMap.TileWidth)),
-					Y:          tiledMap.Height - int((object.Y-float64(tiledMap.TileHeight)/2)/float64(tiledMap.TileHeight)),
+					X:          int((object.X + offsetX) / float64(tiledMap.TileWidth)),
+					Y:          tiledMap.Height - int((object.Y-offsetY)/float64(tiledMap.TileHeight)),
 					Properties: metadata,
 					SpriteGID:  int(object.GID),
 					Class:      class,
 				}
 
-				if tiledTile, err := tiledMap.TileGIDToTile(object.GID); err == nil {
-					e.SpriteId = tileToSpriteId(tiledTile.ID, tiledTile.Tileset)
-				}
-
 				entityId := object.Properties.GetString("entity_id")
 				if entityId == "" {
 					entityId = fmt.Sprintf("tiled-%d", object.ID)
+				}
+				if tiledTile, err := tiledMap.TileGIDToTile(object.GID); err == nil {
+					e.SpriteId = tileToSpriteId(tiledTile.ID, tiledTile.Tileset)
 				}
 
 				gameMap.Entities[entityId] = e

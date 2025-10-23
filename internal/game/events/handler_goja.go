@@ -10,18 +10,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type handlerFn[T any] func(ctx EntityContext, world WorldStateReader, state any, event *T) *HandlerOutput
-
 type gojaEventHandler struct {
-	vm      *goja.Runtime
-	program *goja.Program
-
-	fnInit                 func(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput
-	fnOnInteract           handlerFn[EventOnInteract]
-	fnOnDialogueComplete   handlerFn[EventDialogueComplete]
-	fnOnChatterComplete    handlerFn[EventChatterComplete]
-	fnOnTimerComplete      handlerFn[EventTimerComplete]
-	fnOnEntityZoneActivity handlerFn[EventEntityZoneActivity]
+	vm       *goja.Runtime
+	program  *goja.Program
+	fnInit   func(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput
+	handlers map[reflect.Type]EventHandlerFunc // event type -> wrapped function
 }
 
 func (e *gojaEventHandler) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
@@ -31,45 +24,25 @@ func (e *gojaEventHandler) Init(ctx EntityContext, world WorldStateReader, state
 	return nil
 }
 
-func (e *gojaEventHandler) OnInteract(ctx EntityContext, world WorldStateReader, state any, event *EventOnInteract) *HandlerOutput {
-	if e.fnOnInteract == nil {
-		return nil
+func (e *gojaEventHandler) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {
+	eventType := reflect.TypeOf(event)
+	if eventType.Kind() == reflect.Ptr {
+		eventType = eventType.Elem()
 	}
-	return e.fnOnInteract(ctx, world, state, event)
-}
 
-func (e *gojaEventHandler) OnDialogueComplete(ctx EntityContext, world WorldStateReader, state any, event *EventDialogueComplete) *HandlerOutput {
-	if e.fnOnDialogueComplete == nil {
-		return nil
+	handler, exists := e.handlers[eventType]
+	if !exists {
+		return nil // No handler registered for this event
 	}
-	return e.fnOnDialogueComplete(ctx, world, state, event)
-}
 
-func (e *gojaEventHandler) OnChatterComplete(ctx EntityContext, world WorldStateReader, state any, event *EventChatterComplete) *HandlerOutput {
-	if e.fnOnChatterComplete == nil {
-		return nil
-	}
-	return e.fnOnChatterComplete(ctx, world, state, event)
-}
-
-func (e *gojaEventHandler) OnTimerComplete(ctx EntityContext, world WorldStateReader, state any, event *EventTimerComplete) *HandlerOutput {
-	if e.fnOnTimerComplete == nil {
-		return nil
-	}
-	return e.fnOnTimerComplete(ctx, world, state, event)
-}
-
-func (e *gojaEventHandler) OnEntityZoneActivity(ctx EntityContext, world WorldStateReader, state any, event *EventEntityZoneActivity) *HandlerOutput {
-	if e.fnOnEntityZoneActivity == nil {
-		return nil
-	}
-	return e.fnOnEntityZoneActivity(ctx, world, state, event)
+	return handler(ctx, world, state, event)
 }
 
 func NewGojaEventHandler(id string, program *goja.Program) (EventHandler, error) {
 	handler := &gojaEventHandler{
-		vm:      newGojaVM(),
-		program: program,
+		vm:       newGojaVM(),
+		program:  program,
+		handlers: make(map[reflect.Type]EventHandlerFunc),
 	}
 	globalVariables := map[string]any{
 		"log": gojaLogs{
@@ -85,22 +58,52 @@ func NewGojaEventHandler(id string, program *goja.Program) (EventHandler, error)
 		return nil, fmt.Errorf("error compiling goja script: %w", err)
 	}
 
-	// Register Init function
-	if v := handler.vm.Get("Init"); v != nil {
+	// Extract handler object (const handler = {...})
+	handlerObj := handler.vm.Get("handler")
+	if handlerObj == nil || goja.IsUndefined(handlerObj) || goja.IsNull(handlerObj) {
+		return nil, fmt.Errorf("script must export 'const handler = {...}' object")
+	}
+
+	obj := handlerObj.ToObject(handler.vm)
+	
+	// Validate: check for unknown methods
+	validMethods := make(map[string]bool)
+	validMethods["Init"] = true
+	for _, jsFuncName := range registry.handlers {
+		validMethods[jsFuncName] = true
+	}
+	
+	for _, key := range obj.Keys() {
+		if !validMethods[key] {
+			return nil, fmt.Errorf("handler has unknown method '%s' (valid methods: Init, %v)", key, getValidMethodNames())
+		}
+	}
+	
+	// Register Init method
+	if v := obj.Get("Init"); v != nil {
 		if fn, ok := goja.AssertFunction(v); ok {
 			handler.fnInit = wrapInitFunction(handler, fn)
 		}
 	}
 
-	for name, register := range gojaHandlerMapping {
-		if v := handler.vm.Get(name); v != nil {
+	// Auto-register all event handlers from registry
+	for eventType, jsFuncName := range registry.handlers {
+		if v := obj.Get(jsFuncName); v != nil {
 			if fn, ok := goja.AssertFunction(v); ok {
-				register(handler, fn)
+				handler.handlers[eventType] = wrapGenericHandler(handler, fn)
 			}
 		}
 	}
 
 	return handler, nil
+}
+
+func getValidMethodNames() []string {
+	names := []string{"Init"}
+	for _, jsFuncName := range registry.handlers {
+		names = append(names, jsFuncName)
+	}
+	return names
 }
 
 func wrapInitFunction(e *gojaEventHandler, fn goja.Callable) func(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
@@ -123,13 +126,13 @@ func wrapInitFunction(e *gojaEventHandler, fn goja.Callable) func(ctx EntityCont
 	}
 }
 
-func wrapHandlerFn[T any](e *gojaEventHandler, fn goja.Callable) handlerFn[T] {
-	return func(ctx EntityContext, world WorldStateReader, state any, event *T) *HandlerOutput {
+func wrapGenericHandler(e *gojaEventHandler, fn goja.Callable) EventHandlerFunc {
+	return func(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {
 		fnState := goja.Undefined()
 		if state != nil {
 			fnState = state.(goja.Value)
 		}
-		// State is now mutable - JS can modify it directly
+
 		result, err := fn(
 			goja.Undefined(),
 			e.vm.ToValue(ctx),

@@ -66,6 +66,7 @@ func (d *Dispatcher) Dispatch(event any) {
 func (d *Dispatcher) Flush(worldState WorldStateReader) []DispatchedEffect {
 	var effects []DispatchedEffect
 	for _, event := range d.queuedEvents {
+		log.Debug().Interface("event", event).Type("type", event).Msg("dispatching event")
 		eventPtr := event
 		if reflect.TypeOf(event).Kind() != reflect.Ptr {
 			// Create a pointer to the value
@@ -75,7 +76,7 @@ func (d *Dispatcher) Flush(worldState WorldStateReader) []DispatchedEffect {
 			eventPtr = ptr.Interface()
 		}
 		for _, registeredHandler := range d.registeredHandlers {
-			output := dispatchEvent(registeredHandler.Handler, registeredHandler.ctx, worldState, registeredHandler.State, eventPtr)
+			output := registeredHandler.Handler.HandleEvent(registeredHandler.ctx, worldState, registeredHandler.State, eventPtr)
 			effects = append(effects, registeredHandler.handleOutput(output)...)
 		}
 	}

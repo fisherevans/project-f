@@ -45,6 +45,7 @@ type context struct {
 	elapsed      float64
 	utils        ContextUtils
 	debugToggles *DebugToggleSystem
+	flags        *FlagRegister
 }
 
 func Initialize(window *opengl.Window, saveId string) {
@@ -61,6 +62,7 @@ func Initialize(window *opengl.Window, saveId string) {
 		window:       window,
 		save:         save,
 		debugToggles: newToggles(),
+		flags:        newFlags(),
 	}
 	ctx.utils = ContextUtils{}
 
@@ -158,4 +160,8 @@ func PopNotifications(time float64) []string {
 
 func TimeElapsed() float64 {
 	return ctx.elapsed
+}
+
+func Flags() *FlagRegister {
+	return ctx.flags
 }

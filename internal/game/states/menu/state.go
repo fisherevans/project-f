@@ -16,27 +16,30 @@ import (
 var atlas = resources.DefaultAtlas()
 
 var (
-	margin         = 6.0
-	padding        = 5.0
-	transitionTime = 0.25
+	menuContentWidth = 100
+	menuMargin       = 6
+	menuPadding      = 5
+	itemPadding      = 3
+	transitionTime   = 0.25
 )
 
 type State struct {
 	background game.State
 	transition float64
+	exiting    bool
 
-	main  Main
-	batch *pixel.Batch
+	menuStack []*Menu
+	batch     *pixel.Batch
 }
 
 func New(i game.MenuIntent) game.State {
-	return &State{
+	s := &State{
 		background: i.Background,
 		transition: 0,
 		batch:      atlas.NewBatch(),
-
-		main: createMain(),
 	}
+	s.menuStack = []*Menu{createMainMenu(s)}
+	return s
 }
 
 func (s *State) ClearColor() color.Color {
@@ -50,13 +53,52 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.batch.Clear()
 
-	s.transition = math.Min(1, s.transition+timeDelta*(1.0/transitionTime))
+	transitionDt := timeDelta
+	if s.exiting {
+		transitionDt *= -1
+	}
+	s.transition = math.Min(1, s.transition+transitionDt*(1.0/transitionTime))
+	if s.exiting && s.transition <= 0 {
+		if err := game.CurrentSave().Save(); err != nil {
+			game.DebugNotification("failed to save: " + err.Error())
+		}
+		game.SetActiveStateIntent(game.SwapStateIntent{
+			State: s.background,
+		})
+		return
+	}
 
 	fadeColor := colors.WithAlphaTodoFix(colors.Black.RGBA, 0.7*s.transition)
 	gfx.DrawRect(atlas, s.batch, pixel.IM, gfx.BottomLeft, game.GameWidth, game.GameHeight, fadeColor)
 
-	matrix := pixel.IM.Moved(pixel.V(-100.0*(1.0-s.transition), 0))
-	s.main.Render(s, matrix, s.batch, targetBounds)
+	if game.Controls[*State]().ButtonSelect().JustPressed() {
+		s.exiting = !s.exiting
+	}
+	if !s.exiting {
+		s.menuStack[len(s.menuStack)-1].HandleInputs()
+	}
+
+	topLeft := pixel.IM.Moved(pixel.V(-100.0*(1.0-s.transition), game.GameHeight-10))
+	for menuIndex, menu := range s.menuStack {
+		if menuIndex > 0 {
+			gfx.DrawRect(atlas, s.batch, pixel.IM, gfx.BottomLeft, game.GameWidth, game.GameHeight, colors.WithAlpha(colors.Black.RGBA, 0.2))
+		}
+		menu.Render(s, topLeft.Moved(gfx.IVec(20*menuIndex+menuMargin, -5*menuIndex-menuMargin)), s.batch, targetBounds)
+	}
 
 	s.batch.Draw(target)
+
+	game.DebugBL("retro frame: %v", game.CurrentSave().SystemSettings.RetroFrame)
+}
+
+func (s *State) PopMenu() {
+	if len(s.menuStack) <= 1 {
+		s.exiting = true
+	} else {
+		s.menuStack = s.menuStack[:len(s.menuStack)-1]
+	}
+}
+
+func (s *State) PushMenu(menu *Menu) {
+	s.menuStack = append(s.menuStack, menu)
 }

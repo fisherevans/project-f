@@ -33,7 +33,7 @@ func (t *timers) AddTimer(createdBy string, id string, durationSeconds float64) 
 	t.inProgress = append(t.inProgress, newTimer)
 }
 
-func (t *timers) Update(deltaSeconds float64, dispatcher *events.Dispatcher) {
+func (t *timers) Update(deltaSeconds float64, dispatcher *events.Dispatcher, state *State) {
 	for id, timer := range t.inProgress {
 		timer.elapsed += deltaSeconds
 		if timer.elapsed < timer.duration {
@@ -52,5 +52,9 @@ func (t *timers) Update(deltaSeconds float64, dispatcher *events.Dispatcher) {
 			DurationSeconds: timer.duration,
 			TriggerCount:    timer.triggerCount,
 		})
+		// Mark timer complete for plan tracking
+		if state != nil {
+			state.planExecutor.MarkTimerComplete(timer.id)
+		}
 	}
 }

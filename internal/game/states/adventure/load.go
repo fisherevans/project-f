@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"fmt"
 	"math/rand"
 	"slices"
 
@@ -67,18 +68,26 @@ func initializeMap(a *State, m *resources.Map) {
 			a.baseRenderLayers = append(a.baseRenderLayers, thisRenderLayer)
 		}
 	}
-	a.occupiedLocations = map[MapLocation]EntityId{}
 	for _, collisionTile := range m.Layers[resources.LayerCollision].Tiles {
 		location := adjustedLocation(collisionTile.X, collisionTile.Y)
 		switch collisionTile.SpriteId {
 		case resources.TileCollisionBlock:
-			a.movementRestrictions[location] = MovementNotAllowed{}
-		case resources.TileCollisionJumpHorizontal:
-			a.movementRestrictions[location] = MovementJumpTile{}
-		case resources.TileCollisionJumpVertical:
-			a.movementRestrictions[location] = MovementJumpTile{}
-		case resources.TileCollisionJumpAll:
-			a.movementRestrictions[location] = MovementJumpTile{}
+			a.AddEntity(&EntityCollision{
+				InnateEntity: InnateEntity{
+					BaseEntity: BaseEntity{
+						Id: EntityId(fmt.Sprintf("collision-%d-%d", location.X, location.Y)),
+					},
+					MapLocation: location,
+				},
+				Passable: newPassablePreventIngress(true),
+			})
+			// TODO dashing!
+			//case resources.TileCollisionJumpHorizontal:
+			//	a.movementRestrictions[location] = MovementJumpTile{}
+			//case resources.TileCollisionJumpVertical:
+			//	a.movementRestrictions[location] = MovementJumpTile{}
+			//case resources.TileCollisionJumpAll:
+			//	a.movementRestrictions[location] = MovementJumpTile{}
 		}
 	}
 	for stringEntityId, entity := range m.Entities {
@@ -147,6 +156,7 @@ func initializeMap(a *State, m *resources.Map) {
 							MoveStateRunning: characterSpeed * 1.75,
 							MoveStateDashing: characterSpeed * 1.5,
 						},
+						Passable: newPassablePreventIngress(true),
 					},
 					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
 						MoveStateIdle:    anim.AshaIdle(atlas),
@@ -170,12 +180,14 @@ func initializeMap(a *State, m *resources.Map) {
 				AnimatedMoveableEntity: AnimatedMoveableEntity{
 					MoveableEntity: MoveableEntity{
 						BaseEntity: BaseEntity{
-							Id: entityId,
+							Id:           entityId,
+							Interactable: true,
 						},
 						CurrentLocation: location,
 						MoveSpeeds: map[MoveState]float64{
 							MoveStateWalking: 2,
 						},
+						Passable: newPassablePreventIngress(true),
 					},
 					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
 						MoveStateIdle:    anim.AshaIdle(atlas),
@@ -203,22 +215,26 @@ func initializeMap(a *State, m *resources.Map) {
 			a.AddEntity(&EntityChest{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id: entityId,
+						Id:           entityId,
+						Interactable: true,
 					},
 					MapLocation: location,
 				},
-				hasItem: true,
-				item:    entity.GetStringMetadata("item", "a sock"),
+				hasItem:  true,
+				item:     entity.GetStringMetadata("item", "a sock"),
+				Passable: newPassablePreventIngress(true),
 			})
 		case "interest":
 			a.AddEntity(&EntityInterest{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id: entityId,
+						Id:           entityId,
+						Interactable: true,
 					},
 					MapLocation: location,
 				},
-				topic: entity.GetStringMetadata("topic", ""),
+				topic:    entity.GetStringMetadata("topic", ""),
+				Passable: newPassablePreventIngress(true),
 			})
 		case "dummy_robot":
 			a.AddEntity(NewEntityCombatTest(entityId, location))
@@ -226,36 +242,31 @@ func initializeMap(a *State, m *resources.Map) {
 			a.AddEntity(&EntityMenuTest{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id: entityId,
+						Id:           entityId,
+						Interactable: true,
 					},
 					MapLocation: location,
 				},
+				Passable: newPassablePreventIngress(true),
 			})
 		case "stairs":
-			ref := TeleportReference(entity.GetStringMetadata("ref", ""))
+			ref := TeleportReference("teleport:" + entity.GetStringMetadata("ref", ""))
 			if _, exists := a.teleports[ref]; exists {
 				log.Fatal().Msgf("stairs reference %s already exists", ref)
 				break
 			}
-			dest := TeleportReference(entity.GetStringMetadata("destination", ""))
+			dest := TeleportReference("teleport:" + entity.GetStringMetadata("destination", ""))
 			a.teleports[ref] = Teleport{
 				Destination:   dest,
 				Location:      location,
 				ExitDirection: input.DirectionFromString(entity.GetStringMetadata("exit_direction", "")),
 			}
-			if _, exists := a.movementRestrictions[location]; exists {
-				log.Fatal().Msgf("stairs location at %s is already occupied", location)
-				break
-			}
-			a.movementRestrictions[location] = TeleportTile{
-				Reference: ref,
-			}
+			a.zones.SetZoneId(location, string(ref))
 		case "torch":
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id:       entityId,
-						Passable: true,
+						Id: entityId,
 					},
 					MapLocation: location,
 				},
@@ -275,6 +286,7 @@ func initializeMap(a *State, m *resources.Map) {
 						},
 					},
 				},
+				Passable: newPassablePreventIngress(false),
 			}
 			switch *entity.SpriteId {
 			case tiles.Torch:
@@ -293,8 +305,7 @@ func initializeMap(a *State, m *resources.Map) {
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id:       entityId,
-						Passable: true,
+						Id: entityId,
 					},
 					MapLocation: location,
 				},
@@ -312,14 +323,14 @@ func initializeMap(a *State, m *resources.Map) {
 					},
 				},
 				Animations: []*anim.AnimatedSprite{anim.RedCoin(atlas)},
+				Passable:   newPassablePreventIngress(false),
 			}
 			a.AddEntity(t)
 		case "light":
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id:       entityId,
-						Passable: true,
+						Id: entityId,
 					},
 					MapLocation: location,
 				},
@@ -330,6 +341,7 @@ func initializeMap(a *State, m *resources.Map) {
 					},
 				},
 				Animations: []*anim.AnimatedSprite{anim.NewStaticAnimation(entity.SpriteId.From(atlas))},
+				Passable:   newPassablePreventIngress(false),
 			}
 			if *entity.SpriteId == tiles.LightFork {
 				t.RenderZPriority = 10
@@ -353,8 +365,7 @@ func initializeMap(a *State, m *resources.Map) {
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id:       entityId,
-						Passable: true,
+						Id: entityId,
 					},
 					MapLocation: location,
 				},
@@ -364,6 +375,7 @@ func initializeMap(a *State, m *resources.Map) {
 						ColorMask: colorMask,
 					},
 				},
+				Passable: newPassablePreventIngress(false),
 			}
 			if *entity.SpriteId == tiles.LightFork {
 				t.RenderZPriority = 10
@@ -373,10 +385,12 @@ func initializeMap(a *State, m *resources.Map) {
 			a.AddEntity(&EntityAnimatedInterest{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id: entityId,
+						Id:           entityId,
+						Interactable: true,
 					},
 					MapLocation: location,
 				},
+				Passable:     newPassablePreventIngress(true),
 				OnAnimation:  anim.PDA(atlas),
 				OffAnimation: anim.PDADisabled(atlas),
 				OnMessage:    "You've got mail!",
@@ -386,24 +400,26 @@ func initializeMap(a *State, m *resources.Map) {
 		case "shadow":
 			a.AddMob(NewShadowMob(entityId, location))
 		case "rocket":
-			dest := TeleportReference(entity.GetStringMetadata("destination", ""))
+			dest := TeleportReference("teleport:" + entity.GetStringMetadata("destination", ""))
 			e := &EntityTeleport{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id: entityId,
+						Id:           entityId,
+						Interactable: true,
 					},
 					MapLocation: location,
 				},
 				RequiredElythium: 2,
 				Destination:      dest,
+				Passable:         newPassablePreventIngress(true),
 			}
 			a.AddEntity(e)
 		case "level_up":
 			t := &LightEntity{
 				InnateEntity: InnateEntity{
 					BaseEntity: BaseEntity{
-						Id:       entityId,
-						Passable: true,
+						Id:           entityId,
+						Interactable: true,
 					},
 					MapLocation: location,
 				},
@@ -426,6 +442,7 @@ func initializeMap(a *State, m *resources.Map) {
 				Animations: []*anim.AnimatedSprite{
 					anim.Load(atlas, "space_base", "level_up"),
 				},
+				Passable: newPassablePreventIngress(true),
 			}
 			a.AddEntity(t)
 		default:

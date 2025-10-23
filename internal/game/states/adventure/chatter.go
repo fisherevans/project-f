@@ -62,6 +62,8 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matri
 				e.EntityId = string(basic.target)
 			}
 			s.eventDispatcher.Dispatch(e)
+			// Mark chatter complete for plan tracking
+			s.planExecutor.MarkChatterComplete(chatter.Id())
 			continue
 		}
 		incompleteChatters = append(incompleteChatters, chatter)

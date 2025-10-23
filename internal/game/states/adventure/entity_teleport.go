@@ -3,16 +3,16 @@ package adventure
 import (
 	"fmt"
 
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
-
+	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/util/tiles"
+	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game/anim"
 )
 
 type EntityTeleport struct {
 	InnateEntity
+	Passable
 	RequiredElythium int
 	Destination      TeleportReference
 }
@@ -22,27 +22,40 @@ func (e *EntityTeleport) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 }
 
 func (e *EntityTeleport) Interact(adv *State, source Entity) {
-	player, IsPlayer := source.(*Player)
-	if !IsPlayer {
-		log.Warn().Msg("EntityTeleport interact: source is not a Player")
-		return
-	}
-
 	if adv.hud.ElythiumCount < e.RequiredElythium {
-		adv.dialogues.Append(NewBasicDialogue(fmt.Sprintf("You need %d Elythium to travel home!", e.RequiredElythium), nil, ""))
+		msg := fmt.Sprintf("You need %d Elythium to travel home!", e.RequiredElythium)
+		adv.AddSystemEffect(events.Effect{
+			Dialogue: &events.EffectDialogue{
+				Text: msg,
+			},
+		})
 		return
 	}
 
-	destination, exists := adv.teleports[e.Destination]
-	if !exists {
-		log.Warn().Msgf("EntityTeleport interact: destination '%s' not found", e.Destination)
-		return
-	}
-
-	adv.dialogues.Append(NewBasicDialogue("You've managed to escape!", func(s *State) {
-		adv.hud.ElythiumCount -= e.RequiredElythium
-		adv.teleport(player, destination)
-	}, ""))
+	d := string(e.Destination)
+	adv.AddSystemEffect(events.Effect{
+		Plan: &events.EffectPlan{
+			Steps: []events.PlanStep{
+				{
+					Serial: []events.Effect{
+						{
+							Dialogue: &events.EffectDialogue{
+								Text: "You've managed to escape!",
+							},
+						},
+						{
+							YieldElythium: &events.EffectYieldElythium{
+								Amount: -e.RequiredElythium,
+							},
+							TeleportPlayer: &events.EffectTeleportPlayer{
+								ToReference: &d,
+							},
+						},
+					},
+				},
+			},
+		},
+	})
 }
 
 type EntityAnimatedTeleport struct {
@@ -82,7 +95,17 @@ func (e *EntityAnimatedTeleport) Interact(adv *State, source Entity) {
 		return
 	}
 	e.toggled = true
-	adv.dialogues.Append(NewBasicDialogue(msg, func(s *State) {
-		e.toggled = false
-	}, ""))
+	adv.AddSerialSystemEffects(
+		events.Effect{
+			Dialogue: &events.EffectDialogue{
+				Text: msg,
+			},
+		},
+		events.Effect{
+			Function: &events.EffectFunction{
+				Fn: func() {
+					e.toggled = false
+				},
+			},
+		})
 }

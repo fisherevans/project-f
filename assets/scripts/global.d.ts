@@ -1,395 +1,224 @@
-// TypeScript definitions for Project F scripting API
+// AUTO-GENERATED - DO NOT EDIT
+// Generated at 2025-10-23T00:10:25-04:00 by go generate
+// Source: internal/game/events/handler.go, internal/game/events/effect.go
 
 // ============================================================================
-// WORLD API
+// LOGGING
 // ============================================================================
 
-interface World {
-  /** Get a world variable value */
-  getVar(key: string): any;
-  
-  /** Check if a world variable exists */
-  hasVar(key: string): boolean;
+interface Logger {
+  Debug(message: string): void;
+  Info(message: string): void;
+  Warn(message: string): void;
+  Error(message: string): void;
 }
 
-declare const world: World;
+declare const log: Logger;
 
 // ============================================================================
-// ENTITY SELF
+// CONTEXT
 // ============================================================================
 
-interface EntitySelf {
-  /** The entity's unique ID */
-  id: string;
+interface EntityContext {
+  Id(): string;
+}
+
+interface WorldStateReader {
+  // Add world state methods as needed
 }
 
 // ============================================================================
-// EVENTS
+// EVENT TYPES
 // ============================================================================
 
-interface BaseEvent {
-  type: string;
+interface EventOnInteract {
+  targetId: string;
+}
+
+interface EventDialogueComplete {
+  dialogueId: string;
+}
+
+interface EventChatterComplete {
+  chatterId: string;
   entityId: string;
-  timestamp: number;
 }
 
-interface InteractEvent extends BaseEvent {
-  type: "Interact";
-  sourceEntityId: string;
+interface EventTimerComplete {
+  createdBy: string;
+  timerId: string;
+  durationSeconds: number;
+  triggerCount: number;
 }
 
-interface EnterZoneEvent extends BaseEvent {
-  type: "EnterZone";
-  zoneName: string;
+interface EventEntityZoneActivity {
+  entityId: string;
+  zoneId: string;
+  isEntering: boolean;
 }
 
-interface LeaveZoneEvent extends BaseEvent {
-  type: "LeaveZone";
-  zoneName: string;
-}
-
-interface TimerEvent extends BaseEvent {
-  type: "Timer";
-  timerName: string;
-}
-
-interface TriggerEvent extends BaseEvent {
-  type: "Trigger";
-  triggerName: string;
-  data?: Record<string, any>;
-}
-
-interface FlagChangedEvent extends BaseEvent {
-  type: "FlagChanged";
-  varName: string;
-  oldValue: any;
+interface EventWorldStateUpdated {
+  key: string;
   newValue: any;
+  oldValue: any;
+  setBy: string;
 }
 
-interface StepEvent extends BaseEvent {
-  type: "Step";
-  deltaTime: number;
+interface EventCombatComplete {
+  combatId: string;
+  result: any;
 }
-
-type GameEvent = 
-  | InteractEvent 
-  | EnterZoneEvent 
-  | LeaveZoneEvent 
-  | TimerEvent 
-  | TriggerEvent 
-  | FlagChangedEvent 
-  | StepEvent;
 
 // ============================================================================
-// EFFECTS
+// EFFECT TYPES
 // ============================================================================
 
-interface SetVarEffect {
-  type: "SetVar";
-  data: {
-    key: string;
-    value: any;
-  };
+interface DynamicAnimationReference {
+  tilesheet: string;
+  name: string;
 }
 
-interface IncVarEffect {
-  type: "IncVar";
-  data: {
-    key: string;
-    value: number;
-  };
+interface LightConfig {
+  color: string;
+  size: number;
+  modifier: string;
 }
 
-interface ClearVarEffect {
-  type: "ClearVar";
-  data: {
-    key: string;
-  };
+interface EffectFunction {
+  fn: any;
 }
 
-interface MoveToEffect {
-  type: "MoveTo";
-  data: {
-    x: number;
-    y: number;
-  };
+interface EffectDialogue {
+  dialogueId: string;
+  text: string;
 }
 
-interface OpenDoorEffect {
-  type: "OpenDoor";
-  data: {
-    doorId: string;
-  };
+interface EffectChatter {
+  chatterId: string;
+  entityId: string;
+  durationSeconds: number;
+  message: string;
 }
 
-interface CloseDoorEffect {
-  type: "CloseDoor";
-  data: {
-    doorId: string;
-  };
+interface EffectYieldElythium {
+  amount: number;
 }
 
-interface TriggerEffect {
-  type: "Trigger";
-  data: {
-    triggerName: string;
-    targetEntity?: string;
-    data?: Record<string, any>;
-  };
+interface EffectTimer {
+  timerId: string;
+  durationSeconds: number;
 }
 
-interface StartBattleEffect {
-  type: "StartBattle";
-  data: {
-    battleId: string;
-  };
+interface EffectMutateEntity {
+  entityId: string;
+  mode: string | undefined;
+  isPassable: boolean | undefined;
+  dynamicAnimations: Record<string, DynamicAnimationReference[]>;
+  dynamicLights: Record<string, LightConfig[]>;
 }
 
-interface SetCameraEffect {
-  type: "SetCamera";
-  data: {
-    target: string;
-  };
+interface EffectSetWorldState {
+  key: string;
+  value: any;
 }
 
-interface PlayMusicEffect {
-  type: "PlayMusic";
-  data: {
-    musicId: string;
-    fadeIn?: number;
-  };
+interface EffectSetEntityLocation {
+  entityId: string;
+  toReference: string | undefined;
+  toLocation: any | undefined;
+  toEntityId: string | undefined;
 }
 
-interface PlaySoundEffect {
-  type: "PlaySound";
-  data: {
-    soundId: string;
-    volume?: number;
-  };
+interface EffectTeleportPlayer {
+  toReference: string | undefined;
+  toLocation: any | undefined;
+  toEntityId: string | undefined;
+  exitDirection: any | undefined;
+  transitionStyle: string | undefined;
 }
-
-interface ShowDialogEffect {
-  type: "ShowDialog";
-  data: {
-    text: string;
-    speaker?: string;
-  };
-}
-
-interface StartTimerEffect {
-  type: "StartTimer";
-  data: {
-    timerName: string;
-    duration: number;
-  };
-}
-
-interface StopTimerEffect {
-  type: "StopTimer";
-  data: {
-    timerName: string;
-  };
-}
-
-interface SpawnEntityEffect {
-  type: "SpawnEntity";
-  data: {
-    entityType: string;
-    x: number;
-    y: number;
-    properties?: Record<string, any>;
-  };
-}
-
-interface RemoveEntityEffect {
-  type: "RemoveEntity";
-  data: {
-    entityId?: string;
-  };
-}
-
-interface TransactionEffect {
-  type: "Transaction";
-  data: {
-    effects: Effect[];
-  };
-}
-
-type Effect = 
-  | SetVarEffect 
-  | IncVarEffect 
-  | ClearVarEffect
-  | MoveToEffect
-  | OpenDoorEffect
-  | CloseDoorEffect
-  | TriggerEffect
-  | StartBattleEffect
-  | SetCameraEffect
-  | PlayMusicEffect
-  | PlaySoundEffect
-  | ShowDialogEffect
-  | StartTimerEffect
-  | StopTimerEffect
-  | SpawnEntityEffect
-  | RemoveEntityEffect
-  | TransactionEffect;
-
-// ============================================================================
-// PLANS
-// ============================================================================
 
 interface EffectPlan {
-  type: "Effect";
-  data: Effect;
+  planId: string;
+  steps: any[];
 }
 
-interface WaitPlan {
-  type: "Wait";
-  data: {
-    duration: number;
-  };
+interface EffectBlockInput {
+  blocked: boolean;
 }
 
-interface SeqPlan {
-  type: "Seq";
-  children: Plan[];
+interface EffectFade {
+  fadeId: string;
+  durationSeconds: number;
+  autoDeactivate: boolean | undefined;
+  fromColor: string | undefined;
+  toColor: string | undefined;
+  transitions: number;
 }
 
-interface ParPlan {
-  type: "Par";
-  children: Plan[];
+interface EffectDeactivateFade {
+  fadeId: string;
 }
 
-interface IfPlan {
-  type: "If";
-  data: {
-    condition: boolean;
-  };
-  children: [Plan] | [Plan, Plan]; // then, optional else
+interface EffectTriggerMovement {
+  entityId: string;
+  direction: any;
 }
 
-interface ChoicePlan {
-  type: "Choice";
-  data: {
-    prompt: string;
-    options: string[];
-  };
-  children: Plan[]; // One per option
+interface EffectSetFollowCamera {
+  entityId: string | undefined;
+  resetPosition: boolean;
 }
 
-type Plan = EffectPlan | WaitPlan | SeqPlan | ParPlan | IfPlan | ChoicePlan;
+interface EffectMutateNPC {
+  entityId: string;
+  talkingAtEntityId: string | undefined;
+  isTalking: boolean | undefined;
+}
 
-// ============================================================================
-// HANDLER RESULT
-// ============================================================================
+interface EffectTriggerCombat {
+  combatId: string;
+  opponent: any | undefined;
+  background: string;
+}
 
-interface HandlerResult {
-  /** Effects to apply immediately */
+interface Effect {
+  function?: EffectFunction;
+  dialogue?: EffectDialogue;
+  chatter?: EffectChatter;
+  yieldElythium?: EffectYieldElythium;
+  timer?: EffectTimer;
+  mutateEntity?: EffectMutateEntity;
+  setWorldState?: EffectSetWorldState;
+  setEntityLocation?: EffectSetEntityLocation;
+  teleportPlayer?: EffectTeleportPlayer;
+  plan?: EffectPlan;
+  blockInput?: EffectBlockInput;
+  fade?: EffectFade;
+  deactivateFade?: EffectDeactivateFade;
+  triggerMovement?: EffectTriggerMovement;
+  setFollowCamera?: EffectSetFollowCamera;
+  mutateNPC?: EffectMutateNPC;
+  triggerCombat?: EffectTriggerCombat;
+}
+
+interface HandlerOutput {
+  state?: any;
   effects?: Effect[];
-  
-  /** Multi-step plan to execute */
-  plan?: Plan;
-  
-  /** Updated entity state */
-  state?: Record<string, any>;
 }
 
 // ============================================================================
-// SUBSCRIPTION
+// ENTITY HANDLER
 // ============================================================================
 
-interface Subscription {
-  /** Zone names to listen for EnterZone events */
-  EnterZone?: string | string[];
-  
-  /** Zone names to listen for LeaveZone events */
-  LeaveZone?: string | string[];
-  
-  /** Trigger names to listen for */
-  Trigger?: string | string[];
-  
-  /** Variable prefixes to watch (e.g., "map.meadow.*") */
-  VarPrefix?: string | string[];
-  
-  /** Handler priority (higher = earlier execution) */
-  Priority?: number;
+interface EntityHandler {
+  Init?: (self: EntityContext, world: WorldStateReader, state: any) => HandlerOutput | null;
+  OnInteract?: (self: EntityContext, world: WorldStateReader, state: any, event: EventOnInteract) => HandlerOutput | null;
+  OnDialogueComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventDialogueComplete) => HandlerOutput | null;
+  OnChatterComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventChatterComplete) => HandlerOutput | null;
+  OnTimerComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventTimerComplete) => HandlerOutput | null;
+  OnEntityZoneActivity?: (self: EntityContext, world: WorldStateReader, state: any, event: EventEntityZoneActivity) => HandlerOutput | null;
+  OnWorldStateUpdated?: (self: EntityContext, world: WorldStateReader, state: any, event: EventWorldStateUpdated) => HandlerOutput | null;
+  OnCombatComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventCombatComplete) => HandlerOutput | null;
 }
 
-declare const SUBSCRIPTION: Subscription;
-
-// ============================================================================
-// EVENT HANDLERS
-// ============================================================================
-
-/** Called when entity is first created */
-declare function OnInit(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>
-): HandlerResult | void;
-
-/** Called when entity is interacted with */
-declare function OnInteract(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>,
-  event: InteractEvent
-): HandlerResult | void;
-
-/** Called when entity enters a zone */
-declare function OnEnterZone(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>,
-  event: EnterZoneEvent
-): HandlerResult | void;
-
-/** Called when entity leaves a zone */
-declare function OnLeaveZone(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>,
-  event: LeaveZoneEvent
-): HandlerResult | void;
-
-/** Called when a timer expires */
-declare function OnTimer(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>,
-  event: TimerEvent
-): HandlerResult | void;
-
-/** Called when a trigger is activated */
-declare function OnTrigger(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>,
-  event: TriggerEvent
-): HandlerResult | void;
-
-/** Called when a watched variable changes */
-declare function OnFlagChanged(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>,
-  event: FlagChangedEvent
-): HandlerResult | void;
-
-/** Called periodically for background processing */
-declare function OnStep(
-  self: EntitySelf,
-  world: World,
-  state: Record<string, any>,
-  event: StepEvent
-): HandlerResult | void;
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/** Get deterministic game time (milliseconds since epoch) */
-declare function getTime(): number;
-
-/** Get deterministic random number [0, 1) */
-declare function random(): number;
+declare const handler: EntityHandler;

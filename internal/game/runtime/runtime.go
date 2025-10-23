@@ -62,13 +62,10 @@ func Run() {
 
 		// Update canvas scale and pixel grid canvas
 		canvasScale = calculateCanvasScale(window)
-		if game.DebugToggles().F6().JustPressed() || lastSceneCanvasScale != canvasScale {
+		if lastSceneCanvasScale != canvasScale || game.Flags().JustChanged("retro_frame_reset") {
 			lastSceneCanvasScale = canvasScale
 			pixelGridCanvas = createPixelGridCanvas(canvasScale)
 			pixelGridRecorder.UpdateCanvas(pixelGridCanvas.Canvas)
-			if game.DebugToggles().F6().ToggleState() {
-				pixelGridCanvas.Reset()
-			}
 		}
 
 		// Composite and draw to window
@@ -94,7 +91,7 @@ func Run() {
 func initWindow() *opengl.Window {
 	cfg := opengl.WindowConfig{
 		Title:     "Project F",
-		Bounds:    pixel.R(0, 0, game.GameWidth*3.5, game.GameHeight*5),
+		Bounds:    pixel.R(0, 0, game.GameWidth*3.1, game.GameHeight*5),
 		Resizable: true,
 		VSync:     true,
 	}
@@ -107,13 +104,15 @@ func initWindow() *opengl.Window {
 
 func createPixelGridCanvas(scale float64) *shaders.Canvas {
 	c := shaders.NewCanvas(int(game.GameWidth*scale), int(game.GameHeight*scale))
-	c.SetPixelGridOverlayShader(
-		float32(scale),
-		0.0125,
-		0.05,
-		0.05,
-		0.05,
-	)
+	if !game.CurrentSave().SystemSettings.RetroFrame.DisablePixelGrid {
+		c.SetPixelGridOverlayShader(
+			float32(scale),
+			float32(game.CurrentSave().SystemSettings.RetroFrame.ScanlineDarken),
+			float32(game.CurrentSave().SystemSettings.RetroFrame.GridDarkenX),
+			float32(game.CurrentSave().SystemSettings.RetroFrame.GridDarkenY),
+			float32(game.CurrentSave().SystemSettings.RetroFrame.SubpixelTint),
+		)
+	}
 	return c
 }
 
@@ -122,7 +121,7 @@ func calculateCanvasScale(window *opengl.Window) float64 {
 	scaleX := math.Floor(windowWidth / game.GameWidth)
 	scaleY := math.Floor(windowHeight / game.GameHeight)
 	scale := math.Min(scaleX, scaleY)
-	
+
 	if scale < 0.5 {
 		return 0.5
 	} else if scale < 1.0 {
@@ -165,7 +164,7 @@ func handleCaptureHotkeys(window *opengl.Window, sceneCanvas *shaders.Canvas, sc
 			CopyCanvasToClipboard(sceneCanvas.Canvas)
 		}
 	}
-	
+
 	if window.JustPressed(pixel.KeyO) {
 		if window.Pressed(pixel.KeyLeftControl) {
 			pixelGridRecorder.Toggle()
@@ -182,7 +181,7 @@ func captureRecordingFrames(sceneRecorder, pixelGridRecorder *Recorder, deltaTim
 			sceneRecorder.Stop()
 		}
 	}
-	
+
 	if pixelGridRecorder.IsRecording() {
 		if err := pixelGridRecorder.CaptureFrame(deltaTime); err != nil {
 			game.DebugNotification("Frame capture error: %v", err)

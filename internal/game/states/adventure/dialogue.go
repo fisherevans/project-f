@@ -81,10 +81,10 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 		if dialogue.Content().IsContentFullyDisplayed() {
 			if a || bJustPressed {
 				ds.queuedDialogues = ds.queuedDialogues[1:]
-				dialogue.OnDismiss(s)
 				s.eventDispatcher.Dispatch(events.EventDialogueComplete{
 					DialogueId: dialogue.Id(),
 				})
+				s.planExecutor.MarkDialogueComplete(dialogue.Id())
 			}
 		} else if dialogue.Content().IsPageFullyDisplayed() {
 			dialogue.Content().NextPage()
@@ -111,23 +111,20 @@ type Dialogue interface {
 	Id() string
 	Message() string
 	Content() *textbox.Content
-	OnDismiss(*State)
 }
 
 type basicDialogue struct {
-	id        string
-	message   string
-	content   *textbox.Content
-	onDismiss func(*State)
+	id      string
+	message string
+	content *textbox.Content
 }
 
-func NewBasicDialogue(message string, onDismiss func(state *State), id string) Dialogue {
+func NewBasicDialogue(message string, id string) Dialogue {
 	content := dialogueBox.NewComplexContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
-		id:        id,
-		message:   message,
-		content:   content,
-		onDismiss: onDismiss,
+		id:      id,
+		message: message,
+		content: content,
 	}
 }
 
@@ -141,10 +138,4 @@ func (b basicDialogue) Message() string {
 
 func (b basicDialogue) Content() *textbox.Content {
 	return b.content
-}
-
-func (b basicDialogue) OnDismiss(state *State) {
-	if b.onDismiss != nil {
-		b.onDismiss(state)
-	}
 }

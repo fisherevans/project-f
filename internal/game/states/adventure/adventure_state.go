@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"fisherevans.com/project/f/internal/game/events"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
@@ -56,16 +57,14 @@ type State struct {
 	camera Camera
 	player *Player
 
-	entities             map[EntityId]Entity
-	occupiedLocations    map[MapLocation]EntityId
-	movementRestrictions map[MapLocation]MovementRestriction
-	teleports            map[TeleportReference]Teleport
-	actions              *ActionQueue
-	chatters             *ChatterSystem
-	dialogues            *DialogueSystem
-	overlays             *OverlaySystem
-	timers               *timers
-	zones                *zones
+	entities   map[EntityId]Entity
+	tileStates map[MapLocation]*TileState
+	teleports  map[TeleportReference]Teleport
+	chatters   *ChatterSystem
+	dialogues  *DialogueSystem
+	overlays   *OverlaySystem
+	timers     *timers
+	zones      *zones
 
 	hud *Hud
 
@@ -86,23 +85,23 @@ type State struct {
 	mobs     []*ShadowMob
 
 	eventDispatcher *events.Dispatcher
+	systemEffects   []events.DispatchedEffect
 	worldState      events.WorldState
+	planExecutor    *events.PlanExecutor
 }
 
 func New(i game.AdventureIntent) game.State {
 	m := resources.GetMap(i.MapName)
 	a := &State{
-		entities:             make(map[EntityId]Entity),
-		occupiedLocations:    make(map[MapLocation]EntityId),
-		movementRestrictions: make(map[MapLocation]MovementRestriction),
-		teleports:            make(map[TeleportReference]Teleport),
-		camera:               NewStaticCamera(pixel.Vec{}),
-		actions:              NewActionQueue(),
-		chatters:             NewChatterSystem(),
-		dialogues:            NewDialogueSystem(),
-		overlays:             NewOverlaySystem(),
-		timers:               newTimers(),
-		zones:                newZones(),
+		entities:   make(map[EntityId]Entity),
+		tileStates: make(map[MapLocation]*TileState),
+		teleports:  make(map[TeleportReference]Teleport),
+		camera:     NewStaticCamera(pixel.Vec{}),
+		chatters:   NewChatterSystem(),
+		dialogues:  NewDialogueSystem(),
+		overlays:   NewOverlaySystem(),
+		timers:     newTimers(),
+		zones:      newZones(),
 
 		hud: NewHud(),
 
@@ -124,6 +123,7 @@ func New(i game.AdventureIntent) game.State {
 		hudBatch: atlas.NewBatch(),
 
 		eventDispatcher: events.NewDispatcher(),
+		planExecutor:    events.NewPlanExecutor(),
 	}
 	a.worldState = events.NewWorldState()
 
@@ -137,6 +137,7 @@ func New(i game.AdventureIntent) game.State {
 		colors.HexString("#ed3579"), // red led
 		colors.HexString("#4CC9F0"), // blue led
 	)
+	a.eventDispatcher.Register(events.NewEphemeralEntityContext("system"), newSystemEventHandler(a))
 
 	initializeMap(a, m)
 	return a
@@ -163,11 +164,11 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		mob.Update(s, timeDelta)
 	}
 
-	s.actions.ExecuteActions(s, timeDelta)
+	s.timers.Update(timeDelta, s.eventDispatcher, s)
 
-	s.timers.Update(timeDelta, s.eventDispatcher)
-
+	s.processEffects(s.PopSystemEffects())
 	s.processEffects(s.eventDispatcher.Flush(s.worldState))
+	s.processEffects(s.planExecutor.GetNextEffects())
 
 	s.camera.Update(s, timeDelta)
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)
@@ -203,26 +204,53 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	// LIGHTING
 
+	// build light map
 	s.lightMapBatch.Clear()
 	s.DrawAmbient(s.lightMapCanvas, cameraMatrix, renderBounds, imdraw.New(nil))
 	s.litSceneCanvas.Clear(colornames.Black)
-	for _, entity := range s.locationSortedEntities() {
-		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-		entity.RenderLight(s.lightMapBatch, cameraMatrix.Moved(renderLocation))
+	switch game.CurrentSave().SystemSettings.Lighting.LightingComposition {
+	case rpg.LightingCompositionFull:
+		for _, entity := range s.locationSortedEntities() {
+			renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
+			entity.RenderLight(s.lightMapBatch, cameraMatrix.Moved(renderLocation))
+		}
+	case rpg.LightingCompositionAmbient:
 	}
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 
+	// render "lit" scene
 	s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
 	s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
-	s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
-	s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+	switch game.CurrentSave().SystemSettings.Lighting.LightingMode {
+	case rpg.LightingModeBlended:
+		s.litSceneCanvas.SetComposeMethod(pixel.ComposeMultiply)
+		s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+	case rpg.LightingModeOver:
+		s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
+		s.lightMapCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
+	case rpg.LightingModeOff:
+	}
 	s.litSceneCanvas.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 
 	// BLOOM
 
-	bloomed := s.bloom.ApplyBloom(s.sceneCanvas)
-	bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	switch game.CurrentSave().SystemSettings.Lighting.BloomMode {
+	case rpg.BloomModeOff:
+	case rpg.BloomModeOverThreshold, rpg.BloomModeOverBlurred:
+		oldPasses := s.bloom.Passes
+		if game.CurrentSave().SystemSettings.Lighting.BloomMode == rpg.BloomModeOverThreshold {
+			s.bloom.Passes = 0
+		} else {
+		}
+		bloomed := s.bloom.GenerateBloomCanvas(s.sceneCanvas)
+		s.bloom.Passes = oldPasses
+		target.Clear(pixel.RGBA{})
+		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	case rpg.BloomModeBlended:
+		bloomed := s.bloom.ApplyBloom(s.sceneCanvas)
+		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	}
 
 	// HUD + CHAT
 
@@ -261,10 +289,6 @@ func (s *State) locationSortedEntities() []Entity {
 		if iL.Y != jL.Y {
 			return iL.Y > jL.Y
 		}
-		iP, jP := sortedEntities[i].IsPassable(), sortedEntities[j].IsPassable()
-		if iP != jP {
-			return jP
-		}
 		if iL.X != jL.X {
 			return iL.X < jL.X
 		}
@@ -285,4 +309,43 @@ func (s *State) inputMode() inputMode {
 
 func (s *State) AddMob(mob *ShadowMob) {
 	s.mobs = append(s.mobs, mob)
+}
+
+func (s *State) setWorldState(key string, value any, id string) {
+	oldValue := s.worldState.Get(key)
+	s.worldState.Set(key, value)
+	s.eventDispatcher.Dispatch(&events.EventWorldStateUpdated{
+		Key:      key,
+		NewValue: value,
+		OldValue: oldValue,
+		SetBy:    id,
+	})
+}
+
+func (s *State) AddSystemEffect(e events.Effect) {
+	s.systemEffects = append(s.systemEffects, events.DispatchedEffect{
+		Source: events.NewEphemeralEntityContext("system"),
+		Effect: e,
+	})
+}
+
+func (s *State) AddSerialSystemEffects(effects ...events.Effect) {
+	s.systemEffects = append(s.systemEffects, events.DispatchedEffect{
+		Source: events.NewEphemeralEntityContext("system"),
+		Effect: events.Effect{
+			Plan: &events.EffectPlan{
+				Steps: []events.PlanStep{
+					{
+						Serial: effects,
+					},
+				},
+			},
+		},
+	})
+}
+
+func (s *State) PopSystemEffects() []events.DispatchedEffect {
+	out := s.systemEffects
+	s.systemEffects = nil
+	return out
 }

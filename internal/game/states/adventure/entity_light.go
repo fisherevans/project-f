@@ -10,6 +10,7 @@ type LightEntity struct {
 	InnateEntity
 	Light
 	Animations []*anim.AnimatedSprite
+	Passable
 }
 
 func (i *LightEntity) Update(adv *State, timeDelta float64) {

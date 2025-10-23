@@ -25,6 +25,15 @@ type GameSave struct {
 	Primortals    map[PrimortalType]*PrimortalProgress `yaml:"primortals"`
 
 	ControlledUnlockedSkills map[SkillId]struct{} `yaml:"unlocked_skills"`
+
+	SystemSettings *SystemSettings `yaml:"system_settings"`
+}
+
+func (g *GameSave) FillDefaults() {
+	if g.SystemSettings == nil {
+		g.SystemSettings = &SystemSettings{}
+	}
+	g.SystemSettings.FillDefaults()
 }
 
 func (g *GameSave) IsSkillUnlocked(skill SkillId) bool {
@@ -121,6 +130,9 @@ func LoadGameSaves() (map[string]*GameSave, error) {
 			log.Warn().Msgf("Failed to unmarshal %s: %v", path, err)
 			continue
 		}
+
+		// initialize config with defaults if needed
+		gs.FillDefaults()
 
 		// todo validate loaded saves (i.e. skills in loadouts are unlocked and valid ids)
 

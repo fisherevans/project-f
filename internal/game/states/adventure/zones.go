@@ -12,6 +12,13 @@ func newZones() *zones {
 	}
 }
 
+func (z *zones) SetZoneId(loc MapLocation, zoneId string) {
+	if _, exists := z.zones[loc]; !exists {
+		z.zones[loc] = make(map[string]struct{})
+	}
+	z.zones[loc][zoneId] = struct{}{}
+}
+
 func (z *zones) RegisterZone(zone resources.Zone) {
 	for x := zone.X; x <= zone.X+zone.W; x++ {
 		for y := zone.Y; y <= zone.Y+zone.H; y++ {
