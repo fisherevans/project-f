@@ -84,11 +84,13 @@ type State struct {
 	hudBatch *pixel.Batch
 	mobs     []*ShadowMob
 
-	eventDispatcher *events.Dispatcher
-	systemEffects   []events.DispatchedEffect
-	worldState      events.WorldState
-	planExecutor    *events.PlanExecutor
-	run             *rpg.Run
+	eventDispatcher    *events.Dispatcher
+	systemEffects      []events.DispatchedEffect
+	worldState         events.WorldState
+	planExecutor       *events.PlanExecutor
+	run                *rpg.Run
+	movementController *MovementController
+	behaviors          map[EntityId]EntityBehavior
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -122,8 +124,10 @@ func New(i game.AdventureIntent) game.State {
 
 		hudBatch: atlas.NewBatch(),
 
-		eventDispatcher: events.NewDispatcher(),
-		planExecutor:    events.NewPlanExecutor(),
+		eventDispatcher:    events.NewDispatcher(),
+		planExecutor:       events.NewPlanExecutor(),
+		movementController: NewMovementController(),
+		behaviors:          make(map[EntityId]EntityBehavior),
 	}
 	a.hud = NewHud(func() int { return a.run.Elythium })
 	a.worldState = events.NewWorldState(a.run)
@@ -151,15 +155,13 @@ func (s *State) ClearColor() color.Color {
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	game.DebugTL("delta: %.3f", timeDelta)
 
-	for _, entity := range s.entities {
-		remaining := timeDelta
-		for remaining > 0 {
-			nextRemaining := entity.Move(s, remaining)
-			elapsed := remaining - nextRemaining
-			entity.Update(s, elapsed)
-			remaining = nextRemaining
-		}
+	for _, behavior := range s.behaviors {
+		behavior.Update(s, timeDelta)
 	}
+
+	s.movementController.Update(s, timeDelta)
+
+	//	s.updateAnimationsAndLights(timeDelta)
 
 	for _, mob := range s.mobs {
 		mob.Update(s, timeDelta)
@@ -176,7 +178,10 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	// SCENE
 
-	game.DebugBR("player moving: %.1f", s.player.ConstantMovement)
+	playerMovement := s.movementController.Get(s.player.GetEntityId())
+	if playerMovement != nil {
+		game.DebugBR("player moving: %.1f", playerMovement.ConstantMovement())
+	}
 
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
@@ -261,8 +266,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.overlays.OnTick(s, target, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.hudBatch.Draw(target)
-
-	game.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {
 		game.SetActiveStateIntent(game.MenuIntent{

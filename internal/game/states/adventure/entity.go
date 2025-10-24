@@ -25,8 +25,6 @@ type Entity interface {
 	TeleportTo(s *State, location MapLocation) bool
 	GetEntityId() EntityId
 
-	Move(adv *State, timeDelta float64) float64
-	Update(adv *State, timeDelta float64)
 	RenderScene(target pixel.Target, matrix pixel.Matrix)
 	RenderLight(target pixel.Target, matrix pixel.Matrix)
 	GetRenderZPriority() int

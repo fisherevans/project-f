@@ -3,13 +3,13 @@ package adventure
 import (
 	"slices"
 
+	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
@@ -95,46 +95,57 @@ func initializeMap(a *State, m *resources.Map) {
 		}
 		switch entityType {
 		case "player":
-			normalPlayerLight := &Light{
-				RenderDetails: LightRenderDetails{
-					SizeScale: 1.5,
-					ColorMask: colors.HexString("#888"),
-				},
-			}
-			dashPlayerLight := &Light{
-				RenderDetails: LightRenderDetails{
-					SizeScale: 1.5,
-					ColorMask: colors.HexString("#88f"),
-				},
-			}
 			a.player = &Player{
-				AnimatedMoveableEntity: AnimatedMoveableEntity{
-					MoveableEntity: MoveableEntity{
-						BaseEntity: BaseEntity{
-							id: entityId,
+				BaseEntity: BaseEntity{
+					id: entityId,
+				},
+				Passable: newPassablePreventIngress(true),
+				Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+					MoveStateIdle:    anim.AshaIdle(atlas),
+					MoveStateWalking: anim.AshaWalk(atlas),
+					MoveStateRunning: anim.AshaRun(atlas),
+					MoveStateDashing: anim.Dash(atlas),
+				},
+				Lights: map[MoveState]*Light{
+					MoveStateIdle: {
+						RenderDetails: LightRenderDetails{
+							SizeScale: 1.5,
+							ColorMask: pixel.RGB(1, 1, 1),
 						},
-						CurrentLocation: location,
-						MoveSpeeds: map[MoveState]float64{
-							MoveStateWalking: characterSpeed,
-							MoveStateRunning: characterSpeed * 1.75,
-							MoveStateDashing: characterSpeed * 1.5,
+					},
+					MoveStateWalking: {
+						RenderDetails: LightRenderDetails{
+							SizeScale: 1.5,
+							ColorMask: pixel.RGB(1, 1, 1),
 						},
-						Passable: newPassablePreventIngress(true),
 					},
-					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
-						MoveStateIdle:    anim.AshaIdle(atlas),
-						MoveStateWalking: anim.AshaWalk(atlas),
-						MoveStateRunning: anim.AshaRun(atlas),
-						MoveStateDashing: anim.Dash(atlas),
+					MoveStateRunning: {
+						RenderDetails: LightRenderDetails{
+							SizeScale: 1.5,
+							ColorMask: pixel.RGB(1, 1, 1),
+						},
 					},
-					Lights: map[MoveState]*Light{
-						MoveStateIdle:    normalPlayerLight,
-						MoveStateWalking: normalPlayerLight,
-						MoveStateRunning: normalPlayerLight,
-						MoveStateDashing: dashPlayerLight,
+					MoveStateDashing: {
+						RenderDetails: LightRenderDetails{
+							SizeScale: 1.5,
+							ColorMask: pixel.RGB(1, 1, 1),
+						},
 					},
 				},
 			}
+
+			// Register with movement controller and behavior
+			speeds := map[MoveState]float64{
+				MoveStateWalking: characterSpeed,
+				MoveStateRunning: characterSpeed * 1.75,
+				MoveStateDashing: characterSpeed * 1.5,
+			}
+			movementState := a.movementController.Register(entityId, location, speeds)
+			a.player.SetMovementState(movementState)
+
+			behavior := NewPlayerBehavior(entityId)
+			a.behaviors[entityId] = behavior
+
 			a.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
 			a.AddEntity(a.player)
 			a.worldState.Set("player_id", string(entityId))
