@@ -13,42 +13,47 @@ import (
 )
 
 func init() {
-	registerDynamicEntity().byClass("NPC").byTile(tiles.NPC).register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
-		e := &NPC{
-			AnimatedMoveableEntity: AnimatedMoveableEntity{
-				MoveableEntity: MoveableEntity{
-					BaseEntity: BaseEntity{
-						id:             entityId,
-						isInteractable: true,
-					},
-					CurrentLocation: location,
-					MoveSpeeds: map[MoveState]float64{
-						MoveStateWalking: 2,
-					},
-					Passable: newPassablePreventIngress(true),
-				},
-				Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
-					MoveStateIdle:    anim.AshaIdle(atlas),
-					MoveStateWalking: anim.AshaWalk(atlas),
-					MoveStateRunning: anim.AshaRun(atlas),
-				},
-				ColorMask: pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
-			},
-			DoesMove:        true,
-			IdleChance:      0.05,
-			MaxIdleDuration: 6,
-		}
+	registerDynamicEntity().byClass("NPC").byTile(tiles.NPC).register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		doesMove := true
+		horizOnly := false
+		walkSpeed := 2.0
+		
 		switch mapEntity.GetStringMetadata("movement", "") {
 		case "static":
-			e.DoesMove = false
+			doesMove = false
 		case "horiz":
-			e.HorizOnly = true
+			horizOnly = true
 		}
 		switch mapEntity.GetStringMetadata("speed", "") {
 		case "fast":
-			e.MoveableEntity.MoveSpeeds[MoveStateWalking] = 4
+			walkSpeed = 4.0
 		}
-		return e, events.NewBasicHandler(None{}).
+		
+		npc := &NPC{
+			BaseEntity: BaseEntity{
+				id:             entityId,
+				isInteractable: true,
+			},
+			Passable: newPassablePreventIngress(true),
+			Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+				MoveStateIdle:    anim.AshaIdle(atlas),
+				MoveStateWalking: anim.AshaWalk(atlas),
+				MoveStateRunning: anim.AshaRun(atlas),
+			},
+			ColorMask: pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
+		}
+		
+		// Register with movement controller and behavior
+		speeds := map[MoveState]float64{
+			MoveStateWalking: walkSpeed,
+		}
+		movementState := s.movementController.Register(entityId, location, speeds)
+		npc.SetMovementState(movementState)
+		
+		behavior := NewNPCBehavior(entityId, doesMove, horizOnly)
+		s.behaviors[entityId] = behavior
+		
+		return npc, events.NewBasicHandler(None{}).
 			WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
 				if ctx.Id() != event.TargetId {
 					return nil
@@ -90,58 +95,80 @@ type NPCEntityContext interface {
 }
 
 type NPC struct {
-	AnimatedMoveableEntity
-	DoesMove  bool
-	HorizOnly bool
+	BaseEntity
+	Passable
+	Animations             map[MoveState]map[input.Direction]*anim.AnimatedSprite
+	ColorMask              pixel.RGBA
+	movementState          *MovementState
+	lastAnimationDirection input.Direction
+	lastAnimationState     MoveState
 
 	Talking        bool
 	TalkingTowards EntityId
+}
 
-	IdleChance      float64
-	MaxIdleDuration float64
-	idleDuration    float64
+func (n *NPC) SetMovementState(state *MovementState) {
+	n.movementState = state
 }
 
 func (n *NPC) IsTalking() bool {
 	return n.Talking
 }
 
-func (n *NPC) Update(adv *State, timeDelta float64) {
-	defer n.AnimatedMoveableEntity.Update(adv, timeDelta)
-	if n.IsMoving() {
+func (n *NPC) RenderScene(target pixel.Target, matrix pixel.Matrix) {
+	if n.movementState == nil {
 		return
 	}
-	if n.Talking {
-		ent, exists := adv.entities[n.TalkingTowards]
-		if exists {
-			n.FacingDirection = DirectionTowards(n.RenderMapLocation(), ent.RenderMapLocation())
-		}
+	
+	animations, ok := n.Animations[n.movementState.MoveState()]
+	if !ok {
 		return
 	}
-	if !n.DoesMove {
+	
+	animation, ok := animations[n.movementState.FacingDirection()]
+	if !ok {
 		return
 	}
-	if n.idleDuration > 0 {
-		n.idleDuration -= timeDelta
-		return
-	}
-	if rand.Float64() < n.IdleChance {
-		n.idleDuration = rand.Float64() * n.MaxIdleDuration
-		return
-	}
-	if n.TriggerMovement(adv, n.GetFacingLocation(), MoveStateWalking) {
-		return
-	}
-	var dir input.Direction
-	if n.HorizOnly {
-		if n.FacingDirection == input.NotPressed {
-			dir = input.Left
-		} else {
-			dir = n.FacingDirection.Opposite()
-		}
+	
+	sprite := animation.Sprite()
+	if n.ColorMask.A > 0 {
+		sprite.DrawColorMask(target, matrix, n.ColorMask)
 	} else {
-		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
+		sprite.Draw(target, matrix)
 	}
-	n.FacingDirection = dir
-	n.TriggerMovement(adv, n.GetLocationInDirection(dir), MoveStateWalking)
+}
+
+func (n *NPC) RenderLight(target pixel.Target, matrix pixel.Matrix) {
+	// NPC has no light
+}
+
+func (n *NPC) Location() MapLocation {
+	if n.movementState == nil {
+		return MapLocation{}
+	}
+	return n.movementState.Location()
+}
+
+func (n *NPC) PreciseMapLocation() pixel.Vec {
+	if n.movementState == nil {
+		return pixel.Vec{}
+	}
+	return n.movementState.PreciseLocation()
+}
+
+func (n *NPC) RenderMapLocation() pixel.Vec {
+	location := n.PreciseMapLocation()
+	// Add Y offset for character rendering (feet position)
+	return location.Add(pixel.V(0, 0.25))
+}
+
+func (n *NPC) IsMoving() bool {
+	if n.movementState == nil {
+		return false
+	}
+	return n.movementState.IsMoving()
+}
+
+func (n *NPC) TeleportTo(s *State, location MapLocation) bool {
+	return s.movementController.TeleportTo(s, n.GetEntityId(), location)
 }

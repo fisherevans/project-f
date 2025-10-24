@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"fisherevans.com/project/f/internal/game/events"
+	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
@@ -84,11 +85,13 @@ type State struct {
 	hudBatch *pixel.Batch
 	mobs     []*ShadowMob
 
-	eventDispatcher *events.Dispatcher
-	systemEffects   []events.DispatchedEffect
-	worldState      events.WorldState
-	planExecutor    *events.PlanExecutor
-	run             *rpg.Run
+	eventDispatcher    *events.Dispatcher
+	systemEffects      []events.DispatchedEffect
+	worldState         events.WorldState
+	planExecutor       *events.PlanExecutor
+	run                *rpg.Run
+	movementController *MovementController
+	behaviors          map[EntityId]EntityBehavior
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -122,8 +125,10 @@ func New(i game.AdventureIntent) game.State {
 
 		hudBatch: atlas.NewBatch(),
 
-		eventDispatcher: events.NewDispatcher(),
-		planExecutor:    events.NewPlanExecutor(),
+		eventDispatcher:    events.NewDispatcher(),
+		planExecutor:       events.NewPlanExecutor(),
+		movementController: NewMovementController(),
+		behaviors:          make(map[EntityId]EntityBehavior),
 	}
 	a.hud = NewHud(func() int { return a.run.Elythium })
 	a.worldState = events.NewWorldState(a.run)
@@ -151,32 +156,39 @@ func (s *State) ClearColor() color.Color {
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	game.DebugTL("delta: %.3f", timeDelta)
 
-	for _, entity := range s.entities {
-		remaining := timeDelta
-		for remaining > 0 {
-			nextRemaining := entity.Move(s, remaining)
-			elapsed := remaining - nextRemaining
-			entity.Update(s, elapsed)
-			remaining = nextRemaining
-		}
+	// 1. Update behaviors (input handling, AI decisions)
+	for _, behavior := range s.behaviors {
+		behavior.Update(s, timeDelta)
 	}
 
+	// 2. Update movement controller (handles all tile transitions with time delta chaining)
+	s.movementController.Update(s, timeDelta)
+
+	// 3. Update animations and lights for moveable entities
+	s.updateAnimationsAndLights(timeDelta)
+
+	// 4. Update other systems
 	for _, mob := range s.mobs {
 		mob.Update(s, timeDelta)
 	}
 
 	s.timers.Update(timeDelta, s.eventDispatcher, s)
 
+	// 4. Process effects
 	s.processEffects(s.PopSystemEffects())
 	s.processEffects(s.eventDispatcher.Flush(s.worldState))
 	s.processEffects(s.planExecutor.GetNextEffects())
 
+	// 5. Update camera
 	s.camera.Update(s, timeDelta)
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)
 
 	// SCENE
 
-	game.DebugBR("player moving: %.1f", s.player.ConstantMovement)
+	playerMovement := s.movementController.Get(s.player.GetEntityId())
+	if playerMovement != nil {
+		game.DebugBR("player moving: %.1f", playerMovement.ConstantMovement())
+	}
 
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
@@ -207,8 +219,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	// build light map
 	s.lightMapBatch.Clear()
-	s.DrawAmbient(s.lightMapCanvas, cameraMatrix, renderBounds, imdraw.New(nil))
-	s.litSceneCanvas.Clear(colornames.Black)
 	switch game.CurrentSave().SystemSettings.Lighting.LightingComposition {
 	case rpg.LightingCompositionFull:
 		for _, entity := range s.locationSortedEntities() {
@@ -217,10 +227,13 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		}
 	case rpg.LightingCompositionAmbient:
 	}
+	s.lightMapCanvas.Clear(colors.Black.RGBA)
+	s.DrawAmbient(s.lightMapCanvas, cameraMatrix, renderBounds, imdraw.New(nil))
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 
 	// render "lit" scene
+	s.litSceneCanvas.Clear(colornames.Black)
 	s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
 	s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
 	switch game.CurrentSave().SystemSettings.Lighting.LightingMode {
@@ -262,7 +275,8 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.hudBatch.Draw(target)
 
-	game.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
+	playerLoc := s.player.Location()
+	game.DebugTR("location: %d, %d", playerLoc.X, playerLoc.Y)
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {
 		game.SetActiveStateIntent(game.MenuIntent{
@@ -296,6 +310,115 @@ func (s *State) locationSortedEntities() []Entity {
 		return i < j
 	})
 	return sortedEntities
+}
+
+func (s *State) updateAnimationsAndLights(timeDelta float64) {
+	// Update player animations
+	if s.player != nil {
+		s.updatePlayerAnimations(timeDelta)
+	}
+
+	// Update NPC animations
+	for _, entity := range s.entities {
+		if npc, ok := entity.(*NPC); ok {
+			s.updateNPCAnimations(npc, timeDelta)
+		}
+	}
+
+	// Update other entities that have Update() methods
+	for _, entity := range s.entities {
+		// DynamicEntity, LightEntity, etc. still have Update() methods
+		switch e := entity.(type) {
+		case *DynamicEntity:
+			e.Update(s, timeDelta)
+		case *LightEntity:
+			e.Update(s, timeDelta)
+		}
+	}
+}
+
+func (s *State) updatePlayerAnimations(timeDelta float64) {
+	movement := s.movementController.Get(s.player.GetEntityId())
+	if movement == nil {
+		return
+	}
+
+	animations, ok := s.player.Animations[movement.MoveState()]
+	if !ok {
+		animations, ok = s.player.Animations[MoveStateIdle]
+	}
+	if !ok {
+		return
+	}
+
+	animation, ok := animations[movement.FacingDirection()]
+	if !ok {
+		animation = animations[input.Down]
+	}
+	if animation == nil {
+		return
+	}
+
+	// Reset animation only if direction changed (not on state changes during continuous movement)
+	if s.player.lastAnimationDirection != movement.FacingDirection() {
+		animation.Reset()
+		s.player.lastAnimationDirection = movement.FacingDirection()
+	}
+	s.player.lastAnimationState = movement.MoveState()
+
+	// Update animation with speed multiplier when moving
+	if movement.IsMoving() {
+		animation.Update(timeDelta * movement.GetCurrentSpeed())
+	} else {
+		animation.Update(timeDelta)
+	}
+
+	// Update player light
+	if s.player.Lights != nil {
+		light, ok := s.player.Lights[movement.MoveState()]
+		if !ok {
+			light, ok = s.player.Lights[MoveStateIdle]
+		}
+		if light != nil {
+			light.Update(timeDelta)
+		}
+	}
+}
+
+func (s *State) updateNPCAnimations(npc *NPC, timeDelta float64) {
+	if npc.movementState == nil {
+		return
+	}
+
+	animations, ok := npc.Animations[npc.movementState.MoveState()]
+	if !ok {
+		animations, ok = npc.Animations[MoveStateIdle]
+	}
+	if !ok {
+		return
+	}
+
+	animation, ok := animations[npc.movementState.FacingDirection()]
+	if !ok {
+		animation = animations[input.Down]
+	}
+	if animation == nil {
+		return
+	}
+
+	// Reset animation only if direction changed (not on state changes during continuous movement)
+	if npc.lastAnimationDirection != npc.movementState.FacingDirection() {
+		animation.Reset()
+		npc.lastAnimationDirection = npc.movementState.FacingDirection()
+	}
+	npc.lastAnimationState = npc.movementState.MoveState()
+
+	// Update animation with speed multiplier when moving
+	if npc.movementState.IsMoving() {
+		animation.Update(timeDelta * npc.movementState.GetCurrentSpeed())
+	} else {
+		animation.Update(timeDelta)
+	}
 }
 
 func (s *State) inputMode() inputMode {

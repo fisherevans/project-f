@@ -14,7 +14,7 @@ import (
 
 func init() {
 	registerDynamicEntity().byTile(tiles.RedCoin).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 			e := NewDynamicEntity(entityId, location)
 			e.SetDefaultIsPassable(true)
 			e.WithLights("", NewDynamicLight(colors.FromString("#f00"), 0.5, "pulse_slow"))
@@ -22,7 +22,7 @@ func init() {
 			return e, nil
 		})
 	registerDynamicEntity().byTile(tiles.Rocket).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 			e := NewDynamicEntity(entityId, location).WithAnimations("", anim.NewStaticAnimation(tiles.Rocket.From(atlas)))
 			dest := "teleport:" + mapEntity.GetStringMetadata("destination", "")
 			requiredElythium := 2
@@ -58,7 +58,7 @@ func init() {
 			return e, handler.CreateHandler()
 		})
 	registerDynamicEntity().byTile(tiles.DummyFightRobot).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 			e := NewDynamicEntity(entityId, location)
 			e.WithAnimations("", anim.NewStaticAnimation(atlas.GetSprite("primortals/dummy_entity")))
 			var dummyQuips = []string{

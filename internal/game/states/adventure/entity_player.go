@@ -1,98 +1,95 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/events"
+	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
+	"github.com/gopxl/pixel/v2"
 )
 
 type Player struct {
-	AnimatedMoveableEntity
-
-	intentDirection input.Direction
-	intentDuration  float64
+	BaseEntity
+	Passable
+	Animations            map[MoveState]map[input.Direction]*anim.AnimatedSprite
+	Lights                map[MoveState]*Light
+	ColorMask             pixel.RGBA
+	movementState         *MovementState
+	lastAnimationDirection input.Direction
+	lastAnimationState     MoveState
 }
 
-func (p *Player) Update(adv *State, timeDelta float64) {
-	defer p.AnimatedMoveableEntity.Update(adv, timeDelta)
-	// trigger running or face new direction after movement
-	if p.IsMoving() {
-		if game.Controls[*State]().DPad().IsPressed() {
-			p.intentDirection = game.Controls[*State]().
-				DPad().GetDirection()
-		}
-		if game.Controls[*State]().ButtonB().IsPressed() {
-			if p.MoveState == MoveStateWalking {
-				p.MoveState = MoveStateRunning
-			}
-		} else {
-			if p.MoveState == MoveStateRunning {
-				p.MoveState = MoveStateWalking
-			}
-		}
+func (p *Player) SetMovementState(state *MovementState) {
+	p.movementState = state
+}
+
+func (p *Player) RenderScene(target pixel.Target, matrix pixel.Matrix) {
+	if p.movementState == nil {
 		return
 	}
-	// once player is done moving, stop accepting input if player does not have input priority
-	if adv.inputMode() != inputModePlayerMovement {
+	
+	animations, ok := p.Animations[p.movementState.MoveState()]
+	if !ok {
 		return
 	}
-	// face direction of intent after movement
-	if p.intentDirection != input.NotPressed && p.intentDirection != p.FacingDirection {
-		p.FacingDirection = p.intentDirection
+	
+	animation, ok := animations[p.movementState.FacingDirection()]
+	if !ok {
+		return
 	}
-	// trigger movement if player is pressing a direction
-	if game.Controls[*State]().DPad().IsPressed() {
-		direction := game.Controls[*State]().
-			DPad().GetDirection()
-		p.FacingDirection = direction
-		if p.intentDirection != direction {
-			p.intentDirection = direction
-			p.intentDuration = 0
-		}
-		p.intentDuration += timeDelta
-		if p.intentDuration > 0.075 {
-			speed := MoveStateWalking
-			if game.Controls[*State]().ButtonB().IsPressed() {
-				speed = MoveStateRunning
-			}
-			p.TriggerMovement(adv, p.GetFacingLocation(), speed)
-		}
+	
+	sprite := animation.Sprite()
+	if p.ColorMask.A > 0 {
+		sprite.DrawColorMask(target, matrix, p.ColorMask)
+	} else {
+		sprite.Draw(target, matrix)
 	}
-	// interact with item if player is pressing A
-	if game.Controls[*State]().ButtonA().JustPressedOrRepeated() {
-		interactLocation := p.InteractLocation()
-		if interactLocation == nil {
-			return
-		}
-		for _, entityIdAtLocation := range adv.GetTileState(interactLocation.Location).EntitiesWithin {
-			adv.eventDispatcher.Dispatch(events.EventOnInteract{
-				SourceId:        string(p.id),
-				SourceDirection: interactLocation.Direction,
-				TargetId:        string(entityIdAtLocation),
-			})
-		}
+}
+
+func (p *Player) RenderLight(target pixel.Target, matrix pixel.Matrix) {
+	if p.Lights == nil || p.movementState == nil {
+		return
 	}
+	light, ok := p.Lights[p.movementState.MoveState()]
+	if !ok {
+		light, ok = p.Lights[MoveStateIdle]
+	}
+	if light != nil {
+		light.Render(target, matrix)
+	}
+}
+
+func (p *Player) Location() MapLocation {
+	if p.movementState == nil {
+		return MapLocation{}
+	}
+	return p.movementState.Location()
+}
+
+func (p *Player) PreciseMapLocation() pixel.Vec {
+	if p.movementState == nil {
+		return pixel.Vec{}
+	}
+	return p.movementState.PreciseLocation()
+}
+
+func (p *Player) RenderMapLocation() pixel.Vec {
+	location := p.PreciseMapLocation()
+	// Add Y offset for character rendering (feet position)
+	return location.Add(pixel.V(0, 0.25))
+}
+
+func (p *Player) IsMoving() bool {
+	if p.movementState == nil {
+		return false
+	}
+	return p.movementState.IsMoving()
+}
+
+func (p *Player) TeleportTo(s *State, location MapLocation) bool {
+	return s.movementController.TeleportTo(s, p.GetEntityId(), location)
 }
 
 func (p *Player) DashTowards(s *State, direction input.Direction, location MapLocation) {
-	location = p.findDashDestination(s, direction, location)
-	p.TriggerMovement(s, location, MoveStateDashing)
-}
-
-func (p *Player) findDashDestination(s *State, direction input.Direction, location MapLocation) MapLocation {
-	for {
-		ts := s.GetTileState(location)
-		moved := false
-		for _, entityId := range ts.EntitiesWithin {
-			if entity, ok := s.entities[entityId]; ok {
-				if _, ok := entity.(*EntityDashGap); ok {
-					moved = true
-					location = location.Moved(direction.GetVector())
-				}
-			}
-		}
-		if !moved {
-			return location
-		}
+	if behavior, ok := s.behaviors[p.GetEntityId()].(*PlayerBehavior); ok {
+		behavior.DashTowards(s, direction, location)
 	}
 }

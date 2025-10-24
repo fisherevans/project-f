@@ -219,10 +219,19 @@ func (s *State) processEffectTriggerMovement(source events.EntityContext, e *eve
 		log.Warn().Str("entityId", e.EntityId).Msg("only player is supported for trigger movement")
 		return
 	}
-	s.player.FacingDirection = e.Direction
-	s.player.intentDirection = e.Direction
-	s.player.TriggerMovement(s, s.player.GetFacingLocation(), MoveStateWalking)
-
+	
+	// Get player's movement state and trigger movement
+	movement := s.movementController.Get(s.player.GetEntityId())
+	if movement != nil {
+		movement.SetFacingDirection(e.Direction)
+		target := movement.GetLocationInDirection(e.Direction)
+		s.movementController.TriggerMovement(s, s.player.GetEntityId(), target, MoveStateWalking)
+	}
+	
+	// Update player behavior intent
+	if behavior, ok := s.behaviors[s.player.GetEntityId()].(*PlayerBehavior); ok {
+		behavior.intentDirection = e.Direction
+	}
 }
 
 // processEffectTeleportPlayer creates a plan to teleport the player with fade transition

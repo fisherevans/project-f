@@ -12,24 +12,25 @@ type Entity interface {
 	events.EntityContext
 	Passable
 
+	// Location methods
 	PreciseMapLocation() pixel.Vec
 	RenderMapLocation() pixel.Vec
 	Location() MapLocation
 
+	// State methods
 	GetMode() string
 	SetMode(mode string)
-
 	IsInteractable() bool
-
 	IsMoving() bool
-	TeleportTo(s *State, location MapLocation) bool
 	GetEntityId() EntityId
+	GetRenderZPriority() int
 
-	Move(adv *State, timeDelta float64) float64
-	Update(adv *State, timeDelta float64)
+	// Teleportation
+	TeleportTo(s *State, location MapLocation) bool
+
+	// Rendering
 	RenderScene(target pixel.Target, matrix pixel.Matrix)
 	RenderLight(target pixel.Target, matrix pixel.Matrix)
-	GetRenderZPriority() int
 }
 
 type BaseEntity struct {

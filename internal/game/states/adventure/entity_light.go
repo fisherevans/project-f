@@ -13,7 +13,7 @@ import (
 func init() {
 	registerDynamicEntity().
 		byTile(tiles.Torch, tiles.TorchRight, tiles.TorchLeft).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 			e := NewDynamicEntity(entityId, location)
 			e.SetDefaultIsPassable(true)
 			e.WithLights("", NewDynamicLight(colors.FromString("#db9a3d"), 2, "flicker"))
@@ -33,7 +33,7 @@ func init() {
 		})
 	registerDynamicEntity().
 		byTile(tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 			e := NewDynamicEntity(entityId, location)
 			e.SetDefaultIsPassable(true)
 			e.WithLights("", NewDynamicLight(colors.FromString("#fff"), 1.333, ""))
@@ -45,7 +45,7 @@ func init() {
 		})
 	registerDynamicEntity().
 		byTile(tiles.GlowRed, tiles.GlowOrange, tiles.GlowAqua, tiles.GlowPurple, tiles.GlowPink, tiles.GlowTBD).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 			colorMask := colors.HexString("#fff")
 			switch *mapEntity.SpriteId {
 			case tiles.GlowRed:

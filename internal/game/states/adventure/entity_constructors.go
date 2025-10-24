@@ -13,13 +13,12 @@ func init() {
 	registerDynamicEntity().byClass("Script").register(constructScriptEntity)
 }
 
-func constructScriptEntity(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+func constructScriptEntity(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 	e := NewDynamicEntity(entityId, location)
 	return e, nil
 }
 
-type entityConstructor func(EntityId, MapLocation, *resources.Entity) (Entity, events.EventHandler)
-
+type entityConstructor func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler)
 var dynamicEntitiesByClass = map[string]entityConstructor{}
 var dynamicEntitiesByTile = map[resources.TilesheetSpriteId]entityConstructor{}
 
@@ -71,7 +70,7 @@ func (s *State) registerParameterizedEntity(entityId EntityId, location MapLocat
 		return false
 	}
 
-	entity, eventHandler := constructor(entityId, location, mapEntity)
+	entity, eventHandler := constructor(s, entityId, location, mapEntity)
 
 	if scriptRef := mapEntity.GetStringMetadata("script_ref", ""); scriptRef != "" {
 		if eventHandler != nil {

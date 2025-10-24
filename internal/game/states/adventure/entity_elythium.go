@@ -45,7 +45,7 @@ func init() {
 	})
 	registerDynamicEntity().
 		byTile(tiles.Elythium).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		register(func(s *State, entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
 			e := NewDynamicEntity(entityId, location).
 				WithMode("ready").
 				WithLights("ready", &Light{
