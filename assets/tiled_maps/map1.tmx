@@ -1458,145 +1458,19 @@
   <object id="153" gid="6122" x="655.98" y="1215.43" width="16" height="16"/>
   <object id="174" type="Script" x="1032" y="1304">
    <properties>
-    <property name="script_src">const handler = {
-    Init(self, world, state) {
-	    return {
-	        state: state || {
-	            ready: true
-	        },
-	    }
-    },
-    OnTimerComplete(self, world, state, event) {
-	    if (event.createdBy !== self.Id() || event.timerId !== &quot;reset&quot;) {
-	        return;
-	    }
-	    state.ready = true
-	    return {
-	        state: state,
-	    };
-    },
-    OnEntityZoneActivity(self, world, state, event) {
-    log.Info(&quot;in OnEntityZoneActivity / %#v / %#v / %#v / %#v / %#v&quot;,
-	 event.zoneId,
-	event.isEntering,
-	event.entityId,
-	world.Get(&quot;player_id&quot;),
-	state)
-    if (event.zoneId === &quot;exit&quot; &amp;&amp;
-        event.isEntering === true &amp;&amp;
-        event.entityId === world.Get(&quot;player_id&quot;) &amp;&amp;
-        state.ready) {
-        state.ready = false;
-        return {
-            state: state,
-            effects: [
-                {
-                    timer: {
-                        timerId: &quot;reset&quot;,
-                        durationSeconds: 10,
-                    },
-                    chatter: {
-                        entityId: world.Get(&quot;player_id&quot;),
-                        durationSeconds: 5,
-                        message: &quot;I should turn around...&quot;,
-                    }
-                }
-            ]
-        }
-    }
-    },
-};</property>
+    <property name="script_ref" value="exit_chatter"/>
    </properties>
    <point/>
   </object>
   <object id="176" type="Script" x="700" y="1192">
    <properties>
-    <property name="script_src">function updateState(self, mode, passable) {
-  return {
-    mutateEntity: {
-      entityId: self.Id(),
-      mode,
-      isPassable: passable,
-    },
-  };
-}
-
-const handler = {
-  Init(self, world, state) {
-    return {
-      effects: [
-        {
-          mutateEntity: {
-            entityId: self.Id(),
-            dynamicAnimations: {
-              closed: [
-                { tilesheet: &quot;adventure/doors/shield_front_1&quot;, name: &quot;closed&quot; },
-                { tilesheet: &quot;adventure/doors/shield_front_1&quot;, name: &quot;waves&quot; },
-              ],
-              open: [
-                { tilesheet: &quot;adventure/doors/shield_front_1&quot;, name: &quot;open&quot; },
-              ],
-            },
-            dynamicLights: {
-              closed: [
-                { color: &quot;#127fd7&quot;, size: 1.5, modifier: &quot;pulse_slow&quot; }
-              ],
-            },
-          },
-        },
-        updateState(self, &quot;closed&quot;, false),
-      ],
-    };
-  },
-
-  OnWorldStateUpdated(self, world, state, event) {
-	log.Info(&quot;in world update: %#v&quot;, event)
-    if (event.key !== &quot;door_open&quot;) return;
-    if (event.newValue) {
-      return { effects: [updateState(self, &quot;open&quot;, true)] };
-    } else {
-      return { effects: [updateState(self, &quot;closed&quot;, false)] };
-    }
-  },
-};</property>
+    <property name="script_ref" value="door"/>
    </properties>
    <point/>
   </object>
   <object id="177" type="Script" x="728" y="1208">
    <properties>
-    <property name="script_src">const handler = {
-    Init(self, world, state) {
-	    return {
-		effects: [
-			{
-				mutateEntity: {
-					entityId: self.Id(),
-					mode: &quot;off&quot;,
-					isPassable: false,
-					dynamicAnimations: {
-						&quot;on&quot;: [
-							{ tilesheet: &quot;adventure/doors/lever_horizontal&quot;, name: &quot;on&quot; }
-						],
-						&quot;off&quot;: [
-							{ tilesheet: &quot;adventure/doors/lever_horizontal&quot;, name: &quot;off&quot; }
-						]
-					}
-				},
-				setWorldState:{key:&quot;door_open&quot;,value:false}
-			}
-		]
-    	}
-    },
-    OnInteract(self, world, state, event) {
-	if (event.targetId !== self.Id()) {
-		return
-	} else if (self.Mode() === &quot;off&quot;) {
-		return {effects: [{mutateEntity: { entityId: self.Id(), mode: &quot;on&quot; }, setWorldState:{key:&quot;door_open&quot;,value:true}}]}
-	} else {
-		return {effects: [{mutateEntity: { entityId: self.Id(), mode: &quot;off&quot; }, setWorldState:{key:&quot;door_open&quot;,value:false}}]}
-	}
-    },
-};</property>
+    <property name="script_ref" value="door_lever"/>
    </properties>
    <point/>
   </object>

@@ -35,10 +35,6 @@ func (i *InnateEntity) RenderMapLocation() pixel.Vec {
 	return i.PreciseMapLocation()
 }
 
-func (i *InnateEntity) Interact(adv *State, source Entity) {
-
-}
-
 func (i *InnateEntity) RenderLight(target pixel.Target, matrix pixel.Matrix) {
 
 }

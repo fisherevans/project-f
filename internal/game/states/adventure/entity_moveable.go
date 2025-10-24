@@ -46,8 +46,16 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 	m.ConstantMovement += moveDelta
 	m.MoveProgression += moveDelta
 	if m.MoveProgression >= 0.5 {
+		// todo this works, but is called a lot
 		if adv.GetTileState(m.CurrentLocation).RemoveEntity(m.GetEntityId()) {
 			m.emitZoneEvents(adv, m.CurrentLocation, false)
+		}
+		if adv.GetTileState(m.TargetLocation).AddEntity(m.GetEntityId()) {
+			m.emitZoneEvents(adv, m.TargetLocation, true)
+			// when entering a new tile, make sure we don't trigger the next movement in the same tick
+			if m.MoveProgression >= 1 {
+				m.MoveProgression = 1
+			}
 		}
 	}
 	if m.MoveProgression >= 1.0 {
@@ -66,7 +74,7 @@ func (m *MoveableEntity) Move(adv *State, timeDelta float64) float64 {
 func (m *MoveableEntity) emitZoneEvents(adv *State, loc MapLocation, isEntering bool) {
 	for _, zoneId := range adv.zones.ZonesAt(loc) {
 		adv.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
-			EntityId:   string(m.Id),
+			EntityId:   string(m.id),
 			ZoneId:     zoneId,
 			IsEntering: isEntering,
 		})
@@ -107,7 +115,6 @@ func (m *MoveableEntity) TriggerMovement(adv *State, newLocation MapLocation, de
 	if !m.isValidMovement(adv, m.Location(), newLocation) {
 		return false
 	}
-	adv.GetTileState(newLocation).AddEntity(m.GetEntityId())
 	m.TargetLocation = newLocation
 	m.MoveState = desiredMoveState
 	return true
@@ -134,10 +141,6 @@ func (m *MoveableEntity) RenderMapLocation() pixel.Vec {
 
 func (m *MoveableEntity) Location() MapLocation {
 	return m.CurrentLocation
-}
-
-func (m *MoveableEntity) Interact(adv *State, source Entity) {
-
 }
 
 type InteractionTarget struct {
@@ -176,7 +179,7 @@ func (m *MoveableEntity) GetCurrentSpeed() float64 {
 
 func (m *MoveableEntity) TeleportTo(s *State, newLocation MapLocation) bool {
 	if m.MoveState != MoveStateIdle {
-		log.Warn().Msgf("cannot teleport '%s' while moving '%d'", m.Id, m.MoveState)
+		log.Warn().Msgf("cannot teleport '%s' while moving '%d'", m.id, m.MoveState)
 		return false
 	}
 	oldLocation := m.Location()

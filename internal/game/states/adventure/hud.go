@@ -14,15 +14,15 @@ import (
 )
 
 type Hud struct {
-	ElythiumCount     int
+	ElythiumCount     func() int
 	elythiumCountIcon *anim.AnimatedSprite
 
 	researchIcon *anim.AnimatedSprite
 }
 
-func NewHud() *Hud {
+func NewHud(elythiumCount func() int) *Hud {
 	return &Hud{
-		ElythiumCount:     0,
+		ElythiumCount:     elythiumCount,
 		elythiumCountIcon: anim.Load(atlas, "adventure/hud/elythium", "default"),
 		researchIcon:      anim.Load(atlas, "adventure/hud/research", "default"),
 	}
@@ -42,7 +42,7 @@ func (h *Hud) OnTick(s *State, target pixel.Target, matrix pixel.Matrix, bounds 
 	counts := []topRightCount{
 		{
 			icon:   h.elythiumCountIcon,
-			count:  h.ElythiumCount,
+			count:  h.ElythiumCount(),
 			stroke: "#3d1632",
 			fg:     "#edb2dc",
 		},
@@ -89,7 +89,7 @@ func (h *Hud) onTickElythiumCount(s *State, target pixel.Target, matrix pixel.Ma
 	topRight := pixel.IM.Moved(pixel.V(game.GameWidth-padding, game.GameHeight-padding))
 	h.elythiumCountIcon.Sprite().Draw(target, topRight.Moved(gfx.TopRight.Align(sprite)))
 
-	content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:#3d1632,+c:#edb2dc}%d", h.ElythiumCount))
+	content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:#3d1632,+c:#edb2dc}%d", h.ElythiumCount()))
 	txtVNudge := -1.0 // push it down or up to align with sprite
 	txtVNudge -= (sprite.Bounds().H() - content.Bounds().H()) / 2
 	txtHNudge := -1.0 // padding between number and sprite

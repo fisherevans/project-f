@@ -1,13 +1,16 @@
 package events
 
 import (
+	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/dop251/goja"
 	"github.com/rs/zerolog/log"
 )
 
 type WorldStateReader interface {
 	Get(key string) any
+	GetAsString(key string) string
 	Has(key string) bool
+	GetRun() *rpg.Run
 	ToGojaValue(vm *goja.Runtime) goja.Value
 }
 
@@ -18,12 +21,19 @@ type WorldState interface {
 	Delete(key string)
 }
 
-func NewWorldState() WorldState {
-	return &mapState{}
+func NewWorldState(run *rpg.Run) WorldState {
+	return &mapState{
+		run: run,
+	}
 }
 
 type mapState struct {
 	data map[string]any
+	run  *rpg.Run
+}
+
+func (s *mapState) GetRun() *rpg.Run {
+	return s.run
 }
 
 func (s *mapState) Has(key string) bool {
@@ -34,6 +44,12 @@ func (s *mapState) Has(key string) bool {
 func (s *mapState) Get(key string) any {
 	val, _ := s.getMap()[key]
 	return val
+}
+
+func (s *mapState) GetAsString(key string) string {
+	val := s.Get(key)
+	str, _ := val.(string)
+	return str
 }
 
 func (s *mapState) ToGojaValue(vm *goja.Runtime) goja.Value {

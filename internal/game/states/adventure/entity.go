@@ -8,57 +8,63 @@ import (
 
 type EntityId string
 
-func (i EntityId) GetEntityId() EntityId {
-	return i
-}
-
 type Entity interface {
+	events.EntityContext
 	Passable
+
+	PreciseMapLocation() pixel.Vec
+	RenderMapLocation() pixel.Vec
+	Location() MapLocation
 
 	GetMode() string
 	SetMode(mode string)
 
 	IsInteractable() bool
 
-	Move(adv *State, timeDelta float64) float64
 	IsMoving() bool
-	Update(adv *State, timeDelta float64)
-	PreciseMapLocation() pixel.Vec
-	RenderMapLocation() pixel.Vec
-	Location() MapLocation
 	TeleportTo(s *State, location MapLocation) bool
+	GetEntityId() EntityId
+
+	Move(adv *State, timeDelta float64) float64
+	Update(adv *State, timeDelta float64)
 	RenderScene(target pixel.Target, matrix pixel.Matrix)
 	RenderLight(target pixel.Target, matrix pixel.Matrix)
-	GetEntityId() EntityId
-	Interact(adv *State, source Entity)
 	GetRenderZPriority() int
 }
 
 type BaseEntity struct {
-	Id              EntityId
-	Interactable    bool
-	RenderZPriority int
-	Mode            string
+	id              EntityId
+	isInteractable  bool
+	renderZPriority int
+	mode            string
+}
+
+func (b *BaseEntity) Id() string {
+	return string(b.id)
+}
+
+func (b *BaseEntity) Mode() string {
+	return b.mode
 }
 
 func (b *BaseEntity) GetEntityId() EntityId {
-	return b.Id
+	return b.id
 }
 
 func (b *BaseEntity) GetRenderZPriority() int {
-	return b.RenderZPriority
+	return b.renderZPriority
 }
 
 func (b *BaseEntity) GetMode() string {
-	return b.Mode
+	return b.mode
 }
 
 func (b *BaseEntity) SetMode(mode string) {
-	b.Mode = mode
+	b.mode = mode
 }
 
 func (b *BaseEntity) IsInteractable() bool {
-	return b.Interactable
+	return b.isInteractable
 }
 
 func (s *State) AddEntity(e Entity) bool {
@@ -80,31 +86,4 @@ func (s *State) requirePlayerEntity(id EntityId) (*Player, bool) {
 	}
 	player, isPlayer := e.(*Player)
 	return player, isPlayer
-}
-
-type eventEntityWrapper struct {
-	entity Entity
-}
-
-func newEventEntityWrapper(entity Entity) *eventEntityWrapper {
-	return &eventEntityWrapper{
-		entity: entity,
-	}
-}
-
-func (w eventEntityWrapper) Id() string {
-	return string(w.entity.GetEntityId())
-}
-
-func (w eventEntityWrapper) Mode() string {
-	return w.entity.GetMode()
-}
-
-func (w eventEntityWrapper) Position() *events.EntityPosition {
-	loc := w.entity.Location()
-	return &events.EntityPosition{
-		X:        loc.X,
-		Y:        loc.Y,
-		IsMoving: w.entity.IsMoving(),
-	}
 }

@@ -65,30 +65,34 @@ func (p *Player) Update(adv *State, timeDelta float64) {
 			return
 		}
 		for _, entityIdAtLocation := range adv.GetTileState(interactLocation.Location).EntitiesWithin {
-			entityAtLocation := adv.entities[entityIdAtLocation]
-			entityAtLocation.Interact(adv, p)
 			adv.eventDispatcher.Dispatch(events.EventOnInteract{
-				TargetId: string(entityIdAtLocation),
+				SourceId:        string(p.id),
+				SourceDirection: interactLocation.Direction,
+				TargetId:        string(entityIdAtLocation),
 			})
 		}
-		if true {
-			return // todo solve dash
+	}
+}
+
+func (p *Player) DashTowards(s *State, direction input.Direction, location MapLocation) {
+	location = p.findDashDestination(s, direction, location)
+	p.TriggerMovement(s, location, MoveStateDashing)
+}
+
+func (p *Player) findDashDestination(s *State, direction input.Direction, location MapLocation) MapLocation {
+	for {
+		ts := s.GetTileState(location)
+		moved := false
+		for _, entityId := range ts.EntitiesWithin {
+			if entity, ok := s.entities[entityId]; ok {
+				if _, ok := entity.(*EntityDashGap); ok {
+					moved = true
+					location = location.Moved(direction.GetVector())
+				}
+			}
 		}
-		//doDash := false
-		//for {
-		//	movementTile, movementExists := adv.movementRestrictions[interactLocation.Location]
-		//	if !movementExists || movementTile.EntryAllowed(adv, p.Id) {
-		//		if doDash {
-		//			p.TriggerMovement(adv, interactLocation.Location, MoveStateDashing)
-		//		}
-		//		break
-		//	}
-		//	if movementTile.CanDashOver() {
-		//		doDash = true
-		//		interactLocation.NextTile()
-		//		continue
-		//	}
-		//	break
-		//}
+		if !moved {
+			return location
+		}
 	}
 }

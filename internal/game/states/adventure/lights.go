@@ -4,7 +4,6 @@ import (
 	"math"
 	"math/rand"
 
-	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -123,18 +122,11 @@ func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
 		renderDetails.ColorMask)
 }
 
-func NewDynamicLight(color string, size float64, modifier string) *Light {
+func NewDynamicLight(color pixel.RGBA, size float64, modifier string) *Light {
 	l := &Light{
 		RenderDetails: LightRenderDetails{
 			SizeScale: size,
-			ColorMask: colors.FromString(color),
-		},
-		Modifiers: []LightModifier{
-			&LightModifierPulse{
-				PeriodSeconds:       4,
-				SizeIntensity:       0.1,
-				BrightnessIntensity: 0.4,
-			},
+			ColorMask: color,
 		},
 	}
 	pulse := func(periodSeconds float64) LightModifier {

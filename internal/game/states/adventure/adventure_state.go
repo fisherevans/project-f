@@ -88,6 +88,7 @@ type State struct {
 	systemEffects   []events.DispatchedEffect
 	worldState      events.WorldState
 	planExecutor    *events.PlanExecutor
+	run             *rpg.Run
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -102,8 +103,7 @@ func New(i game.AdventureIntent) game.State {
 		overlays:   NewOverlaySystem(),
 		timers:     newTimers(),
 		zones:      newZones(),
-
-		hud: NewHud(),
+		run:        &rpg.Run{},
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -125,7 +125,8 @@ func New(i game.AdventureIntent) game.State {
 		eventDispatcher: events.NewDispatcher(),
 		planExecutor:    events.NewPlanExecutor(),
 	}
-	a.worldState = events.NewWorldState()
+	a.hud = NewHud(func() int { return a.run.Elythium })
+	a.worldState = events.NewWorldState(a.run)
 
 	a.bloom.Threshold = 1.0
 	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
@@ -318,7 +319,6 @@ func (s *State) setWorldState(key string, value any, id string) {
 		Key:      key,
 		NewValue: value,
 		OldValue: oldValue,
-		SetBy:    id,
 	})
 }
 
@@ -333,13 +333,7 @@ func (s *State) AddSerialSystemEffects(effects ...events.Effect) {
 	s.systemEffects = append(s.systemEffects, events.DispatchedEffect{
 		Source: events.NewEphemeralEntityContext("system"),
 		Effect: events.Effect{
-			Plan: &events.EffectPlan{
-				Steps: []events.PlanStep{
-					{
-						Serial: effects,
-					},
-				},
-			},
+			Plan: events.NewSerialPlan(effects...),
 		},
 	})
 }

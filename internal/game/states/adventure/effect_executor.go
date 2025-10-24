@@ -77,11 +77,11 @@ func (s *State) processEffectMutateEntity(source events.EntityContext, e *events
 		if e.IsPassable != nil {
 			dynamic.SetDefaultIsPassable(*e.IsPassable)
 		}
-		if e.DynamicAnimations != nil {
-			dynamic.SetDynamicAnimations(e.DynamicAnimations)
+		if e.DynamicAnimations != nil && *e.DynamicAnimations != nil {
+			dynamic.SetDynamicAnimations(*e.DynamicAnimations)
 		}
-		if e.DynamicLights != nil {
-			dynamic.SetDynamicLights(e.DynamicLights)
+		if e.DynamicLights != nil && *e.DynamicLights != nil {
+			dynamic.SetDynamicLights(*e.DynamicLights)
 		}
 	}
 	logEffectf(source, e, "entity mutated")
@@ -91,7 +91,7 @@ func (s *State) processEffectYieldElythium(source events.EntityContext, e *event
 	if e == nil {
 		return
 	}
-	s.hud.ElythiumCount += e.Amount
+	s.run.Elythium += e.Amount
 	logEffectf(source, e, "elythium granted")
 }
 
@@ -429,7 +429,7 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 		})
 		s.eventDispatcher.Dispatch(&events.EventCombatComplete{
 			CombatId: e.CombatId,
-			Result:   r,
+			Result:   "completed", // TODO: serialize result properly
 		})
 		s.planExecutor.MarkCombatComplete(e.CombatId)
 	}

@@ -4,33 +4,71 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 )
 
 type DynamicEntity struct {
 	InnateEntity
 
-	defaultIsPassable *blockIngressPassable
-	passable          map[string]Passable
-	lights            map[string][]*Light
-	animations        map[string][]*anim.AnimatedSprite
-
 	lastRenderMode string
+
+	defaultIsPassable *blockIngressPassable
+	modes             map[string]*DynamicEntityMode
+}
+
+type DynamicEntityMode struct {
+	Passable
+	Lights                []*Light
+	LightOriginOffset     pixel.Vec
+	Animations            []*anim.AnimatedSprite
+	AnimationOriginOffset pixel.Vec
 }
 
 func NewDynamicEntity(id EntityId, location MapLocation) *DynamicEntity {
 	return &DynamicEntity{
 		InnateEntity: InnateEntity{
 			BaseEntity: BaseEntity{
-				Id:           id,
-				Interactable: true,
+				id:             id,
+				isInteractable: true,
 			},
 			MapLocation: location,
 		},
 		defaultIsPassable: newPassablePreventIngress(true),
-		lights:            map[string][]*Light{},
-		animations:        map[string][]*anim.AnimatedSprite{},
+		modes:             map[string]*DynamicEntityMode{},
 	}
+}
+
+func (e *DynamicEntity) getDynamicEntityMode(mode string) *DynamicEntityMode {
+	if _, ok := e.modes[mode]; !ok {
+		e.modes[mode] = &DynamicEntityMode{}
+	}
+	return e.modes[mode]
+}
+
+func (e *DynamicEntity) WithMode(mode string) *DynamicEntity {
+	e.mode = mode
+	return e
+}
+
+func (e *DynamicEntity) WithLights(mode string, lights ...*Light) *DynamicEntity {
+	e.getDynamicEntityMode(mode).Lights = lights
+	return e
+}
+
+func (e *DynamicEntity) WithLightOriginOffset(mode string, offset pixel.Vec) *DynamicEntity {
+	e.getDynamicEntityMode(mode).LightOriginOffset = offset
+	return e
+}
+
+func (e *DynamicEntity) WithAnimations(mode string, animations ...*anim.AnimatedSprite) *DynamicEntity {
+	e.getDynamicEntityMode(mode).Animations = animations
+	return e
+}
+
+func (e *DynamicEntity) WithAnimationOriginOffset(mode string, offset pixel.Vec) *DynamicEntity {
+	e.getDynamicEntityMode(mode).AnimationOriginOffset = offset
+	return e
 }
 
 func (e *DynamicEntity) SetDefaultIsPassable(isPassable bool) {
@@ -38,14 +76,11 @@ func (e *DynamicEntity) SetDefaultIsPassable(isPassable bool) {
 }
 
 func (e *DynamicEntity) getPassable() Passable {
-	if e.passable == nil {
+	dm := e.getDynamicEntityMode(e.GetMode())
+	if dm.Passable == nil {
 		return e.defaultIsPassable
 	}
-	passable, ok := e.passable[e.GetMode()]
-	if !ok {
-		return e.defaultIsPassable
-	}
-	return passable
+	return dm.Passable
 }
 
 func (e *DynamicEntity) CanEgress(side input.Direction, id EntityId) bool {
@@ -56,58 +91,51 @@ func (e *DynamicEntity) CanIngress(side input.Direction, id EntityId) bool {
 	return e.getPassable().CanIngress(side, id)
 }
 
-func forEach[T any](key string, valueMap map[string][]T, do func(T)) {
-	values, ok := valueMap[key]
-	if !ok {
-		return
-	}
-	for _, value := range values {
-		do(value)
-	}
-}
-
 func (e *DynamicEntity) RenderScene(target pixel.Target, matrix pixel.Matrix) {
 	doReset := e.lastRenderMode != e.GetMode()
-	forEach(e.GetMode(), e.animations, func(a *anim.AnimatedSprite) {
+	dm := e.getDynamicEntityMode(e.GetMode())
+	for _, a := range dm.Animations {
 		if doReset {
 			a.Reset()
 		}
-		a.Sprite().Draw(target, matrix)
-	})
+		a.Sprite().Draw(target, matrix.Moved(dm.AnimationOriginOffset))
+	}
 	e.lastRenderMode = e.GetMode()
 }
 
 func (e *DynamicEntity) RenderLight(target pixel.Target, matrix pixel.Matrix) {
-	forEach(e.GetMode(), e.lights, func(l *Light) {
-		l.Render(target, matrix)
-	})
+	dm := e.getDynamicEntityMode(e.GetMode())
+	for _, l := range dm.Lights {
+		l.Render(target, matrix.Moved(dm.LightOriginOffset))
+	}
 }
 
 func (e *DynamicEntity) Update(adv *State, timeDelta float64) {
-	forEach(e.GetMode(), e.animations, func(a *anim.AnimatedSprite) {
+	dm := e.getDynamicEntityMode(e.GetMode())
+	for _, a := range dm.Animations {
 		a.Update(timeDelta)
-	})
-	forEach(e.GetMode(), e.lights, func(l *Light) {
+	}
+	for _, l := range dm.Lights {
 		l.Update(timeDelta)
-	})
+	}
 }
 
 func (e *DynamicEntity) SetDynamicAnimations(modeAnimations map[string][]events.DynamicAnimationReference) {
 	for mode, animationRefs := range modeAnimations {
-		var animations []*anim.AnimatedSprite
+		dm := e.getDynamicEntityMode(mode)
+		dm.Animations = nil
 		for _, animationRef := range animationRefs {
-			animations = append(animations, anim.Load(atlas, animationRef.Tilesheet, animationRef.Name))
+			dm.Animations = append(dm.Animations, anim.Load(atlas, animationRef.Tilesheet, animationRef.Name))
 		}
-		e.animations[mode] = animations
 	}
 }
 
 func (e *DynamicEntity) SetDynamicLights(lights map[string][]events.LightConfig) {
 	for mode, lightConfigs := range lights {
-		var lights []*Light
+		dm := e.getDynamicEntityMode(mode)
+		dm.Lights = nil
 		for _, lightConfig := range lightConfigs {
-			lights = append(lights, NewDynamicLight(lightConfig.Color, lightConfig.Size, lightConfig.Modifier))
+			dm.Lights = append(dm.Lights, NewDynamicLight(colors.FromString(lightConfig.Color), lightConfig.Size, lightConfig.Modifier))
 		}
-		e.lights[mode] = lights
 	}
 }

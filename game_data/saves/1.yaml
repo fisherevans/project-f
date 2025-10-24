@@ -28,7 +28,7 @@ primortals:
         last_seen: 2025-10-14T20:48:49Z
     pumbl:
         visibility: defeated
-        research_points: 5
+        research_points: 15
         last_seen: 2025-10-14T20:47:49Z
     toxmidge:
         visibility: defeated
@@ -36,14 +36,12 @@ primortals:
         last_seen: 2025-10-13T20:47:49Z
 unlocked_skills:
     acid_string: {}
-    brace: {}
     curl_up: {}
     guard: {}
     jab: {}
     mend_spores: {}
     photo_surge: {}
     shoulder_roll: {}
-    strike: {}
 system_settings:
     lighting:
         lighting_composition: full

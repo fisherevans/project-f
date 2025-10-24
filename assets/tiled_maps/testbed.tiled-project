@@ -35,7 +35,7 @@
             "id": 4,
             "members": [
                 {
-                    "name": "script_src",
+                    "name": "script_ref",
                     "type": "string",
                     "value": ""
                 }

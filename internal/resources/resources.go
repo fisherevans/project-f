@@ -41,11 +41,6 @@ var (
 			FileExtension: "tmx",
 			FileLoader:    loadTiledMap,
 		},
-		{
-			FileRoot:      "scripts",
-			FileExtension: "js",
-			FileLoader:    loadScript,
-		},
 	}
 )
 
