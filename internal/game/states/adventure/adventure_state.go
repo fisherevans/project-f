@@ -3,7 +3,6 @@ package adventure
 import (
 	"image/color"
 	"math"
-	"sort"
 
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -55,16 +54,16 @@ type State struct {
 	ambientLightAreas   []resources.AmbientLightArea
 
 	camera Camera
-	player *Player
+	player string
 
-	entities   map[EntityId]Entity
-	tileStates map[MapLocation]*TileState
-	teleports  map[TeleportReference]Teleport
-	chatters   *ChatterSystem
-	dialogues  *DialogueSystem
-	overlays   *OverlaySystem
-	timers     *timers
-	zones      *zones
+	entities *EntitySystem
+
+	teleports map[TeleportReference]Teleport
+	chatters  *ChatterSystem
+	dialogues *DialogueSystem
+	overlays  *OverlaySystem
+	timers    *timers
+	zones     *zones
 
 	hud *Hud
 
@@ -85,7 +84,6 @@ type State struct {
 	mobs     []*ShadowMob
 
 	eventDispatcher *events.Dispatcher
-	systemEffects   []events.DispatchedEffect
 	worldState      events.WorldState
 	planExecutor    *events.PlanExecutor
 	run             *rpg.Run
@@ -94,16 +92,14 @@ type State struct {
 func New(i game.AdventureIntent) game.State {
 	m := resources.GetMap(i.MapName)
 	a := &State{
-		entities:   make(map[EntityId]Entity),
-		tileStates: make(map[MapLocation]*TileState),
-		teleports:  make(map[TeleportReference]Teleport),
-		camera:     NewStaticCamera(pixel.Vec{}),
-		chatters:   NewChatterSystem(),
-		dialogues:  NewDialogueSystem(),
-		overlays:   NewOverlaySystem(),
-		timers:     newTimers(),
-		zones:      newZones(),
-		run:        &rpg.Run{},
+		teleports: make(map[TeleportReference]Teleport),
+		camera:    NewStaticCamera(pixel.Vec{}),
+		chatters:  NewChatterSystem(),
+		dialogues: NewDialogueSystem(),
+		overlays:  NewOverlaySystem(),
+		timers:    newTimers(),
+		zones:     newZones(),
+		run:       &rpg.Run{},
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -125,6 +121,7 @@ func New(i game.AdventureIntent) game.State {
 		eventDispatcher: events.NewDispatcher(),
 		planExecutor:    events.NewPlanExecutor(),
 	}
+	a.entities = NewEntitySystem(a)
 	a.hud = NewHud(func() int { return a.run.Elythium })
 	a.worldState = events.NewWorldState(a.run)
 
@@ -151,15 +148,7 @@ func (s *State) ClearColor() color.Color {
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	game.DebugTL("delta: %.3f", timeDelta)
 
-	for _, entity := range s.entities {
-		remaining := timeDelta
-		for remaining > 0 {
-			nextRemaining := entity.Move(s, remaining)
-			elapsed := remaining - nextRemaining
-			entity.Update(s, elapsed)
-			remaining = nextRemaining
-		}
-	}
+	s.entities.Update(timeDelta)
 
 	for _, mob := range s.mobs {
 		mob.Update(s, timeDelta)
@@ -167,19 +156,18 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.timers.Update(timeDelta, s.eventDispatcher, s)
 
-	s.processEffects(s.PopSystemEffects())
-	s.processEffects(s.eventDispatcher.Flush(s.worldState))
-	s.processEffects(s.planExecutor.GetNextEffects())
+	s.processEffects(s.eventDispatcher.Flush(s.worldState)...)
+	s.processEffects(s.planExecutor.GetNextEffects()...)
 
 	s.camera.Update(s, timeDelta)
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)
 
 	// SCENE
 
-	game.DebugBR("player moving: %.1f", s.player.ConstantMovement)
-
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
+
+	s.lightMapBatch.Clear()
 
 	// todo limit rendering out of bounds tiles
 
@@ -192,10 +180,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		mob.Render(s.sceneBatch, cameraMatrix.Moved(renderLocation))
 	}
 
-	for _, entity := range s.locationSortedEntities() {
-		renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-		entity.RenderScene(s.sceneBatch, cameraMatrix.Moved(renderLocation))
-	}
+	s.entities.Render(s.sceneBatch, s.lightMapBatch, cameraMatrix)
 
 	for _, thisRenderLayer := range s.overlayRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
@@ -205,22 +190,16 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	// LIGHTING
 
-	// build light map
-	s.lightMapBatch.Clear()
-	s.DrawAmbient(s.lightMapCanvas, cameraMatrix, renderBounds, imdraw.New(nil))
-	s.litSceneCanvas.Clear(colornames.Black)
-	switch game.CurrentSave().SystemSettings.Lighting.LightingComposition {
-	case rpg.LightingCompositionFull:
-		for _, entity := range s.locationSortedEntities() {
-			renderLocation := entity.RenderMapLocation().Scaled(resources.MapTileSize.Float())
-			entity.RenderLight(s.lightMapBatch, cameraMatrix.Moved(renderLocation))
-		}
-	case rpg.LightingCompositionAmbient:
+	// entities draw lights above
+	if game.CurrentSave().SystemSettings.Lighting.LightingComposition == rpg.LightingCompositionAmbient {
+		// a little gross
+		s.lightMapBatch.Clear()
 	}
+	s.DrawAmbient(s.lightMapCanvas, cameraMatrix, renderBounds, imdraw.New(nil))
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 
-	// render "lit" scene
+	s.litSceneCanvas.Clear(colornames.Black)
 	s.litSceneCanvas.SetComposeMethod(pixel.ComposeOver)
 	s.sceneCanvas.Draw(s.litSceneCanvas, pixel.IM.Moved(targetBounds.Center()))
 	switch game.CurrentSave().SystemSettings.Lighting.LightingMode {
@@ -262,7 +241,8 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.hudBatch.Draw(target)
 
-	game.DebugTR("location: %d, %d", s.player.CurrentLocation.X, s.player.CurrentLocation.Y)
+	playerLocation := s.entities.GetEntity(s.player).Location
+	game.DebugTR("location: %d, %d", playerLocation.X, playerLocation.Y)
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {
 		game.SetActiveStateIntent(game.MenuIntent{
@@ -274,28 +254,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 			Background: s,
 		})
 	}
-}
-
-func (s *State) locationSortedEntities() []Entity {
-	sortedEntities := make([]Entity, 0, len(s.entities))
-	for _, ent := range s.entities {
-		sortedEntities = append(sortedEntities, ent)
-	}
-	sort.Slice(sortedEntities, func(i, j int) bool {
-		iZ, jZ := sortedEntities[i].GetRenderZPriority(), sortedEntities[j].GetRenderZPriority()
-		if iZ != jZ {
-			return iZ < jZ
-		}
-		iL, jL := sortedEntities[i].RenderMapLocation(), sortedEntities[j].RenderMapLocation()
-		if iL.Y != jL.Y {
-			return iL.Y > jL.Y
-		}
-		if iL.X != jL.X {
-			return iL.X < jL.X
-		}
-		return i < j
-	})
-	return sortedEntities
 }
 
 func (s *State) inputMode() inputMode {
@@ -322,24 +280,17 @@ func (s *State) setWorldState(key string, value any, id string) {
 	})
 }
 
-func (s *State) AddSystemEffect(e events.Effect) {
-	s.systemEffects = append(s.systemEffects, events.DispatchedEffect{
-		Source: events.NewEphemeralEntityContext("system"),
-		Effect: e,
-	})
+func (s *State) ExecuteSystemEffects(effects ...events.Effect) {
+	for _, e := range effects {
+		s.processEffects(events.DispatchedEffect{
+			Source: events.NewEphemeralEntityContext("system"),
+			Effect: e,
+		})
+	}
 }
 
-func (s *State) AddSerialSystemEffects(effects ...events.Effect) {
-	s.systemEffects = append(s.systemEffects, events.DispatchedEffect{
-		Source: events.NewEphemeralEntityContext("system"),
-		Effect: events.Effect{
-			Plan: events.NewSerialPlan(effects...),
-		},
+func (s *State) ExecuteSystemEffectsInOrder(effects ...events.Effect) {
+	s.ExecuteSystemEffects(events.Effect{
+		Plan: events.NewSerialPlan(effects...),
 	})
-}
-
-func (s *State) PopSystemEffects() []events.DispatchedEffect {
-	out := s.systemEffects
-	s.systemEffects = nil
-	return out
 }

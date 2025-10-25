@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-23T15:01:45-04:00 by go generate
+// Generated at 2025-10-24T22:38:29-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -12,7 +12,8 @@ type Effect struct {
 	Chatter *EffectChatter
 	YieldElythium *EffectYieldElythium
 	Timer *EffectTimer
-	MutateEntity *EffectMutateEntity
+	MutateModeBasedEntity *EffectMutateModeBasedEntity
+	MutateBlockingPresence *EffectMutateBlockingPresence
 	SetWorldState *EffectSetWorldState
 	SetEntityLocation *EffectSetEntityLocation
 	TeleportPlayer *EffectTeleportPlayer

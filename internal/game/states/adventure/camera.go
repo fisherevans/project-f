@@ -63,11 +63,11 @@ const EntityCameraSpeedPlayerDefault = EntityCameraSpeedMedium
 
 type EntityCamera struct {
 	cameraLocation
-	target EntityId
+	target string
 	speed  float64
 }
 
-func NewFollowCamera(target EntityId, initialLocation pixel.Vec, speed float64) *EntityCamera {
+func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
 	return &EntityCamera{
 		cameraLocation: cameraLocation{location: pixel.V(initialLocation.X, initialLocation.Y)},
 		target:         target,
@@ -76,11 +76,11 @@ func NewFollowCamera(target EntityId, initialLocation pixel.Vec, speed float64) 
 }
 
 func (c *EntityCamera) Update(s *State, timeDelta float64) {
-	target, found := s.entities[c.target]
+	target, found := s.entities.positions[c.target]
 	if !found {
 		return
 	}
-	targetLocation := target.RenderMapLocation()
+	targetLocation := target.PreciseLocation()
 	if c.speed == EntityCameraSpeedNoLag {
 		c.location = targetLocation
 		return

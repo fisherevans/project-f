@@ -103,7 +103,7 @@ func (c *ChatterSystem) sortChatters() {
 type basicEntityChatter struct {
 	id             string
 	content        *textbox.Content
-	target         EntityId
+	target         string
 	renderLocation pixel.Vec
 	displayTime    float64
 	elapsedTime    float64
@@ -130,12 +130,12 @@ func (b *basicEntityChatter) Content() *textbox.Content {
 
 func (b *basicEntityChatter) Update(s *State, timeDelta float64) {
 	b.elapsedTime += timeDelta
-	if entity, ok := s.entities[b.target]; ok {
-		b.renderLocation = entity.RenderMapLocation()
+	if position, ok := s.entities.positions[b.target]; ok {
+		b.renderLocation = position.PreciseLocation()
 	}
 }
 
-func newBasicEntityChatter(target EntityId, displayTime float64, message string, id string) Chatter {
+func newBasicEntityChatter(target string, displayTime float64, message string, id string) Chatter {
 	content := chatterBox.NewSimpleContent(message)
 	//content.SetTypingSpeed(0.01)
 	return &basicEntityChatter{

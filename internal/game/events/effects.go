@@ -3,6 +3,7 @@ package events
 import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
 )
 
 type RunnableFunction func()
@@ -36,17 +37,14 @@ type EffectTimer struct {
 	DurationSeconds float64
 }
 
-type EffectMutateEntity struct {
+type EffectMutateModeBasedEntity struct {
 	EntityId   string
 	Mode       *string
-	IsPassable *bool
-
-	// DynamicEntity changes
-	DynamicAnimations *map[string][]DynamicAnimationReference
-	DynamicLights     *map[string][]LightConfig
+	Animations *map[string][]AnimationReference
+	Lights     *map[string][]LightConfig
 }
 
-type DynamicAnimationReference struct {
+type AnimationReference struct {
 	Tilesheet string
 	Name      string
 }
@@ -55,6 +53,11 @@ type LightConfig struct {
 	Color    string
 	Size     float64
 	Modifier string `optional:"true"`
+}
+
+type EffectMutateBlockingPresence struct {
+	EntityId          string
+	IsBlockingIngress *bool
 }
 
 type EffectSetWorldState struct {
@@ -135,6 +138,7 @@ type EffectDeactivateFade struct {
 type EffectTriggerMovement struct {
 	EntityId  string
 	Direction input.Direction
+	MoveState *types.MoveState
 }
 
 type EffectSetFollowCamera struct {
@@ -145,7 +149,6 @@ type EffectSetFollowCamera struct {
 type EffectMutateNPC struct {
 	EntityId          string
 	TalkingAtEntityId *string
-	IsTalking         *bool
 }
 
 type EffectTriggerCombat struct {

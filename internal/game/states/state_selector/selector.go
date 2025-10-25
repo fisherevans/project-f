@@ -69,7 +69,7 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 		target.Clear(colors.Black.RGBA)
 	}
 
-	titleContent := titleTextbox.NewSimpleContent("Select a State:")
+	titleContent := titleTextbox.NewSimpleContent("Select a state:")
 	titleTextbox.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)), titleContent)
 
 	for index, option := range s.states {

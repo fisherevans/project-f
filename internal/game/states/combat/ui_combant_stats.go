@@ -241,7 +241,7 @@ func (sb *StatBar) Draw(target pixel.Target, matrix pixel.Matrix, width int) int
 			//moveVec := sb.labelSprite.Bounds().Center()
 			labelContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%s", colors.ToHex(sb.color), sb.label)) // TODO don't compute hex
 			combatantStatText.Render(target, matrix.Moved(pixel.V(float64(2), 0)), labelContent)
-			//sb.labelSprite.DrawColorMask(target, matrix.Moved(pixel.V(float64(2), float64(5)-sb.labelSprite.Bounds().H())).Moved(moveVec), sb.color)
+			//sb.labelSprite.DrawColorMask(target, matrix.MovedDelta(pixel.V(float64(2), float64(5)-sb.labelSprite.Bounds().H())).MovedDelta(moveVec), sb.color)
 
 			valueContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%d{+c:%s}/%d", colors.ToHex(sb.colorBright), sb.current, colors.ToHex(sb.color), sb.max)) // TODO don't compute hex
 			valueDx := float64((width - valueContent.Width()) - 2)

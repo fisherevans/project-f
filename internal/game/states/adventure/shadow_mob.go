@@ -91,7 +91,7 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 		TriggerRadius: 0.8,
 		OnTrigger: func(s *State, m *ShadowMob) {
 			if game.DebugToggles().F5().ToggleState() {
-				s.AddSystemEffect(events.Effect{
+				s.ExecuteSystemEffects(events.Effect{
 					Plan: &events.EffectPlan{
 						Steps: []events.PlanStep{
 							{
@@ -139,7 +139,7 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 
 // NewShadowMobWithConfig constructs a ShadowMob focusing on the key knobs; all
 // other tunables are set to internal defaults that you can modify later if desired.
-func NewShadowMobWithConfig(entityId EntityId, location MapLocation, cfg *ShadowMobConfig) *ShadowMob {
+func NewShadowMobWithConfig(entityId string, location MapLocation, cfg *ShadowMobConfig) *ShadowMob {
 	c := DefaultShadowMobConfig()
 	if cfg != nil {
 		// Override provided fields (zero values are treated as explicit, except OnTrigger)
@@ -179,7 +179,7 @@ func NewShadowMobWithConfig(entityId EntityId, location MapLocation, cfg *Shadow
 		origin:      pixel.V(float64(location.X), float64(location.Y)),
 		leashRadius: c.LeashRadius, // 0 disables; otherwise soft-clamped in `leashClamp`
 
-		// State
+		// state
 		state: ShadowMobStateWandering,
 
 		// --- Sensing defaults (detection/aggro range slowly drifts for variety) ---
@@ -219,7 +219,7 @@ func NewShadowMobWithConfig(entityId EntityId, location MapLocation, cfg *Shadow
 	return m
 }
 
-func NewShadowMob(entityId EntityId, location MapLocation) *ShadowMob {
+func NewShadowMob(entityId string, location MapLocation) *ShadowMob {
 	cfg := DefaultShadowMobConfig()
 	return NewShadowMobWithConfig(entityId, location, &cfg)
 }
@@ -228,7 +228,7 @@ func NewShadowMob(entityId EntityId, location MapLocation) *ShadowMob {
 
 // playerPosFromState isolates how we fetch the player's position.
 func playerPosFromState(s *State) pixel.Vec {
-	ml := s.player.PreciseMapLocation()
+	ml := s.entities.GetEntity(s.player).PreciseLocation()
 	return pixel.V(float64(ml.X), float64(ml.Y))
 }
 
@@ -351,7 +351,7 @@ func (m *ShadowMob) Update(s *State, timeDelta float64) {
 		m.triggerTimer = m.triggerCooldown
 	}
 
-	// --- State transitions ---
+	// --- state transitions ---
 	switch m.state {
 	case ShadowMobStateWandering:
 		if distToPlayer <= m.senseCurrent {
@@ -454,7 +454,7 @@ func (m *ShadowMob) sampleCircleAgainstTiles(s *State, center pixel.Vec, radius 
 
 func (s *State) canMobTraverse(x, y int) bool {
 	// todo mob entity id? direction?
-	return s.CanEntityEnter(EntityId(""), input.Down, MapLocation{X: x, Y: y})
+	return s.entities.isValidTransition("", MapLocation{X: x, Y: y}, input.Down, true)
 }
 
 // tileCircleIntersects checks if a circle at `center` with squared radius `rr` intersects a unit tile centered at (tx,ty), extents [tx-0.5,tx+0.5] x [ty-0.5,ty+0.5].

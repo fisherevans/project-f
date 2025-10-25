@@ -6,49 +6,52 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
-	"fisherevans.com/project/f/internal/util/tiles"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 )
 
 func init() {
-	registerDynamicEntity().byClass("NPC").byTile(tiles.NPC).register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
-		e := &NPC{
-			AnimatedMoveableEntity: AnimatedMoveableEntity{
-				MoveableEntity: MoveableEntity{
-					BaseEntity: BaseEntity{
-						id:             entityId,
-						isInteractable: true,
-					},
-					CurrentLocation: location,
-					MoveSpeeds: map[MoveState]float64{
-						MoveStateWalking: 2,
-					},
-					Passable: newPassablePreventIngress(true),
-				},
-				Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
-					MoveStateIdle:    anim.AshaIdle(atlas),
-					MoveStateWalking: anim.AshaWalk(atlas),
-					MoveStateRunning: anim.AshaRun(atlas),
-				},
-				ColorMask: pixel.RGB(rand.Float64(), rand.Float64(), rand.Float64()),
-			},
-			DoesMove:        true,
-			IdleChance:      0.05,
-			MaxIdleDuration: 6,
+	//byClass("NPC").byTile(tiles.NPC)
+	targetRegistration().registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+		state := NewMovementModeEntityState(entityId, system)
+		renderer := NewMovementBasedEntityRenderer(entityId, system)
+		color := colors.HSLToRGBA(rand.Float64(), 1, 1)
+		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
+			types.MoveStateIdle:    anim.AshaIdle(atlas),
+			types.MoveStateWalking: anim.AshaWalk(atlas),
+			types.MoveStateRunning: anim.AshaRun(atlas),
+		} {
+			for direction, animation := range animations {
+				renderer.WithMovementStateRenderer(moveState, direction, NewBasicEntityRenderer().
+					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(system, entityId)).
+					WithAnimationOriginOffset(pixel.V(0, 0.25)).
+					WithAnimations(animation).
+					WithAnimationColorMask(color))
+			}
 		}
+		doesMove, horizOnly := true, false
+		idleChance, maxIdle := 0.05, 6.0
 		switch mapEntity.GetStringMetadata("movement", "") {
 		case "static":
-			e.DoesMove = false
+			doesMove = false
 		case "horiz":
-			e.HorizOnly = true
+			horizOnly = true
 		}
 		switch mapEntity.GetStringMetadata("speed", "") {
 		case "fast":
-			e.MoveableEntity.MoveSpeeds[MoveStateWalking] = 4
+			// todo e.MoveableEntity.MoveSpeeds[MoveStateWalking] = 4
 		}
-		return e, events.NewBasicHandler(None{}).
+		presence := newBlockIngressPresence(true)
+		behavior := NewNPCBehavior(entityId, system, doesMove, horizOnly, idleChance, maxIdle)
+		position := system.RegisterEntity(entityId, location, presence, behavior, renderer, state)
+		position.MovementSpeeds = map[types.MoveState]float64{
+			types.MoveStateWalking: 2,
+		}
+		// todo pass in NPCEntityContext some how
+		return events.NewBasicHandler(None{}).
 			WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
 				if ctx.Id() != event.TargetId {
 					return nil
@@ -74,8 +77,8 @@ func init() {
 					},
 					events.Effect{
 						MutateNPC: &events.EffectMutateNPC{
-							EntityId:  ctx.Id(),
-							IsTalking: util.Ptr(false),
+							EntityId:          ctx.Id(),
+							TalkingAtEntityId: util.Ptr(""),
 						},
 					},
 				)
@@ -89,59 +92,79 @@ type NPCEntityContext interface {
 	IsTalking() bool
 }
 
-type NPC struct {
-	AnimatedMoveableEntity
-	DoesMove  bool
-	HorizOnly bool
+type NPCBehavior struct {
+	id        string
+	system    *EntitySystem
+	isEnabled func() bool
 
-	Talking        bool
-	TalkingTowards EntityId
+	talkingTowards string
+	idleDuration   float64
 
+	DoesMove        bool
+	HorizOnly       bool
 	IdleChance      float64
 	MaxIdleDuration float64
-	idleDuration    float64
 }
 
-func (n *NPC) IsTalking() bool {
-	return n.Talking
+func NewNPCBehavior(id string, system *EntitySystem, doesMove, horizOnly bool, idleChance, maxIdleDuration float64) *NPCBehavior {
+	return &NPCBehavior{
+		id:              id,
+		system:          system,
+		isEnabled:       func() bool { return true },
+		DoesMove:        doesMove,
+		HorizOnly:       horizOnly,
+		IdleChance:      idleChance,
+		MaxIdleDuration: maxIdleDuration,
+	}
 }
 
-func (n *NPC) Update(adv *State, timeDelta float64) {
-	defer n.AnimatedMoveableEntity.Update(adv, timeDelta)
-	if n.IsMoving() {
+func (b *NPCBehavior) MovementComplete(dispatcher Dispatcher) {
+}
+
+func (b *NPCBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Dispatcher) {
+	if p.IsMoving() {
 		return
 	}
-	if n.Talking {
-		ent, exists := adv.entities[n.TalkingTowards]
+	if b.talkingTowards != "" {
+		talkingTowardsEnt, exists := b.system.positions[b.talkingTowards]
 		if exists {
-			n.FacingDirection = DirectionTowards(n.RenderMapLocation(), ent.RenderMapLocation())
+			// todo effect?
+			p.FacingDirection = DirectionTowards(p.PreciseLocation(), talkingTowardsEnt.PreciseLocation())
 		}
 		return
 	}
-	if !n.DoesMove {
+	if !b.DoesMove {
 		return
 	}
-	if n.idleDuration > 0 {
-		n.idleDuration -= timeDelta
+	if b.idleDuration > 0 {
+		b.idleDuration -= timeDelta
 		return
 	}
-	if rand.Float64() < n.IdleChance {
-		n.idleDuration = rand.Float64() * n.MaxIdleDuration
+	if rand.Float64() < b.IdleChance {
+		b.idleDuration = rand.Float64() * b.MaxIdleDuration
 		return
 	}
-	if n.TriggerMovement(adv, n.GetFacingLocation(), MoveStateWalking) {
+	// todo speed
+	dispatcher.ProcessEffects(events.Effect{
+		TriggerMovement: events.NewTriggerMovementEffect(b.id, p.FacingDirection),
+	})
+	// todo event when trigger effect fails maybe?
+	// used to return here if trigger worked
+	if true {
 		return
 	}
 	var dir input.Direction
-	if n.HorizOnly {
-		if n.FacingDirection == input.NotPressed {
+	if b.HorizOnly {
+		if p.FacingDirection == input.NotPressed {
 			dir = input.Left
 		} else {
-			dir = n.FacingDirection.Opposite()
+			dir = p.FacingDirection.Opposite()
 		}
 	} else {
 		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
 	}
-	n.FacingDirection = dir
-	n.TriggerMovement(adv, n.GetLocationInDirection(dir), MoveStateWalking)
+	p.FacingDirection = dir
+	dispatcher.ProcessEffects(events.Effect{
+		TriggerMovement: events.NewTriggerMovementEffect(b.id, p.FacingDirection),
+	})
 }

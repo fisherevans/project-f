@@ -61,10 +61,9 @@ func init() {
 		Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 			return events.NewOutput().WithEffects(
 				events.Effect{
-					MutateEntity: events.NewMutateEntityEffect(ctx.Id()).
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
 						WithMode("off").
-						WithIsPassable(false).
-						WithDynamicAnimations(map[string][]events.DynamicAnimationReference{
+						WithAnimations(map[string][]events.AnimationReference{
 							"on": {
 								{Tilesheet: "adventure/doors/lever_horizontal", Name: "on"},
 							},
@@ -86,7 +85,7 @@ func init() {
 			if ctx.Mode() == "off" {
 				return events.NewOutput().WithEffects(
 					events.Effect{
-						MutateEntity: events.NewMutateEntityEffect(ctx.Id()).WithMode("on"),
+						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).WithMode("on"),
 					},
 					events.Effect{
 						SetWorldState: events.NewSetWorldStateEffect("door_open", true),
@@ -95,7 +94,7 @@ func init() {
 			} else {
 				return events.NewOutput().WithEffects(
 					events.Effect{
-						MutateEntity: events.NewMutateEntityEffect(ctx.Id()).WithMode("off"),
+						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).WithMode("off"),
 					},
 					events.Effect{
 						SetWorldState: events.NewSetWorldStateEffect("door_open", false),
@@ -111,8 +110,11 @@ func init() {
 		Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 			return events.NewOutput().WithEffects(
 				events.Effect{
-					MutateEntity: events.NewMutateEntityEffect(ctx.Id()).
-						WithDynamicAnimations(map[string][]events.DynamicAnimationReference{
+					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.Id()).
+						WithIsBlockingIngress(true),
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
+						WithMode("closed").
+						WithAnimations(map[string][]events.AnimationReference{
 							"closed": {
 								{Tilesheet: "adventure/doors/shield_front_1", Name: "closed"},
 								{Tilesheet: "adventure/doors/shield_front_1", Name: "waves"},
@@ -121,16 +123,11 @@ func init() {
 								{Tilesheet: "adventure/doors/shield_front_1", Name: "open"},
 							},
 						}).
-						WithDynamicLights(map[string][]events.LightConfig{
+						WithLights(map[string][]events.LightConfig{
 							"closed": {
 								{Color: "#127fd7", Size: 1.5, Modifier: "pulse_slow"},
 							},
 						}),
-				},
-				events.Effect{
-					MutateEntity: events.NewMutateEntityEffect(ctx.Id()).
-						WithMode("closed").
-						WithIsPassable(false),
 				},
 			)
 		},
@@ -138,18 +135,19 @@ func init() {
 			if event.Key != "door_open" {
 				return nil
 			}
-
 			if doorOpen, ok := event.NewValue.(bool); ok && doorOpen {
 				return events.NewOutput().WithEffects(events.Effect{
-					MutateEntity: events.NewMutateEntityEffect(ctx.Id()).
-						WithMode("open").
-						WithIsPassable(true),
+					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.Id()).
+						WithIsBlockingIngress(false),
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
+						WithMode("open"),
 				})
 			} else {
 				return events.NewOutput().WithEffects(events.Effect{
-					MutateEntity: events.NewMutateEntityEffect(ctx.Id()).
-						WithMode("closed").
-						WithIsPassable(false),
+					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.Id()).
+						WithIsBlockingIngress(true),
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
+						WithMode("closed"),
 				})
 			}
 		},

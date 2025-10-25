@@ -2,7 +2,6 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/events"
-	"fisherevans.com/project/f/internal/game/input"
 	"github.com/rs/zerolog/log"
 )
 
@@ -34,29 +33,25 @@ func (h *SystemEventHandler) HandleEvent(ctx events.EntityContext, world events.
 }
 
 func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.WorldStateReader, _ any, event *events.EventOnInteract) *events.HandlerOutput {
-	targetEntity, ok := h.State.entities[EntityId(event.TargetId)]
-	if !ok {
-		log.Warn().Msgf("system event: no target entity with id %s", event.TargetId)
-		return nil
-	}
-	if event.SourceId != string(h.State.player.GetEntityId()) {
+	if event.SourceId != h.State.player {
 		log.Warn().Msgf("system event: got interact event for a non-player entity %s", ctx.Id())
-		return nil
 	}
-	switch castEntity := targetEntity.(type) {
-	case *EntityDashGap:
-		return h.onInteractDashGap(castEntity, event.SourceDirection)
-	}
+
+	// todo dash
+	//switch castEntity := targetEntity.(type) {
+	//case *EntityDashGap:
+	//	return h.onInteractDashGap(castEntity, event.SourceDirection)
+	//}
 	return nil
 }
 
-func (h *SystemEventHandler) onInteractDashGap(dashGap *EntityDashGap, interactDirection input.Direction) *events.HandlerOutput {
-	h.State.player.DashTowards(h.State, interactDirection, dashGap.Location())
-	return nil
-}
+//func (h *SystemEventHandler) onInteractDashGap(dashGap *EntityDashGap, interactDirection input.Direction) *events.HandlerOutput {
+//	h.State.player.DashTowards(h.State, interactDirection, dashGap.Location())
+//	return nil
+//}
 
 func (h *SystemEventHandler) onZoneActivity(ctx events.EntityContext, world events.WorldStateReader, _ any, event *events.EventEntityZoneActivity) *events.HandlerOutput {
-	if !event.IsEntering || event.EntityId != string(h.State.player.GetEntityId()) {
+	if !event.IsEntering || event.EntityId != h.State.player {
 		return nil
 	}
 	tele, ok := h.State.teleports[TeleportReference(event.ZoneId)]

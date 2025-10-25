@@ -1,15 +1,14 @@
 package adventure
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/rs/zerolog/log"
 
-	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
@@ -67,88 +66,45 @@ func initializeMap(a *State, m *resources.Map) {
 	}
 	for _, collisionTile := range m.Layers[resources.LayerCollision].Tiles {
 		location := adjustedLocation(collisionTile.X, collisionTile.Y)
+		id := fmt.Sprintf("collision-%d-%d", location.X, location.Y)
 		switch collisionTile.SpriteId {
 		case resources.TileCollisionBlock:
-			a.AddEntity(newCollisionEntity(location))
+			a.entities.RegisterEntity(id, location, newBlockIngressPresence(false), nil, nil, nil)
 		case resources.TileCollisionJumpHorizontal,
 			resources.TileCollisionJumpVertical,
 			resources.TileCollisionJumpAll:
-			a.AddEntity(newDashGapEntity(location))
+			a.entities.RegisterEntity(id, location, newBlockIngressPresence(true), nil, nil, nil) // todo dashin
 		}
 	}
-	for stringEntityId, entity := range m.Entities {
-		if entity == nil {
-			log.Fatal().Str("entityId", stringEntityId).Msg("entity cannot be nil")
-		}
-		entityId := EntityId(stringEntityId)
-		location := adjustedLocation(entity.X, entity.Y)
-		if a.registerParameterizedEntity(entityId, location, entity) {
-			log.Info().Msgf("added parameterized entity '%s'", stringEntityId)
+	for entityId, mapEntity := range m.Entities {
+		if mapEntity == nil {
+			log.Fatal().Str("entityId", entityId).Msg("entity cannot be nil")
 			continue
 		}
-		entityType := entity.GetStringMetadata("type", "")
-		if entity.SpriteId != nil {
-			switch *entity.SpriteId {
+		location := adjustedLocation(mapEntity.X, mapEntity.Y)
+		if a.registerParameterizedEntity(entityId, location, mapEntity, a.entities) {
+			log.Info().Msgf("added parameterized entity '%s'", entityId)
+			continue
+		}
+		entityType := mapEntity.GetStringMetadata("type", "")
+		if mapEntity.SpriteId != nil {
+			switch *mapEntity.SpriteId {
 			case tiles.ShadowMob:
 				entityType = "shadow"
 			}
 		}
 		switch entityType {
-		case "player":
-			normalPlayerLight := &Light{
-				RenderDetails: LightRenderDetails{
-					SizeScale: 1.5,
-					ColorMask: colors.HexString("#888"),
-				},
-			}
-			dashPlayerLight := &Light{
-				RenderDetails: LightRenderDetails{
-					SizeScale: 1.5,
-					ColorMask: colors.HexString("#88f"),
-				},
-			}
-			a.player = &Player{
-				AnimatedMoveableEntity: AnimatedMoveableEntity{
-					MoveableEntity: MoveableEntity{
-						BaseEntity: BaseEntity{
-							id: entityId,
-						},
-						CurrentLocation: location,
-						MoveSpeeds: map[MoveState]float64{
-							MoveStateWalking: characterSpeed,
-							MoveStateRunning: characterSpeed * 1.75,
-							MoveStateDashing: characterSpeed * 1.5,
-						},
-						Passable: newPassablePreventIngress(true),
-					},
-					Animations: map[MoveState]map[input.Direction]*anim.AnimatedSprite{
-						MoveStateIdle:    anim.AshaIdle(atlas),
-						MoveStateWalking: anim.AshaWalk(atlas),
-						MoveStateRunning: anim.AshaRun(atlas),
-						MoveStateDashing: anim.Dash(atlas),
-					},
-					Lights: map[MoveState]*Light{
-						MoveStateIdle:    normalPlayerLight,
-						MoveStateWalking: normalPlayerLight,
-						MoveStateRunning: normalPlayerLight,
-						MoveStateDashing: dashPlayerLight,
-					},
-				},
-			}
-			a.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
-			a.AddEntity(a.player)
-			a.worldState.Set("player_id", string(entityId))
 		case "stairs":
-			ref := TeleportReference("teleport:" + entity.GetStringMetadata("ref", ""))
+			ref := TeleportReference("teleport:" + mapEntity.GetStringMetadata("ref", ""))
 			if _, exists := a.teleports[ref]; exists {
 				log.Fatal().Msgf("stairs reference %s already exists", ref)
 				break
 			}
-			dest := TeleportReference("teleport:" + entity.GetStringMetadata("destination", ""))
+			dest := TeleportReference("teleport:" + mapEntity.GetStringMetadata("destination", ""))
 			a.teleports[ref] = Teleport{
 				Destination:   dest,
 				Location:      location,
-				ExitDirection: input.DirectionFromString(entity.GetStringMetadata("exit_direction", "")),
+				ExitDirection: input.DirectionFromString(mapEntity.GetStringMetadata("exit_direction", "")),
 			}
 			a.zones.SetZoneId(location, string(ref))
 		case "shadow":
@@ -157,5 +113,5 @@ func initializeMap(a *State, m *resources.Map) {
 			log.Warn().Msgf("Unknown entity type: %s / %s", entityId, entityType)
 		}
 	}
-	a.processEffects(a.eventDispatcher.Init(a.worldState))
+	a.processEffects(a.eventDispatcher.Init(a.worldState)...)
 }

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-23T15:01:45-04:00 by go generate
+// Generated at 2025-10-24T22:38:29-04:00 by go generate
 // Source: internal/game/events/effect.go
 
 package events
@@ -72,7 +72,15 @@ func (e *EffectTimer) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectMutateEntity) Validate() error {
+func (e *EffectMutateModeBasedEntity) Validate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectMutateBlockingPresence) Validate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -261,10 +269,16 @@ func (e Effect) Validate() error {
 			reporter.sub("timer").addf("", "%v", err)
 		}
 	}
-	if e.MutateEntity != nil {
+	if e.MutateModeBasedEntity != nil {
 		effectCount++
-		if err := e.MutateEntity.Validate(); err != nil {
-			reporter.sub("mutateEntity").addf("", "%v", err)
+		if err := e.MutateModeBasedEntity.Validate(); err != nil {
+			reporter.sub("mutateModeBasedEntity").addf("", "%v", err)
+		}
+	}
+	if e.MutateBlockingPresence != nil {
+		effectCount++
+		if err := e.MutateBlockingPresence.Validate(); err != nil {
+			reporter.sub("mutateBlockingPresence").addf("", "%v", err)
 		}
 	}
 	if e.SetWorldState != nil {

@@ -22,11 +22,15 @@ func (l MapLocation) ToVec() pixel.Vec {
 	return pixel.V(float64(l.X), float64(l.Y))
 }
 
-func (l MapLocation) Moved(dx int, dy int) MapLocation {
+func (l MapLocation) MovedDelta(dx int, dy int) MapLocation {
 	return MapLocation{
 		X: l.X + dx,
 		Y: l.Y + dy,
 	}
+}
+
+func (l MapLocation) Moved(dir input.Direction) MapLocation {
+	return l.MovedDelta(dir.GetVector())
 }
 
 func (l MapLocation) DirectionTowards(other MapLocation) input.Direction {

@@ -59,8 +59,8 @@ func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
 	})
 }
 
-func (d *Dispatcher) Dispatch(event any) {
-	d.queuedEvents = append(d.queuedEvents, event)
+func (d *Dispatcher) Dispatch(events ...any) {
+	d.queuedEvents = append(d.queuedEvents, events...)
 }
 
 func (d *Dispatcher) Flush(worldState WorldStateReader) []DispatchedEffect {

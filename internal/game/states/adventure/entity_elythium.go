@@ -4,8 +4,6 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
 
@@ -22,13 +20,10 @@ func init() {
 					TimerId:         "reset",
 					DurationSeconds: 3,
 				},
-				MutateEntity: &events.EffectMutateEntity{
-					EntityId: ctx.Id(),
-					Mode:     &mode,
-				},
 				YieldElythium: &events.EffectYieldElythium{
 					Amount: 3,
 				},
+				MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).WithMode(mode),
 			},
 		)
 	})
@@ -37,35 +32,19 @@ func init() {
 			return nil
 		}
 		return events.NewOutput().WithEffects(events.Effect{
-			MutateEntity: &events.EffectMutateEntity{
-				EntityId: ctx.Id(),
-				Mode:     util.Ptr("ready"),
-			},
+			MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).WithMode("ready"),
 		})
 	})
-	registerDynamicEntity().
+	targetRegistration().
 		byTile(tiles.Elythium).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
-			e := NewDynamicEntity(entityId, location).
-				WithMode("ready").
-				WithLights("ready", &Light{
-					RenderDetails: LightRenderDetails{
-						SizeScale: 1.5,
-						ColorMask: colors.HexString("#f06"),
-					},
-					Modifiers: []LightModifier{
-						&LightModifierPulse{
-							PeriodSeconds:       4,
-							SizeIntensity:       0.1,
-							BrightnessIntensity: 0.4,
-						},
-					},
-				}).
-				WithAnimations("ready",
-					anim.Load(atlas, "adventure/entities/elythium/crystals", "default"),
-					anim.Load(atlas, "adventure/entities/elythium/crystals_sparkle", "default")).
-				WithAnimations("mined",
-					anim.Load(atlas, "adventure/entities/elythium/crystals_rock", "default"))
-			return e, handler.CreateHandler()
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+			renderer := NewModeBasedEntityRenderer(entityId, system)
+			renderer.WithModeRenderer("ready", NewBasicEntityRenderer().WithAnimations(
+				anim.Load(atlas, "adventure/entities/elythium/crystals", "default"),
+				anim.Load(atlas, "adventure/entities/elythium/crystals_sparkle", "default")))
+			renderer.WithModeRenderer("mind", NewBasicEntityRenderer().WithAnimations(
+				anim.Load(atlas, "adventure/entities/elythium/crystals_rock", "default")))
+			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
+			return handler.CreateHandler()
 		})
 }

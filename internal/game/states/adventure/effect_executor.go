@@ -7,17 +7,17 @@ import (
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 )
 
-func (s *State) processEffects(effects []events.DispatchedEffect) {
+func (s *State) processEffects(effects ...events.DispatchedEffect) {
 	for _, e := range effects {
 		s.processEffectFunction(e.Source, e.Function)
 		s.processEffectDialogue(e.Source, e.Dialogue)
 		s.processEffectTimer(e.Source, e.Timer)
-		s.processEffectMutateEntity(e.Source, e.MutateEntity)
 		s.processEffectYieldElythium(e.Source, e.YieldElythium)
 		s.processEffectChatter(e.Source, e.Chatter)
 		s.processSetWorldState(e.Source, e.SetWorldState)
@@ -29,8 +29,10 @@ func (s *State) processEffects(effects []events.DispatchedEffect) {
 		s.processEffectTeleportPlayer(e.Source, e.TeleportPlayer)
 		s.processEffectTriggerMovement(e.Source, e.TriggerMovement)
 		s.processEffectSetFollowCamera(e.Source, e.SetFollowCamera)
-		s.processEffectMutateNPC(e.Source, e.MutateNPC)
 		s.processEffectTriggerCombat(e.Source, e.TriggerCombat)
+		s.processEffectMutateModeBasedRenderer(e.Source, e.MutateModeBasedEntity)
+		s.processEffectMutateBlockingPresence(e.Source, e.MutateBlockingPresence)
+		s.processEffectMutateNPC(e.Source, e.MutateNPC)
 	}
 }
 
@@ -60,31 +62,42 @@ func (s *State) processEffectTimer(source events.EntityContext, e *events.Effect
 	logEffectf(source, e, "timer added")
 }
 
-func (s *State) processEffectMutateEntity(source events.EntityContext, e *events.EffectMutateEntity) {
+func (s *State) processEffectMutateModeBasedRenderer(source events.EntityContext, e *events.EffectMutateModeBasedEntity) {
 	if e == nil {
 		return
 	}
-	entity, exists := s.entities[EntityId(e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to find entity for mutation")
+	entity := s.entities.GetEntity(e.EntityId)
+	modeBased, ok := entity.EntityRenderer.(*ModeBasedEntityRenderer)
+	if !ok {
+		log.Warn().Str("entityId", e.EntityId).Msg("failed to find mode based entity for mutation")
 		return
 	}
 	if e.Mode != nil {
-		entity.SetMode(*e.Mode)
+		modeBased.currentMode = *e.Mode
 	}
-	dynamic, isDynamic := entity.(*DynamicEntity)
-	if isDynamic {
-		if e.IsPassable != nil {
-			dynamic.SetDefaultIsPassable(*e.IsPassable)
-		}
-		if e.DynamicAnimations != nil && *e.DynamicAnimations != nil {
-			dynamic.SetDynamicAnimations(*e.DynamicAnimations)
-		}
-		if e.DynamicLights != nil && *e.DynamicLights != nil {
-			dynamic.SetDynamicLights(*e.DynamicLights)
-		}
+	if e.Animations != nil {
+		modeBased.SetModeAnimations(*e.Animations)
 	}
-	logEffectf(source, e, "entity mutated")
+	if e.Lights != nil {
+		modeBased.SetModeLights(*e.Lights)
+	}
+	logEffectf(source, e, "mode based entity mutated")
+}
+
+func (s *State) processEffectMutateBlockingPresence(source events.EntityContext, e *events.EffectMutateBlockingPresence) {
+	if e == nil {
+		return
+	}
+	entity := s.entities.GetEntity(e.EntityId)
+	presence, ok := entity.EntityPresence.(*blockIngressPresence)
+	if !ok {
+		log.Warn().Str("entityId", e.EntityId).Msg("failed to find presence block ingress")
+		return
+	}
+	if e.IsBlockingIngress != nil {
+		presence.isBlockingIngress = *e.IsBlockingIngress
+	}
+	logEffectf(source, e, "block presence mutated")
 }
 
 func (s *State) processEffectYieldElythium(source events.EntityContext, e *events.EffectYieldElythium) {
@@ -99,7 +112,7 @@ func (s *State) processEffectChatter(source events.EntityContext, e *events.Effe
 	if e == nil {
 		return
 	}
-	s.chatters.Add(newBasicEntityChatter(EntityId(e.EntityId), e.DurationSeconds, e.Message, e.ChatterId))
+	s.chatters.Add(newBasicEntityChatter(e.EntityId, e.DurationSeconds, e.Message, e.ChatterId))
 	logEffectf(source, e, "chatter added")
 }
 
@@ -126,26 +139,13 @@ func (s *State) processTeleportEntity(source events.EntityContext, e *events.Eff
 	} else if e.ToLocation != nil {
 		toLocation = MapLocation{X: e.ToLocation.X, Y: e.ToLocation.Y}
 	} else if e.ToEntityId != nil {
-		toEntity, exists := s.entities[EntityId(*e.ToEntityId)]
-		if !exists {
-			log.Warn().Str("toEntityId", *e.ToEntityId).Msg("failed to find entity to teleport to")
-			return
-		}
-		toLocation = toEntity.Location()
+		entity := s.entities.GetEntity(*e.ToEntityId)
+		toLocation = entity.Location
 	} else {
 		log.Warn().Msg("failed to find teleport destination")
 		return
 	}
-	entity, exists := s.entities[EntityId(e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to find entity for teleport")
-		return
-	}
-	if entity.TeleportTo(s, toLocation) {
-		logEffectf(source, e, "entity teleported")
-	} else {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to teleport entity")
-	}
+	s.entities.SetEntityLocation(e.EntityId, toLocation)
 }
 
 // processEffectPlan starts a new plan
@@ -215,14 +215,12 @@ func (s *State) processEffectTriggerMovement(source events.EntityContext, e *eve
 	if e == nil {
 		return
 	}
-	if e.EntityId != string(s.player.GetEntityId()) {
-		log.Warn().Str("entityId", e.EntityId).Msg("only player is supported for trigger movement")
-		return
+	entity := s.entities.GetEntity(e.EntityId)
+	moveState := types.MoveStateWalking
+	if e.MoveState != nil {
+		moveState = *e.MoveState
 	}
-	s.player.FacingDirection = e.Direction
-	s.player.intentDirection = e.Direction
-	s.player.TriggerMovement(s, s.player.GetFacingLocation(), MoveStateWalking)
-
+	s.entities.AttemptMovement(e.EntityId, entity.Location.Moved(e.Direction), moveState)
 }
 
 // processEffectTeleportPlayer creates a plan to teleport the player with fade transition
@@ -240,8 +238,6 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 	if e.TransitionStyle != nil {
 		transitionStyle = *e.TransitionStyle
 	}
-
-	playerEntityId := string(s.player.GetEntityId())
 
 	// Determine exit direction: use explicit if provided, otherwise get from teleport reference
 	var exitDirection *input.Direction
@@ -277,13 +273,13 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 					AutoDeactivate:  bPtr(false),
 				}},
 				{SetEntityLocation: &events.EffectSetEntityLocation{
-					EntityId:    playerEntityId,
+					EntityId:    s.player,
 					ToReference: e.ToReference,
 					ToLocation:  e.ToLocation,
 					ToEntityId:  e.ToEntityId,
 				}},
 				{SetFollowCamera: &events.EffectSetFollowCamera{
-					EntityId:      &playerEntityId,
+					EntityId:      &s.player,
 					ResetPosition: true,
 				}},
 			}},
@@ -296,7 +292,7 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 			steps = append(steps,
 				events.PlanStep{Parallel: []events.Effect{
 					{TriggerMovement: &events.EffectTriggerMovement{
-						EntityId:  playerEntityId,
+						EntityId:  s.player,
 						Direction: *exitDirection,
 					}},
 				}},
@@ -338,7 +334,7 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 			Steps: []events.PlanStep{
 				{Serial: []events.Effect{
 					{SetEntityLocation: &events.EffectSetEntityLocation{
-						EntityId:    playerEntityId,
+						EntityId:    s.player,
 						ToReference: e.ToReference,
 						ToLocation:  e.ToLocation,
 						ToEntityId:  e.ToEntityId,
@@ -364,16 +360,12 @@ func (s *State) processEffectSetFollowCamera(source events.EntityContext, e *eve
 	if e.EntityId == nil {
 		log.Warn().Str("entityId", *e.EntityId).Msg("currently EntityId is required to set follow camera")
 	}
-	entity, exists := s.entities[EntityId(*e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", *e.EntityId).Msg("failed to find entity for follow camera")
-		return
-	}
+	target := s.entities.GetEntity(*e.EntityId)
 	location := s.camera.CurrentLocation()
 	if e.ResetPosition {
-		location = entity.RenderMapLocation()
+		location = target.PreciseLocation()
 	}
-	camera := NewFollowCamera(EntityId(*e.EntityId), location, EntityCameraSpeedPlayerDefault)
+	camera := NewFollowCamera(target.Id, location, EntityCameraSpeedPlayerDefault)
 	s.camera = camera
 	logEffectf(source, e, "follow camera set")
 }
@@ -382,21 +374,14 @@ func (s *State) processEffectMutateNPC(source events.EntityContext, e *events.Ef
 	if e == nil {
 		return
 	}
-	entity, exists := s.entities[EntityId(e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to find entity for mutation")
+	entity := s.entities.GetEntity(e.EntityId)
+	npc, ok := entity.EntityBehavior.(*NPCBehavior)
+	if !ok {
+		log.Warn().Str("entityId", e.EntityId).Msg("failed to find npc entity for mutation")
 		return
 	}
-	npc, ok := entity.(*NPC)
-	if !ok {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to cast entity to NPC")
-	}
 	if e.TalkingAtEntityId != nil {
-		npc.Talking = true
-		npc.TalkingTowards = EntityId(*e.TalkingAtEntityId)
-	}
-	if e.IsTalking != nil {
-		npc.Talking = *e.IsTalking
+		npc.talkingTowards = *e.TalkingAtEntityId
 	}
 	logEffectf(source, e, "npc mutated")
 }
@@ -422,7 +407,7 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 			State: s,
 		})
 		game.CurrentSave().Animech.AnimechExperience += r.ResearchPoints // todo this isn't right
-		s.AddSystemEffect(events.Effect{
+		s.ExecuteSystemEffects(events.Effect{
 			DeactivateFade: &events.EffectDeactivateFade{
 				FadeId: "combat_fade",
 			},
@@ -434,7 +419,7 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 		s.planExecutor.MarkCombatComplete(e.CombatId)
 	}
 
-	s.AddSystemEffect(events.Effect{
+	s.ExecuteSystemEffects(events.Effect{
 		Plan: &events.EffectPlan{
 			Steps: []events.PlanStep{
 				{
