@@ -4,7 +4,6 @@ import (
 	"slices"
 	"sort"
 
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
@@ -31,8 +30,8 @@ type EntitySystem struct {
 	behaviors map[string]EntityBehavior
 	states    map[string]EntityState
 
-	positions         map[string]*EntityPosition
-	occupiedLocations map[MapLocation]map[string]struct{}
+	positions   map[string]*EntityPosition
+	occupations *Occupation
 }
 
 func NewEntitySystem(state *State) *EntitySystem {
@@ -46,8 +45,8 @@ func NewEntitySystem(state *State) *EntitySystem {
 		behaviors: map[string]EntityBehavior{},
 		states:    map[string]EntityState{},
 
-		positions:         map[string]*EntityPosition{},
-		occupiedLocations: map[MapLocation]map[string]struct{}{},
+		positions:   map[string]*EntityPosition{},
+		occupations: NewOccupation(state),
 	}
 }
 
@@ -69,7 +68,7 @@ func (es *EntitySystem) RegisterEntity(id string, location MapLocation, presence
 	if state != nil {
 		es.states[id] = state
 	}
-	es.occupy(id, location)
+	es.occupations.Occupy(id, location)
 	return es.positions[id]
 }
 
@@ -84,42 +83,17 @@ func (es *EntitySystem) GetEntity(id string) Entity {
 	}
 }
 
-func (es *EntitySystem) occupy(id string, loc MapLocation) {
-	if _, exists := es.occupiedLocations[loc]; !exists {
-		es.occupiedLocations[loc] = map[string]struct{}{}
-	}
-	es.occupiedLocations[loc][id] = struct{}{}
-}
-
-func (es *EntitySystem) vacateAndEmitEvent(id string, loc MapLocation, wasTeleported bool) {
-	if _, exists := es.occupiedLocations[loc]; !exists {
-		return
-	}
-	if _, exists := es.occupiedLocations[loc][id]; !exists {
-		return
-	}
-	delete(es.occupiedLocations[loc], id)
-	es.emitEntityLocationExitEvents(id, loc, wasTeleported)
-}
-
-func (es *EntitySystem) occupyingEntityIds(loc MapLocation) map[string]struct{} {
-	if _, exists := es.occupiedLocations[loc]; !exists {
-		return map[string]struct{}{}
-	}
-	return es.occupiedLocations[loc]
-}
-
 func (es *EntitySystem) interactableEntityIds(loc MapLocation) map[string]struct{} {
 	out := map[string]struct{}{}
-	for entityId := range es.occupyingEntityIds(loc) {
+	es.occupations.ForEachOccupyingEntity(loc, func(entityId string) {
 		presence, exists := es.presences[entityId]
 		if !exists {
-			continue
+			return
 		}
 		if presence.IsInteractable() {
 			out[entityId] = struct{}{}
 		}
-	}
+	})
 	return out
 }
 
@@ -137,40 +111,25 @@ func (es *EntitySystem) TeleportEntity(id string, toLocation MapLocation) {
 	if position.IsMoving() {
 		position.CancelMovement()
 	}
-	es.vacateAndEmitEvent(id, position.Location, true)
+	es.occupations.VacateAndEmit(id, position.Location, true)
 	position.Location = toLocation
-	es.occupy(id, position.Location)
-	es.emitEntityLocationEnterEvents(id, position.Location, true)
+	es.occupations.OccupyAndEmit(id, position.Location, true)
 }
 
 var validAttemptMovementStates = []types.MoveState{types.MoveStateWalking, types.MoveStateRunning, types.MoveStateDashing}
 
 func (es *EntitySystem) AttemptMovement(id string, targetLocation MapLocation, movementState types.MoveState) bool {
-	warnLog := log.Log().Str("id", id).Any("state", movementState).Any("target", targetLocation)
-	position, exists := es.positions[id]
-	if !exists {
-		warnLog.Msgf("no position for entity")
-		return false
-	}
-	if position.IsMoving() {
-		return false
-	}
-	if position.Location == targetLocation {
-		warnLog.Msgf("attempted movement to same location")
-		return true
-	}
+	log := log.Debug().Str("id", id).Any("state", movementState).Any("target", targetLocation)
 	if !slices.Contains(validAttemptMovementStates, movementState) {
-		warnLog.Msgf("invalid attempted movement state")
+		log.Msgf("movement state not valid")
 		return false
 	}
-	movementDirection := position.Location.DirectionTowards(targetLocation)
-	if !es.isValidTransition(id, targetLocation, movementDirection, true) {
+	isValid, position, movementDirection := es.isMovementValid(id, targetLocation)
+	if !isValid {
+		log.Msgf("movement not valid")
 		return false
 	}
-	if !es.isValidTransition(id, position.Location, movementDirection, false) {
-		return false
-	}
-	es.occupy(id, position.Location) // emit enter events within movement update - don't "enter" until primary is updated
+	es.occupations.Occupy(id, targetLocation) // emit enter events within movement update - don't "enter" until primary is updated
 	position.MovementTargetLocation = targetLocation
 	position.MovementState = movementState
 	position.FacingDirection = movementDirection
@@ -178,9 +137,35 @@ func (es *EntitySystem) AttemptMovement(id string, targetLocation MapLocation, m
 	position.MovementProgressionScale = 1.0 / distance
 	return true
 }
+func (es *EntitySystem) isMovementValid(id string, targetLocation MapLocation) (bool, *EntityPosition, input.Direction) {
+	log := log.Debug().Str("id", id)
+	position, exists := es.positions[id]
+	if !exists {
+		log.Msgf("no position for entity")
+		return false, position, input.NotPressed
+	}
+	movementDirection := position.Location.DirectionTowards(targetLocation)
+	if position.IsMoving() {
+		log.Msgf("entity is already moving")
+		return false, position, movementDirection
+	}
+	if position.Location == targetLocation {
+		log.Msgf("attempted movement to same location")
+		return false, position, movementDirection
+	}
+	if !es.isValidTransition(id, targetLocation, movementDirection, true) {
+		log.Msgf("movement ingress not valid")
+		return false, position, movementDirection
+	}
+	if !es.isValidTransition(id, position.Location, movementDirection, false) {
+		log.Msgf("movement egress not valid")
+		return false, position, movementDirection
+	}
+	return true, position, movementDirection
+}
 
 func (es *EntitySystem) isValidTransition(id string, loc MapLocation, movementDirection input.Direction, isIngress bool) bool {
-	for occupiedById, _ := range es.occupyingEntityIds(loc) {
+	for _, occupiedById := range es.occupations.OccupyingEntityList(loc) {
 		if occupiedById == id {
 			continue
 		}
@@ -201,28 +186,6 @@ func (es *EntitySystem) isValidTransition(id string, loc MapLocation, movementDi
 	return true
 }
 
-func (es *EntitySystem) emitEntityLocationExitEvents(id string, from MapLocation, wasTeleported bool) {
-	for _, zoneId := range es.state.zones.ZonesAt(from) {
-		es.state.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
-			EntityId:      id,
-			ZoneId:        zoneId,
-			IsEntering:    false,
-			WasTeleported: wasTeleported,
-		})
-	}
-}
-
-func (es *EntitySystem) emitEntityLocationEnterEvents(id string, to MapLocation, wasTeleported bool) {
-	for _, zoneId := range es.state.zones.ZonesAt(to) {
-		es.state.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
-			EntityId:      id,
-			ZoneId:        zoneId,
-			IsEntering:    true,
-			WasTeleported: wasTeleported,
-		})
-	}
-}
-
 func (es *EntitySystem) Update(timeDelta float64) {
 	dispatcher := &stateDispatcher{
 		s: es.state,
@@ -236,7 +199,7 @@ func (es *EntitySystem) Update(timeDelta float64) {
 			var lastRemaining float64 // prevent infinite loops if movement is not making progress
 			for remaining > 0 && remaining != lastRemaining {
 				remaining = position.ProgressMovement(timeDelta)
-				if remaining > 0 && hasBehavior {
+				if remaining > 0 && hasBehavior && behavior.IsEnabled() {
 					behavior.MovementComplete(dispatcher)
 				}
 				lastRemaining = remaining
@@ -244,7 +207,9 @@ func (es *EntitySystem) Update(timeDelta float64) {
 		}
 		if hasBehavior {
 			if hasPosition {
-				behavior.Update(timeDelta, position, dispatcher)
+				if behavior.IsEnabled() {
+					behavior.Update(timeDelta, position, dispatcher)
+				}
 			} else {
 				log.Warn().Str("entityId", id).Msg("no position for entity with behavior, skipping")
 			}

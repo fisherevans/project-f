@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 
@@ -39,6 +40,20 @@ func (l MapLocation) DirectionTowards(other MapLocation) input.Direction {
 
 func (l MapLocation) DistanceTo(location MapLocation) float64 {
 	return l.ToVec().Sub(location.ToVec()).Len()
+}
+
+func (l MapLocation) ToEventLocation() events.Location {
+	return events.Location{
+		X: l.X,
+		Y: l.Y,
+	}
+}
+
+func LocationFromEvent(l events.Location) MapLocation {
+	return MapLocation{
+		X: l.X,
+		Y: l.Y,
+	}
 }
 
 type MapBounds struct {

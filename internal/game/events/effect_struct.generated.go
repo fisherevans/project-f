@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-25T00:10:48-04:00 by go generate
+// Generated at 2025-10-25T15:43:29-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -18,11 +18,13 @@ type Effect struct {
 	SetEntityLocation *EffectSetEntityLocation
 	TeleportPlayer *EffectTeleportPlayer
 	Plan *EffectPlan
-	BlockInput *EffectBlockInput
+	MutateEntityBehavior *EffectMutateEntityBehavior
 	Fade *EffectFade
 	DeactivateFade *EffectDeactivateFade
 	TriggerMovement *EffectTriggerMovement
+	ResetMovement *EffectResetMovement
 	SetFollowCamera *EffectSetFollowCamera
 	MutateNPC *EffectMutateNPC
 	TriggerCombat *EffectTriggerCombat
+	EntityFaceDirection *EffectEntityFaceDirection
 }

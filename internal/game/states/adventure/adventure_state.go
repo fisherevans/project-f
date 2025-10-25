@@ -3,6 +3,7 @@ package adventure
 import (
 	"image/color"
 	"math"
+	"sort"
 
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -113,17 +114,15 @@ func New(i game.AdventureIntent) game.State {
 
 		lightMapBatch:  atlas.NewBatch(),
 		lightMapCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
-
 		litSceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
 
 		hudBatch: atlas.NewBatch(),
-
-		eventDispatcher: events.NewDispatcher(),
-		planExecutor:    events.NewPlanExecutor(),
 	}
+	a.planExecutor = events.NewPlanExecutor(a.processEffects)
 	a.entities = NewEntitySystem(a)
 	a.hud = NewHud(func() int { return a.run.Elythium })
 	a.worldState = events.NewWorldState(a.run)
+	a.eventDispatcher = events.NewDispatcher(a.worldState, a.processEffects)
 
 	a.bloom.Threshold = 1.0
 	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
@@ -156,8 +155,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.timers.Update(timeDelta, s.eventDispatcher, s)
 
-	s.processEffects(s.eventDispatcher.Flush(s.worldState)...)
-	s.processEffects(s.planExecutor.GetNextEffects()...)
+	s.planExecutor.Update()
 
 	s.camera.Update(s, timeDelta)
 	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)
@@ -186,6 +184,13 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	}
 
 	s.sceneBatch.Draw(s.sceneCanvas)
+
+	var locations []string
+	s.entities.occupations.ForEachOccupiedLocation(s.player, func(location MapLocation) {
+		locations = append(locations, location.String())
+	})
+	sort.Strings(locations)
+	game.DebugBL("player locations: %v", locations)
 
 	// LIGHTING
 
@@ -239,9 +244,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.overlays.OnTick(s, target, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.hudBatch.Draw(target)
-
-	playerLocation := s.entities.GetEntity(s.player).Location
-	game.DebugTR("location: %d, %d", playerLocation.X, playerLocation.Y)
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {
 		game.SetActiveStateIntent(game.MenuIntent{

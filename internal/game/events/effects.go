@@ -118,8 +118,11 @@ type PlanStep struct {
 	Parallel []Effect
 }
 
-type EffectBlockInput struct {
-	Blocked bool // true = block, false = unblock
+type EffectMutateEntityBehavior struct {
+	EntityId  string
+	DisableBy *string `one_of:"enablement"`
+	EnableBy  *string `one_of:"enablement"`
+	Reset     *bool
 }
 
 type EffectFade struct {
@@ -142,6 +145,10 @@ type EffectTriggerMovement struct {
 	MoveState *types.MoveState
 }
 
+type EffectResetMovement struct {
+	EntityId string
+}
+
 type EffectSetFollowCamera struct {
 	EntityId      *string `one_of:"target"`
 	ResetPosition bool
@@ -156,4 +163,9 @@ type EffectTriggerCombat struct {
 	CombatId   string `auto_generate:"true"`
 	Opponent   *rpg.PrimortalType
 	Background string
+}
+
+type EffectEntityFaceDirection struct {
+	EntityId  string
+	Direction input.Direction
 }

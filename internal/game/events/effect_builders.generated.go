@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-25T00:10:48-04:00 by go generate
+// Generated at 2025-10-25T15:43:29-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -19,16 +19,16 @@ func NewFunctionEffect(fn RunnableFunction) *EffectFunction {
 func NewDialogueEffect(dialogueId string, text string) *EffectDialogue {
 	return &EffectDialogue{
 		DialogueId: dialogueId,
-		Text:       text,
+		Text: text,
 	}
 }
 
 func NewChatterEffect(chatterId string, entityId string, durationSeconds float64, message string) *EffectChatter {
 	return &EffectChatter{
-		ChatterId:       chatterId,
-		EntityId:        entityId,
+		ChatterId: chatterId,
+		EntityId: entityId,
 		DurationSeconds: durationSeconds,
-		Message:         message,
+		Message: message,
 	}
 }
 
@@ -40,7 +40,7 @@ func NewYieldElythiumEffect(amount int) *EffectYieldElythium {
 
 func NewTimerEffect(timerId string, durationSeconds float64) *EffectTimer {
 	return &EffectTimer{
-		TimerId:         timerId,
+		TimerId: timerId,
 		DurationSeconds: durationSeconds,
 	}
 }
@@ -79,7 +79,7 @@ func (e *EffectMutateBlockingPresence) WithIsBlockingIngress(isBlockingIngress b
 
 func NewSetWorldStateEffect(key string, value any) *EffectSetWorldState {
 	return &EffectSetWorldState{
-		Key:   key,
+		Key: key,
 		Value: value,
 	}
 }
@@ -106,7 +106,8 @@ func (e *EffectSetEntityLocation) WithToEntityId(toEntityId string) *EffectSetEn
 }
 
 func NewTeleportPlayerEffect() *EffectTeleportPlayer {
-	return &EffectTeleportPlayer{}
+	return &EffectTeleportPlayer{
+	}
 }
 
 func (e *EffectTeleportPlayer) WithToReference(toReference string) *EffectTeleportPlayer {
@@ -137,21 +138,36 @@ func (e *EffectTeleportPlayer) WithTransitionStyle(transitionStyle string) *Effe
 func NewPlanEffect(planId string, steps []PlanStep) *EffectPlan {
 	return &EffectPlan{
 		PlanId: planId,
-		Steps:  steps,
+		Steps: steps,
 	}
 }
 
-func NewBlockInputEffect(blocked bool) *EffectBlockInput {
-	return &EffectBlockInput{
-		Blocked: blocked,
+func NewMutateEntityBehaviorEffect(entityId string) *EffectMutateEntityBehavior {
+	return &EffectMutateEntityBehavior{
+		EntityId: entityId,
 	}
+}
+
+func (e *EffectMutateEntityBehavior) WithDisableBy(disableBy string) *EffectMutateEntityBehavior {
+	e.DisableBy = &disableBy
+	return e
+}
+
+func (e *EffectMutateEntityBehavior) WithEnableBy(enableBy string) *EffectMutateEntityBehavior {
+	e.EnableBy = &enableBy
+	return e
+}
+
+func (e *EffectMutateEntityBehavior) WithReset(reset bool) *EffectMutateEntityBehavior {
+	e.Reset = &reset
+	return e
 }
 
 func NewFadeEffect(fadeId string, durationSeconds float64, transitions int) *EffectFade {
 	return &EffectFade{
-		FadeId:          fadeId,
+		FadeId: fadeId,
 		DurationSeconds: durationSeconds,
-		Transitions:     transitions,
+		Transitions: transitions,
 	}
 }
 
@@ -197,6 +213,12 @@ func (e *EffectTriggerMovement) WithMoveState(moveState types.MoveState) *Effect
 	return e
 }
 
+func NewResetMovementEffect(entityId string) *EffectResetMovement {
+	return &EffectResetMovement{
+		EntityId: entityId,
+	}
+}
+
 func NewSetFollowCameraEffect(resetPosition bool) *EffectSetFollowCamera {
 	return &EffectSetFollowCamera{
 		ResetPosition: resetPosition,
@@ -221,7 +243,7 @@ func (e *EffectMutateNPC) WithTalkingAtEntityId(talkingAtEntityId string) *Effec
 
 func NewTriggerCombatEffect(combatId string, background string) *EffectTriggerCombat {
 	return &EffectTriggerCombat{
-		CombatId:   combatId,
+		CombatId: combatId,
 		Background: background,
 	}
 }
@@ -230,3 +252,11 @@ func (e *EffectTriggerCombat) WithOpponent(opponent rpg.PrimortalType) *EffectTr
 	e.Opponent = &opponent
 	return e
 }
+
+func NewEntityFaceDirectionEffect(entityId string, direction input.Direction) *EffectEntityFaceDirection {
+	return &EffectEntityFaceDirection{
+		EntityId: entityId,
+		Direction: direction,
+	}
+}
+

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-25T00:10:48-04:00 by go generate
+// Generated at 2025-10-25T15:43:29-04:00 by go generate
 // Source: internal/game/events/effect.go
 
 package events
@@ -160,9 +160,22 @@ func (e *EffectPlan) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectBlockInput) Validate() error {
+func (e *EffectMutateEntityBehavior) Validate() error {
 	reporter := newIssueReporter()
 
+	// Validate one_of group: enablement
+	enablementCount := 0
+	if e.DisableBy != nil {
+		enablementCount++
+	}
+	if e.EnableBy != nil {
+		enablementCount++
+	}
+	if enablementCount != 1 {
+		reporter.addf("enablement", "exactly one of [disableBy, enableBy] must be set")
+	}
+
+	reporter.requireString("entityId", e.EntityId)
 
 	return reporter.report()
 }
@@ -211,6 +224,14 @@ func (e *EffectTriggerMovement) Validate() error {
 	return reporter.report()
 }
 
+func (e *EffectResetMovement) Validate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
 func (e *EffectSetFollowCamera) Validate() error {
 	reporter := newIssueReporter()
 
@@ -245,6 +266,14 @@ func (e *EffectTriggerCombat) Validate() error {
 
 	reporter.requireString("combatId", e.CombatId)
 	reporter.requireString("background", e.Background)
+
+	return reporter.report()
+}
+
+func (e *EffectEntityFaceDirection) Validate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
 
 	return reporter.report()
 }
@@ -320,10 +349,10 @@ func (e Effect) Validate() error {
 			reporter.sub("plan").addf("", "%v", err)
 		}
 	}
-	if e.BlockInput != nil {
+	if e.MutateEntityBehavior != nil {
 		effectCount++
-		if err := e.BlockInput.Validate(); err != nil {
-			reporter.sub("blockInput").addf("", "%v", err)
+		if err := e.MutateEntityBehavior.Validate(); err != nil {
+			reporter.sub("mutateEntityBehavior").addf("", "%v", err)
 		}
 	}
 	if e.Fade != nil {
@@ -344,6 +373,12 @@ func (e Effect) Validate() error {
 			reporter.sub("triggerMovement").addf("", "%v", err)
 		}
 	}
+	if e.ResetMovement != nil {
+		effectCount++
+		if err := e.ResetMovement.Validate(); err != nil {
+			reporter.sub("resetMovement").addf("", "%v", err)
+		}
+	}
 	if e.SetFollowCamera != nil {
 		effectCount++
 		if err := e.SetFollowCamera.Validate(); err != nil {
@@ -360,6 +395,12 @@ func (e Effect) Validate() error {
 		effectCount++
 		if err := e.TriggerCombat.Validate(); err != nil {
 			reporter.sub("triggerCombat").addf("", "%v", err)
+		}
+	}
+	if e.EntityFaceDirection != nil {
+		effectCount++
+		if err := e.EntityFaceDirection.Validate(); err != nil {
+			reporter.sub("entityFaceDirection").addf("", "%v", err)
 		}
 	}
 

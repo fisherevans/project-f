@@ -60,9 +60,8 @@ func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashG
 
 func findDashDestination(s *State, direction input.Direction, location MapLocation) MapLocation {
 	for {
-		entityIds := s.entities.occupyingEntityIds(location)
 		moved := false
-		for entityId := range entityIds {
+		for _, entityId := range s.entities.occupations.OccupyingEntityList(location) {
 			entity := s.entities.GetEntity(entityId)
 			if entity.EntityState == nil {
 				continue

@@ -48,7 +48,7 @@ func init() {
 							Dialogue: &events.EffectDialogue{
 								Text: "You've managed to escape!",
 							},
-							BlockInput: events.NewBlockInputEffect(true),
+							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("rocket"),
 						},
 						events.Effect{
 							YieldElythium: &events.EffectYieldElythium{
@@ -59,7 +59,7 @@ func init() {
 							},
 						},
 						events.Effect{
-							BlockInput: events.NewBlockInputEffect(false),
+							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("rocket"),
 						},
 					)
 				})
@@ -122,7 +122,7 @@ func init() {
 							Dialogue: &events.EffectDialogue{
 								Text: message,
 							},
-							BlockInput: events.NewBlockInputEffect(true),
+							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("robot"),
 						},
 						events.Effect{
 							TriggerCombat: &events.EffectTriggerCombat{
@@ -134,7 +134,7 @@ func init() {
 							Dialogue: &events.EffectDialogue{
 								Text: "Well, butter my bolts... you actually did it.",
 							},
-							BlockInput: events.NewBlockInputEffect(false),
+							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("robot"),
 						},
 					)
 				})

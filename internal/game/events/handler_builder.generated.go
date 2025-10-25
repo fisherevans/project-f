@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-25T00:10:48-04:00 by go generate
+// Generated at 2025-10-25T15:43:29-04:00 by go generate
 // Source: internal/game/events/handler.go
 
 package events

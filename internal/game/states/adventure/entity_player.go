@@ -15,18 +15,9 @@ import (
 func init() {
 	targetRegistration().byTile(tiles.Player).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 		renderer := NewMovementBasedEntityRenderer(entityId, system)
-		dashPlayerLight := &Light{
-			RenderDetails: LightRenderDetails{
-				SizeScale: 1.5,
-				ColorMask: colors.HexString("#88f"),
-			},
-		}
-		normalPlayerLight := &Light{
-			RenderDetails: LightRenderDetails{
-				SizeScale: 1.5,
-				ColorMask: colors.HexString("#888"),
-			},
-		}
+
+		dashPlayerLight := NewDynamicLight(colors.HexString("#88f"), 1.5, "")
+		normalPlayerLight := NewDynamicLight(colors.HexString("#888"), 1.5, "")
 		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
 			types.MoveStateIdle:    anim.AshaIdle(atlas),
 			types.MoveStateWalking: anim.AshaWalk(atlas),
@@ -62,9 +53,7 @@ func init() {
 }
 
 type PlayerBehavior struct {
-	id                  string
-	system              *EntitySystem
-	isEnabled           func() bool
+	*baseEntityBehavior
 	intentDirection     input.Direction
 	intentDuration      float64
 	awaitingInteraction bool
@@ -72,10 +61,14 @@ type PlayerBehavior struct {
 
 func NewPlayerBehavior(id string, system *EntitySystem) *PlayerBehavior {
 	return &PlayerBehavior{
-		id:        id,
-		system:    system,
-		isEnabled: func() bool { return system.state.inputMode() == inputModePlayerMovement },
+		baseEntityBehavior: newBaseEntityBehavior(id, system),
 	}
+}
+
+func (b *PlayerBehavior) Reset() {
+	b.intentDirection = input.NotPressed
+	b.intentDuration = 0
+	b.awaitingInteraction = false
 }
 
 func (b *PlayerBehavior) MovementComplete(dispatcher Dispatcher) {
@@ -83,14 +76,10 @@ func (b *PlayerBehavior) MovementComplete(dispatcher Dispatcher) {
 }
 
 func (b *PlayerBehavior) triggerMovement(dispatcher Dispatcher) {
-	if !b.isEnabled() {
-		return
-	}
-	doTrigger := game.Controls[*State]().DPad().IsPressed() || b.intentDuration > 0.075
+	doTrigger := game.Controls[*State]().DPad().IsPressed() && b.intentDuration > 0.075
 	if !doTrigger {
 		return
 	}
-	b.intentDuration = 0
 	direction := game.Controls[*State]().DPad().GetDirection()
 	moveState := types.MoveStateWalking
 	if game.Controls[*State]().ButtonB().IsPressed() {
@@ -114,14 +103,12 @@ func (b *PlayerBehavior) triggerInteraction(p *EntityPosition, dispatcher Dispat
 }
 
 func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Dispatcher) {
-	if !b.isEnabled() {
-		return
-	}
 	// trigger running or face new direction after movement
 	if p.IsMoving() {
 		// todo - make effects?
 		if game.Controls[*State]().DPad().IsPressed() {
 			b.intentDirection = game.Controls[*State]().DPad().GetDirection()
+			b.intentDuration += timeDelta
 		}
 		if game.Controls[*State]().ButtonB().IsPressed() {
 			if p.MovementState == types.MoveStateWalking {
@@ -138,7 +125,6 @@ func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher
 		return
 	}
 	// face direction of intent after movement
-	// todo effect?
 	if b.intentDirection != input.NotPressed && b.intentDirection != p.FacingDirection {
 		p.FacingDirection = b.intentDirection
 	}

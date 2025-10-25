@@ -53,14 +53,14 @@ func (ep *EntityPosition) ProgressMovement(timeDelta float64) float64 {
 	ep.AccumulatedMovement += moveDelta
 	ep.MovementProgression += moveDelta * ep.MovementProgressionScale
 	if ep.MovementProgression >= 1.0 {
-		ep.System.vacateAndEmitEvent(ep.Id, ep.Location, false)
+		ep.System.occupations.VacateAndEmit(ep.Id, ep.Location, false)
 		ep.Location = ep.MovementTargetLocation
 		ep.MovementTargetLocation = MapLocation{}
 		ep.MovementState = types.MoveStateIdle
 		remaining := ep.MovementProgression - 1.0
 		ep.MovementProgression = 0
 		ep.MovementProgressionScale = 1
-		ep.System.emitEntityLocationEnterEvents(ep.Id, ep.Location, false)
+		ep.System.occupations.EmitOccupyEvents(ep.Id, ep.Location, false)
 		remainingTime := remaining / moveSpeed // movement is complete, but there is more time in the tick to move
 		return remainingTime
 	}
@@ -71,7 +71,7 @@ func (ep *EntityPosition) CancelMovement() {
 	if !ep.IsMoving() {
 		return
 	}
-	ep.System.vacateAndEmitEvent(ep.Id, ep.MovementTargetLocation, false)
+	ep.System.occupations.VacateAndEmit(ep.Id, ep.MovementTargetLocation, false)
 	ep.MovementTargetLocation = ep.Location
 	ep.MovementState = types.MoveStateIdle
 	ep.MovementProgression = 0

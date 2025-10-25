@@ -113,5 +113,5 @@ func initializeMap(a *State, m *resources.Map) {
 			log.Warn().Msgf("Unknown entity type: %s / %s", entityId, entityType)
 		}
 	}
-	a.processEffects(a.eventDispatcher.Init(a.worldState)...)
+	a.eventDispatcher.Init(a.worldState)
 }

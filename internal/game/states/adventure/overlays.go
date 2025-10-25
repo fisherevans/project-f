@@ -5,6 +5,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
@@ -12,7 +13,7 @@ import (
 )
 
 type Overlay interface {
-	EntityId() string
+	Id() string
 	OnTick(s *State, target *pixel.Batch, timeDelta float64)
 	SetIsActive(bool)
 	GetIsActive() bool
@@ -36,6 +37,8 @@ func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.B
 		overlay.OnTick(s, target, timeDelta)
 		if overlay.GetIsActive() {
 			remaining = append(remaining, overlay)
+		} else {
+			log.Info().Str("overlay", overlay.Id()).Msg("overlay deactivated")
 		}
 	}
 	o.overlays = remaining
@@ -43,7 +46,7 @@ func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.B
 
 func (o *OverlaySystem) Deactivate(id string) {
 	for _, overlay := range o.overlays {
-		if overlay.EntityId() == id {
+		if overlay.Id() == id {
 			overlay.SetIsActive(false)
 		}
 	}
@@ -69,7 +72,7 @@ func NewBaseOverlay(id string, durationSeconds float64, autoDeactivate bool) *Ba
 	}
 }
 
-func (o *BaseOverlay) EntityId() string {
+func (o *BaseOverlay) Id() string {
 	return o.OverlayId
 }
 
@@ -85,7 +88,7 @@ func (o *BaseOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) {
 	o.elapsedSeconds += timeDelta
 	if !o.IsComplete && o.elapsedSeconds >= o.DurationSeconds {
 		o.IsComplete = true
-		s.planExecutor.MarkFadeComplete(o.EntityId())
+		s.planExecutor.MarkFadeComplete(o.Id())
 		if o.AutoDeactivate {
 			o.IsActive = false
 		}

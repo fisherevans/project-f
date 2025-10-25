@@ -17,7 +17,7 @@ import (
 func init() {
 	targetRegistration().byClass("NPC").byTile(tiles.NPC).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 		renderer := NewMovementBasedEntityRenderer(entityId, system)
-		color := colors.HSLToRGBA(rand.Float64(), 1, 1)
+		color := colors.HSLToRGBA(rand.Float64(), 1, 0.85)
 		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
 			types.MoveStateIdle:    anim.AshaIdle(atlas),
 			types.MoveStateWalking: anim.AshaWalk(atlas),
@@ -82,9 +82,7 @@ func init() {
 }
 
 type NPCBehavior struct {
-	id        string
-	system    *EntitySystem
-	isEnabled func() bool
+	*baseEntityBehavior
 
 	talkingTowards string
 	idleDuration   float64
@@ -97,14 +95,17 @@ type NPCBehavior struct {
 
 func NewNPCBehavior(id string, system *EntitySystem, doesMove, horizOnly bool, idleChance, maxIdleDuration float64) *NPCBehavior {
 	return &NPCBehavior{
-		id:              id,
-		system:          system,
-		isEnabled:       func() bool { return true },
-		DoesMove:        doesMove,
-		HorizOnly:       horizOnly,
-		IdleChance:      idleChance,
-		MaxIdleDuration: maxIdleDuration,
+		baseEntityBehavior: newBaseEntityBehavior(id, system),
+		DoesMove:           doesMove,
+		HorizOnly:          horizOnly,
+		IdleChance:         idleChance,
+		MaxIdleDuration:    maxIdleDuration,
 	}
+}
+
+func (b *NPCBehavior) Reset() {
+	b.talkingTowards = ""
+	b.idleDuration = 0
 }
 
 func (b *NPCBehavior) GenerateEntityContext() *events.BasicEntityContext {
@@ -114,9 +115,18 @@ func (b *NPCBehavior) GenerateEntityContext() *events.BasicEntityContext {
 }
 
 func (b *NPCBehavior) MovementComplete(dispatcher Dispatcher) {
+	b.doMovement(b.system.positions[b.id], dispatcher)
 }
 
 func (b *NPCBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Dispatcher) {
+	if b.idleDuration > 0 {
+		b.idleDuration -= timeDelta
+		return
+	}
+	b.doMovement(p, dispatcher)
+}
+
+func (b *NPCBehavior) doMovement(p *EntityPosition, dispatcher Dispatcher) {
 	if p.IsMoving() {
 		return
 	}
@@ -131,20 +141,18 @@ func (b *NPCBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Di
 	if !b.DoesMove {
 		return
 	}
-	if b.idleDuration > 0 {
-		b.idleDuration -= timeDelta
-		return
-	}
 	if rand.Float64() < b.IdleChance {
 		b.idleDuration = rand.Float64() * b.MaxIdleDuration
 		return
 	}
-	dispatcher.ProcessEffects(events.Effect{
-		TriggerMovement: events.NewTriggerMovementEffect(b.id).WithDirection(p.FacingDirection),
-	})
-	// todo event when trigger effect fails maybe?
-	// used to return here if trigger worked
-	if true {
+	nextLocation := p.Location.Moved(p.FacingDirection)
+	isValid, _, _ := b.system.isMovementValid(b.id, nextLocation)
+	if isValid {
+		dispatcher.ProcessEffects(events.Effect{
+			TriggerMovement: events.
+				NewTriggerMovementEffect(b.id).
+				WithLocation(nextLocation.ToEventLocation()),
+		})
 		return
 	}
 	var dir input.Direction

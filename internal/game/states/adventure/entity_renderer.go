@@ -114,7 +114,7 @@ func (r *BasicEntityRenderer) Update(timeDelta float64) {
 
 func (r *BasicEntityRenderer) RenderToScene(target pixel.Target, matrix pixel.Matrix) {
 	for _, a := range r.animations {
-		a.Sprite().Draw(target, matrix.Moved(r.animationOriginOffset.Scaled(resources.MapTileSize.Float())))
+		a.Sprite().DrawColorMask(target, matrix.Moved(r.animationOriginOffset.Scaled(resources.MapTileSize.Float())), r.animationColorMask)
 	}
 }
 
