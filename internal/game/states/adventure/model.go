@@ -37,6 +37,10 @@ func (l MapLocation) DirectionTowards(other MapLocation) input.Direction {
 	return DirectionTowards(gfx.IVec(l.X, l.Y), gfx.IVec(other.X, other.Y))
 }
 
+func (l MapLocation) DistanceTo(location MapLocation) float64 {
+	return l.ToVec().Sub(location.ToVec()).Len()
+}
+
 type MapBounds struct {
 	MinX, MinY, MaxX, MaxY int
 }

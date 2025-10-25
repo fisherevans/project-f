@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fisherevans.com/project/f/internal/game/events"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
 )
 
 func init() {
 	Register("map1", events.BasicHandlerBuilder[None]{
 		OnInteract: func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
-			if ctx.Id() != event.TargetId {
+			if ctx.EntityId() != event.TargetId {
 				return nil
 			}
 			return events.NewOutput().WithEffects(events.Effect{
@@ -30,7 +31,7 @@ func init() {
 			})
 		},
 		TimerComplete: func(ctx events.EntityContext, world events.WorldStateReader, state ExitChatterState, event *events.EventTimerComplete) *events.HandlerOutput {
-			if event.CreatedBy != ctx.Id() || event.TimerId != "reset" {
+			if event.CreatedBy != ctx.EntityId() || event.TimerId != "reset" {
 				return nil
 			}
 			state.Ready = true
@@ -61,7 +62,7 @@ func init() {
 		Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 			return events.NewOutput().WithEffects(
 				events.Effect{
-					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithMode("off").
 						WithAnimations(map[string][]events.AnimationReference{
 							"on": {
@@ -78,14 +79,14 @@ func init() {
 			)
 		},
 		OnInteract: func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
-			if event.TargetId != ctx.Id() {
+			if event.TargetId != ctx.EntityId() {
 				return nil
 			}
 
-			if ctx.Mode() == "off" {
+			if ctx.GetStringMetadata(types.MetadataKeyMode) == "off" {
 				return events.NewOutput().WithEffects(
 					events.Effect{
-						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).WithMode("on"),
+						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("on"),
 					},
 					events.Effect{
 						SetWorldState: events.NewSetWorldStateEffect("door_open", true),
@@ -94,7 +95,7 @@ func init() {
 			} else {
 				return events.NewOutput().WithEffects(
 					events.Effect{
-						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).WithMode("off"),
+						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("off"),
 					},
 					events.Effect{
 						SetWorldState: events.NewSetWorldStateEffect("door_open", false),
@@ -110,9 +111,9 @@ func init() {
 		Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 			return events.NewOutput().WithEffects(
 				events.Effect{
-					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.Id()).
+					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.EntityId()).
 						WithIsBlockingIngress(true),
-					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithMode("closed").
 						WithAnimations(map[string][]events.AnimationReference{
 							"closed": {
@@ -137,16 +138,16 @@ func init() {
 			}
 			if doorOpen, ok := event.NewValue.(bool); ok && doorOpen {
 				return events.NewOutput().WithEffects(events.Effect{
-					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.Id()).
+					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.EntityId()).
 						WithIsBlockingIngress(false),
-					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithMode("open"),
 				})
 			} else {
 				return events.NewOutput().WithEffects(events.Effect{
-					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.Id()).
+					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.EntityId()).
 						WithIsBlockingIngress(true),
-					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.Id()).
+					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithMode("closed"),
 				})
 			}

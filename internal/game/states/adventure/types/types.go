@@ -8,3 +8,8 @@ const (
 	MoveStateRunning
 	MoveStateDashing
 )
+
+const (
+	MetadataKeyMode      = "mode"
+	MetadataKeyIsTalking = "isTalking"
+)

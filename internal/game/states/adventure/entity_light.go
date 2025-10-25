@@ -13,7 +13,7 @@ import (
 func init() {
 	targetRegistration().
 		byTile(tiles.Torch, tiles.TorchRight, tiles.TorchLeft).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewDynamicLight(colors.FromString("#db9a3d"), 2, "flicker"))
 			switch *mapEntity.SpriteId {
@@ -29,11 +29,11 @@ func init() {
 				renderer.WithZPriority(10)
 			}
 			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
-			return nil
+			return nil, nil
 		})
 	targetRegistration().
 		byTile(tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewDynamicLight(colors.FromString("#fff"), 1.333, ""))
 			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *mapEntity.SpriteId))
@@ -41,11 +41,11 @@ func init() {
 				renderer.WithZPriority(10)
 			}
 			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
-			return nil
+			return nil, nil
 		})
 	targetRegistration().
 		byTile(tiles.GlowRed, tiles.GlowOrange, tiles.GlowAqua, tiles.GlowPurple, tiles.GlowPink, tiles.GlowTBD).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			colorMask := colors.HexString("#fff")
 			switch *mapEntity.SpriteId {
 			case tiles.GlowRed:
@@ -61,11 +61,10 @@ func init() {
 			}
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewDynamicLight(colorMask, 2, ""))
-			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *mapEntity.SpriteId))
 			if *mapEntity.SpriteId == tiles.LightFork {
 				renderer.WithZPriority(10)
 			}
 			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
-			return nil
+			return nil, nil
 		})
 }

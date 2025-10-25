@@ -2,6 +2,8 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/events"
+	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -34,24 +36,52 @@ func (h *SystemEventHandler) HandleEvent(ctx events.EntityContext, world events.
 
 func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.WorldStateReader, _ any, event *events.EventOnInteract) *events.HandlerOutput {
 	if event.SourceId != h.State.player {
-		log.Warn().Msgf("system event: got interact event for a non-player entity %s", ctx.Id())
+		log.Warn().Msgf("system event: got interact event for a non-player entity %s", ctx.EntityId())
 	}
 
-	// todo dash
-	//switch castEntity := targetEntity.(type) {
-	//case *EntityDashGap:
-	//	return h.onInteractDashGap(castEntity, event.SourceDirection)
-	//}
+	targetEntity := h.State.entities.GetEntity(event.TargetId)
+	if targetEntity.EntityState == nil {
+		return nil
+	}
+	switch state := targetEntity.EntityState.(type) {
+	case DashGapState:
+		return h.onInteractDashGap(targetEntity, state, event)
+	}
 	return nil
 }
 
-//func (h *SystemEventHandler) onInteractDashGap(dashGap *EntityDashGap, interactDirection input.Direction) *events.HandlerOutput {
-//	h.State.player.DashTowards(h.State, interactDirection, dashGap.Location())
-//	return nil
-//}
+func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashGapState, event *events.EventOnInteract) *events.HandlerOutput {
+	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.Location)
+	to := events.Location{X: location.X, Y: location.Y}
+	return events.NewOutput().WithEffects(events.Effect{
+		TriggerMovement: events.NewTriggerMovementEffect(event.SourceId).WithLocation(to).WithMoveState(types.MoveStateDashing),
+	})
+}
+
+func findDashDestination(s *State, direction input.Direction, location MapLocation) MapLocation {
+	for {
+		entityIds := s.entities.occupyingEntityIds(location)
+		moved := false
+		for entityId := range entityIds {
+			entity := s.entities.GetEntity(entityId)
+			if entity.EntityState == nil {
+				continue
+			}
+			_, ok := entity.EntityState.(DashGapState) // todo consider direction config in state once supported
+			if !ok {
+				continue
+			}
+			moved = true
+			location = location.MovedDelta(direction.GetVector())
+		}
+		if !moved {
+			return location
+		}
+	}
+}
 
 func (h *SystemEventHandler) onZoneActivity(ctx events.EntityContext, world events.WorldStateReader, _ any, event *events.EventEntityZoneActivity) *events.HandlerOutput {
-	if !event.IsEntering || event.EntityId != h.State.player {
+	if !event.IsEntering || event.EntityId != h.State.player || event.WasTeleported {
 		return nil
 	}
 	tele, ok := h.State.teleports[TeleportReference(event.ZoneId)]

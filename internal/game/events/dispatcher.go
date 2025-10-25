@@ -24,7 +24,7 @@ func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []Dispatche
 		if err := effect.Validate(); err != nil {
 			log.Err(err).
 				Interface("effect", effect).
-				Str("source", r.ctx.Id()).
+				Str("source", r.ctx.EntityId()).
 				Msg("Invalid effect")
 		} else {
 			effects = append(effects, DispatchedEffect{
@@ -50,7 +50,7 @@ func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
 		log.Fatal().Msg("Event handler context is nil")
 	}
 	if handler == nil {
-		log.Fatal().Msgf("Event handler for %s is nil", ctx.Id())
+		log.Fatal().Msgf("Event handler for %s is nil", ctx.EntityId())
 	}
 	d.registeredHandlers = append(d.registeredHandlers, &registeredEventHandler{
 		ctx:     ctx,

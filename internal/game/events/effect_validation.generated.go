@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-24T22:38:29-04:00 by go generate
+// Generated at 2025-10-25T00:10:48-04:00 by go generate
 // Source: internal/game/events/effect.go
 
 package events
@@ -190,6 +190,21 @@ func (e *EffectDeactivateFade) Validate() error {
 
 func (e *EffectTriggerMovement) Validate() error {
 	reporter := newIssueReporter()
+
+	// Validate one_of group: to
+	toCount := 0
+	if e.Direction != nil {
+		toCount++
+	}
+	if e.Location != nil {
+		toCount++
+		if err := e.Location.Validate(); err != nil {
+			reporter.sub("location").addf("", "%v", err)
+		}
+	}
+	if toCount != 1 {
+		reporter.addf("to", "exactly one of [direction, location] must be set")
+	}
 
 	reporter.requireString("entityId", e.EntityId)
 

@@ -12,7 +12,7 @@ import (
 )
 
 type Overlay interface {
-	Id() string
+	EntityId() string
 	OnTick(s *State, target *pixel.Batch, timeDelta float64)
 	SetIsActive(bool)
 	GetIsActive() bool
@@ -43,7 +43,7 @@ func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.B
 
 func (o *OverlaySystem) Deactivate(id string) {
 	for _, overlay := range o.overlays {
-		if overlay.Id() == id {
+		if overlay.EntityId() == id {
 			overlay.SetIsActive(false)
 		}
 	}
@@ -69,7 +69,7 @@ func NewBaseOverlay(id string, durationSeconds float64, autoDeactivate bool) *Ba
 	}
 }
 
-func (o *BaseOverlay) Id() string {
+func (o *BaseOverlay) EntityId() string {
 	return o.OverlayId
 }
 
@@ -85,7 +85,7 @@ func (o *BaseOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) {
 	o.elapsedSeconds += timeDelta
 	if !o.IsComplete && o.elapsedSeconds >= o.DurationSeconds {
 		o.IsComplete = true
-		s.planExecutor.MarkFadeComplete(o.Id())
+		s.planExecutor.MarkFadeComplete(o.EntityId())
 		if o.AutoDeactivate {
 			o.IsActive = false
 		}

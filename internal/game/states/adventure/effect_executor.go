@@ -37,7 +37,7 @@ func (s *State) processEffects(effects ...events.DispatchedEffect) {
 }
 
 func logEffectf(source events.EntityContext, e any, messageFormat string, args ...any) {
-	log.Info().Str("caller", source.Id()).Interface("e", e).Msgf(messageFormat, args...)
+	log.Info().Str("caller", source.EntityId()).Interface("e", e).Msgf(messageFormat, args...)
 }
 func (s *State) processEffectFunction(source events.EntityContext, e *events.EffectFunction) {
 	if e == nil {
@@ -58,7 +58,7 @@ func (s *State) processEffectTimer(source events.EntityContext, e *events.Effect
 	if e == nil {
 		return
 	}
-	s.timers.AddTimer(source.Id(), e.TimerId, e.DurationSeconds)
+	s.timers.AddTimer(source.EntityId(), e.TimerId, e.DurationSeconds)
 	logEffectf(source, e, "timer added")
 }
 
@@ -120,7 +120,7 @@ func (s *State) processSetWorldState(source events.EntityContext, e *events.Effe
 	if e == nil {
 		return
 	}
-	s.setWorldState(e.Key, e.Value, source.Id())
+	s.setWorldState(e.Key, e.Value, source.EntityId())
 	logEffectf(source, e, "world state updated")
 }
 
@@ -145,7 +145,7 @@ func (s *State) processTeleportEntity(source events.EntityContext, e *events.Eff
 		log.Warn().Msg("failed to find teleport destination")
 		return
 	}
-	s.entities.SetEntityLocation(e.EntityId, toLocation)
+	s.entities.TeleportEntity(e.EntityId, toLocation)
 }
 
 // processEffectPlan starts a new plan
@@ -220,7 +220,16 @@ func (s *State) processEffectTriggerMovement(source events.EntityContext, e *eve
 	if e.MoveState != nil {
 		moveState = *e.MoveState
 	}
-	s.entities.AttemptMovement(e.EntityId, entity.Location.Moved(e.Direction), moveState)
+	var location MapLocation
+	if e.Direction != nil {
+		location = entity.Location.Moved(*e.Direction)
+	} else if e.Location != nil {
+		location = MapLocation{
+			X: e.Location.X,
+			Y: e.Location.Y,
+		}
+	}
+	s.entities.AttemptMovement(e.EntityId, location, moveState)
 }
 
 // processEffectTeleportPlayer creates a plan to teleport the player with fade transition
@@ -291,10 +300,7 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 		if exitDirection != nil && *exitDirection != input.NotPressed {
 			steps = append(steps,
 				events.PlanStep{Parallel: []events.Effect{
-					{TriggerMovement: &events.EffectTriggerMovement{
-						EntityId:  s.player,
-						Direction: *exitDirection,
-					}},
+					{TriggerMovement: events.NewTriggerMovementEffect(s.player).WithDirection(*exitDirection)},
 				}},
 			)
 		}

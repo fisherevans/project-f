@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-24T22:38:29-04:00 by go generate
+// Generated at 2025-10-25T00:10:48-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -176,11 +176,20 @@ func NewDeactivateFadeEffect(fadeId string) *EffectDeactivateFade {
 	}
 }
 
-func NewTriggerMovementEffect(entityId string, direction input.Direction) *EffectTriggerMovement {
+func NewTriggerMovementEffect(entityId string) *EffectTriggerMovement {
 	return &EffectTriggerMovement{
-		EntityId:  entityId,
-		Direction: direction,
+		EntityId: entityId,
 	}
+}
+
+func (e *EffectTriggerMovement) WithDirection(direction input.Direction) *EffectTriggerMovement {
+	e.Direction = &direction
+	return e
+}
+
+func (e *EffectTriggerMovement) WithLocation(location Location) *EffectTriggerMovement {
+	e.Location = &location
+	return e
 }
 
 func (e *EffectTriggerMovement) WithMoveState(moveState types.MoveState) *EffectTriggerMovement {

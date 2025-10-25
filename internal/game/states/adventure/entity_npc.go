@@ -10,13 +10,12 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/tiles"
 	"github.com/gopxl/pixel/v2"
 )
 
 func init() {
-	//byClass("NPC").byTile(tiles.NPC)
-	targetRegistration().registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
-		state := NewMovementModeEntityState(entityId, system)
+	targetRegistration().byClass("NPC").byTile(tiles.NPC).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 		renderer := NewMovementBasedEntityRenderer(entityId, system)
 		color := colors.HSLToRGBA(rand.Float64(), 1, 1)
 		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
@@ -33,7 +32,7 @@ func init() {
 			}
 		}
 		doesMove, horizOnly := true, false
-		idleChance, maxIdle := 0.05, 6.0
+		idleChance, maxIdle, speed := 0.05, 6.0, 2.0
 		switch mapEntity.GetStringMetadata("movement", "") {
 		case "static":
 			doesMove = false
@@ -42,42 +41,37 @@ func init() {
 		}
 		switch mapEntity.GetStringMetadata("speed", "") {
 		case "fast":
-			// todo e.MoveableEntity.MoveSpeeds[MoveStateWalking] = 4
+			speed = 4
 		}
 		presence := newBlockIngressPresence(true)
 		behavior := NewNPCBehavior(entityId, system, doesMove, horizOnly, idleChance, maxIdle)
-		position := system.RegisterEntity(entityId, location, presence, behavior, renderer, state)
+		position := system.RegisterEntity(entityId, location, presence, behavior, renderer, nil)
 		position.MovementSpeeds = map[types.MoveState]float64{
-			types.MoveStateWalking: 2,
+			types.MoveStateWalking: speed,
 		}
-		// todo pass in NPCEntityContext some how
-		return events.NewBasicHandler(None{}).
+		return behavior.GenerateEntityContext(), events.NewBasicHandler(None{}).
 			WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
-				if ctx.Id() != event.TargetId {
+				if ctx.EntityId() != event.TargetId {
 					return nil
 				}
-				npcCtx, ok := ctx.(NPCEntityContext)
-				if !ok {
-					return nil
-				}
-				if npcCtx.IsTalking() {
+				if ctx.GetBoolMetadata(types.MetadataKeyIsTalking) {
 					return nil
 				}
 				return events.NewOutput().WithSerialPlan(
 					events.Effect{
 						MutateNPC: &events.EffectMutateNPC{
-							EntityId:          ctx.Id(),
+							EntityId:          ctx.EntityId(),
 							TalkingAtEntityId: util.Ptr(world.GetAsString("player_id")),
 						},
 						Chatter: &events.EffectChatter{
-							EntityId:        ctx.Id(),
+							EntityId:        ctx.EntityId(),
 							DurationSeconds: 5,
 							Message:         util.OneOffDialogues.Random(),
 						},
 					},
 					events.Effect{
 						MutateNPC: &events.EffectMutateNPC{
-							EntityId:          ctx.Id(),
+							EntityId:          ctx.EntityId(),
 							TalkingAtEntityId: util.Ptr(""),
 						},
 					},
@@ -85,11 +79,6 @@ func init() {
 			}).
 			CreateHandler()
 	})
-}
-
-type NPCEntityContext interface {
-	events.EntityContext
-	IsTalking() bool
 }
 
 type NPCBehavior struct {
@@ -118,6 +107,12 @@ func NewNPCBehavior(id string, system *EntitySystem, doesMove, horizOnly bool, i
 	}
 }
 
+func (b *NPCBehavior) GenerateEntityContext() *events.BasicEntityContext {
+	return events.NewBasicEntityContext(b.id).WithMetadata(types.MetadataKeyIsTalking, func() any {
+		return b.talkingTowards != ""
+	})
+}
+
 func (b *NPCBehavior) MovementComplete(dispatcher Dispatcher) {
 }
 
@@ -144,9 +139,8 @@ func (b *NPCBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Di
 		b.idleDuration = rand.Float64() * b.MaxIdleDuration
 		return
 	}
-	// todo speed
 	dispatcher.ProcessEffects(events.Effect{
-		TriggerMovement: events.NewTriggerMovementEffect(b.id, p.FacingDirection),
+		TriggerMovement: events.NewTriggerMovementEffect(b.id).WithDirection(p.FacingDirection),
 	})
 	// todo event when trigger effect fails maybe?
 	// used to return here if trigger worked
@@ -165,6 +159,6 @@ func (b *NPCBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Di
 	}
 	p.FacingDirection = dir
 	dispatcher.ProcessEffects(events.Effect{
-		TriggerMovement: events.NewTriggerMovementEffect(b.id, p.FacingDirection),
+		TriggerMovement: events.NewTriggerMovementEffect(b.id).WithDirection(p.FacingDirection),
 	})
 }

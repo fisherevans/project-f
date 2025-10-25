@@ -14,16 +14,16 @@ import (
 
 func init() {
 	targetRegistration().byTile(tiles.RedCoin).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			renderer := NewBasicEntityRenderer().
 				WithAnimations(anim.RedCoin(atlas)).
 				WithLights(NewDynamicLight(colors.FromString("#f00"), 0.5, "pulse_slow"))
 			presence := newBlockIngressPresence(false)
 			system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
-			return nil
+			return nil, nil
 		})
 	targetRegistration().byTile(tiles.Rocket).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			renderer := NewBasicEntityRenderer().
 				WithAnimations(anim.NewStaticAnimation(tiles.Rocket.From(atlas)))
 			presence := newBlockIngressPresence(true)
@@ -32,7 +32,7 @@ func init() {
 			requiredElythium := 2
 			handler := events.NewBasicHandler(None{}).
 				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
-					if event.TargetId != ctx.Id() {
+					if event.TargetId != ctx.EntityId() {
 						return nil
 					}
 					if world.GetRun().Elythium < requiredElythium {
@@ -48,6 +48,7 @@ func init() {
 							Dialogue: &events.EffectDialogue{
 								Text: "You've managed to escape!",
 							},
+							BlockInput: events.NewBlockInputEffect(true),
 						},
 						events.Effect{
 							YieldElythium: &events.EffectYieldElythium{
@@ -57,12 +58,15 @@ func init() {
 								ToReference: &dest,
 							},
 						},
+						events.Effect{
+							BlockInput: events.NewBlockInputEffect(false),
+						},
 					)
 				})
-			return handler.CreateHandler()
+			return nil, handler.CreateHandler()
 		})
 	targetRegistration().byTile(tiles.DummyFightRobot).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			renderer := NewBasicEntityRenderer().
 				WithAnimations(anim.NewStaticAnimation(atlas.GetSprite("primortals/dummy_entity")))
 			presence := newBlockIngressPresence(true)
@@ -102,7 +106,7 @@ func init() {
 					})
 				}).
 				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
-					if ctx.Id() != event.TargetId {
+					if ctx.EntityId() != event.TargetId {
 						return nil
 					}
 					stutters := []string{"Beep.", "Boop.", "Die.", "Die!", "{+u}DIE!!!{-u"}
@@ -118,6 +122,7 @@ func init() {
 							Dialogue: &events.EffectDialogue{
 								Text: message,
 							},
+							BlockInput: events.NewBlockInputEffect(true),
 						},
 						events.Effect{
 							TriggerCombat: &events.EffectTriggerCombat{
@@ -129,9 +134,10 @@ func init() {
 							Dialogue: &events.EffectDialogue{
 								Text: "Well, butter my bolts... you actually did it.",
 							},
+							BlockInput: events.NewBlockInputEffect(false),
 						},
 					)
 				})
-			return handler.CreateHandler()
+			return nil, handler.CreateHandler()
 		})
 }

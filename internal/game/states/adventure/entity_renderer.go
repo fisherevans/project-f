@@ -141,6 +141,17 @@ func NewModeBasedEntityRenderer(id string, system *EntitySystem) *ModeBasedEntit
 	}
 }
 
+func (r *ModeBasedEntityRenderer) WithMode(mode string) *ModeBasedEntityRenderer {
+	r.currentMode = mode
+	return r
+}
+
+func (r *ModeBasedEntityRenderer) GenerateEntityContext() *events.BasicEntityContext {
+	return events.NewBasicEntityContext(r.id).WithMetadata(types.MetadataKeyMode, func() any {
+		return r.currentMode
+	})
+}
+
 func (r *ModeBasedEntityRenderer) getBasicEntityRenderer(mode string) *BasicEntityRenderer {
 	if _, ok := r.modes[mode]; !ok {
 		r.modes[mode] = NewBasicEntityRenderer()

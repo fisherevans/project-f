@@ -191,7 +191,7 @@ func parseStructFields(structType *ast.StructType) []FieldInfo {
 			tagValue := field.Tag.Value
 			// Remove backticks
 			tagValue = strings.Trim(tagValue, "`")
-			
+
 			if strings.Contains(tagValue, `auto_generate:"true"`) {
 				autoGenerate = true
 			}
@@ -452,7 +452,7 @@ func generateEffectValidation(effects []EffectInfo) string {
 	sb.WriteString("\t\"fmt\"\n")
 	sb.WriteString("\t\"sync/atomic\"\n")
 	sb.WriteString(")\n\n")
-	
+
 	// Generate counter variables for each effect type that has auto_generate fields
 	for _, effect := range effects {
 		if !strings.HasPrefix(effect.Name, "Effect") {
@@ -489,7 +489,7 @@ func generateEffectValidation(effects []EffectInfo) string {
 				effectName := effect.Name[len("Effect"):]
 				counterName := fmt.Sprintf("%sCounter", camelCase(effectName))
 				prefix := toKebabCase(effectName)
-				
+
 				sb.WriteString(fmt.Sprintf("\tif e.%s == \"\" {\n", field.Name))
 				sb.WriteString(fmt.Sprintf("\t\tid := %s.Add(1)\n", counterName))
 				sb.WriteString(fmt.Sprintf("\t\te.%s = fmt.Sprintf(\"%s-%%05d\", id)\n", field.Name, prefix))
@@ -521,7 +521,7 @@ func generateEffectValidation(effects []EffectInfo) string {
 				sb.WriteString("\t}\n")
 			}
 			sb.WriteString(fmt.Sprintf("\tif %sCount != 1 {\n", groupName))
-			sb.WriteString(fmt.Sprintf("\t\treporter.addf(%q, \"exactly one of [%s] must be set\")\n", 
+			sb.WriteString(fmt.Sprintf("\t\treporter.addf(%q, \"exactly one of [%s] must be set\")\n",
 				groupName, getFieldNames(groupFields)))
 			sb.WriteString("\t}\n\n")
 		}
@@ -531,7 +531,7 @@ func generateEffectValidation(effects []EffectInfo) string {
 			if strings.HasPrefix(field.GoType, "*") || field.Optional || field.OneOf != "" {
 				continue
 			}
-			
+
 			fieldType := field.GoType
 			if fieldType == "string" {
 				sb.WriteString(fmt.Sprintf("\treporter.requireString(%q, e.%s)\n", camelCase(field.Name), field.Name))
@@ -551,7 +551,7 @@ func generateEffectValidation(effects []EffectInfo) string {
 			if !strings.HasPrefix(field.GoType, "*") || field.OneOf != "" {
 				continue
 			}
-			
+
 			fieldType := strings.TrimPrefix(field.GoType, "*")
 			if !isBasicType(fieldType) {
 				sb.WriteString(fmt.Sprintf("\tif e.%s != nil {\n", field.Name))
@@ -637,6 +637,7 @@ func generateEffectBuilders(effects []EffectInfo) string {
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/input\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/rpg\"\n")
+	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/states/adventure/types\"\n")
 	sb.WriteString(")\n\n")
 
 	for _, effect := range effects {

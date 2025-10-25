@@ -22,11 +22,12 @@ const (
 )
 
 type Chatter interface {
+	Id() string
 	Content() *textbox.Content
 	State() ChatterState
 	RenderAbove() pixel.Vec
 	Update(s *State, timeDelta float64)
-	Id() string
+	EntityId() string
 }
 
 type ChatterSystem struct {
@@ -57,9 +58,7 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matri
 		if chatter.State() == ChatterComplete {
 			e := events.EventChatterComplete{
 				ChatterId: chatter.Id(),
-			}
-			if basic, ok := chatter.(*basicEntityChatter); ok { // todo messy
-				e.EntityId = string(basic.target)
+				EntityId:  chatter.EntityId(),
 			}
 			s.eventDispatcher.Dispatch(e)
 			// Mark chatter complete for plan tracking
@@ -111,6 +110,10 @@ type basicEntityChatter struct {
 
 func (b *basicEntityChatter) Id() string {
 	return b.id
+}
+
+func (b *basicEntityChatter) EntityId() string {
+	return b.target
 }
 
 func (b *basicEntityChatter) State() ChatterState {

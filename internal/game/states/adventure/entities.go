@@ -56,11 +56,7 @@ func (es *EntitySystem) RegisterEntity(id string, location MapLocation, presence
 		log.Fatal().Str("id", id).Msg("entity already exists")
 	}
 	es.entityIds[id] = struct{}{}
-	es.positions[id] = &EntityPosition{
-		System:   es,
-		Id:       id,
-		Location: location,
-	}
+	es.positions[id] = NewEntityPosition(id, es, location)
 	if presence != nil {
 		es.presences[id] = presence
 	}
@@ -95,7 +91,7 @@ func (es *EntitySystem) occupy(id string, loc MapLocation) {
 	es.occupiedLocations[loc][id] = struct{}{}
 }
 
-func (es *EntitySystem) vacateAndEmitEvent(id string, loc MapLocation) {
+func (es *EntitySystem) vacateAndEmitEvent(id string, loc MapLocation, wasTeleported bool) {
 	if _, exists := es.occupiedLocations[loc]; !exists {
 		return
 	}
@@ -103,7 +99,7 @@ func (es *EntitySystem) vacateAndEmitEvent(id string, loc MapLocation) {
 		return
 	}
 	delete(es.occupiedLocations[loc], id)
-	es.emitEntityLocationExitEvents(id, loc)
+	es.emitEntityLocationExitEvents(id, loc, wasTeleported)
 }
 
 func (es *EntitySystem) occupyingEntityIds(loc MapLocation) map[string]struct{} {
@@ -113,24 +109,38 @@ func (es *EntitySystem) occupyingEntityIds(loc MapLocation) map[string]struct{} 
 	return es.occupiedLocations[loc]
 }
 
-func (es *EntitySystem) SetEntityLocation(id string, loc MapLocation) {
-	warnLog := log.Log().Str("id", id).Any("location", loc)
+func (es *EntitySystem) interactableEntityIds(loc MapLocation) map[string]struct{} {
+	out := map[string]struct{}{}
+	for entityId := range es.occupyingEntityIds(loc) {
+		presence, exists := es.presences[entityId]
+		if !exists {
+			continue
+		}
+		if presence.IsInteractable() {
+			out[entityId] = struct{}{}
+		}
+	}
+	return out
+}
+
+func (es *EntitySystem) TeleportEntity(id string, toLocation MapLocation) {
+	warnLog := log.Log().Str("id", id).Any("location", toLocation)
 	position, exists := es.positions[id]
 	if !exists {
 		warnLog.Msgf("no position for entity")
 		return
 	}
-	if position.Location == loc {
+	if position.Location == toLocation {
 		warnLog.Msgf("attempted movement to same location")
 		return
 	}
 	if position.IsMoving() {
 		position.CancelMovement()
 	}
-	es.vacateAndEmitEvent(id, position.Location)
-	position.Location = loc
+	es.vacateAndEmitEvent(id, position.Location, true)
+	position.Location = toLocation
 	es.occupy(id, position.Location)
-	es.emitEntityLocationEnterEvents(id, position.Location)
+	es.emitEntityLocationEnterEvents(id, position.Location, true)
 }
 
 var validAttemptMovementStates = []types.MoveState{types.MoveStateWalking, types.MoveStateRunning, types.MoveStateDashing}
@@ -163,6 +173,9 @@ func (es *EntitySystem) AttemptMovement(id string, targetLocation MapLocation, m
 	es.occupy(id, position.Location) // emit enter events within movement update - don't "enter" until primary is updated
 	position.MovementTargetLocation = targetLocation
 	position.MovementState = movementState
+	position.FacingDirection = movementDirection
+	distance := position.Location.DistanceTo(targetLocation)
+	position.MovementProgressionScale = 1.0 / distance
 	return true
 }
 
@@ -188,22 +201,24 @@ func (es *EntitySystem) isValidTransition(id string, loc MapLocation, movementDi
 	return true
 }
 
-func (es *EntitySystem) emitEntityLocationExitEvents(id string, from MapLocation) {
+func (es *EntitySystem) emitEntityLocationExitEvents(id string, from MapLocation, wasTeleported bool) {
 	for _, zoneId := range es.state.zones.ZonesAt(from) {
 		es.state.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
-			EntityId:   id,
-			ZoneId:     zoneId,
-			IsEntering: false,
+			EntityId:      id,
+			ZoneId:        zoneId,
+			IsEntering:    false,
+			WasTeleported: wasTeleported,
 		})
 	}
 }
 
-func (es *EntitySystem) emitEntityLocationEnterEvents(id string, to MapLocation) {
+func (es *EntitySystem) emitEntityLocationEnterEvents(id string, to MapLocation, wasTeleported bool) {
 	for _, zoneId := range es.state.zones.ZonesAt(to) {
 		es.state.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
-			EntityId:   id,
-			ZoneId:     zoneId,
-			IsEntering: true,
+			EntityId:      id,
+			ZoneId:        zoneId,
+			IsEntering:    true,
+			WasTeleported: wasTeleported,
 		})
 	}
 }
@@ -212,17 +227,19 @@ func (es *EntitySystem) Update(timeDelta float64) {
 	dispatcher := &stateDispatcher{
 		s: es.state,
 	}
-	for id, _ := range es.entityIds {
+	for id, _ := range es.entityIds { // todo consider tracking just update-able entities (basic collisions are included here)
 		position, hasPosition := es.positions[id]
 		behavior, hasBehavior := es.behaviors[id]
 		renderer, hasRenderer := es.renderers[id]
 		if hasPosition {
 			remaining := timeDelta
-			for remaining > 0 {
+			var lastRemaining float64 // prevent infinite loops if movement is not making progress
+			for remaining > 0 && remaining != lastRemaining {
 				remaining = position.ProgressMovement(timeDelta)
 				if remaining > 0 && hasBehavior {
 					behavior.MovementComplete(dispatcher)
 				}
+				lastRemaining = remaining
 			}
 		}
 		if hasBehavior {
@@ -250,6 +267,7 @@ func (es *EntitySystem) Render(sceneTarget, lightMapTarget pixel.Target, cameraM
 type sortedRenderableEntity struct {
 	id       string
 	renderer EntityRenderer
+	presence EntityPresence
 	position *EntityPosition
 }
 

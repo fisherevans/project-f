@@ -73,7 +73,7 @@ func initializeMap(a *State, m *resources.Map) {
 		case resources.TileCollisionJumpHorizontal,
 			resources.TileCollisionJumpVertical,
 			resources.TileCollisionJumpAll:
-			a.entities.RegisterEntity(id, location, newBlockIngressPresence(true), nil, nil, nil) // todo dashin
+			a.entities.RegisterEntity(id, location, newBlockIngressPresence(true), nil, nil, DashGapState{})
 		}
 	}
 	for entityId, mapEntity := range m.Entities {

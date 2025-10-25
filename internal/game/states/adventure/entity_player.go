@@ -13,8 +13,7 @@ import (
 )
 
 func init() {
-	targetRegistration().byTile(tiles.Player).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
-		state := NewMovementModeEntityState(entityId, system)
+	targetRegistration().byTile(tiles.Player).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 		renderer := NewMovementBasedEntityRenderer(entityId, system)
 		dashPlayerLight := &Light{
 			RenderDetails: LightRenderDetails{
@@ -48,33 +47,34 @@ func init() {
 		}
 		presence := newBlockIngressPresence(false)
 		behavior := NewPlayerBehavior(entityId, system)
-		position := system.RegisterEntity(entityId, location, presence, behavior, renderer, state)
+		position := system.RegisterEntity(entityId, location, presence, behavior, renderer, nil)
 		position.MovementSpeeds = map[types.MoveState]float64{
 			types.MoveStateWalking: characterSpeed,
 			types.MoveStateRunning: characterSpeed * 1.75,
-			types.MoveStateDashing: characterSpeed * 1.5,
+			types.MoveStateDashing: characterSpeed * 3,
 		}
 		// todo this seems gross
 		system.state.player = entityId
 		system.state.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
 		system.state.worldState.Set("player_id", entityId)
-		return nil
+		return nil, nil
 	})
 }
 
 type PlayerBehavior struct {
-	id              string
-	system          *EntitySystem
-	isEnabled       func() bool
-	intentDirection input.Direction
-	intentDuration  float64
+	id                  string
+	system              *EntitySystem
+	isEnabled           func() bool
+	intentDirection     input.Direction
+	intentDuration      float64
+	awaitingInteraction bool
 }
 
 func NewPlayerBehavior(id string, system *EntitySystem) *PlayerBehavior {
 	return &PlayerBehavior{
 		id:        id,
 		system:    system,
-		isEnabled: func() bool { return !system.state.blockInput },
+		isEnabled: func() bool { return system.state.inputMode() == inputModePlayerMovement },
 	}
 }
 
@@ -83,14 +83,32 @@ func (b *PlayerBehavior) MovementComplete(dispatcher Dispatcher) {
 }
 
 func (b *PlayerBehavior) triggerMovement(dispatcher Dispatcher) {
-	if b.isEnabled() && game.Controls[*State]().DPad().IsPressed() && b.intentDuration > 0.075 {
-		direction := game.Controls[*State]().DPad().GetDirection()
-		moveState := types.MoveStateWalking
-		if game.Controls[*State]().ButtonB().IsPressed() {
-			moveState = types.MoveStateRunning
-		}
-		dispatcher.ProcessEffects(events.Effect{
-			TriggerMovement: events.NewTriggerMovementEffect(b.id, direction).WithMoveState(moveState),
+	if !b.isEnabled() {
+		return
+	}
+	doTrigger := game.Controls[*State]().DPad().IsPressed() || b.intentDuration > 0.075
+	if !doTrigger {
+		return
+	}
+	b.intentDuration = 0
+	direction := game.Controls[*State]().DPad().GetDirection()
+	moveState := types.MoveStateWalking
+	if game.Controls[*State]().ButtonB().IsPressed() {
+		moveState = types.MoveStateRunning
+	}
+	dispatcher.ProcessEffects(events.Effect{
+		TriggerMovement: events.NewTriggerMovementEffect(b.id).WithDirection(direction).WithMoveState(moveState),
+	})
+}
+
+func (b *PlayerBehavior) triggerInteraction(p *EntityPosition, dispatcher Dispatcher) {
+	b.awaitingInteraction = false
+	interactLocation := p.Location.MovedDelta(p.FacingDirection.GetVector())
+	for targetEntityId := range b.system.interactableEntityIds(interactLocation) {
+		dispatcher.EmitEvents(events.EventOnInteract{
+			SourceId:              b.id,
+			SourceFacingDirection: p.FacingDirection,
+			TargetId:              targetEntityId,
 		})
 	}
 }
@@ -114,6 +132,10 @@ func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher
 				p.MovementState = types.MoveStateWalking
 			}
 		}
+		if game.Controls[*State]().ButtonA().JustPressedOrRepeated() {
+			b.awaitingInteraction = true
+		}
+		return
 	}
 	// face direction of intent after movement
 	// todo effect?
@@ -130,40 +152,14 @@ func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher
 		}
 		b.intentDuration += timeDelta
 	}
-	b.triggerMovement(dispatcher)
+	if b.awaitingInteraction {
+		b.triggerInteraction(p, dispatcher)
+		return
+	}
 	// interact with item if player is pressing A
 	if game.Controls[*State]().ButtonA().JustPressedOrRepeated() && p.FacingDirection != input.NotPressed {
-		interactLocation := p.Location.MovedDelta(p.FacingDirection.GetVector())
-		for targetEntityId := range b.system.occupyingEntityIds(interactLocation) {
-			dispatcher.EmitEvents(events.EventOnInteract{
-				SourceId:        b.id,
-				SourceDirection: p.FacingDirection,
-				TargetId:        targetEntityId,
-			})
-		}
+		b.triggerInteraction(p, dispatcher)
+	} else {
+		b.triggerMovement(dispatcher)
 	}
 }
-
-// todo dashing
-//func (p *Player) DashTowards(s *State, direction input.Direction, location MapLocation) {
-//	location = p.findDashDestination(s, direction, location)
-//	p.TriggerMovement(s, location, MoveStateDashing)
-//}
-//
-//func (p *Player) findDashDestination(s *State, direction input.Direction, location MapLocation) MapLocation {
-//	for {
-//		ts := s.GetTileState(location)
-//		moved := false
-//		for _, entityId := range ts.EntitiesWithin {
-//			if entity, ok := s.entities[entityId]; ok {
-//				if _, ok := entity.(*EntityDashGap); ok {
-//					moved = true
-//					location = location.MovedDelta(direction.GetVector())
-//				}
-//			}
-//		}
-//		if !moved {
-//			return location
-//		}
-//	}
-//}

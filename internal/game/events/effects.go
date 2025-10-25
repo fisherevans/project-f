@@ -137,7 +137,8 @@ type EffectDeactivateFade struct {
 
 type EffectTriggerMovement struct {
 	EntityId  string
-	Direction input.Direction
+	Direction *input.Direction `one_of:"to"`
+	Location  *Location        `one_of:"to"`
 	MoveState *types.MoveState
 }
 

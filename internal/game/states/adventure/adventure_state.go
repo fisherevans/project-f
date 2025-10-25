@@ -135,7 +135,7 @@ func New(i game.AdventureIntent) game.State {
 		colors.HexString("#ed3579"), // red led
 		colors.HexString("#4CC9F0"), // blue led
 	)
-	a.eventDispatcher.Register(events.NewEphemeralEntityContext("system"), newSystemEventHandler(a))
+	a.eventDispatcher.Register(events.NewBasicEntityContext("system"), newSystemEventHandler(a))
 
 	initializeMap(a, m)
 	return a
@@ -169,8 +169,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.lightMapBatch.Clear()
 
-	// todo limit rendering out of bounds tiles
-
 	for _, thisRenderLayer := range s.baseRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
 	}
@@ -180,6 +178,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		mob.Render(s.sceneBatch, cameraMatrix.Moved(renderLocation))
 	}
 
+	// todo limit rendering out of bounds entities
 	s.entities.Render(s.sceneBatch, s.lightMapBatch, cameraMatrix)
 
 	for _, thisRenderLayer := range s.overlayRenderLayers {
@@ -283,7 +282,7 @@ func (s *State) setWorldState(key string, value any, id string) {
 func (s *State) ExecuteSystemEffects(effects ...events.Effect) {
 	for _, e := range effects {
 		s.processEffects(events.DispatchedEffect{
-			Source: events.NewEphemeralEntityContext("system"),
+			Source: events.NewBasicEntityContext("system"),
 			Effect: e,
 		})
 	}

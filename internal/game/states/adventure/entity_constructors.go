@@ -10,17 +10,17 @@ import (
 type None struct{}
 
 func init() {
-	// todo rename class to ModeBasedEntity
-	targetRegistration().byClass("Script").registrar(registerModeBasedEntity)
+	targetRegistration().byClass("ModeBasedEntity").registrar(registerModeBasedEntity)
 }
 
-func registerModeBasedEntity(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) events.EventHandler {
-	state := NewStringModeEntityState("")
-	system.RegisterEntity(entityId, location, nil, nil, NewModeBasedEntityRenderer(entityId, system), state)
-	return nil
+func registerModeBasedEntity(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
+	presence := newBlockIngressPresence(true)
+	renderer := NewModeBasedEntityRenderer(entityId, system)
+	system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
+	return renderer.GenerateEntityContext(), nil
 }
 
-type entityRegistrar func(string, MapLocation, *resources.Entity, *EntitySystem) events.EventHandler
+type entityRegistrar func(string, MapLocation, *resources.Entity, *EntitySystem) (events.EntityContext, events.EventHandler)
 
 var registrarsByClass = map[string]entityRegistrar{}
 var registrarsEntitiesByTile = map[resources.TilesheetSpriteId]entityRegistrar{}
@@ -73,7 +73,10 @@ func (s *State) registerParameterizedEntity(entityId string, location MapLocatio
 		return false
 	}
 
-	eventHandler := registerer(entityId, location, mapEntity, system)
+	entityContext, eventHandler := registerer(entityId, location, mapEntity, system)
+	if entityContext == nil {
+		entityContext = events.NewBasicEntityContext(entityId)
+	}
 
 	if scriptRef := mapEntity.GetStringMetadata("script_ref", ""); scriptRef != "" {
 		if eventHandler != nil {
@@ -81,36 +84,11 @@ func (s *State) registerParameterizedEntity(entityId string, location MapLocatio
 		}
 		eventHandler = handlers.Get(scriptRef)
 	}
+
 	if eventHandler != nil {
-		ctx := &systemEntityContext{
-			id:     entityId,
-			system: system,
-		}
-		s.eventDispatcher.Register(ctx, eventHandler)
+		s.eventDispatcher.Register(entityContext, eventHandler)
 		log.Info().Msgf("Registered event handler %s", entityId)
 	}
 
 	return true
-}
-
-type systemEntityContext struct {
-	id     string
-	system *EntitySystem
-}
-
-func (s *systemEntityContext) Id() string {
-	return s.id
-}
-
-func (s *systemEntityContext) Mode() string {
-	// todo, clean up - maybe move to entity state that I removed?
-	state, ok := s.system.states[s.id]
-	if !ok {
-		return ""
-	}
-	stringMode, ok := state.(EntityStateStringMode)
-	if !ok {
-		return ""
-	}
-	return stringMode.mode
 }
