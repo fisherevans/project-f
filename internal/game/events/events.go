@@ -45,3 +45,9 @@ type EventCombatComplete struct {
 	CombatId string
 	Result   string
 }
+
+type EventScriptedMotionComplete struct {
+	EntityId    string
+	MotionId    string
+	WasCanceled bool
+}

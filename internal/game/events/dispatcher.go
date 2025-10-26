@@ -96,6 +96,10 @@ func (d *Dispatcher) handleOutput(handler *registeredEventHandler, output *Handl
 		handler.State = output.State
 	}
 	for _, effect := range output.Effects {
+		if err := effect.Validate(); err != nil {
+			log.Error().Interface("effect", effect).Msg("Invalid effect, ignoring")
+			continue
+		}
 		d.effectDispatcher(DispatchedEffect{
 			Source: handler.ctx,
 			Effect: effect,

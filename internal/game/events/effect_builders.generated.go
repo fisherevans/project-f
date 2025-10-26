@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-25T15:43:29-04:00 by go generate
+// Generated at 2025-10-26T09:38:00-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -8,6 +8,7 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"github.com/gopxl/pixel/v2"
 )
 
 func NewFunctionEffect(fn RunnableFunction) *EffectFunction {
@@ -64,6 +65,17 @@ func (e *EffectMutateModeBasedEntity) WithAnimations(animations map[string][]Ani
 func (e *EffectMutateModeBasedEntity) WithLights(lights map[string][]LightConfig) *EffectMutateModeBasedEntity {
 	e.Lights = &lights
 	return e
+}
+
+func (e *EffectMutateModeBasedEntity) WithAnimationColorMasks(animationColorMasks map[string]pixel.RGBA) *EffectMutateModeBasedEntity {
+	e.AnimationColorMasks = &animationColorMasks
+	return e
+}
+
+func NewResetModeBasedEntityAnimationEffect(entityId string) *EffectResetModeBasedEntityAnimation {
+	return &EffectResetModeBasedEntityAnimation{
+		EntityId: entityId,
+	}
 }
 
 func NewMutateBlockingPresenceEffect(entityId string) *EffectMutateBlockingPresence {
@@ -219,14 +231,34 @@ func NewResetMovementEffect(entityId string) *EffectResetMovement {
 	}
 }
 
-func NewSetFollowCameraEffect(resetPosition bool) *EffectSetFollowCamera {
-	return &EffectSetFollowCamera{
-		ResetPosition: resetPosition,
+func NewOverrideCameraEffect() *EffectOverrideCamera {
+	return &EffectOverrideCamera{
 	}
 }
 
-func (e *EffectSetFollowCamera) WithEntityId(entityId string) *EffectSetFollowCamera {
-	e.EntityId = &entityId
+func (e *EffectOverrideCamera) WithFollow(follow FollowCamera) *EffectOverrideCamera {
+	e.Follow = &follow
+	return e
+}
+
+func NewPopCameraOverrideEffect(maintainCurrentLocation bool) *EffectPopCameraOverride {
+	return &EffectPopCameraOverride{
+		MaintainCurrentLocation: maintainCurrentLocation,
+	}
+}
+
+func NewMutateFollowCameraEffect() *EffectMutateFollowCamera {
+	return &EffectMutateFollowCamera{
+	}
+}
+
+func (e *EffectMutateFollowCamera) WithFollowEntityId(followEntityId string) *EffectMutateFollowCamera {
+	e.FollowEntityId = &followEntityId
+	return e
+}
+
+func (e *EffectMutateFollowCamera) WithResetPosition(resetPosition bool) *EffectMutateFollowCamera {
+	e.ResetPosition = &resetPosition
 	return e
 }
 
@@ -257,6 +289,45 @@ func NewEntityFaceDirectionEffect(entityId string, direction input.Direction) *E
 	return &EffectEntityFaceDirection{
 		EntityId: entityId,
 		Direction: direction,
+	}
+}
+
+func NewStartScriptedMotionEffect(motionId string, entityId string) *EffectStartScriptedMotion {
+	return &EffectStartScriptedMotion{
+		MotionId: motionId,
+		EntityId: entityId,
+	}
+}
+
+func (e *EffectStartScriptedMotion) WithLocation(location Location) *EffectStartScriptedMotion {
+	e.Location = &location
+	return e
+}
+
+func (e *EffectStartScriptedMotion) WithToEntityId(toEntityId string) *EffectStartScriptedMotion {
+	e.ToEntityId = &toEntityId
+	return e
+}
+
+func (e *EffectStartScriptedMotion) WithRelative(relative RelativeLocation) *EffectStartScriptedMotion {
+	e.Relative = &relative
+	return e
+}
+
+func NewOverrideEntityBehaviorEffect(entityId string) *EffectOverrideEntityBehavior {
+	return &EffectOverrideEntityBehavior{
+		EntityId: entityId,
+	}
+}
+
+func (e *EffectOverrideEntityBehavior) WithScriptedMotion(scriptedMotion EntityBehaviorScriptedMotion) *EffectOverrideEntityBehavior {
+	e.ScriptedMotion = &scriptedMotion
+	return e
+}
+
+func NewPopEntityBehaviorOverrideEffect(entityId string) *EffectPopEntityBehaviorOverride {
+	return &EffectPopEntityBehaviorOverride{
+		EntityId: entityId,
 	}
 }
 

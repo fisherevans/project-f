@@ -55,7 +55,7 @@ func init() {
 			case tiles.GlowAqua:
 				colorMask = colors.HexString("#50d5e0")
 			case tiles.GlowPurple:
-				colorMask = colors.HexString("#50d5e0")
+				colorMask = colors.HexString("#9350e0")
 			case tiles.GlowPink:
 				colorMask = colors.HexString("#e050cb")
 			}

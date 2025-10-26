@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"github.com/gopxl/pixel/v2"
 )
 
 type RunnableFunction func()
@@ -38,15 +39,20 @@ type EffectTimer struct {
 }
 
 type EffectMutateModeBasedEntity struct {
-	EntityId   string
-	Mode       *string
-	Animations *map[string][]AnimationReference
-	Lights     *map[string][]LightConfig
+	EntityId            string
+	Mode                *string
+	Animations          *map[string][]AnimationReference
+	Lights              *map[string][]LightConfig
+	AnimationColorMasks *map[string]pixel.RGBA
 }
 
 type AnimationReference struct {
 	Tilesheet string
 	Name      string
+}
+
+type EffectResetModeBasedEntityAnimation struct {
+	EntityId string
 }
 
 type LightConfig struct {
@@ -114,8 +120,8 @@ func (p *EffectPlan) WithId(id string) *EffectPlan {
 type PlanStep struct {
 	// Serial: effects execute one after another
 	// Parallel: all effects in the list run simultaneously, wait for all to complete
-	Serial   []Effect
-	Parallel []Effect
+	Serial   []Effect `one_of:"type"`
+	Parallel []Effect `one_of:"type"`
 }
 
 type EffectMutateEntityBehavior struct {
@@ -149,7 +155,20 @@ type EffectResetMovement struct {
 	EntityId string
 }
 
-type EffectSetFollowCamera struct {
+type EffectOverrideCamera struct {
+	Follow *FollowCamera `one_of:"type"`
+}
+
+type EffectPopCameraOverride struct {
+	MaintainCurrentLocation bool
+}
+
+type EffectMutateFollowCamera struct {
+	FollowEntityId *string
+	ResetPosition  *bool
+}
+
+type FollowCamera struct {
 	EntityId      *string `one_of:"target"`
 	ResetPosition bool
 }
@@ -168,4 +187,39 @@ type EffectTriggerCombat struct {
 type EffectEntityFaceDirection struct {
 	EntityId  string
 	Direction input.Direction
+}
+
+// todo implement handlers for these
+// todo register motion id in plan system!
+// todo script some motion!
+
+type EffectStartScriptedMotion struct {
+	MotionId   string `auto_generate:"true"`
+	EntityId   string
+	Location   *Location         `one_of:"target"`
+	ToEntityId *string           `one_of:"target"`
+	Relative   *RelativeLocation `one_of:"target"`
+}
+
+type RelativeLocation struct {
+	Direction input.Direction
+	Steps     int
+}
+
+type EffectOverrideEntityBehavior struct {
+	EntityId       string
+	ScriptedMotion *EntityBehaviorScriptedMotion `one_of:"type"`
+}
+
+type EntityBehaviorPlayer struct {
+}
+
+type EntityBehaviorNPC struct {
+}
+
+type EntityBehaviorScriptedMotion struct {
+}
+
+type EffectPopEntityBehaviorOverride struct {
+	EntityId string
 }

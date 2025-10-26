@@ -53,8 +53,6 @@ func (t *timers) Update(deltaSeconds float64, dispatcher *events.Dispatcher, sta
 			TriggerCount:    timer.triggerCount,
 		})
 		// Mark timer complete for plan tracking
-		if state != nil {
-			state.planExecutor.MarkTimerComplete(timer.id)
-		}
+		state.planExecutor.MarkTimerComplete(timer.id)
 	}
 }

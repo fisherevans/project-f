@@ -1,0 +1,11 @@
+tilesheet:
+  tileWidth: 16
+  tileHeight: 16
+animations:
+  default:
+    sequence:
+      row: 1
+      columnFrom: 1
+      columnTo: 4
+    framesPerSecond: 8
+    repeat: false

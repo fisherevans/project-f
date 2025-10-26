@@ -82,7 +82,7 @@ func (s *State) registerParameterizedEntity(entityId string, location MapLocatio
 		if eventHandler != nil {
 			log.Fatal().Str("entityId", string(entityId)).Msgf("entity has more than one handler configured!")
 		}
-		eventHandler = handlers.Get(scriptRef)
+		eventHandler = handlers.Get(scriptRef, mapEntity.Properties)
 	}
 
 	if eventHandler != nil {

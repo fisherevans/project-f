@@ -267,3 +267,27 @@ func (es *EntitySystem) locationSortedRenderers() []sortedRenderableEntity {
 	})
 	return sorted
 }
+
+func (es *EntitySystem) OverrideBehavior(id string, behavior EntityBehavior) {
+	existing, exists := es.behaviors[id]
+	if !exists {
+		es.behaviors[id] = behavior
+		log.Warn().Str("entityId", id).Msg("no behavior for entity, just setting")
+		return
+	}
+	es.behaviors[id] = NewEntityBehaviorOverride(existing, behavior)
+}
+
+func (es *EntitySystem) PopOverrideBehavior(id string) {
+	existing, exists := es.behaviors[id]
+	if !exists {
+		log.Warn().Str("entityId", id).Msg("no behavior for entity, can't pop")
+		return
+	}
+	override, ok := existing.(*EntityBehaviorOverride)
+	if !ok {
+		log.Warn().Str("entityId", id).Msg("behavior isn't overridden, just removing")
+		delete(es.behaviors, id)
+	}
+	es.behaviors[id] = override.replacedBehavior
+}

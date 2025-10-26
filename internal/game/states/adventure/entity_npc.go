@@ -17,7 +17,7 @@ import (
 func init() {
 	targetRegistration().byClass("NPC").byTile(tiles.NPC).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 		renderer := NewMovementBasedEntityRenderer(entityId, system)
-		color := colors.HSLToRGBA(rand.Float64(), 1, 0.85)
+		color := colors.HSLToRGBA(rand.Float64(), 1, 0.65)
 		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
 			types.MoveStateIdle:    anim.AshaIdle(atlas),
 			types.MoveStateWalking: anim.AshaWalk(atlas),

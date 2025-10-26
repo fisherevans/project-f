@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-25T15:43:29-04:00 by go generate
+// Generated at 2025-10-26T09:38:00-04:00 by go generate
 // Source: internal/game/events/handler.go
 
 package events
@@ -17,6 +17,7 @@ type BasicHandlerBuilder[T any] struct {
 	EntityZoneActivity func(ctx EntityContext, world WorldStateReader, state T, event *EventEntityZoneActivity) *HandlerOutput
 	WorldStateUpdated func(ctx EntityContext, world WorldStateReader, state T, event *EventWorldStateUpdated) *HandlerOutput
 	CombatComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput
+	ScriptedMotionComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput
 }
 
 func NewBasicHandler[T any](defaultState T) *BasicHandlerBuilder[T] {
@@ -64,6 +65,11 @@ func (b *BasicHandlerBuilder[T]) WithWorldStateUpdated(worldStateUpdated func(ct
 
 func (b *BasicHandlerBuilder[T]) WithCombatComplete(combatComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.CombatComplete = combatComplete
+	return b
+}
+
+func (b *BasicHandlerBuilder[T]) WithScriptedMotionComplete(scriptedMotionComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+	b.ScriptedMotionComplete = scriptedMotionComplete
 	return b
 }
 
@@ -139,6 +145,11 @@ func (h *basicHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader,
 			return nil
 		}
 		return h.builder.CombatComplete(ctx, world, convertedState, e)
+	case *EventScriptedMotionComplete:
+		if h.builder.ScriptedMotionComplete == nil {
+			return nil
+		}
+		return h.builder.ScriptedMotionComplete(ctx, world, convertedState, e)
 	}
 	return nil
 }

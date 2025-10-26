@@ -354,6 +354,9 @@ func GetCompletionIds(effect Effect) []string {
 	if effect.TriggerCombat != nil && effect.TriggerCombat.CombatId != "" {
 		ids = append(ids, MakeCombatCompletionId(effect.TriggerCombat.CombatId))
 	}
+	if effect.StartScriptedMotion != nil && effect.StartScriptedMotion.MotionId != "" {
+		ids = append(ids, MakeMotionCompletionId(effect.StartScriptedMotion.MotionId))
+	}
 
 	return ids
 }
@@ -377,6 +380,10 @@ func MakeChatterCompletionId(chatterId string) string {
 
 func MakeCombatCompletionId(combatId string) string {
 	return fmt.Sprintf("combat:%s", combatId)
+}
+
+func MakeMotionCompletionId(motionId string) string {
+	return fmt.Sprintf("motion:%s", motionId)
 }
 
 // MarkDialogueComplete marks a dialogue as complete
@@ -412,5 +419,10 @@ func (pe *PlanExecutor) MarkCombatComplete(combatId string) {
 	if combatId != "" {
 		pe.MarkComplete(MakeCombatCompletionId(combatId))
 	}
+}
 
+func (pe *PlanExecutor) MarkMotionComplete(motionId string) {
+	if motionId != "" {
+		pe.MarkComplete(MakeMotionCompletionId(motionId))
+	}
 }

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-25T15:43:29-04:00 by go generate
+// Generated at 2025-10-26T09:38:00-04:00 by go generate
 // Source: internal/game/events/effect.go
 
 package events
@@ -15,6 +15,36 @@ var timerCounter atomic.Uint64
 var planCounter atomic.Uint64
 var fadeCounter atomic.Uint64
 var triggerCombatCounter atomic.Uint64
+var startScriptedMotionCounter atomic.Uint64
+
+func (p *PlanStep) Validate() error {
+	reporter := newIssueReporter()
+
+	// Validate one_of group: type
+	typeCount := 0
+	if len(p.Serial) > 0 {
+		typeCount++
+		for i, item := range p.Serial {
+			if err := item.Validate(); err != nil {
+				reporter.sub("serial").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
+			}
+		}
+	}
+	if len(p.Parallel) > 0 {
+		typeCount++
+		for i, item := range p.Parallel {
+			if err := item.Validate(); err != nil {
+				reporter.sub("parallel").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
+			}
+		}
+	}
+	if typeCount != 1 {
+		reporter.addf("type", "exactly one of [serial, parallel] must be set")
+	}
+
+
+	return reporter.report()
+}
 
 func (e *EffectFunction) Validate() error {
 	reporter := newIssueReporter()
@@ -80,6 +110,14 @@ func (e *EffectMutateModeBasedEntity) Validate() error {
 	return reporter.report()
 }
 
+func (e *EffectResetModeBasedEntityAnimation) Validate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
 func (e *EffectMutateBlockingPresence) Validate() error {
 	reporter := newIssueReporter()
 
@@ -106,9 +144,6 @@ func (e *EffectSetEntityLocation) Validate() error {
 	}
 	if e.ToLocation != nil {
 		destinationCount++
-		if err := e.ToLocation.Validate(); err != nil {
-			reporter.sub("toLocation").addf("", "%v", err)
-		}
 	}
 	if e.ToEntityId != nil {
 		destinationCount++
@@ -132,9 +167,6 @@ func (e *EffectTeleportPlayer) Validate() error {
 	}
 	if e.ToLocation != nil {
 		destinationCount++
-		if err := e.ToLocation.Validate(); err != nil {
-			reporter.sub("toLocation").addf("", "%v", err)
-		}
 	}
 	if e.ToEntityId != nil {
 		destinationCount++
@@ -156,6 +188,11 @@ func (e *EffectPlan) Validate() error {
 	}
 
 	reporter.requireString("planId", e.PlanId)
+	for i, item := range e.Steps {
+		if err := item.Validate(); err != nil {
+			reporter.sub("steps").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
+		}
+	}
 
 	return reporter.report()
 }
@@ -211,9 +248,6 @@ func (e *EffectTriggerMovement) Validate() error {
 	}
 	if e.Location != nil {
 		toCount++
-		if err := e.Location.Validate(); err != nil {
-			reporter.sub("location").addf("", "%v", err)
-		}
 	}
 	if toCount != 1 {
 		reporter.addf("to", "exactly one of [direction, location] must be set")
@@ -232,17 +266,31 @@ func (e *EffectResetMovement) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectSetFollowCamera) Validate() error {
+func (e *EffectOverrideCamera) Validate() error {
 	reporter := newIssueReporter()
 
-	// Validate one_of group: target
-	targetCount := 0
-	if e.EntityId != nil {
-		targetCount++
+	// Validate one_of group: type
+	typeCount := 0
+	if e.Follow != nil {
+		typeCount++
 	}
-	if targetCount != 1 {
-		reporter.addf("target", "exactly one of [entityId] must be set")
+	if typeCount != 1 {
+		reporter.addf("type", "exactly one of [follow] must be set")
 	}
+
+
+	return reporter.report()
+}
+
+func (e *EffectPopCameraOverride) Validate() error {
+	reporter := newIssueReporter()
+
+
+	return reporter.report()
+}
+
+func (e *EffectMutateFollowCamera) Validate() error {
+	reporter := newIssueReporter()
 
 
 	return reporter.report()
@@ -271,6 +319,60 @@ func (e *EffectTriggerCombat) Validate() error {
 }
 
 func (e *EffectEntityFaceDirection) Validate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectStartScriptedMotion) Validate() error {
+	reporter := newIssueReporter()
+
+	if e.MotionId == "" {
+		id := startScriptedMotionCounter.Add(1)
+		e.MotionId = fmt.Sprintf("start-scripted-motion-%05d", id)
+	}
+
+	// Validate one_of group: target
+	targetCount := 0
+	if e.Location != nil {
+		targetCount++
+	}
+	if e.ToEntityId != nil {
+		targetCount++
+	}
+	if e.Relative != nil {
+		targetCount++
+	}
+	if targetCount != 1 {
+		reporter.addf("target", "exactly one of [location, toEntityId, relative] must be set")
+	}
+
+	reporter.requireString("motionId", e.MotionId)
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectOverrideEntityBehavior) Validate() error {
+	reporter := newIssueReporter()
+
+	// Validate one_of group: type
+	typeCount := 0
+	if e.ScriptedMotion != nil {
+		typeCount++
+	}
+	if typeCount != 1 {
+		reporter.addf("type", "exactly one of [scriptedMotion] must be set")
+	}
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectPopEntityBehaviorOverride) Validate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -317,6 +419,12 @@ func (e Effect) Validate() error {
 		effectCount++
 		if err := e.MutateModeBasedEntity.Validate(); err != nil {
 			reporter.sub("mutateModeBasedEntity").addf("", "%v", err)
+		}
+	}
+	if e.ResetModeBasedEntityAnimation != nil {
+		effectCount++
+		if err := e.ResetModeBasedEntityAnimation.Validate(); err != nil {
+			reporter.sub("resetModeBasedEntityAnimation").addf("", "%v", err)
 		}
 	}
 	if e.MutateBlockingPresence != nil {
@@ -379,10 +487,22 @@ func (e Effect) Validate() error {
 			reporter.sub("resetMovement").addf("", "%v", err)
 		}
 	}
-	if e.SetFollowCamera != nil {
+	if e.OverrideCamera != nil {
 		effectCount++
-		if err := e.SetFollowCamera.Validate(); err != nil {
-			reporter.sub("setFollowCamera").addf("", "%v", err)
+		if err := e.OverrideCamera.Validate(); err != nil {
+			reporter.sub("overrideCamera").addf("", "%v", err)
+		}
+	}
+	if e.PopCameraOverride != nil {
+		effectCount++
+		if err := e.PopCameraOverride.Validate(); err != nil {
+			reporter.sub("popCameraOverride").addf("", "%v", err)
+		}
+	}
+	if e.MutateFollowCamera != nil {
+		effectCount++
+		if err := e.MutateFollowCamera.Validate(); err != nil {
+			reporter.sub("mutateFollowCamera").addf("", "%v", err)
 		}
 	}
 	if e.MutateNPC != nil {
@@ -401,6 +521,24 @@ func (e Effect) Validate() error {
 		effectCount++
 		if err := e.EntityFaceDirection.Validate(); err != nil {
 			reporter.sub("entityFaceDirection").addf("", "%v", err)
+		}
+	}
+	if e.StartScriptedMotion != nil {
+		effectCount++
+		if err := e.StartScriptedMotion.Validate(); err != nil {
+			reporter.sub("startScriptedMotion").addf("", "%v", err)
+		}
+	}
+	if e.OverrideEntityBehavior != nil {
+		effectCount++
+		if err := e.OverrideEntityBehavior.Validate(); err != nil {
+			reporter.sub("overrideEntityBehavior").addf("", "%v", err)
+		}
+	}
+	if e.PopEntityBehaviorOverride != nil {
+		effectCount++
+		if err := e.PopEntityBehaviorOverride.Validate(); err != nil {
+			reporter.sub("popEntityBehaviorOverride").addf("", "%v", err)
 		}
 	}
 

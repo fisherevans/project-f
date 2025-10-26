@@ -148,4 +148,5 @@ func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher
 	} else {
 		b.triggerMovement(dispatcher)
 	}
+
 }

@@ -205,6 +205,12 @@ func (r *ModeBasedEntityRenderer) RenderToLightMap(target pixel.Target, matrix p
 	r.getBasicEntityRenderer(r.currentMode).RenderToLightMap(target, matrix)
 }
 
+func (r *ModeBasedEntityRenderer) SetColorMasks(masks map[string]pixel.RGBA) {
+	for mode, colorMask := range masks {
+		r.getBasicEntityRenderer(mode).WithAnimationColorMask(colorMask)
+	}
+}
+
 type MovementBasedEntityRenderer struct {
 	id     string
 	system *EntitySystem
