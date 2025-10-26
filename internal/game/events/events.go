@@ -7,9 +7,9 @@ import (
 // Event types - add new events here and run go generate
 
 type EventOnInteract struct {
-	SourceId        string
-	TargetId        string
-	SourceDirection input.Direction
+	SourceId              string
+	TargetId              string
+	SourceFacingDirection input.Direction
 }
 
 type EventDialogueComplete struct {
@@ -29,9 +29,10 @@ type EventTimerComplete struct {
 }
 
 type EventEntityZoneActivity struct {
-	EntityId   string
-	ZoneId     string
-	IsEntering bool
+	EntityId      string
+	ZoneId        string
+	IsEntering    bool
+	WasTeleported bool
 }
 
 type EventWorldStateUpdated struct {
@@ -43,4 +44,10 @@ type EventWorldStateUpdated struct {
 type EventCombatComplete struct {
 	CombatId string
 	Result   string
+}
+
+type EventScriptedMotionComplete struct {
+	EntityId    string
+	MotionId    string
+	WasCanceled bool
 }

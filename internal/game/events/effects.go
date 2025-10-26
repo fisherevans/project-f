@@ -3,6 +3,8 @@ package events
 import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"github.com/gopxl/pixel/v2"
 )
 
 type RunnableFunction func()
@@ -36,25 +38,32 @@ type EffectTimer struct {
 	DurationSeconds float64
 }
 
-type EffectMutateEntity struct {
-	EntityId   string
-	Mode       *string
-	IsPassable *bool
-
-	// DynamicEntity changes
-	DynamicAnimations *map[string][]DynamicAnimationReference
-	DynamicLights     *map[string][]LightConfig
+type EffectMutateModeBasedEntity struct {
+	EntityId            string
+	Mode                *string
+	Animations          *map[string][]AnimationReference
+	Lights              *map[string][]LightConfig
+	AnimationColorMasks *map[string]pixel.RGBA
 }
 
-type DynamicAnimationReference struct {
+type AnimationReference struct {
 	Tilesheet string
 	Name      string
+}
+
+type EffectResetModeBasedEntityAnimation struct {
+	EntityId string
 }
 
 type LightConfig struct {
 	Color    string
 	Size     float64
 	Modifier string `optional:"true"`
+}
+
+type EffectMutateBlockingPresence struct {
+	EntityId          string
+	IsBlockingIngress *bool
 }
 
 type EffectSetWorldState struct {
@@ -111,12 +120,15 @@ func (p *EffectPlan) WithId(id string) *EffectPlan {
 type PlanStep struct {
 	// Serial: effects execute one after another
 	// Parallel: all effects in the list run simultaneously, wait for all to complete
-	Serial   []Effect
-	Parallel []Effect
+	Serial   []Effect `one_of:"type"`
+	Parallel []Effect `one_of:"type"`
 }
 
-type EffectBlockInput struct {
-	Blocked bool // true = block, false = unblock
+type EffectMutateEntityBehavior struct {
+	EntityId  string
+	DisableBy *string `one_of:"enablement"`
+	EnableBy  *string `one_of:"enablement"`
+	Reset     *bool
 }
 
 type EffectFade struct {
@@ -134,10 +146,29 @@ type EffectDeactivateFade struct {
 
 type EffectTriggerMovement struct {
 	EntityId  string
-	Direction input.Direction
+	Direction *input.Direction `one_of:"to"`
+	Location  *Location        `one_of:"to"`
+	MoveState *types.MoveState
 }
 
-type EffectSetFollowCamera struct {
+type EffectResetMovement struct {
+	EntityId string
+}
+
+type EffectOverrideCamera struct {
+	Follow *FollowCamera `one_of:"type"`
+}
+
+type EffectPopCameraOverride struct {
+	MaintainCurrentLocation bool
+}
+
+type EffectMutateFollowCamera struct {
+	FollowEntityId *string
+	ResetPosition  *bool
+}
+
+type FollowCamera struct {
 	EntityId      *string `one_of:"target"`
 	ResetPosition bool
 }
@@ -145,11 +176,50 @@ type EffectSetFollowCamera struct {
 type EffectMutateNPC struct {
 	EntityId          string
 	TalkingAtEntityId *string
-	IsTalking         *bool
 }
 
 type EffectTriggerCombat struct {
 	CombatId   string `auto_generate:"true"`
 	Opponent   *rpg.PrimortalType
 	Background string
+}
+
+type EffectEntityFaceDirection struct {
+	EntityId  string
+	Direction input.Direction
+}
+
+// todo implement handlers for these
+// todo register motion id in plan system!
+// todo script some motion!
+
+type EffectStartScriptedMotion struct {
+	MotionId   string `auto_generate:"true"`
+	EntityId   string
+	Location   *Location         `one_of:"target"`
+	ToEntityId *string           `one_of:"target"`
+	Relative   *RelativeLocation `one_of:"target"`
+}
+
+type RelativeLocation struct {
+	Direction input.Direction
+	Steps     int
+}
+
+type EffectOverrideEntityBehavior struct {
+	EntityId       string
+	ScriptedMotion *EntityBehaviorScriptedMotion `one_of:"type"`
+}
+
+type EntityBehaviorPlayer struct {
+}
+
+type EntityBehaviorNPC struct {
+}
+
+type EntityBehaviorScriptedMotion struct {
+}
+
+type EffectPopEntityBehaviorOverride struct {
+	EntityId string
 }

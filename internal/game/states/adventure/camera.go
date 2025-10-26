@@ -3,7 +3,9 @@ package adventure
 import (
 	"math"
 
+	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
@@ -37,8 +39,12 @@ func (c *cameraLocation) ComputeRenderDetails(s *State, targetBounds pixel.Rect)
 		MaxX: util.MinInt(s.mapWidth-1, cameraMapX+cameraRenderDistanceX),
 		MaxY: util.MinInt(s.mapHeight-1, cameraMapY+cameraRenderDistanceY),
 	}
+	// avoid screen tearing by moving the camera only by full pixels
+	moveDeltaX := -int(math.Round(c.location.X * resources.MapTileSize.Float()))
+	moveDeltaY := -int(math.Round(c.location.Y * resources.MapTileSize.Float()))
+	moveDelta := gfx.IVec(moveDeltaX, moveDeltaY)
 	renderMatrix := pixel.IM.
-		Moved(c.location.Scaled(-1 * resources.MapTileSize.Float())).
+		Moved(moveDelta).
 		Moved(targetBounds.Center())
 	return bounds, renderMatrix
 }
@@ -63,11 +69,11 @@ const EntityCameraSpeedPlayerDefault = EntityCameraSpeedMedium
 
 type EntityCamera struct {
 	cameraLocation
-	target EntityId
+	target string
 	speed  float64
 }
 
-func NewFollowCamera(target EntityId, initialLocation pixel.Vec, speed float64) *EntityCamera {
+func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
 	return &EntityCamera{
 		cameraLocation: cameraLocation{location: pixel.V(initialLocation.X, initialLocation.Y)},
 		target:         target,
@@ -76,15 +82,70 @@ func NewFollowCamera(target EntityId, initialLocation pixel.Vec, speed float64) 
 }
 
 func (c *EntityCamera) Update(s *State, timeDelta float64) {
-	target, found := s.entities[c.target]
+	target, found := s.entities.positions[c.target]
 	if !found {
 		return
 	}
-	targetLocation := target.RenderMapLocation()
+	targetLocation := target.PreciseLocation()
 	if c.speed == EntityCameraSpeedNoLag {
 		c.location = targetLocation
 		return
 	}
 	delta := targetLocation.Sub(c.location)
 	c.location = c.location.Add(delta.Scaled(math.Min(timeDelta*c.speed, 1.0)))
+}
+
+type CameraOverride struct {
+	replacedCamera Camera
+	newCamera      Camera
+}
+
+func NewCameraOverride(replacedCamera Camera, newCamera Camera) *CameraOverride {
+	return &CameraOverride{
+		replacedCamera: replacedCamera,
+		newCamera:      newCamera,
+	}
+}
+
+func (c *CameraOverride) SetLocation(location pixel.Vec) {
+	c.newCamera.SetLocation(location)
+}
+
+func (c *CameraOverride) CurrentLocation() pixel.Vec {
+	return c.newCamera.CurrentLocation()
+}
+
+func (c *CameraOverride) Update(s *State, timeDelta float64) {
+	c.newCamera.Update(s, timeDelta)
+}
+
+func (c *CameraOverride) ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix) {
+	return c.newCamera.ComputeRenderDetails(s, targetBounds)
+}
+
+func (s *State) OverrideCamera(newCamera Camera) {
+	s.camera = NewCameraOverride(s.camera, newCamera)
+}
+
+func (s *State) PopOverrideCamera(maintainCurrentLocation bool) {
+	override, ok := s.camera.(*CameraOverride)
+	if !ok {
+		log.Warn().Msg("camera isn't overridden, nothing to do")
+		return
+	}
+	// todo consider making single highly customizable camera
+	newFollow, newOk := getCameraToMutate(override.newCamera).(*EntityCamera)
+	replacedFollow, replacedOk := getCameraToMutate(override.replacedCamera).(*EntityCamera)
+	if newOk && replacedOk && maintainCurrentLocation {
+		replacedFollow.location = newFollow.location
+	}
+	s.camera = override.replacedCamera
+}
+
+func getCameraToMutate(c Camera) Camera {
+	override, ok := c.(*CameraOverride)
+	if ok {
+		return override.newCamera
+	}
+	return c
 }

@@ -4,13 +4,103 @@ import (
 	"math"
 	"math/rand"
 
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 )
 
-var light = atlas.GetSprite("lights/white_5x5")
+type Light struct {
+	RenderDetails []LightRenderDetails
+	Modifiers     []LightModifier
+}
+
+func (l *Light) Update(timeDelta float64) {
+	if l == nil {
+		return
+	}
+	for _, m := range l.Modifiers {
+		m.Update(timeDelta)
+	}
+}
+
+func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
+	if l == nil {
+		return
+	}
+	for _, renderDetails := range l.RenderDetails {
+		for _, m := range l.Modifiers {
+			m.Apply(&renderDetails)
+		}
+		renderDetails.Sprite.DrawColorMask(
+			target,
+			pixel.IM.
+				Moved(renderDetails.PositionDelta).
+				Scaled(pixel.ZV, renderDetails.SizeScale).
+				Chained(matrix),
+			renderDetails.ColorMask)
+
+	}
+}
+
+func NewDynamicLight(color pixel.RGBA, size float64, modifier string) *Light {
+	l := &Light{
+		RenderDetails: []LightRenderDetails{
+			{
+				Sprite:    atlas.GetSprite("lights/white_5x5"),
+				SizeScale: size,
+				ColorMask: color,
+			},
+			//{
+			//	Sprite:    atlas.GetSprite("lights/white_hard_5x5"),
+			//	SizeScale: size,
+			//	ColorMask: colors.WithAlpha(color, 0.5),
+			//},
+			//{
+			//	Sprite:    atlas.GetSprite("lights/white_hard_5x5"),
+			//	SizeScale: size * 0.5,
+			//	ColorMask: colors.WithAlpha(color, 0.5),
+			//},
+		},
+	}
+	pulse := func(periodSeconds float64) LightModifier {
+		return &LightModifierPulse{
+			PeriodSeconds:       periodSeconds,
+			SizeIntensity:       0.1,
+			BrightnessIntensity: 0.4,
+		}
+	}
+	flicker := func(freqSeconds float64) LightModifier {
+		return &LightModifierFlicker{
+			Jitter: &LightModifierJitterUpdate{
+				FrequencySeconds:   freqSeconds,
+				FrequencyVariation: freqSeconds * 0.333,
+			},
+			SizeVariation:       0.1,
+			BrightnessVariation: 0.1,
+		}
+	}
+	switch modifier {
+	case "":
+	case "pulse_slow":
+		l.Modifiers = append(l.Modifiers, pulse(6))
+	case "pulse_medium", "pulse":
+		l.Modifiers = append(l.Modifiers, pulse(4))
+	case "pulse_fast":
+		l.Modifiers = append(l.Modifiers, pulse(2))
+	case "flicker_slow":
+		l.Modifiers = append(l.Modifiers, flicker(0.35))
+	case "flicker_medium", "flicker":
+		l.Modifiers = append(l.Modifiers, flicker(0.15))
+	case "flicker_fast":
+		l.Modifiers = append(l.Modifiers, flicker(0.075))
+	default:
+		log.Error().Str("modifier", modifier).Msg("unknown light modifier")
+	}
+	return l
+}
 
 type LightRenderDetails struct {
+	Sprite        pixelutil.BoundedDrawable
 	SizeScale     float64
 	ColorMask     pixel.RGBA
 	PositionDelta pixel.Vec
@@ -89,79 +179,4 @@ func (l *LightModifierPulse) Update(timeDelta float64) {
 func (l *LightModifierPulse) Apply(details *LightRenderDetails) {
 	details.SizeScale *= l.sizeMultiplier
 	details.ColorMask = details.ColorMask.Scaled(l.brightnessMultiplier)
-}
-
-type Light struct {
-	RenderDetails LightRenderDetails
-	Modifiers     []LightModifier
-}
-
-func (l *Light) Update(timeDelta float64) {
-	if l == nil {
-		return
-	}
-	for _, m := range l.Modifiers {
-		m.Update(timeDelta)
-	}
-}
-
-func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
-	if l == nil {
-		return
-	}
-	renderDetails := l.RenderDetails
-	for _, m := range l.Modifiers {
-		m.Apply(&renderDetails)
-	}
-	light.DrawColorMask(
-		target,
-		pixel.IM.
-			Moved(renderDetails.PositionDelta).
-			Scaled(pixel.ZV, renderDetails.SizeScale).
-			Chained(matrix),
-		renderDetails.ColorMask)
-}
-
-func NewDynamicLight(color pixel.RGBA, size float64, modifier string) *Light {
-	l := &Light{
-		RenderDetails: LightRenderDetails{
-			SizeScale: size,
-			ColorMask: color,
-		},
-	}
-	pulse := func(periodSeconds float64) LightModifier {
-		return &LightModifierPulse{
-			PeriodSeconds:       periodSeconds,
-			SizeIntensity:       0.1,
-			BrightnessIntensity: 0.4,
-		}
-	}
-	flicker := func(freqSeconds float64) LightModifier {
-		return &LightModifierFlicker{
-			Jitter: &LightModifierJitterUpdate{
-				FrequencySeconds:   freqSeconds,
-				FrequencyVariation: freqSeconds * 0.333,
-			},
-			SizeVariation:       0.1,
-			BrightnessVariation: 0.1,
-		}
-	}
-	switch modifier {
-	case "":
-	case "pulse_slow":
-		l.Modifiers = append(l.Modifiers, pulse(6))
-	case "pulse_medium", "pulse":
-		l.Modifiers = append(l.Modifiers, pulse(4))
-	case "pulse_fast":
-		l.Modifiers = append(l.Modifiers, pulse(2))
-	case "flicker_slow":
-		l.Modifiers = append(l.Modifiers, flicker(0.35))
-	case "flicker_medium", "flicker":
-		l.Modifiers = append(l.Modifiers, flicker(0.15))
-	case "flicker_fast":
-		l.Modifiers = append(l.Modifiers, flicker(0.075))
-	default:
-		log.Error().Str("modifier", modifier).Msg("unknown light modifier")
-	}
-	return l
 }

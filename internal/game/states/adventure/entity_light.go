@@ -11,41 +11,41 @@ import (
 )
 
 func init() {
-	registerDynamicEntity().
+	targetRegistration().
 		byTile(tiles.Torch, tiles.TorchRight, tiles.TorchLeft).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
-			e := NewDynamicEntity(entityId, location)
-			e.SetDefaultIsPassable(true)
-			e.WithLights("", NewDynamicLight(colors.FromString("#db9a3d"), 2, "flicker"))
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
+			renderer := NewBasicEntityRenderer()
+			renderer.WithLights(NewDynamicLight(colors.FromString("#db9a3d"), 2, "flicker"))
 			switch *mapEntity.SpriteId {
 			case tiles.Torch:
-				e.WithAnimations("", anim.Torch(atlas))
+				renderer.WithAnimations(anim.Torch(atlas))
 			case tiles.TorchRight:
-				e.WithAnimations("", anim.TorchRight(atlas))
-				e.WithLightOriginOffset("", pixel.V(float64(resources.MapTileSize/2), 0))
-				e.renderZPriority = 10
+				renderer.WithAnimations(anim.TorchRight(atlas))
+				renderer.WithLightOriginOffset(pixel.V(float64(resources.MapTileSize/2), 0))
+				renderer.WithZPriority(10)
 			case tiles.TorchLeft:
-				e.WithAnimations("", anim.TorchLeft(atlas))
-				e.WithLightOriginOffset("", pixel.V(-float64(resources.MapTileSize/2), 0))
-				e.renderZPriority = 10
+				renderer.WithAnimations(anim.TorchLeft(atlas))
+				renderer.WithLightOriginOffset(pixel.V(-float64(resources.MapTileSize/2), 0))
+				renderer.WithZPriority(10)
 			}
-			return e, nil
+			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
+			return nil, nil
 		})
-	registerDynamicEntity().
+	targetRegistration().
 		byTile(tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
-			e := NewDynamicEntity(entityId, location)
-			e.SetDefaultIsPassable(true)
-			e.WithLights("", NewDynamicLight(colors.FromString("#fff"), 1.333, ""))
-			e.WithAnimations("", anim.NewStaticAnimationFromId(atlas, *mapEntity.SpriteId))
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
+			renderer := NewBasicEntityRenderer()
+			renderer.WithLights(NewDynamicLight(colors.FromString("#fff"), 1.333, ""))
+			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *mapEntity.SpriteId))
 			if *mapEntity.SpriteId == tiles.LightFork {
-				e.renderZPriority = 10
+				renderer.WithZPriority(10)
 			}
-			return e, nil
+			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
+			return nil, nil
 		})
-	registerDynamicEntity().
+	targetRegistration().
 		byTile(tiles.GlowRed, tiles.GlowOrange, tiles.GlowAqua, tiles.GlowPurple, tiles.GlowPink, tiles.GlowTBD).
-		register(func(entityId EntityId, location MapLocation, mapEntity *resources.Entity) (Entity, events.EventHandler) {
+		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			colorMask := colors.HexString("#fff")
 			switch *mapEntity.SpriteId {
 			case tiles.GlowRed:
@@ -55,37 +55,16 @@ func init() {
 			case tiles.GlowAqua:
 				colorMask = colors.HexString("#50d5e0")
 			case tiles.GlowPurple:
-				colorMask = colors.HexString("#50d5e0")
+				colorMask = colors.HexString("#9350e0")
 			case tiles.GlowPink:
 				colorMask = colors.HexString("#e050cb")
 			}
-			e := NewDynamicEntity(entityId, location)
-			e.SetDefaultIsPassable(true)
-			e.WithLights("", NewDynamicLight(colorMask, 2, ""))
-			return e, nil
+			renderer := NewBasicEntityRenderer()
+			renderer.WithLights(NewDynamicLight(colorMask, 2, ""))
+			if *mapEntity.SpriteId == tiles.LightFork {
+				renderer.WithZPriority(10)
+			}
+			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
+			return nil, nil
 		})
-}
-
-type LightEntity struct {
-	InnateEntity
-	Light
-	Animations []*anim.AnimatedSprite
-	Passable
-}
-
-func (i *LightEntity) Update(adv *State, timeDelta float64) {
-	i.Light.Update(timeDelta)
-	for _, a := range i.Animations {
-		a.Update(timeDelta)
-	}
-}
-
-func (i *LightEntity) RenderScene(target pixel.Target, matrix pixel.Matrix) {
-	for _, a := range i.Animations {
-		a.Sprite().Draw(target, matrix)
-	}
-}
-
-func (i *LightEntity) RenderLight(target pixel.Target, matrix pixel.Matrix) {
-	i.Light.Render(target, matrix)
 }

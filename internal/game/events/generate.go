@@ -191,7 +191,7 @@ func parseStructFields(structType *ast.StructType) []FieldInfo {
 			tagValue := field.Tag.Value
 			// Remove backticks
 			tagValue = strings.Trim(tagValue, "`")
-			
+
 			if strings.Contains(tagValue, `auto_generate:"true"`) {
 				autoGenerate = true
 			}
@@ -452,7 +452,7 @@ func generateEffectValidation(effects []EffectInfo) string {
 	sb.WriteString("\t\"fmt\"\n")
 	sb.WriteString("\t\"sync/atomic\"\n")
 	sb.WriteString(")\n\n")
-	
+
 	// Generate counter variables for each effect type that has auto_generate fields
 	for _, effect := range effects {
 		if !strings.HasPrefix(effect.Name, "Effect") {
@@ -473,97 +473,49 @@ func generateEffectValidation(effects []EffectInfo) string {
 	}
 	sb.WriteString("\n")
 
+	// First pass: determine which types need validation
+	typesWithValidation := make(map[string]bool)
+	// The Effect union type always needs validation
+	typesWithValidation["Effect"] = true
+	for _, effect := range effects {
+		if strings.HasPrefix(effect.Name, "Effect") {
+			typesWithValidation[effect.Name] = true
+		} else {
+			// Check if helper type needs validation
+			needsValidation := false
+			for _, field := range effect.Fields {
+				if field.OneOf != "" {
+					needsValidation = true
+					break
+				}
+			}
+			if needsValidation {
+				typesWithValidation[effect.Name] = true
+			}
+		}
+	}
+
+	// Generate Validate method for helper types first (they may be used by Effect types)
+	for _, effect := range effects {
+		// Only process helper types (non-Effect types) that need validation
+		if strings.HasPrefix(effect.Name, "Effect") {
+			continue
+		}
+		if !typesWithValidation[effect.Name] {
+			continue
+		}
+
+		generateValidateMethod(&sb, effect, typesWithValidation)
+	}
+
 	// Generate Validate method for each Effect* type
 	for _, effect := range effects {
-		// Skip helper types - only process Effect* types
+		// Only process Effect* types
 		if !strings.HasPrefix(effect.Name, "Effect") {
 			continue
 		}
 
-		sb.WriteString(fmt.Sprintf("func (e *%s) Validate() error {\n", effect.Name))
-		sb.WriteString("\treporter := newIssueReporter()\n\n")
-
-		// Auto-generate fields
-		for _, field := range effect.Fields {
-			if field.AutoGenerate && !strings.HasPrefix(field.GoType, "*") {
-				effectName := effect.Name[len("Effect"):]
-				counterName := fmt.Sprintf("%sCounter", camelCase(effectName))
-				prefix := toKebabCase(effectName)
-				
-				sb.WriteString(fmt.Sprintf("\tif e.%s == \"\" {\n", field.Name))
-				sb.WriteString(fmt.Sprintf("\t\tid := %s.Add(1)\n", counterName))
-				sb.WriteString(fmt.Sprintf("\t\te.%s = fmt.Sprintf(\"%s-%%05d\", id)\n", field.Name, prefix))
-				sb.WriteString("\t}\n\n")
-			}
-		}
-
-		// Group one_of fields
-		oneOfGroups := make(map[string][]FieldInfo)
-		for _, field := range effect.Fields {
-			if field.OneOf != "" {
-				oneOfGroups[field.OneOf] = append(oneOfGroups[field.OneOf], field)
-			}
-		}
-
-		// Validate one_of groups
-		for groupName, groupFields := range oneOfGroups {
-			sb.WriteString(fmt.Sprintf("\t// Validate one_of group: %s\n", groupName))
-			sb.WriteString(fmt.Sprintf("\t%sCount := 0\n", groupName))
-			for _, field := range groupFields {
-				sb.WriteString(fmt.Sprintf("\tif e.%s != nil {\n", field.Name))
-				sb.WriteString(fmt.Sprintf("\t\t%sCount++\n", groupName))
-				// Validate nested struct if it's not a pointer to basic type
-				if !isBasicType(strings.TrimPrefix(field.GoType, "*")) {
-					sb.WriteString(fmt.Sprintf("\t\tif err := e.%s.Validate(); err != nil {\n", field.Name))
-					sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
-					sb.WriteString("\t\t}\n")
-				}
-				sb.WriteString("\t}\n")
-			}
-			sb.WriteString(fmt.Sprintf("\tif %sCount != 1 {\n", groupName))
-			sb.WriteString(fmt.Sprintf("\t\treporter.addf(%q, \"exactly one of [%s] must be set\")\n", 
-				groupName, getFieldNames(groupFields)))
-			sb.WriteString("\t}\n\n")
-		}
-
-		// Validate required fields (non-pointer, non-optional, not in one_of)
-		for _, field := range effect.Fields {
-			if strings.HasPrefix(field.GoType, "*") || field.Optional || field.OneOf != "" {
-				continue
-			}
-			
-			fieldType := field.GoType
-			if fieldType == "string" {
-				sb.WriteString(fmt.Sprintf("\treporter.requireString(%q, e.%s)\n", camelCase(field.Name), field.Name))
-			} else if isNumericType(fieldType) {
-				// For numeric types, we might want different validation
-				// For now, just check they're set (non-zero)
-			} else if !isBasicType(fieldType) {
-				// For struct types (not basic types), validate them
-				sb.WriteString(fmt.Sprintf("\tif err := e.%s.Validate(); err != nil {\n", field.Name))
-				sb.WriteString(fmt.Sprintf("\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
-				sb.WriteString("\t}\n")
-			}
-		}
-
-		// Validate optional pointer fields that are set
-		for _, field := range effect.Fields {
-			if !strings.HasPrefix(field.GoType, "*") || field.OneOf != "" {
-				continue
-			}
-			
-			fieldType := strings.TrimPrefix(field.GoType, "*")
-			if !isBasicType(fieldType) {
-				sb.WriteString(fmt.Sprintf("\tif e.%s != nil {\n", field.Name))
-				sb.WriteString(fmt.Sprintf("\t\tif err := e.%s.Validate(); err != nil {\n", field.Name))
-				sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
-				sb.WriteString("\t\t}\n")
-				sb.WriteString("\t}\n")
-			}
-		}
-
-		sb.WriteString("\n\treturn reporter.report()\n")
-		sb.WriteString("}\n\n")
+		generateValidateMethod(&sb, effect, typesWithValidation)
 	}
 
 	// Generate Validate method for Effect union
@@ -594,6 +546,136 @@ func generateEffectValidation(effects []EffectInfo) string {
 	return sb.String()
 }
 
+func generateValidateMethod(sb *strings.Builder, effect EffectInfo, typesWithValidation map[string]bool) {
+	receiverName := "e"
+	if !strings.HasPrefix(effect.Name, "Effect") {
+		receiverName = "p" // Use 'p' for helper types like PlanStep
+	}
+
+	// Helper to check if a type needs validation
+	needsValidation := func(goType string) bool {
+		// Remove pointer prefix
+		goType = strings.TrimPrefix(goType, "*")
+		// Remove slice prefix
+		goType = strings.TrimPrefix(goType, "[]")
+		// Check if it's in our map
+		return typesWithValidation[goType]
+	}
+
+	sb.WriteString(fmt.Sprintf("func (%s *%s) Validate() error {\n", receiverName, effect.Name))
+	sb.WriteString("\treporter := newIssueReporter()\n\n")
+
+	// Auto-generate fields (only for Effect* types)
+	if strings.HasPrefix(effect.Name, "Effect") {
+		for _, field := range effect.Fields {
+			if field.AutoGenerate && !strings.HasPrefix(field.GoType, "*") {
+				effectName := effect.Name[len("Effect"):]
+				counterName := fmt.Sprintf("%sCounter", camelCase(effectName))
+				prefix := toKebabCase(effectName)
+
+				sb.WriteString(fmt.Sprintf("\tif %s.%s == \"\" {\n", receiverName, field.Name))
+				sb.WriteString(fmt.Sprintf("\t\tid := %s.Add(1)\n", counterName))
+				sb.WriteString(fmt.Sprintf("\t\t%s.%s = fmt.Sprintf(\"%s-%%05d\", id)\n", receiverName, field.Name, prefix))
+				sb.WriteString("\t}\n\n")
+			}
+		}
+	}
+
+	// Group one_of fields
+	oneOfGroups := make(map[string][]FieldInfo)
+	for _, field := range effect.Fields {
+		if field.OneOf != "" {
+			oneOfGroups[field.OneOf] = append(oneOfGroups[field.OneOf], field)
+		}
+	}
+
+	// Validate one_of groups
+	for groupName, groupFields := range oneOfGroups {
+		sb.WriteString(fmt.Sprintf("\t// Validate one_of group: %s\n", groupName))
+		sb.WriteString(fmt.Sprintf("\t%sCount := 0\n", groupName))
+		for _, field := range groupFields {
+			// For slices in one_of, check if they're non-empty
+			if strings.HasPrefix(field.GoType, "[]") {
+				sb.WriteString(fmt.Sprintf("\tif len(%s.%s) > 0 {\n", receiverName, field.Name))
+			} else {
+				sb.WriteString(fmt.Sprintf("\tif %s.%s != nil {\n", receiverName, field.Name))
+			}
+			sb.WriteString(fmt.Sprintf("\t\t%sCount++\n", groupName))
+			// Validate nested struct if it needs validation
+			fieldType := strings.TrimPrefix(field.GoType, "*")
+			if strings.HasPrefix(fieldType, "[]") {
+				// Handle slices
+				elemType := strings.TrimPrefix(fieldType, "[]")
+				if needsValidation(elemType) {
+					sb.WriteString(fmt.Sprintf("\t\tfor i, item := range %s.%s {\n", receiverName, field.Name))
+					sb.WriteString("\t\t\tif err := item.Validate(); err != nil {\n")
+					sb.WriteString(fmt.Sprintf("\t\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+					sb.WriteString("\t\t\t}\n")
+					sb.WriteString("\t\t}\n")
+				}
+			} else if needsValidation(fieldType) {
+				sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.Validate(); err != nil {\n", receiverName, field.Name))
+				sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+				sb.WriteString("\t\t}\n")
+			}
+			sb.WriteString("\t}\n")
+		}
+		sb.WriteString(fmt.Sprintf("\tif %sCount != 1 {\n", groupName))
+		sb.WriteString(fmt.Sprintf("\t\treporter.addf(%q, \"exactly one of [%s] must be set\")\n",
+			groupName, getFieldNames(groupFields)))
+		sb.WriteString("\t}\n\n")
+	}
+
+	// Validate required fields (non-pointer, non-optional, not in one_of)
+	for _, field := range effect.Fields {
+		if strings.HasPrefix(field.GoType, "*") || field.Optional || field.OneOf != "" {
+			continue
+		}
+
+		fieldType := field.GoType
+		if fieldType == "string" {
+			sb.WriteString(fmt.Sprintf("\treporter.requireString(%q, %s.%s)\n", camelCase(field.Name), receiverName, field.Name))
+		} else if isNumericType(fieldType) {
+			// For numeric types, we might want different validation
+			// For now, just check they're set (non-zero)
+		} else if strings.HasPrefix(fieldType, "[]") {
+			// Handle slices
+			elemType := strings.TrimPrefix(fieldType, "[]")
+			if needsValidation(elemType) {
+				sb.WriteString(fmt.Sprintf("\tfor i, item := range %s.%s {\n", receiverName, field.Name))
+				sb.WriteString("\t\tif err := item.Validate(); err != nil {\n")
+				sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+				sb.WriteString("\t\t}\n")
+				sb.WriteString("\t}\n")
+			}
+		} else if needsValidation(fieldType) {
+			// For struct types that need validation
+			sb.WriteString(fmt.Sprintf("\tif err := %s.%s.Validate(); err != nil {\n", receiverName, field.Name))
+			sb.WriteString(fmt.Sprintf("\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+			sb.WriteString("\t}\n")
+		}
+	}
+
+	// Validate optional pointer fields that are set
+	for _, field := range effect.Fields {
+		if !strings.HasPrefix(field.GoType, "*") || field.OneOf != "" {
+			continue
+		}
+
+		fieldType := strings.TrimPrefix(field.GoType, "*")
+		if needsValidation(fieldType) {
+			sb.WriteString(fmt.Sprintf("\tif %s.%s != nil {\n", receiverName, field.Name))
+			sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.Validate(); err != nil {\n", receiverName, field.Name))
+			sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+			sb.WriteString("\t\t}\n")
+			sb.WriteString("\t}\n")
+		}
+	}
+
+	sb.WriteString("\n\treturn reporter.report()\n")
+	sb.WriteString("}\n\n")
+}
+
 func isBasicType(goType string) bool {
 	basicTypes := []string{"string", "int", "int32", "int64", "float32", "float64", "bool", "byte", "rune", "any", "RunnableFunction"}
 	for _, bt := range basicTypes {
@@ -605,7 +687,13 @@ func isBasicType(goType string) bool {
 	if strings.Contains(goType, ".") {
 		return true
 	}
-	return strings.HasPrefix(goType, "[]") || strings.HasPrefix(goType, "map[")
+	// Arrays and maps are basic
+	if strings.HasPrefix(goType, "[]") || strings.HasPrefix(goType, "map[") {
+		return true
+	}
+	// Types that get Validate() methods generated are NOT basic
+	// This includes Effect* types and helper types like PlanStep
+	return false
 }
 
 func isNumericType(goType string) bool {
@@ -637,6 +725,8 @@ func generateEffectBuilders(effects []EffectInfo) string {
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/input\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/rpg\"\n")
+	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/states/adventure/types\"\n")
+	sb.WriteString("\t\"github.com/gopxl/pixel/v2\"\n")
 	sb.WriteString(")\n\n")
 
 	for _, effect := range effects {

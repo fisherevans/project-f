@@ -15,14 +15,14 @@
         },
         "map1.tmx": {
             "expandedObjectLayers": [
-                13,
-                6
+                6,
+                13
             ],
-            "scale": 1.8816,
-            "selectedLayer": 6,
+            "scale": 2.7173,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 928.7308673469389,
-                "y": 1301.8176020408164
+                "x": 877.8934972215067,
+                "y": 1479.9617267140177
             }
         },
         "snowhex_base.tsx": {
@@ -30,7 +30,7 @@
             "scaleInEditor": 1
         },
         "space_base.tsx": {
-            "scaleInDock": 2.5279,
+            "scaleInDock": 1.2203,
             "scaleInEditor": 1
         },
         "sylvoria.tsx": {
@@ -44,7 +44,7 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 64.04435058078141,
-                "y": 63.41077085533262
+                "y": 63.41077085533263
             }
         }
     },
@@ -62,7 +62,7 @@
         "map1.tmx"
     ],
     "project": "testbed.tiled-project",
-    "property.type": "string",
+    "property.type": "object",
     "recentFiles": [
         "testing.tmx",
         "snowhex_base.tsx",

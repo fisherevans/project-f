@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-23T15:01:45-04:00 by go generate
+// Generated at 2025-10-26T09:38:00-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -12,16 +12,25 @@ type Effect struct {
 	Chatter *EffectChatter
 	YieldElythium *EffectYieldElythium
 	Timer *EffectTimer
-	MutateEntity *EffectMutateEntity
+	MutateModeBasedEntity *EffectMutateModeBasedEntity
+	ResetModeBasedEntityAnimation *EffectResetModeBasedEntityAnimation
+	MutateBlockingPresence *EffectMutateBlockingPresence
 	SetWorldState *EffectSetWorldState
 	SetEntityLocation *EffectSetEntityLocation
 	TeleportPlayer *EffectTeleportPlayer
 	Plan *EffectPlan
-	BlockInput *EffectBlockInput
+	MutateEntityBehavior *EffectMutateEntityBehavior
 	Fade *EffectFade
 	DeactivateFade *EffectDeactivateFade
 	TriggerMovement *EffectTriggerMovement
-	SetFollowCamera *EffectSetFollowCamera
+	ResetMovement *EffectResetMovement
+	OverrideCamera *EffectOverrideCamera
+	PopCameraOverride *EffectPopCameraOverride
+	MutateFollowCamera *EffectMutateFollowCamera
 	MutateNPC *EffectMutateNPC
 	TriggerCombat *EffectTriggerCombat
+	EntityFaceDirection *EffectEntityFaceDirection
+	StartScriptedMotion *EffectStartScriptedMotion
+	OverrideEntityBehavior *EffectOverrideEntityBehavior
+	PopEntityBehaviorOverride *EffectPopEntityBehaviorOverride
 }

@@ -10,9 +10,13 @@ import (
 var planIdCounter uint64
 var effectIdCounter uint64
 
+// EffectDispatcher is a function that processes dispatched effects
+type EffectDispatcher func(effects ...DispatchedEffect)
+
 // PlanExecutor manages the execution of effect plans
 type PlanExecutor struct {
-	activePlans []*activePlan
+	activePlans      []*activePlan
+	effectDispatcher EffectDispatcher
 }
 
 type activePlan struct {
@@ -26,9 +30,10 @@ type activePlan struct {
 	nextEffectIndex int
 }
 
-func NewPlanExecutor() *PlanExecutor {
+func NewPlanExecutor(effectDispatcher EffectDispatcher) *PlanExecutor {
 	return &PlanExecutor{
-		activePlans: make([]*activePlan, 0),
+		activePlans:      make([]*activePlan, 0),
+		effectDispatcher: effectDispatcher,
 	}
 }
 
@@ -56,31 +61,146 @@ func (pe *PlanExecutor) autoGenerateEffectIds(effect *Effect) {
 	}
 }
 
-// StartPlan begins executing a new plan
+// StartPlan begins executing a new plan, dispatching effects immediately via the effect dispatcher.
+// This method executes all non-blocking effects synchronously and only queues the plan
+// if it encounters blocking effects (those with completion IDs).
 func (pe *PlanExecutor) StartPlan(source EntityContext, plan *EffectPlan) {
+	effects := pe.ExecutePlanImmediately(source, plan)
+	if len(effects) > 0 {
+		pe.effectDispatcher(effects...)
+	}
+}
+
+// ExecutePlanImmediately executes a plan synchronously, returning all effects that can be executed immediately.
+// If the plan has blocking effects (those with completion IDs), it adds the plan to the executor queue
+// and returns those effects as well. This allows system effects to execute non-blocking effects immediately
+// while still properly queuing blocking effects.
+func (pe *PlanExecutor) ExecutePlanImmediately(source EntityContext, plan *EffectPlan) []DispatchedEffect {
 	// Auto-generate plan ID if empty
 	if plan.PlanId == "" {
 		plan.PlanId = fmt.Sprintf("plan_%d", atomic.AddUint64(&planIdCounter, 1))
 	}
+
+	var effects []DispatchedEffect
 
 	ap := &activePlan{
 		source:          source,
 		plan:            plan,
 		currentStep:     0,
 		waitingFor:      make(map[string]bool),
-		nextEffectIndex: 0, // Start at beginning of first step
+		nextEffectIndex: 0,
 	}
-	pe.activePlans = append(pe.activePlans, ap)
-	log.Info().Str("planId", plan.PlanId).Msg("Plan started")
+
+	log.Info().Str("planId", plan.PlanId).Msg("Executing plan immediately")
+
+	// Process steps until we hit a blocking effect
+	for ap.currentStep < len(ap.plan.Steps) {
+		step := ap.plan.Steps[ap.currentStep]
+
+		// Determine if this step is serial or parallel
+		var stepEffects []Effect
+		isSerial := len(step.Serial) > 0
+		if isSerial {
+			stepEffects = step.Serial
+		} else {
+			stepEffects = step.Parallel
+		}
+
+		if len(stepEffects) == 0 {
+			// Empty step, move to next
+			ap.currentStep++
+			ap.nextEffectIndex = 0
+			continue
+		}
+
+		// Process effects based on serial vs parallel
+		if isSerial {
+			// Serial: dispatch effects until we hit one with a completion ID
+			for ap.nextEffectIndex < len(stepEffects) {
+				effect := stepEffects[ap.nextEffectIndex]
+
+				// Auto-generate IDs before checking for completion
+				pe.autoGenerateEffectIds(&effect)
+
+				completionIds := GetCompletionIds(effect)
+
+				log.Info().
+					Str("planId", ap.plan.PlanId).
+					Int("effectIndex", ap.nextEffectIndex).
+					Int("totalEffects", len(stepEffects)).
+					Int("completionIds", len(completionIds)).
+					Msg("Executing serial effect immediately")
+
+				effects = append(effects, DispatchedEffect{
+					Source: ap.source,
+					Effect: effect,
+				})
+
+				ap.nextEffectIndex++
+
+				// If this effect has completion IDs, we need to wait
+				if len(completionIds) > 0 {
+					for _, completionId := range completionIds {
+						ap.waitingFor[completionId] = true
+						log.Info().Str("planId", ap.plan.PlanId).Str("completionId", completionId).Msg("will wait for completion")
+					}
+					log.Info().Str("planId", ap.plan.PlanId).Msg("Hit blocking effect - adding plan to queue")
+					pe.activePlans = append(pe.activePlans, ap)
+					return effects
+				}
+				// Otherwise, continue to next effect immediately
+			}
+			// All effects in this serial step completed without blocking
+			ap.currentStep++
+			ap.nextEffectIndex = 0
+		} else {
+			// Parallel: check if any effects have completion IDs
+			hasBlockingEffect := false
+			for i := range stepEffects {
+				effect := &stepEffects[i]
+
+				// Auto-generate IDs before checking for completion
+				pe.autoGenerateEffectIds(effect)
+
+				completionIds := GetCompletionIds(*effect)
+
+				effects = append(effects, DispatchedEffect{
+					Source: ap.source,
+					Effect: *effect,
+				})
+
+				if len(completionIds) > 0 {
+					hasBlockingEffect = true
+					for _, completionId := range completionIds {
+						ap.waitingFor[completionId] = true
+						log.Info().Str("planId", ap.plan.PlanId).Str("completionId", completionId).Msg("will wait for completion")
+					}
+				}
+			}
+
+			ap.nextEffectIndex = len(stepEffects)
+
+			if hasBlockingEffect {
+				log.Info().Str("planId", ap.plan.PlanId).Msg("Parallel step has blocking effects - adding plan to queue")
+				pe.activePlans = append(pe.activePlans, ap)
+				return effects
+			}
+
+			// All parallel effects completed without blocking
+			ap.currentStep++
+			ap.nextEffectIndex = 0
+		}
+	}
+
+	// Plan completed entirely without blocking
+	log.Info().Str("planId", ap.plan.PlanId).Msg("Plan completed immediately without blocking")
+	return effects
 }
 
-// GetNextEffects returns the effects to execute for all active plans
-// Returns effects that should be processed and updates plan state
-// Also cleans up completed plans
-func (pe *PlanExecutor) GetNextEffects() []DispatchedEffect {
+// Update returns the effects to execute for all active plans and dispatches them.
+// This is called by the main game loop to process queued plan effects
+func (pe *PlanExecutor) Update() {
 	defer pe.cleanupCompletedPlans()
-
-	var effects []DispatchedEffect
 
 	for _, ap := range pe.activePlans {
 		// If we're waiting for effects to complete, don't dispatch more
@@ -142,7 +262,7 @@ func (pe *PlanExecutor) GetNextEffects() []DispatchedEffect {
 					log.Info().Str("planId", ap.plan.PlanId).Str("completionId", completionId).Msg("waiting for completion")
 				}
 
-				effects = append(effects, DispatchedEffect{
+				pe.effectDispatcher(DispatchedEffect{
 					Source: ap.source,
 					Effect: effect,
 				})
@@ -170,7 +290,7 @@ func (pe *PlanExecutor) GetNextEffects() []DispatchedEffect {
 					log.Info().Str("planId", ap.plan.PlanId).Str("completionId", completionId).Msg("waiting for completion")
 				}
 
-				effects = append(effects, DispatchedEffect{
+				pe.effectDispatcher(DispatchedEffect{
 					Source: ap.source,
 					Effect: *effect,
 				})
@@ -179,8 +299,6 @@ func (pe *PlanExecutor) GetNextEffects() []DispatchedEffect {
 			ap.nextEffectIndex = len(stepEffects)
 		}
 	}
-
-	return effects
 }
 
 // MarkComplete marks an effect as complete (called when timers/overlays/etc finish)
@@ -196,7 +314,7 @@ func (pe *PlanExecutor) MarkComplete(completionId string) {
 				Int("remaining", len(ap.waitingFor)).
 				Msg("Effect completed in plan")
 			// nextEffectIndex is already incremented, just need to clear waitingFor
-			// Next call to GetNextEffects will dispatch the next effect
+			// Next call to Update will dispatch the next effect
 		}
 	}
 }
@@ -236,6 +354,9 @@ func GetCompletionIds(effect Effect) []string {
 	if effect.TriggerCombat != nil && effect.TriggerCombat.CombatId != "" {
 		ids = append(ids, MakeCombatCompletionId(effect.TriggerCombat.CombatId))
 	}
+	if effect.StartScriptedMotion != nil && effect.StartScriptedMotion.MotionId != "" {
+		ids = append(ids, MakeMotionCompletionId(effect.StartScriptedMotion.MotionId))
+	}
 
 	return ids
 }
@@ -259,6 +380,10 @@ func MakeChatterCompletionId(chatterId string) string {
 
 func MakeCombatCompletionId(combatId string) string {
 	return fmt.Sprintf("combat:%s", combatId)
+}
+
+func MakeMotionCompletionId(motionId string) string {
+	return fmt.Sprintf("motion:%s", motionId)
 }
 
 // MarkDialogueComplete marks a dialogue as complete
@@ -294,5 +419,10 @@ func (pe *PlanExecutor) MarkCombatComplete(combatId string) {
 	if combatId != "" {
 		pe.MarkComplete(MakeCombatCompletionId(combatId))
 	}
+}
 
+func (pe *PlanExecutor) MarkMotionComplete(motionId string) {
+	if motionId != "" {
+		pe.MarkComplete(MakeMotionCompletionId(motionId))
+	}
 }

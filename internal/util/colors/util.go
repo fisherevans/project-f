@@ -135,30 +135,43 @@ func toHexByte(r float64) string {
 	return strconv.FormatInt(int64(r*255), 16)
 }
 
+// HSLToRGBA converts HSL color values (all in range [0, 1]) to RGBA
 func HSLToRGBA(h, s, l float64) pixel.RGBA {
+	// Scale hue from [0,1] to [0,360] degrees
+	hue := h * 360.0
+	
 	c := (1 - math.Abs(2*l-1)) * s
-	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
+	x := c * (1 - math.Abs(math.Mod(hue/60, 2)-1))
 	m := l - c/2
 
 	var r, g, b float64
 	switch {
-	case h >= 0 && h < 60:
+	case hue < 60:
 		r, g, b = c, x, 0
-	case h >= 60 && h < 120:
+	case hue < 120:
 		r, g, b = x, c, 0
-	case h >= 120 && h < 180:
+	case hue < 180:
 		r, g, b = 0, c, x
-	case h >= 180 && h < 240:
+	case hue < 240:
 		r, g, b = 0, x, c
-	case h >= 240 && h < 300:
+	case hue < 300:
 		r, g, b = x, 0, c
-	case h >= 300 && h < 360:
-		r, g, b = c, 0, x
 	default:
-		r, g, b = 0, 0, 0 // Fallback for unexpected input
+		r, g, b = c, 0, x
 	}
 
-	return pixel.RGB(r+m, g+m, b+m)
+	// Ensure values are clamped to [0,1] before conversion
+	clamp := func(v float64) float64 {
+		if v < 0 {
+			return 0
+		}
+		if v > 1 {
+			return 1
+		}
+		return v
+	}
+
+	return pixel.RGB(clamp(r+m), clamp(g+m), clamp(b+m))
 }
 
 func ScaleColor(c pixel.RGBA, v float64) pixel.RGBA {

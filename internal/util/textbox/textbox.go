@@ -95,7 +95,7 @@ func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Co
 		matrix = matrix.Moved(pixel.V(0, math.Ceil(float64(height-content.height)/2.0)))
 	case tbcfg.VAlignBottom:
 		// do nothing
-		//matrix = matrix.Moved(gfx.IVec(0, -height))
+		//matrix = matrix.MovedDelta(gfx.IVec(0, -height))
 	}
 
 	tb.imd.Clear()

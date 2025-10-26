@@ -5,6 +5,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
@@ -36,6 +37,8 @@ func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.B
 		overlay.OnTick(s, target, timeDelta)
 		if overlay.GetIsActive() {
 			remaining = append(remaining, overlay)
+		} else {
+			log.Info().Str("overlay", overlay.Id()).Msg("overlay deactivated")
 		}
 	}
 	o.overlays = remaining

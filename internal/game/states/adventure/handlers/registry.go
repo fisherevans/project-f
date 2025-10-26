@@ -5,11 +5,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var registry map[string]func() events.EventHandler
+var registry map[string]func(map[string]any) events.EventHandler
 
-func Register(name string, factory func() events.EventHandler) {
+func Register(name string, factory func(map[string]any) events.EventHandler) {
 	if registry == nil {
-		registry = make(map[string]func() events.EventHandler)
+		registry = make(map[string]func(map[string]any) events.EventHandler)
 	}
 	if _, exists := registry[name]; exists {
 		log.Fatal().Msgf("Handler %s already exists", name)
@@ -17,15 +17,18 @@ func Register(name string, factory func() events.EventHandler) {
 	registry[name] = factory
 }
 
-func Get(name string) events.EventHandler {
+func Get(name string, props map[string]any) events.EventHandler {
 	if registry == nil {
 		return nil
+	}
+	if props == nil {
+		props = map[string]any{}
 	}
 	factory, ok := registry[name]
 	if !ok {
 		return nil
 	}
-	return factory()
+	return factory(props)
 }
 
 type None struct{}

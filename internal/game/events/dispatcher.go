@@ -24,7 +24,7 @@ func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []Dispatche
 		if err := effect.Validate(); err != nil {
 			log.Err(err).
 				Interface("effect", effect).
-				Str("source", r.ctx.Id()).
+				Str("source", r.ctx.EntityId()).
 				Msg("Invalid effect")
 		} else {
 			effects = append(effects, DispatchedEffect{
@@ -37,12 +37,16 @@ func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []Dispatche
 }
 
 type Dispatcher struct {
+	worldState         WorldState
+	effectDispatcher   EffectDispatcher
 	registeredHandlers []*registeredEventHandler
-	queuedEvents       []any
 }
 
-func NewDispatcher() *Dispatcher {
-	return &Dispatcher{}
+func NewDispatcher(worldState WorldState, effectDispatcher EffectDispatcher) *Dispatcher {
+	return &Dispatcher{
+		worldState:       worldState,
+		effectDispatcher: effectDispatcher,
+	}
 }
 
 func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
@@ -50,7 +54,7 @@ func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
 		log.Fatal().Msg("Event handler context is nil")
 	}
 	if handler == nil {
-		log.Fatal().Msgf("Event handler for %s is nil", ctx.Id())
+		log.Fatal().Msgf("Event handler for %s is nil", ctx.EntityId())
 	}
 	d.registeredHandlers = append(d.registeredHandlers, &registeredEventHandler{
 		ctx:     ctx,
@@ -59,13 +63,8 @@ func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
 	})
 }
 
-func (d *Dispatcher) Dispatch(event any) {
-	d.queuedEvents = append(d.queuedEvents, event)
-}
-
-func (d *Dispatcher) Flush(worldState WorldStateReader) []DispatchedEffect {
-	var effects []DispatchedEffect
-	for _, event := range d.queuedEvents {
+func (d *Dispatcher) Dispatch(events ...any) {
+	for _, event := range events {
 		log.Debug().Interface("event", event).Type("type", event).Msg("dispatching event")
 		eventPtr := event
 		if reflect.TypeOf(event).Kind() != reflect.Ptr {
@@ -76,21 +75,36 @@ func (d *Dispatcher) Flush(worldState WorldStateReader) []DispatchedEffect {
 			eventPtr = ptr.Interface()
 		}
 		for _, registeredHandler := range d.registeredHandlers {
-			output := registeredHandler.Handler.HandleEvent(registeredHandler.ctx, worldState, registeredHandler.State, eventPtr)
-			effects = append(effects, registeredHandler.handleOutput(output)...)
+			output := registeredHandler.Handler.HandleEvent(registeredHandler.ctx, d.worldState, registeredHandler.State, eventPtr)
+			d.handleOutput(registeredHandler, output)
 		}
 	}
-	d.queuedEvents = nil
-	return effects
 }
 
-func (d *Dispatcher) Init(worldState WorldStateReader) []DispatchedEffect {
-	var effects []DispatchedEffect
+func (d *Dispatcher) Init(worldState WorldStateReader) {
 	for _, registeredHandler := range d.registeredHandlers {
 		output := registeredHandler.Handler.Init(registeredHandler.ctx, worldState, registeredHandler.State)
-		effects = append(effects, registeredHandler.handleOutput(output)...)
+		d.handleOutput(registeredHandler, output)
 	}
-	return effects
+}
+
+func (d *Dispatcher) handleOutput(handler *registeredEventHandler, output *HandlerOutput) {
+	if output == nil {
+		return
+	}
+	if output.State != nil {
+		handler.State = output.State
+	}
+	for _, effect := range output.Effects {
+		if err := effect.Validate(); err != nil {
+			log.Error().Interface("effect", effect).Msg("Invalid effect, ignoring")
+			continue
+		}
+		d.effectDispatcher(DispatchedEffect{
+			Source: handler.ctx,
+			Effect: effect,
+		})
+	}
 }
 
 type DispatchedEffect struct {

@@ -11,6 +11,31 @@
     ],
     "propertyTypes": [
         {
+            "color": "#ffa0a0a4",
+            "drawFill": true,
+            "id": 5,
+            "members": [
+                {
+                    "name": "script_ref",
+                    "type": "string",
+                    "value": ""
+                }
+            ],
+            "name": "ModeBasedEntity",
+            "type": "class",
+            "useAs": [
+                "property",
+                "map",
+                "layer",
+                "object",
+                "tile",
+                "tileset",
+                "wangcolor",
+                "wangset",
+                "project"
+            ]
+        },
+        {
             "color": "#ff0010c1",
             "drawFill": true,
             "id": 1,
@@ -26,31 +51,6 @@
             "useAs": [
                 "property",
                 "object",
-                "project"
-            ]
-        },
-        {
-            "color": "#ffb300b0",
-            "drawFill": true,
-            "id": 4,
-            "members": [
-                {
-                    "name": "script_ref",
-                    "type": "string",
-                    "value": ""
-                }
-            ],
-            "name": "Script",
-            "type": "class",
-            "useAs": [
-                "property",
-                "map",
-                "layer",
-                "object",
-                "tile",
-                "tileset",
-                "wangcolor",
-                "wangset",
                 "project"
             ]
         },

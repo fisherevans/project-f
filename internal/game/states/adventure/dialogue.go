@@ -82,9 +82,9 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 			if a || bJustPressed {
 				ds.queuedDialogues = ds.queuedDialogues[1:]
 				s.eventDispatcher.Dispatch(events.EventDialogueComplete{
-					DialogueId: dialogue.Id(),
+					DialogueId: dialogue.EntityId(),
 				})
-				s.planExecutor.MarkDialogueComplete(dialogue.Id())
+				s.planExecutor.MarkDialogueComplete(dialogue.EntityId())
 			}
 		} else if dialogue.Content().IsPageFullyDisplayed() {
 			dialogue.Content().NextPage()
@@ -108,7 +108,7 @@ func (ds *DialogueSystem) flushPending() {
 }
 
 type Dialogue interface {
-	Id() string
+	EntityId() string
 	Message() string
 	Content() *textbox.Content
 }
@@ -128,7 +128,7 @@ func NewBasicDialogue(message string, id string) Dialogue {
 	}
 }
 
-func (b basicDialogue) Id() string {
+func (b basicDialogue) EntityId() string {
 	return b.id
 }
 

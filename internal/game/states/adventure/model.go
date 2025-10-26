@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 
@@ -22,15 +23,37 @@ func (l MapLocation) ToVec() pixel.Vec {
 	return pixel.V(float64(l.X), float64(l.Y))
 }
 
-func (l MapLocation) Moved(dx int, dy int) MapLocation {
+func (l MapLocation) MovedDelta(dx int, dy int) MapLocation {
 	return MapLocation{
 		X: l.X + dx,
 		Y: l.Y + dy,
 	}
 }
 
+func (l MapLocation) Moved(dir input.Direction) MapLocation {
+	return l.MovedDelta(dir.GetVector())
+}
+
 func (l MapLocation) DirectionTowards(other MapLocation) input.Direction {
 	return DirectionTowards(gfx.IVec(l.X, l.Y), gfx.IVec(other.X, other.Y))
+}
+
+func (l MapLocation) DistanceTo(location MapLocation) float64 {
+	return l.ToVec().Sub(location.ToVec()).Len()
+}
+
+func (l MapLocation) ToEventLocation() events.Location {
+	return events.Location{
+		X: l.X,
+		Y: l.Y,
+	}
+}
+
+func LocationFromEvent(l events.Location) MapLocation {
+	return MapLocation{
+		X: l.X,
+		Y: l.Y,
+	}
 }
 
 type MapBounds struct {

@@ -13,10 +13,10 @@ func init() {
 		zerolog.ConsoleWriter{
 			Out:        os.Stdout,
 			NoColor:    false,
-			TimeFormat: "15:04:05",
+			TimeFormat: "15:04:05.000",
 		},
 	).With().Timestamp().Logger()
-	zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMicro
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 }

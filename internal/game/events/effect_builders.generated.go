@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-23T15:01:45-04:00 by go generate
+// Generated at 2025-10-26T09:38:00-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -7,6 +7,8 @@ package events
 import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"github.com/gopxl/pixel/v2"
 )
 
 func NewFunctionEffect(fn RunnableFunction) *EffectFunction {
@@ -44,29 +46,46 @@ func NewTimerEffect(timerId string, durationSeconds float64) *EffectTimer {
 	}
 }
 
-func NewMutateEntityEffect(entityId string) *EffectMutateEntity {
-	return &EffectMutateEntity{
+func NewMutateModeBasedEntityEffect(entityId string) *EffectMutateModeBasedEntity {
+	return &EffectMutateModeBasedEntity{
 		EntityId: entityId,
 	}
 }
 
-func (e *EffectMutateEntity) WithMode(mode string) *EffectMutateEntity {
+func (e *EffectMutateModeBasedEntity) WithMode(mode string) *EffectMutateModeBasedEntity {
 	e.Mode = &mode
 	return e
 }
 
-func (e *EffectMutateEntity) WithIsPassable(isPassable bool) *EffectMutateEntity {
-	e.IsPassable = &isPassable
+func (e *EffectMutateModeBasedEntity) WithAnimations(animations map[string][]AnimationReference) *EffectMutateModeBasedEntity {
+	e.Animations = &animations
 	return e
 }
 
-func (e *EffectMutateEntity) WithDynamicAnimations(dynamicAnimations map[string][]DynamicAnimationReference) *EffectMutateEntity {
-	e.DynamicAnimations = &dynamicAnimations
+func (e *EffectMutateModeBasedEntity) WithLights(lights map[string][]LightConfig) *EffectMutateModeBasedEntity {
+	e.Lights = &lights
 	return e
 }
 
-func (e *EffectMutateEntity) WithDynamicLights(dynamicLights map[string][]LightConfig) *EffectMutateEntity {
-	e.DynamicLights = &dynamicLights
+func (e *EffectMutateModeBasedEntity) WithAnimationColorMasks(animationColorMasks map[string]pixel.RGBA) *EffectMutateModeBasedEntity {
+	e.AnimationColorMasks = &animationColorMasks
+	return e
+}
+
+func NewResetModeBasedEntityAnimationEffect(entityId string) *EffectResetModeBasedEntityAnimation {
+	return &EffectResetModeBasedEntityAnimation{
+		EntityId: entityId,
+	}
+}
+
+func NewMutateBlockingPresenceEffect(entityId string) *EffectMutateBlockingPresence {
+	return &EffectMutateBlockingPresence{
+		EntityId: entityId,
+	}
+}
+
+func (e *EffectMutateBlockingPresence) WithIsBlockingIngress(isBlockingIngress bool) *EffectMutateBlockingPresence {
+	e.IsBlockingIngress = &isBlockingIngress
 	return e
 }
 
@@ -135,10 +154,25 @@ func NewPlanEffect(planId string, steps []PlanStep) *EffectPlan {
 	}
 }
 
-func NewBlockInputEffect(blocked bool) *EffectBlockInput {
-	return &EffectBlockInput{
-		Blocked: blocked,
+func NewMutateEntityBehaviorEffect(entityId string) *EffectMutateEntityBehavior {
+	return &EffectMutateEntityBehavior{
+		EntityId: entityId,
 	}
+}
+
+func (e *EffectMutateEntityBehavior) WithDisableBy(disableBy string) *EffectMutateEntityBehavior {
+	e.DisableBy = &disableBy
+	return e
+}
+
+func (e *EffectMutateEntityBehavior) WithEnableBy(enableBy string) *EffectMutateEntityBehavior {
+	e.EnableBy = &enableBy
+	return e
+}
+
+func (e *EffectMutateEntityBehavior) WithReset(reset bool) *EffectMutateEntityBehavior {
+	e.Reset = &reset
+	return e
 }
 
 func NewFadeEffect(fadeId string, durationSeconds float64, transitions int) *EffectFade {
@@ -170,21 +204,61 @@ func NewDeactivateFadeEffect(fadeId string) *EffectDeactivateFade {
 	}
 }
 
-func NewTriggerMovementEffect(entityId string, direction input.Direction) *EffectTriggerMovement {
+func NewTriggerMovementEffect(entityId string) *EffectTriggerMovement {
 	return &EffectTriggerMovement{
 		EntityId: entityId,
-		Direction: direction,
 	}
 }
 
-func NewSetFollowCameraEffect(resetPosition bool) *EffectSetFollowCamera {
-	return &EffectSetFollowCamera{
-		ResetPosition: resetPosition,
+func (e *EffectTriggerMovement) WithDirection(direction input.Direction) *EffectTriggerMovement {
+	e.Direction = &direction
+	return e
+}
+
+func (e *EffectTriggerMovement) WithLocation(location Location) *EffectTriggerMovement {
+	e.Location = &location
+	return e
+}
+
+func (e *EffectTriggerMovement) WithMoveState(moveState types.MoveState) *EffectTriggerMovement {
+	e.MoveState = &moveState
+	return e
+}
+
+func NewResetMovementEffect(entityId string) *EffectResetMovement {
+	return &EffectResetMovement{
+		EntityId: entityId,
 	}
 }
 
-func (e *EffectSetFollowCamera) WithEntityId(entityId string) *EffectSetFollowCamera {
-	e.EntityId = &entityId
+func NewOverrideCameraEffect() *EffectOverrideCamera {
+	return &EffectOverrideCamera{
+	}
+}
+
+func (e *EffectOverrideCamera) WithFollow(follow FollowCamera) *EffectOverrideCamera {
+	e.Follow = &follow
+	return e
+}
+
+func NewPopCameraOverrideEffect(maintainCurrentLocation bool) *EffectPopCameraOverride {
+	return &EffectPopCameraOverride{
+		MaintainCurrentLocation: maintainCurrentLocation,
+	}
+}
+
+func NewMutateFollowCameraEffect() *EffectMutateFollowCamera {
+	return &EffectMutateFollowCamera{
+	}
+}
+
+func (e *EffectMutateFollowCamera) WithFollowEntityId(followEntityId string) *EffectMutateFollowCamera {
+	e.FollowEntityId = &followEntityId
+	return e
+}
+
+func (e *EffectMutateFollowCamera) WithResetPosition(resetPosition bool) *EffectMutateFollowCamera {
+	e.ResetPosition = &resetPosition
 	return e
 }
 
@@ -199,11 +273,6 @@ func (e *EffectMutateNPC) WithTalkingAtEntityId(talkingAtEntityId string) *Effec
 	return e
 }
 
-func (e *EffectMutateNPC) WithIsTalking(isTalking bool) *EffectMutateNPC {
-	e.IsTalking = &isTalking
-	return e
-}
-
 func NewTriggerCombatEffect(combatId string, background string) *EffectTriggerCombat {
 	return &EffectTriggerCombat{
 		CombatId: combatId,
@@ -214,5 +283,51 @@ func NewTriggerCombatEffect(combatId string, background string) *EffectTriggerCo
 func (e *EffectTriggerCombat) WithOpponent(opponent rpg.PrimortalType) *EffectTriggerCombat {
 	e.Opponent = &opponent
 	return e
+}
+
+func NewEntityFaceDirectionEffect(entityId string, direction input.Direction) *EffectEntityFaceDirection {
+	return &EffectEntityFaceDirection{
+		EntityId: entityId,
+		Direction: direction,
+	}
+}
+
+func NewStartScriptedMotionEffect(motionId string, entityId string) *EffectStartScriptedMotion {
+	return &EffectStartScriptedMotion{
+		MotionId: motionId,
+		EntityId: entityId,
+	}
+}
+
+func (e *EffectStartScriptedMotion) WithLocation(location Location) *EffectStartScriptedMotion {
+	e.Location = &location
+	return e
+}
+
+func (e *EffectStartScriptedMotion) WithToEntityId(toEntityId string) *EffectStartScriptedMotion {
+	e.ToEntityId = &toEntityId
+	return e
+}
+
+func (e *EffectStartScriptedMotion) WithRelative(relative RelativeLocation) *EffectStartScriptedMotion {
+	e.Relative = &relative
+	return e
+}
+
+func NewOverrideEntityBehaviorEffect(entityId string) *EffectOverrideEntityBehavior {
+	return &EffectOverrideEntityBehavior{
+		EntityId: entityId,
+	}
+}
+
+func (e *EffectOverrideEntityBehavior) WithScriptedMotion(scriptedMotion EntityBehaviorScriptedMotion) *EffectOverrideEntityBehavior {
+	e.ScriptedMotion = &scriptedMotion
+	return e
+}
+
+func NewPopEntityBehaviorOverrideEffect(entityId string) *EffectPopEntityBehaviorOverride {
+	return &EffectPopEntityBehaviorOverride{
+		EntityId: entityId,
+	}
 }
 

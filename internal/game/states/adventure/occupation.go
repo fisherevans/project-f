@@ -1,129 +1,114 @@
 package adventure
 
-import "fisherevans.com/project/f/internal/game/input"
+import "fisherevans.com/project/f/internal/game/events"
 
-type TileState struct {
-	EntitiesWithin []EntityId
+type Occupation struct {
+	state             *State
+	locationEntities  map[MapLocation]map[string]struct{}
+	entitiesLocations map[string]map[MapLocation]struct{}
 }
 
-func (s *State) GetTileState(loc MapLocation) *TileState {
-	ts, exists := s.tileStates[loc]
-	if !exists {
-		ts = &TileState{}
-		s.tileStates[loc] = ts
+func NewOccupation(state *State) *Occupation {
+	return &Occupation{
+		state:             state,
+		locationEntities:  map[MapLocation]map[string]struct{}{},
+		entitiesLocations: map[string]map[MapLocation]struct{}{},
 	}
-	return ts
 }
 
-func (s *State) CanEntityLeave(entityIdMoving EntityId, movementDirection input.Direction, fromLocation MapLocation) bool {
-	ts := s.GetTileState(fromLocation)
-	for _, entityIdWithin := range ts.EntitiesWithin {
-		if entityIdWithin == entityIdMoving {
-			continue
-		}
-		entityWithin := s.entities[entityIdWithin]
-		if !entityWithin.CanEgress(movementDirection, entityIdMoving) {
-			return false
-		}
+func (o *Occupation) ForEachOccupiedLocation(id string, handler func(location MapLocation)) {
+	for loc := range o.entitiesLocations[id] {
+		handler(loc)
 	}
-	return true
 }
 
-func (s *State) CanEntityEnter(entityIdMoving EntityId, movementDirection input.Direction, desiredLocation MapLocation) bool {
-	ts := s.GetTileState(desiredLocation)
-	for _, entityIdWithin := range ts.EntitiesWithin {
-		if entityIdWithin == entityIdMoving {
-			continue
-		}
-		entityWithin := s.entities[entityIdWithin]
-		if !entityWithin.CanIngress(movementDirection.Opposite(), entityIdMoving) {
-			return false
-		}
+func (o *Occupation) OccupiedLocationsList(id string) []MapLocation {
+	var out []MapLocation
+	for loc := range o.entitiesLocations[id] {
+		out = append(out, loc)
 	}
-	return true
+	return out
 }
 
-func (ts *TileState) AddEntity(id EntityId) bool {
-	for _, existingId := range ts.EntitiesWithin {
-		if existingId == id {
-			return false
-		}
+func (o *Occupation) ForEachOccupyingEntity(loc MapLocation, handler func(id string)) {
+	for id := range o.locationEntities[loc] {
+		handler(id)
 	}
-	ts.EntitiesWithin = append(ts.EntitiesWithin, id)
-	return true
 }
 
-func (ts *TileState) RemoveEntity(id EntityId) bool {
-	removeIndex := -1
-	for index, existingId := range ts.EntitiesWithin {
-		if existingId == id {
-			removeIndex = index
-			break
-		}
+func (o *Occupation) OccupyingEntityList(loc MapLocation) []string {
+	var out []string
+	for id := range o.locationEntities[loc] {
+		out = append(out, id)
 	}
-	if removeIndex == -1 {
+	return out
+}
+
+func (o *Occupation) Occupy(id string, loc MapLocation) bool {
+	if _, exists := o.locationEntities[loc]; !exists {
+		o.locationEntities[loc] = map[string]struct{}{}
+	}
+	o.locationEntities[loc][id] = struct{}{}
+	if _, exists := o.entitiesLocations[id]; !exists {
+		o.entitiesLocations[id] = map[MapLocation]struct{}{}
+	}
+	if _, exists := o.entitiesLocations[id][loc]; exists {
 		return false
 	}
-	ts.EntitiesWithin = append(ts.EntitiesWithin[:removeIndex], ts.EntitiesWithin[removeIndex+1:]...)
+	o.entitiesLocations[id][loc] = struct{}{}
 	return true
 }
 
-type Passable interface {
-	CanEgress(side input.Direction, id EntityId) bool
-	CanIngress(side input.Direction, id EntityId) bool
-}
-
-type blockIngressPassable struct {
-	doBlockIngress bool
-}
-
-func newPassablePreventIngress(doBlockIngress bool) *blockIngressPassable {
-	return &blockIngressPassable{
-		doBlockIngress: doBlockIngress,
+func (o *Occupation) OccupyAndEmit(id string, loc MapLocation, wasTeleported bool) {
+	if !o.Occupy(id, loc) {
+		return
 	}
+	o.EmitOccupyEvents(id, loc, wasTeleported)
 }
 
-func (sp *blockIngressPassable) CanEgress(side input.Direction, id EntityId) bool {
+func (o *Occupation) Vacate(id string, loc MapLocation) bool {
+	if _, exists := o.entitiesLocations[id]; !exists {
+		return false
+	}
+	delete(o.entitiesLocations[id], loc)
+	if len(o.entitiesLocations[id]) == 0 {
+		delete(o.entitiesLocations, id)
+	}
+	if _, exists := o.locationEntities[loc]; !exists {
+		return false
+	}
+	delete(o.locationEntities[loc], id)
+	if len(o.locationEntities[loc]) == 0 {
+		delete(o.locationEntities, loc)
+	}
 	return true
 }
 
-func (sp *blockIngressPassable) CanIngress(side input.Direction, id EntityId) bool {
-	return !sp.doBlockIngress
-}
-
-type directionalPassable struct {
-	blockedSides map[input.Direction]bool
-}
-
-func (dp *directionalPassable) CanEgress(side input.Direction, id EntityId) bool {
-	if dp.blockedSides == nil {
-		return true
+func (o *Occupation) VacateAndEmit(id string, loc MapLocation, wasTeleported bool) {
+	if !o.Vacate(id, loc) {
+		return
 	}
-	return dp.blockedSides[side]
+	o.EmitVacateEvents(id, loc, wasTeleported)
 }
 
-func (dp *directionalPassable) CanIngress(side input.Direction, id EntityId) bool {
-	if dp.blockedSides == nil {
-		return false
+func (o *Occupation) EmitVacateEvents(id string, from MapLocation, wasTeleported bool) {
+	for _, zoneId := range o.state.zones.ZonesAt(from) {
+		o.state.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
+			EntityId:      id,
+			ZoneId:        zoneId,
+			IsEntering:    false,
+			WasTeleported: wasTeleported,
+		})
 	}
-	return dp.blockedSides[side]
 }
 
-type bidirectionalPassable struct {
-	blockedEgressSides  map[input.Direction]bool
-	blockedIngressSides map[input.Direction]bool
-}
-
-func (dp *bidirectionalPassable) CanEgress(side input.Direction, id EntityId) bool {
-	if dp.blockedEgressSides == nil {
-		return false
+func (o *Occupation) EmitOccupyEvents(id string, to MapLocation, wasTeleported bool) {
+	for _, zoneId := range o.state.zones.ZonesAt(to) {
+		o.state.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
+			EntityId:      id,
+			ZoneId:        zoneId,
+			IsEntering:    true,
+			WasTeleported: wasTeleported,
+		})
 	}
-	return dp.blockedEgressSides[side]
-}
-
-func (dp *bidirectionalPassable) CanIngress(side input.Direction, id EntityId) bool {
-	if dp.blockedIngressSides == nil {
-		return false
-	}
-	return dp.blockedIngressSides[side]
 }

@@ -7,84 +7,135 @@ import (
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-func (s *State) processEffects(effects []events.DispatchedEffect) {
+func (s *State) processEffects(effects ...events.DispatchedEffect) {
 	for _, e := range effects {
 		s.processEffectFunction(e.Source, e.Function)
 		s.processEffectDialogue(e.Source, e.Dialogue)
 		s.processEffectTimer(e.Source, e.Timer)
-		s.processEffectMutateEntity(e.Source, e.MutateEntity)
 		s.processEffectYieldElythium(e.Source, e.YieldElythium)
 		s.processEffectChatter(e.Source, e.Chatter)
 		s.processSetWorldState(e.Source, e.SetWorldState)
 		s.processTeleportEntity(e.Source, e.SetEntityLocation)
 		s.processEffectPlan(e.Source, e.Plan)
-		s.processEffectBlockInput(e.Source, e.BlockInput)
+		s.processEffectMutateEntityBehavior(e.Source, e.MutateEntityBehavior)
 		s.processEffectFade(e.Source, e.Fade)
 		s.processEffectDeactivateFade(e.Source, e.DeactivateFade)
 		s.processEffectTeleportPlayer(e.Source, e.TeleportPlayer)
 		s.processEffectTriggerMovement(e.Source, e.TriggerMovement)
-		s.processEffectSetFollowCamera(e.Source, e.SetFollowCamera)
-		s.processEffectMutateNPC(e.Source, e.MutateNPC)
+		s.processEffectOverrideCamera(e.Source, e.OverrideCamera)
+		s.processEffectPopCameraOverride(e.Source, e.PopCameraOverride)
+		s.processEffectMutateFollowCamera(e.Source, e.MutateFollowCamera)
 		s.processEffectTriggerCombat(e.Source, e.TriggerCombat)
+		s.processEffectMutateModeBasedRenderer(e.Source, e.MutateModeBasedEntity)
+		s.processEffectResetModeBasedEntityAnimation(e.Source, e.ResetModeBasedEntityAnimation)
+		s.processEffectMutateBlockingPresence(e.Source, e.MutateBlockingPresence)
+		s.processEffectMutateNPC(e.Source, e.MutateNPC)
+		s.processEffectEntityFaceDirection(e.Source, e.EntityFaceDirection)
+		s.processEffectResetMovement(e.Source, e.ResetMovement)
+		s.processEffectStartScriptedMotion(e.Source, e.StartScriptedMotion)
+		s.processEffectOverrideEntityBehavior(e.Source, e.OverrideEntityBehavior)
+		s.processEffectPopEntityBehaviorOverride(e.Source, e.PopEntityBehaviorOverride)
 	}
 }
 
-func logEffectf(source events.EntityContext, e any, messageFormat string, args ...any) {
-	log.Info().Str("caller", source.Id()).Interface("e", e).Msgf(messageFormat, args...)
+func logEffectInfof(source events.EntityContext, e any, messageFormat string, args ...any) {
+	logEffect(zerolog.InfoLevel, source, e, messageFormat, args...)
 }
+
+func logEffectWarnf(source events.EntityContext, e any, messageFormat string, args ...any) {
+	logEffect(zerolog.WarnLevel, source, e, messageFormat, args...)
+}
+
+func logEffect(level zerolog.Level, source events.EntityContext, e any, messageFormat string, args ...any) {
+	log.WithLevel(level).Str("caller", source.EntityId()).Interface("e", e).Msgf(messageFormat, args...)
+}
+
 func (s *State) processEffectFunction(source events.EntityContext, e *events.EffectFunction) {
 	if e == nil {
 		return
 	}
 	e.Fn()
-	logEffectf(source, e, "function executed")
+	logEffectInfof(source, e, "function executed")
 }
 func (s *State) processEffectDialogue(source events.EntityContext, e *events.EffectDialogue) {
 	if e == nil {
 		return
 	}
 	s.dialogues.Append(NewBasicDialogue(e.Text, e.DialogueId))
-	logEffectf(source, e, "dialogue added")
+	logEffectInfof(source, e, "dialogue added")
 }
 
 func (s *State) processEffectTimer(source events.EntityContext, e *events.EffectTimer) {
 	if e == nil {
 		return
 	}
-	s.timers.AddTimer(source.Id(), e.TimerId, e.DurationSeconds)
-	logEffectf(source, e, "timer added")
+	s.timers.AddTimer(source.EntityId(), e.TimerId, e.DurationSeconds)
+	logEffectInfof(source, e, "timer added")
 }
 
-func (s *State) processEffectMutateEntity(source events.EntityContext, e *events.EffectMutateEntity) {
+func (s *State) processEffectMutateModeBasedRenderer(source events.EntityContext, e *events.EffectMutateModeBasedEntity) {
 	if e == nil {
 		return
 	}
-	entity, exists := s.entities[EntityId(e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to find entity for mutation")
+	entity := s.entities.GetEntity(e.EntityId)
+	modeBased, ok := entity.EntityRenderer.(*ModeBasedEntityRenderer)
+	if !ok {
+		logEffectWarnf(source, e, "failed to find mode based entity for mutation")
 		return
 	}
 	if e.Mode != nil {
-		entity.SetMode(*e.Mode)
+		modeBased.currentMode = *e.Mode
 	}
-	dynamic, isDynamic := entity.(*DynamicEntity)
-	if isDynamic {
-		if e.IsPassable != nil {
-			dynamic.SetDefaultIsPassable(*e.IsPassable)
-		}
-		if e.DynamicAnimations != nil && *e.DynamicAnimations != nil {
-			dynamic.SetDynamicAnimations(*e.DynamicAnimations)
-		}
-		if e.DynamicLights != nil && *e.DynamicLights != nil {
-			dynamic.SetDynamicLights(*e.DynamicLights)
-		}
+	if e.Animations != nil {
+		modeBased.SetModeAnimations(*e.Animations)
 	}
-	logEffectf(source, e, "entity mutated")
+	if e.Lights != nil {
+		modeBased.SetModeLights(*e.Lights)
+	}
+	if e.AnimationColorMasks != nil {
+		modeBased.SetColorMasks(*e.AnimationColorMasks)
+	}
+	logEffectInfof(source, e, "mode based entity mutated")
+}
+
+func (s *State) processEffectResetModeBasedEntityAnimation(source events.EntityContext, e *events.EffectResetModeBasedEntityAnimation) {
+	if e == nil {
+		return
+	}
+	entity := s.entities.GetEntity(e.EntityId)
+	modeBased, ok := entity.EntityRenderer.(*ModeBasedEntityRenderer)
+	if !ok {
+		logEffectWarnf(source, e, "failed to find mode based entity for mutation")
+		return
+	}
+	for _, animation := range modeBased.getBasicEntityRenderer(modeBased.currentMode).animations {
+		animation.Reset()
+	}
+	logEffectInfof(source, e, "mode based entity animations reset")
+}
+
+func (s *State) processEffectMutateBlockingPresence(source events.EntityContext, e *events.EffectMutateBlockingPresence) {
+	if e == nil {
+		return
+	}
+	entity := s.entities.GetEntity(e.EntityId)
+	presence, ok := entity.EntityPresence.(*blockIngressPresence)
+	if !ok {
+		logEffectWarnf(source, e, "failed to find presence block ingress")
+		return
+	}
+	if e.IsBlockingIngress != nil {
+		presence.isBlockingIngress = *e.IsBlockingIngress
+	}
+	logEffectInfof(source, e, "block presence mutated")
 }
 
 func (s *State) processEffectYieldElythium(source events.EntityContext, e *events.EffectYieldElythium) {
@@ -92,23 +143,23 @@ func (s *State) processEffectYieldElythium(source events.EntityContext, e *event
 		return
 	}
 	s.run.Elythium += e.Amount
-	logEffectf(source, e, "elythium granted")
+	logEffectInfof(source, e, "elythium granted")
 }
 
 func (s *State) processEffectChatter(source events.EntityContext, e *events.EffectChatter) {
 	if e == nil {
 		return
 	}
-	s.chatters.Add(newBasicEntityChatter(EntityId(e.EntityId), e.DurationSeconds, e.Message, e.ChatterId))
-	logEffectf(source, e, "chatter added")
+	s.chatters.Add(newBasicEntityChatter(e.EntityId, e.DurationSeconds, e.Message, e.ChatterId))
+	logEffectInfof(source, e, "chatter added")
 }
 
 func (s *State) processSetWorldState(source events.EntityContext, e *events.EffectSetWorldState) {
 	if e == nil {
 		return
 	}
-	s.setWorldState(e.Key, e.Value, source.Id())
-	logEffectf(source, e, "world state updated")
+	s.setWorldState(e.Key, e.Value, source.EntityId())
+	logEffectInfof(source, e, "world state updated")
 }
 
 func (s *State) processTeleportEntity(source events.EntityContext, e *events.EffectSetEntityLocation) {
@@ -119,51 +170,51 @@ func (s *State) processTeleportEntity(source events.EntityContext, e *events.Eff
 	if e.ToReference != nil {
 		tele, ok := s.teleports[TeleportReference(*e.ToReference)]
 		if !ok {
-			log.Warn().Str("toReference", *e.ToReference).Msg("failed to find teleport reference")
+			logEffectWarnf(source, e, "failed to find teleport reference")
 			return
 		}
 		toLocation = tele.Location
 	} else if e.ToLocation != nil {
 		toLocation = MapLocation{X: e.ToLocation.X, Y: e.ToLocation.Y}
 	} else if e.ToEntityId != nil {
-		toEntity, exists := s.entities[EntityId(*e.ToEntityId)]
-		if !exists {
-			log.Warn().Str("toEntityId", *e.ToEntityId).Msg("failed to find entity to teleport to")
-			return
-		}
-		toLocation = toEntity.Location()
+		entity := s.entities.GetEntity(*e.ToEntityId)
+		toLocation = entity.Location
 	} else {
-		log.Warn().Msg("failed to find teleport destination")
+		logEffectWarnf(source, e, "failed to find teleport destination")
 		return
 	}
-	entity, exists := s.entities[EntityId(e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to find entity for teleport")
-		return
-	}
-	if entity.TeleportTo(s, toLocation) {
-		logEffectf(source, e, "entity teleported")
-	} else {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to teleport entity")
-	}
+	s.entities.TeleportEntity(e.EntityId, toLocation)
 }
 
-// processEffectPlan starts a new plan
+// processEffectPlan starts a new plan (effects are dispatched internally by the plan executor)
 func (s *State) processEffectPlan(source events.EntityContext, e *events.EffectPlan) {
 	if e == nil {
 		return
 	}
 	s.planExecutor.StartPlan(source, e)
-	logEffectf(source, e, "plan started")
+	logEffectInfof(source, e, "plan started")
 }
 
 // processEffectBlockInput blocks or unblocks input
-func (s *State) processEffectBlockInput(source events.EntityContext, e *events.EffectBlockInput) {
+func (s *State) processEffectMutateEntityBehavior(source events.EntityContext, e *events.EffectMutateEntityBehavior) {
 	if e == nil {
 		return
 	}
-	s.blockInput = e.Blocked
-	logEffectf(source, e, "input blocked: %v", e.Blocked)
+	b, ok := s.entities.behaviors[e.EntityId]
+	if !ok {
+		logEffectWarnf(source, e, "failed to find behavior to mutate")
+		return
+	}
+	if e.DisableBy != nil {
+		b.Disable(*e.DisableBy)
+	}
+	if e.EnableBy != nil {
+		b.Enable(*e.EnableBy)
+	}
+	if e.Reset != nil && *e.Reset {
+		b.Reset()
+	}
+	logEffectInfof(source, e, "behavior mutated")
 }
 
 // processEffectBlockInput blocks or unblocks input
@@ -172,7 +223,7 @@ func (s *State) processEffectDeactivateFade(source events.EntityContext, e *even
 		return
 	}
 	s.overlays.Deactivate(e.FadeId)
-	logEffectf(source, e, "fade deactivated")
+	logEffectInfof(source, e, "fade deactivated")
 }
 
 // processEffectFade creates a fade overlay
@@ -208,21 +259,44 @@ func (s *State) processEffectFade(source events.EntityContext, e *events.EffectF
 	fade := NewFadeOverlay(fromColor, toColor, transitions, base)
 
 	s.overlays.Add(fade)
-	logEffectf(source, e, "fade overlay added")
+	logEffectInfof(source, e, "fade overlay added")
+}
+
+func (s *State) processEffectResetMovement(source events.EntityContext, e *events.EffectResetMovement) {
+	if e == nil {
+		return
+	}
+	p, ok := s.entities.positions[e.EntityId]
+	if !ok {
+		logEffectWarnf(source, e, "failed to find position for entity")
+		return
+	}
+	p.CancelMovement()
+	b, ok := s.entities.behaviors[e.EntityId]
+	if ok {
+		b.Reset()
+	}
 }
 
 func (s *State) processEffectTriggerMovement(source events.EntityContext, e *events.EffectTriggerMovement) {
 	if e == nil {
 		return
 	}
-	if e.EntityId != string(s.player.GetEntityId()) {
-		log.Warn().Str("entityId", e.EntityId).Msg("only player is supported for trigger movement")
-		return
+	entity := s.entities.GetEntity(e.EntityId)
+	moveState := types.MoveStateWalking
+	if e.MoveState != nil {
+		moveState = *e.MoveState
 	}
-	s.player.FacingDirection = e.Direction
-	s.player.intentDirection = e.Direction
-	s.player.TriggerMovement(s, s.player.GetFacingLocation(), MoveStateWalking)
-
+	var location MapLocation
+	if e.Direction != nil {
+		location = entity.Location.Moved(*e.Direction)
+	} else if e.Location != nil {
+		location = MapLocation{
+			X: e.Location.X,
+			Y: e.Location.Y,
+		}
+	}
+	s.entities.AttemptMovement(e.EntityId, location, moveState)
 }
 
 // processEffectTeleportPlayer creates a plan to teleport the player with fade transition
@@ -231,17 +305,11 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 		return
 	}
 
-	// Helper to create string pointer
-	strPtr := func(s string) *string { return &s }
-	bPtr := func(b bool) *bool { return &b }
-
 	// Determine transition style (default to fade)
 	transitionStyle := "fade"
 	if e.TransitionStyle != nil {
 		transitionStyle = *e.TransitionStyle
 	}
-
-	playerEntityId := string(s.player.GetEntityId())
 
 	// Determine exit direction: use explicit if provided, otherwise get from teleport reference
 	var exitDirection *input.Direction
@@ -263,73 +331,62 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 	case "fade":
 		// Classic fade transition (like the old teleport function)
 		fadeOutId := s.planExecutor.GenerateEffectId("fade")
+		fadeDuration := .33
+		var effects []events.Effect
 
-		steps := []events.PlanStep{
-			// Step 1: Block input and fade out
-			{Serial: []events.Effect{
-				{BlockInput: &events.EffectBlockInput{Blocked: true}},
-				{Fade: &events.EffectFade{
-					FadeId:          fadeOutId,
-					DurationSeconds: 0.33,
-					FromColor:       strPtr("#00000000"), // transparent
-					ToColor:         strPtr("#000000FF"), // black
-					Transitions:     1,
-					AutoDeactivate:  bPtr(false),
-				}},
-				{SetEntityLocation: &events.EffectSetEntityLocation{
-					EntityId:    playerEntityId,
-					ToReference: e.ToReference,
-					ToLocation:  e.ToLocation,
-					ToEntityId:  e.ToEntityId,
-				}},
-				{SetFollowCamera: &events.EffectSetFollowCamera{
-					EntityId:      &playerEntityId,
-					ResetPosition: true,
-				}},
+		effects = append(effects,
+			events.Effect{MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithDisableBy(fadeOutId)},
+			events.Effect{Fade: &events.EffectFade{
+				FadeId:          fadeOutId,
+				DurationSeconds: fadeDuration,
+				FromColor:       util.Ptr("#00000000"), // transparent
+				ToColor:         util.Ptr("#000000FF"), // black
+				Transitions:     1,
+				AutoDeactivate:  util.Ptr(false),
 			}},
-		}
-
-		// todo consider adding "wait for idle" for player to stop moving
-
-		// Set exit direction immediately after teleport (if specified)
-		if exitDirection != nil && *exitDirection != input.NotPressed {
-			steps = append(steps,
-				events.PlanStep{Parallel: []events.Effect{
-					{TriggerMovement: &events.EffectTriggerMovement{
-						EntityId:  playerEntityId,
-						Direction: *exitDirection,
-					}},
-				}},
-			)
-		}
-
-		// Add fade in and unblock steps
-		steps = append(steps,
-			// Step 3/4: Fade in and unblock input (parallel)
-			events.PlanStep{Parallel: []events.Effect{
-				{Fade: &events.EffectFade{
-					FadeId:          "", // Auto-generated
-					DurationSeconds: 0.33,
-					FromColor:       strPtr("#000000FF"), // black
-					ToColor:         strPtr("#00000000"), // transparent
-					Transitions:     1,
-				}},
-				{DeactivateFade: &events.EffectDeactivateFade{
-					FadeId: fadeOutId,
-				}},
-				{Timer: &events.EffectTimer{
-					TimerId:         "", // Auto-generated
-					DurationSeconds: 0.33,
-				}},
+			events.Effect{SetEntityLocation: &events.EffectSetEntityLocation{
+				EntityId:    s.player,
+				ToReference: e.ToReference,
+				ToLocation:  e.ToLocation,
+				ToEntityId:  e.ToEntityId,
 			}},
-			events.PlanStep{Parallel: []events.Effect{
-				{BlockInput: &events.EffectBlockInput{Blocked: false}},
+			events.Effect{MutateFollowCamera: &events.EffectMutateFollowCamera{
+				FollowEntityId: &s.player,
+				ResetPosition:  util.Ptr(true),
 			}},
 		)
 
+		// todo consider adding "wait for idle" for player to stop moving
+
+		if exitDirection != nil && *exitDirection != input.NotPressed {
+			effects = append(effects, events.Effect{
+				MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithReset(true),
+				TriggerMovement:      events.NewTriggerMovementEffect(s.player).WithDirection(*exitDirection),
+			})
+		}
+
+		effects = append(effects,
+			events.Effect{
+				Fade: &events.EffectFade{
+					DurationSeconds: fadeDuration,
+					AutoDeactivate:  util.Ptr(true),
+					FromColor:       util.Ptr("#000000FF"), // black
+					ToColor:         util.Ptr("#00000000"), // transparent
+					Transitions:     1,
+				},
+				DeactivateFade: &events.EffectDeactivateFade{
+					FadeId: fadeOutId,
+				},
+				MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).
+					WithEnableBy(fadeOutId),
+			},
+		)
 		plan = &events.EffectPlan{
-			PlanId: "", // Auto-generated
-			Steps:  steps,
+			Steps: []events.PlanStep{
+				{
+					Serial: effects,
+				},
+			},
 		}
 	case "instant":
 		// Instant teleport with no transition
@@ -338,7 +395,7 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 			Steps: []events.PlanStep{
 				{Serial: []events.Effect{
 					{SetEntityLocation: &events.EffectSetEntityLocation{
-						EntityId:    playerEntityId,
+						EntityId:    s.player,
 						ToReference: e.ToReference,
 						ToLocation:  e.ToLocation,
 						ToEntityId:  e.ToEntityId,
@@ -348,57 +405,80 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 		}
 
 	default:
-		log.Warn().Str("transitionStyle", transitionStyle).Msg("Unknown transition style, using fade")
+		logEffectWarnf(source, e, "unknown transition style, using fade")
 		return
 	}
 
-	// Start the plan
-	s.planExecutor.StartPlan(source, plan)
-	logEffectf(source, e, "player teleport plan started with style: %s", transitionStyle)
+	// Execute the plan as a system effect
+	s.ExecuteSystemEffects(events.Effect{Plan: plan})
+	logEffectInfof(source, e, "player teleport plan started with style: %s", transitionStyle)
 }
 
-func (s *State) processEffectSetFollowCamera(source events.EntityContext, e *events.EffectSetFollowCamera) {
+func (s *State) processEffectOverrideCamera(source events.EntityContext, e *events.EffectOverrideCamera) {
 	if e == nil {
 		return
 	}
-	if e.EntityId == nil {
-		log.Warn().Str("entityId", *e.EntityId).Msg("currently EntityId is required to set follow camera")
-	}
-	entity, exists := s.entities[EntityId(*e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", *e.EntityId).Msg("failed to find entity for follow camera")
+	if e.Follow == nil {
+		logEffectWarnf(source, e, "follow camera override requires a follow camera")
 		return
 	}
-	location := s.camera.CurrentLocation()
-	if e.ResetPosition {
-		location = entity.RenderMapLocation()
+	if e.Follow.EntityId == nil {
+		logEffectWarnf(source, e, "currently Id is required to set follow camera")
 	}
-	camera := NewFollowCamera(EntityId(*e.EntityId), location, EntityCameraSpeedPlayerDefault)
-	s.camera = camera
-	logEffectf(source, e, "follow camera set")
+	target := s.entities.GetEntity(*e.Follow.EntityId)
+	location := s.camera.CurrentLocation()
+	if e.Follow.ResetPosition {
+		location = target.PreciseLocation()
+	}
+	camera := NewFollowCamera(target.Id, location, EntityCameraSpeedPlayerDefault)
+	s.OverrideCamera(camera)
+	logEffectInfof(source, e, "camera overriden")
+}
+
+func (s *State) processEffectPopCameraOverride(source events.EntityContext, e *events.EffectPopCameraOverride) {
+	if e == nil {
+		return
+	}
+	s.PopOverrideCamera(e.MaintainCurrentLocation)
+	logEffectInfof(source, e, "camera popped")
+}
+
+func (s *State) processEffectMutateFollowCamera(source events.EntityContext, e *events.EffectMutateFollowCamera) {
+	if e == nil {
+		return
+	}
+	camera := s.camera
+	if override, ok := camera.(*CameraOverride); ok {
+		camera = override.newCamera
+	}
+	followCamera, ok := camera.(*EntityCamera)
+	if !ok {
+		logEffectWarnf(source, e, "camera is not a follow camera")
+		return
+	}
+	if e.FollowEntityId != nil {
+		followCamera.target = *e.FollowEntityId
+	}
+	if e.ResetPosition != nil && *e.ResetPosition {
+		followCamera.location = s.entities.GetEntity(followCamera.target).PreciseLocation()
+	}
+	logEffectInfof(source, e, "follow camera mutated")
 }
 
 func (s *State) processEffectMutateNPC(source events.EntityContext, e *events.EffectMutateNPC) {
 	if e == nil {
 		return
 	}
-	entity, exists := s.entities[EntityId(e.EntityId)]
-	if !exists {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to find entity for mutation")
+	entity := s.entities.GetEntity(e.EntityId)
+	npc, ok := entity.EntityBehavior.(*NPCBehavior)
+	if !ok {
+		logEffectWarnf(source, e, "failed to find npc entity for mutation")
 		return
 	}
-	npc, ok := entity.(*NPC)
-	if !ok {
-		log.Warn().Str("entityId", e.EntityId).Msg("failed to cast entity to NPC")
-	}
 	if e.TalkingAtEntityId != nil {
-		npc.Talking = true
-		npc.TalkingTowards = EntityId(*e.TalkingAtEntityId)
+		npc.talkingTowards = *e.TalkingAtEntityId
 	}
-	if e.IsTalking != nil {
-		npc.Talking = *e.IsTalking
-	}
-	logEffectf(source, e, "npc mutated")
+	logEffectInfof(source, e, "npc mutated")
 }
 
 func (s *State) processEffectTriggerCombat(source events.EntityContext, e *events.EffectTriggerCombat) {
@@ -410,7 +490,6 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 		return
 	}
 	s.enteringCombat = true
-	s.blockInput = true
 
 	postCombat := func(r game.CombatIntentResult) {
 		game.DebugNotification("Combat complete!")
@@ -422,7 +501,7 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 			State: s,
 		})
 		game.CurrentSave().Animech.AnimechExperience += r.ResearchPoints // todo this isn't right
-		s.AddSystemEffect(events.Effect{
+		s.ExecuteSystemEffects(events.Effect{
 			DeactivateFade: &events.EffectDeactivateFade{
 				FadeId: "combat_fade",
 			},
@@ -434,17 +513,18 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 		s.planExecutor.MarkCombatComplete(e.CombatId)
 	}
 
-	s.AddSystemEffect(events.Effect{
+	s.ExecuteSystemEffects(events.Effect{
 		Plan: &events.EffectPlan{
 			Steps: []events.PlanStep{
 				{
 					Serial: []events.Effect{
 						{
+							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithDisableBy("combat"),
 							Fade: &events.EffectFade{
 								DurationSeconds: 1,
-								AutoDeactivate:  ptr(true),
-								FromColor:       ptr("#00000000"),
-								ToColor:         ptr("#000000FF"),
+								AutoDeactivate:  util.Ptr(true),
+								FromColor:       util.Ptr("#00000000"),
+								ToColor:         util.Ptr("#000000FF"),
 								Transitions:     6,
 							},
 						},
@@ -452,9 +532,9 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 							Fade: &events.EffectFade{
 								FadeId:          "combat_fade",
 								DurationSeconds: 3,
-								AutoDeactivate:  ptr(false),
-								FromColor:       ptr("#00000000"),
-								ToColor:         ptr("#000000FF"),
+								AutoDeactivate:  util.Ptr(false),
+								FromColor:       util.Ptr("#00000000"),
+								ToColor:         util.Ptr("#000000FF"),
 								Transitions:     1,
 							},
 							Function: &events.EffectFunction{
@@ -464,10 +544,10 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 							},
 						},
 						{
+							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithEnableBy("combat"),
 							Function: &events.EffectFunction{
 								Fn: func() {
 									s.enteringCombat = false
-									s.blockInput = false
 									game.RemoveCustomShader()
 									var opponent rpg.PrimortalType
 									if e.Opponent != nil {
@@ -498,6 +578,79 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 	})
 }
 
-func ptr[T any](t T) *T {
-	return &t
+func (s *State) processEffectEntityFaceDirection(source events.EntityContext, e *events.EffectEntityFaceDirection) {
+	if e == nil {
+		return
+	}
+	p, ok := s.entities.positions[e.EntityId]
+	if !ok {
+		logEffectWarnf(source, e, "failed to find position for entity")
+	}
+	p.FacingDirection = e.Direction
+}
+
+func (s *State) processEffectStartScriptedMotion(source events.EntityContext, e *events.EffectStartScriptedMotion) {
+	if e == nil {
+		return
+	}
+	behvaior, ok := s.entities.behaviors[e.EntityId]
+	if !ok {
+		logEffectWarnf(source, e, "failed to find behave motion")
+		return
+	}
+	override, ok := behvaior.(*EntityBehaviorOverride)
+	if ok {
+		behvaior = override.newBehavior
+	}
+	scripted, ok := behvaior.(*ScriptedMotionBehavior)
+	if !ok {
+		logEffectWarnf(source, e, "behavior is not a scripted motion behavior")
+		return
+	}
+	var location MapLocation
+	if e.Location != nil {
+		location = LocationFromEvent(*e.Location)
+	} else if e.Relative != nil {
+		p, ok := s.entities.positions[e.EntityId]
+		if !ok {
+			logEffectWarnf(source, e, "failed to find position for entity")
+			return
+		}
+		location = p.Location
+		if p.IsMoving() {
+			location = p.MovementTargetLocation
+		}
+		for i := 0; i < e.Relative.Steps; i++ {
+			location = location.Moved(e.Relative.Direction)
+		}
+	} else if e.ToEntityId != nil {
+		p, ok := s.entities.positions[*e.ToEntityId]
+		if !ok {
+			logEffectWarnf(source, e, "failed to find position for entity")
+			return
+		}
+		location = p.Location
+	}
+	scripted.SetTarget(e.MotionId, location)
+	logEffectInfof(source, e, "scripted motion started")
+}
+
+func (s *State) processEffectOverrideEntityBehavior(source events.EntityContext, e *events.EffectOverrideEntityBehavior) {
+	if e == nil {
+		return
+	}
+	if e.ScriptedMotion == nil {
+		logEffectWarnf(source, e, "only scripted motion behaviors can be used to override")
+		return
+	}
+	s.entities.OverrideBehavior(e.EntityId, NewScriptedMotionBehavior(e.EntityId, s.entities))
+	logEffectInfof(source, e, "entity behavior overridden")
+}
+
+func (s *State) processEffectPopEntityBehaviorOverride(source events.EntityContext, e *events.EffectPopEntityBehaviorOverride) {
+	if e == nil {
+		return
+	}
+	s.entities.PopOverrideBehavior(e.EntityId)
+	logEffectInfof(source, e, "entity behavior override popped")
 }
