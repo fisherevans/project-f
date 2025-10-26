@@ -15,18 +15,18 @@
         },
         "map1.tmx": {
             "expandedObjectLayers": [
-                6,
-                13
+                13,
+                6
             ],
-            "scale": 2.7173,
-            "selectedLayer": 0,
+            "scale": 3.1417,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 877.8934972215067,
-                "y": 1479.9617267140177
+                "x": 977.3371104815863,
+                "y": 1195.0536333832001
             }
         },
         "snowhex_base.tsx": {
-            "scaleInDock": 1.2774,
+            "scaleInDock": 0.7472,
             "scaleInEditor": 1
         },
         "space_base.tsx": {

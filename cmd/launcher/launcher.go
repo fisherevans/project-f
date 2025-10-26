@@ -13,6 +13,7 @@ import (
 	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/menu"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
+	"fisherevans.com/project/f/internal/game/states/title"
 	"fisherevans.com/project/f/internal/game/states/xenolog"
 )
 
@@ -25,5 +26,6 @@ func main() {
 	game.RegisterStateFactory(menu.New)
 	game.RegisterStateFactory(xenolog.New)
 	game.RegisterStateFactory(state_selector.New)
+	game.RegisterStateFactory(title.New)
 	opengl.Run(runtime.Run)
 }

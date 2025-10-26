@@ -494,7 +494,7 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 	postCombat := func(r game.CombatIntentResult) {
 		game.DebugNotification("Combat complete!")
 		if !r.PlayerWon {
-			game.SetActiveStateIntent(game.InitialState())
+			game.SetActiveStateIntent(game.TitleIntent{})
 			return
 		}
 		game.SetActiveStateIntent(game.SwapStateIntent{

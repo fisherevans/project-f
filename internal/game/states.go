@@ -40,7 +40,7 @@ func createState(config any) (State, error) {
 	return fn(config), nil
 }
 
-func InitialState() SelectIntent {
+func DefaultSelectorState() SelectIntent {
 	i := SelectIntent{}
 	i = i.With("Adventure", func() any {
 		return AdventureIntent{
@@ -57,7 +57,7 @@ func InitialState() SelectIntent {
 				Background: "combat/background_sylvoria",
 				OnComplete: func(r CombatIntentResult) {
 					ctx.Notify("Combat complete!")
-					SetActiveStateIntent(InitialState())
+					SetActiveStateIntent(DefaultSelectorState())
 				},
 			}
 		})

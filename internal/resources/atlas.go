@@ -32,6 +32,7 @@ type Atlas struct {
 func DefaultAtlas() *Atlas {
 	if defaultAtlas == nil {
 		defaultAtlas = CreateAtlas(AtlasFilter{
+			DoIncludeSprite: IgnoreSpritePrefix("title/"),
 			FontNames: []string{
 				FontNameM3x6,
 				FontNameM5x7,
@@ -119,8 +120,30 @@ func (a *Atlas) GetFont(name string) FontInstance {
 }
 
 type AtlasFilter struct {
-	SpritePrefixes []string
-	FontNames      []string
+	DoIncludeSprite func(string) bool
+	FontNames       []string
+}
+
+func RequireSpritePrefix(prefixes ...string) func(string) bool {
+	return func(name string) bool {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(name, prefix) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func IgnoreSpritePrefix(prefixes ...string) func(string) bool {
+	return func(name string) bool {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(name, prefix) {
+				return false
+			}
+		}
+		return true
+	}
 }
 
 func CreateAtlas(filter AtlasFilter) *Atlas {
@@ -128,14 +151,7 @@ func CreateAtlas(filter AtlasFilter) *Atlas {
 	var images []image.Image
 
 	for spriteName, sprite := range spriteResources {
-		include := len(filter.SpritePrefixes) == 0
-		for _, prefix := range filter.SpritePrefixes {
-			if strings.HasPrefix(spriteName, prefix) {
-				include = true
-				break
-			}
-		}
-		if !include {
+		if filter.DoIncludeSprite != nil && !filter.DoIncludeSprite(spriteName) {
 			continue
 		}
 		atlasedListeners = append(atlasedListeners, func(atlas *Atlas, placement pixel.Rect) {

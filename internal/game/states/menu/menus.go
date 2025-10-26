@@ -18,7 +18,7 @@ func createMainMenu(s *State) *Menu {
 				s.PushMenu(createSettingsMenu(s))
 			}),
 			newSimpleSelectionOption(s, "Quit", func(s *State) {
-				game.SetActiveStateIntent(game.InitialState())
+				game.SetActiveStateIntent(game.TitleIntent{})
 			}),
 		},
 	}

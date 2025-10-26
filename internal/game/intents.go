@@ -2,6 +2,9 @@ package game
 
 import "fisherevans.com/project/f/internal/game/rpg"
 
+type TitleIntent struct {
+}
+
 type SelectIntent struct {
 	Destinations []SelectIntentDestination
 }
