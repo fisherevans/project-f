@@ -51,7 +51,7 @@ func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.W
 }
 
 func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashGapState, event *events.EventOnInteract) *events.HandlerOutput {
-	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.Location)
+	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.GetPrimaryLocation())
 	to := events.Location{X: location.X, Y: location.Y}
 	return events.NewOutput().WithEffects(events.Effect{
 		TriggerMovement: events.NewTriggerMovementEffect(event.SourceId).WithLocation(to).WithMoveState(types.MoveStateDashing),

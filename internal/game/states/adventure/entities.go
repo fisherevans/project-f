@@ -104,16 +104,15 @@ func (es *EntitySystem) TeleportEntity(id string, toLocation MapLocation) {
 		warnLog.Msgf("no position for entity")
 		return
 	}
-	if position.Location == toLocation {
+	if position.GetPrimaryLocation() == toLocation {
 		warnLog.Msgf("attempted movement to same location")
 		return
 	}
 	if position.IsMoving() {
 		position.CancelMovement()
 	}
-	es.occupations.VacateAndEmit(id, position.Location, true)
-	position.Location = toLocation
-	es.occupations.OccupyAndEmit(id, position.Location, true)
+	es.occupations.Vacate(id, position.GetPrimaryLocation())
+	position.SetPrimaryLocation(toLocation, true)
 }
 
 var validAttemptMovementStates = []types.MoveState{types.MoveStateWalking, types.MoveStateRunning, types.MoveStateDashing}
@@ -133,7 +132,7 @@ func (es *EntitySystem) AttemptMovement(id string, targetLocation MapLocation, m
 	position.MovementTargetLocation = targetLocation
 	position.MovementState = movementState
 	position.FacingDirection = movementDirection
-	distance := position.Location.DistanceTo(targetLocation)
+	distance := position.GetPrimaryLocation().DistanceTo(targetLocation)
 	position.MovementProgressionScale = 1.0 / distance
 	return true
 }
@@ -144,12 +143,12 @@ func (es *EntitySystem) isMovementValid(id string, targetLocation MapLocation) (
 		log.Msgf("no position for entity")
 		return false, position, input.NotPressed
 	}
-	movementDirection := position.Location.DirectionTowards(targetLocation)
+	movementDirection := position.GetPrimaryLocation().DirectionTowards(targetLocation)
 	if position.IsMoving() {
 		log.Msgf("entity is already moving")
 		return false, position, movementDirection
 	}
-	if position.Location == targetLocation {
+	if position.GetPrimaryLocation() == targetLocation {
 		log.Msgf("attempted movement to same location")
 		return false, position, movementDirection
 	}
@@ -157,7 +156,7 @@ func (es *EntitySystem) isMovementValid(id string, targetLocation MapLocation) (
 		log.Msgf("movement ingress not valid")
 		return false, position, movementDirection
 	}
-	if !es.isValidTransition(id, position.Location, movementDirection, false) {
+	if !es.isValidTransition(id, position.GetPrimaryLocation(), movementDirection, false) {
 		log.Msgf("movement egress not valid")
 		return false, position, movementDirection
 	}

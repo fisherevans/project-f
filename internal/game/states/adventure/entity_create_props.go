@@ -17,7 +17,7 @@ func init() {
 		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			renderer := NewBasicEntityRenderer().
 				WithAnimations(anim.RedCoin(atlas)).
-				WithLights(NewDynamicLight(colors.FromString("#f00"), 0.5, "pulse_slow"))
+				WithLights(NewLightWithModifier(colors.FromString("#f00"), 0.5, "pulse_slow"))
 			presence := newBlockIngressPresence(false)
 			system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
 			return nil, nil
@@ -28,7 +28,7 @@ func init() {
 				WithAnimations(anim.NewStaticAnimation(tiles.Rocket.From(atlas)))
 			presence := newBlockIngressPresence(true)
 			system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
-			dest := "teleport:" + mapEntity.GetStringMetadata("destination", "")
+			dest := "teleport:" + mapEntity.Properties.GetString("destination", "")
 			requiredElythium := 2
 			handler := events.NewBasicHandler(None{}).
 				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {

@@ -4,7 +4,6 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
-	"github.com/gopxl/pixel/v2"
 )
 
 type RunnableFunction func()
@@ -39,26 +38,27 @@ type EffectTimer struct {
 }
 
 type EffectMutateModeBasedEntity struct {
-	EntityId            string
-	Mode                *string
-	Animations          *map[string][]AnimationReference
-	Lights              *map[string][]LightConfig
-	AnimationColorMasks *map[string]pixel.RGBA
+	EntityId string
+	types.ModeBaseRenderConfig
 }
 
-type AnimationReference struct {
-	Tilesheet string
-	Name      string
+func (e *EffectMutateModeBasedEntity) WithMode(mode string) *EffectMutateModeBasedEntity {
+	e.Mode = &mode
+	return e
+}
+
+func (e *EffectMutateModeBasedEntity) WithAnimations(anims map[string][]types.AnimationReference) *EffectMutateModeBasedEntity {
+	e.Animations = anims
+	return e
+}
+
+func (e *EffectMutateModeBasedEntity) WithLights(lights map[string][]types.LightConfig) *EffectMutateModeBasedEntity {
+	e.Lights = lights
+	return e
 }
 
 type EffectResetModeBasedEntityAnimation struct {
 	EntityId string
-}
-
-type LightConfig struct {
-	Color    string
-	Size     float64
-	Modifier string `optional:"true"`
 }
 
 type EffectMutateBlockingPresence struct {

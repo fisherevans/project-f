@@ -11,7 +11,6 @@ type EntityPosition struct {
 	System *EntitySystem
 	Id     string
 
-	Location        MapLocation
 	FacingDirection input.Direction
 
 	MovementState            types.MoveState
@@ -23,13 +22,21 @@ type EntityPosition struct {
 }
 
 func NewEntityPosition(id string, es *EntitySystem, location MapLocation) *EntityPosition {
+	es.occupations.SetPrimaryLocation(id, location, false)
 	return &EntityPosition{
 		System:                   es,
 		Id:                       id,
-		Location:                 location,
 		FacingDirection:          input.Down,
 		MovementProgressionScale: 1,
 	}
+}
+
+func (ep *EntityPosition) GetPrimaryLocation() MapLocation {
+	return ep.System.occupations.GetPrimaryLocation(ep.Id)
+}
+
+func (ep *EntityPosition) SetPrimaryLocation(loc MapLocation, wasTeleported bool) {
+	ep.System.occupations.SetPrimaryLocation(ep.Id, loc, wasTeleported)
 }
 
 func (ep *EntityPosition) GetCurrentSpeed() float64 {
@@ -53,14 +60,15 @@ func (ep *EntityPosition) ProgressMovement(timeDelta float64) float64 {
 	ep.AccumulatedMovement += moveDelta
 	ep.MovementProgression += moveDelta * ep.MovementProgressionScale
 	if ep.MovementProgression >= 1.0 {
-		ep.System.occupations.VacateAndEmit(ep.Id, ep.Location, false)
-		ep.Location = ep.MovementTargetLocation
+		ep.System.occupations.Vacate(ep.Id, ep.GetPrimaryLocation())
+		newPrimary := ep.MovementTargetLocation
 		ep.MovementTargetLocation = MapLocation{}
 		ep.MovementState = types.MoveStateIdle
 		remaining := ep.MovementProgression - 1.0
 		ep.MovementProgression = 0
 		ep.MovementProgressionScale = 1
-		ep.System.occupations.EmitOccupyEvents(ep.Id, ep.Location, false)
+		ep.System.occupations.SetPrimaryLocation(ep.Id, newPrimary, false)
+		//ep.System.occupations.EmitOccupyEvents(ep.Id, ep.Location, false)
 		remainingTime := remaining / moveSpeed // movement is complete, but there is more time in the tick to move
 		return remainingTime
 	}
@@ -71,8 +79,8 @@ func (ep *EntityPosition) CancelMovement() {
 	if !ep.IsMoving() {
 		return
 	}
-	ep.System.occupations.VacateAndEmit(ep.Id, ep.MovementTargetLocation, false)
-	ep.MovementTargetLocation = ep.Location
+	ep.System.occupations.Vacate(ep.Id, ep.MovementTargetLocation)
+	ep.MovementTargetLocation = ep.GetPrimaryLocation()
 	ep.MovementState = types.MoveStateIdle
 	ep.MovementProgression = 0
 	ep.AccumulatedMovement = 0
@@ -80,7 +88,7 @@ func (ep *EntityPosition) CancelMovement() {
 }
 
 func (ep *EntityPosition) PreciseLocation() pixel.Vec {
-	location := ep.Location.ToVec()
+	location := ep.GetPrimaryLocation().ToVec()
 	if !ep.IsMoving() {
 		return location
 	}
@@ -90,7 +98,7 @@ func (ep *EntityPosition) PreciseLocation() pixel.Vec {
 	} else if ep.AccumulatedMovement < 1 {
 		p = interp.EaseInToLinear(p, 2)
 	}
-	movementDelta := ep.MovementTargetLocation.ToVec().Sub(ep.Location.ToVec()).Scaled(p)
+	movementDelta := ep.MovementTargetLocation.ToVec().Sub(location).Scaled(p)
 	return location.Add(movementDelta)
 }
 

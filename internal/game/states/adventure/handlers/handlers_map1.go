@@ -3,10 +3,11 @@ package handlers
 import (
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"fisherevans.com/project/f/internal/util"
 )
 
 func init() {
-	Register("map1", func(_ map[string]any) events.EventHandler {
+	Register("map1", func(_ *util.Properties) events.EventHandler {
 		return events.BasicHandlerBuilder[None]{
 			OnInteract: func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
@@ -26,7 +27,7 @@ func init() {
 	type ExitChatterState struct {
 		Ready bool
 	}
-	Register("exit_chatter", func(_ map[string]any) events.EventHandler {
+	Register("exit_chatter", func(_ *util.Properties) events.EventHandler {
 		return events.BasicHandlerBuilder[ExitChatterState]{
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state ExitChatterState) *events.HandlerOutput {
 				return events.NewOutput().WithState(ExitChatterState{
@@ -62,19 +63,19 @@ func init() {
 }
 
 func init() {
-	Register("door_lever", func(_ map[string]any) events.EventHandler {
+	Register("door_lever", func(_ *util.Properties) events.EventHandler {
 		return events.BasicHandlerBuilder[None]{
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 				return events.NewOutput().WithEffects(
 					events.Effect{
 						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 							WithMode("off").
-							WithAnimations(map[string][]events.AnimationReference{
+							WithAnimations(map[string][]types.AnimationReference{
 								"on": {
-									{Tilesheet: "adventure/doors/lever_horizontal", Name: "on"},
+									{Name: "adventure/doors/lever_horizontal:on"},
 								},
 								"off": {
-									{Tilesheet: "adventure/doors/lever_horizontal", Name: "off"},
+									{Name: "adventure/doors/lever_horizontal:off"},
 								},
 							}),
 					},
@@ -113,7 +114,7 @@ func init() {
 }
 
 func init() {
-	Register("door", func(_ map[string]any) events.EventHandler {
+	Register("door", func(_ *util.Properties) events.EventHandler {
 		return events.BasicHandlerBuilder[None]{
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 				return events.NewOutput().WithEffects(
@@ -122,18 +123,18 @@ func init() {
 							WithIsBlockingIngress(true),
 						MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 							WithMode("closed").
-							WithAnimations(map[string][]events.AnimationReference{
+							WithAnimations(map[string][]types.AnimationReference{
 								"closed": {
-									{Tilesheet: "adventure/doors/shield_front_1", Name: "closed"},
-									{Tilesheet: "adventure/doors/shield_front_1", Name: "waves"},
+									{Name: "adventure/doors/shield_front_1:closed"},
+									{Name: "adventure/doors/shield_front_1:waves"},
 								},
 								"open": {
-									{Tilesheet: "adventure/doors/shield_front_1", Name: "open"},
+									{Name: "adventure/doors/shield_front_1:open"},
 								},
 							}).
-							WithLights(map[string][]events.LightConfig{
+							WithLights(map[string][]types.LightConfig{
 								"closed": {
-									{Color: "#127fd7", Size: 1.5, Modifier: "pulse_slow"},
+									{Color: "#127fd7", Size: 1.5, Modifier: util.Ptr("pulse_slow")},
 								},
 							}),
 					},

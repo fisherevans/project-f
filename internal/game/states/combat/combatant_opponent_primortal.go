@@ -40,7 +40,7 @@ func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 		HealthFlash:            NewDamageFlashMask(),
 		name:                   p.Name,
 		skillChooser:           NewSkillChooser(archetype.SkillPool),
-		baseAnimation:          anim.Load(atlas, "primortals/"+string(primortal), "default"),
+		baseAnimation:          anim.LoadTilesheetAnimation(atlas, "primortals/"+string(primortal), "default"),
 	}
 }
 

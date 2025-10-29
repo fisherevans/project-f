@@ -1,11 +1,32 @@
 package adventure
 
-import "fisherevans.com/project/f/internal/game/input"
+import (
+	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"fisherevans.com/project/f/internal/util"
+)
 
 type EntityPresence interface {
 	IsInteractable() bool
 	AllowsEgress(side input.Direction, id string) bool
 	AllowsIngress(side input.Direction, id string) bool
+}
+
+func NewPresenceFromConfig(properties *util.Properties) EntityPresence {
+	cfg := &types.PresenceConfig{}
+	if !properties.LoadStructFromKey("presence_config", cfg) {
+		return newBlockIngressPresence(true)
+	}
+	isInteractable, blockIngress := false, false
+	if cfg.IsInteractable != nil {
+		isInteractable = *cfg.IsInteractable
+	}
+	if cfg.BlockIngress != nil {
+		blockIngress = *cfg.BlockIngress
+	}
+	p := newBlockIngressPresence(isInteractable)
+	p.isBlockingIngress = blockIngress
+	return p
 }
 
 type blockIngressPresence struct {

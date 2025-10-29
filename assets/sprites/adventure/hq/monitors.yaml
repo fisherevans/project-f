@@ -1,0 +1,11 @@
+tilesheet:
+  tileWidth: 20
+  tileHeight: 68
+animations:
+  default:
+    sequence:
+      row: 1
+      columnFrom: 1
+      columnTo: 7
+    framesPerSecond: 2
+    pingPong: true

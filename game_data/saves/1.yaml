@@ -46,7 +46,7 @@ system_settings:
     lighting:
         lighting_composition: full
         lighting_mode: Blended
-        bloom_mode: Blended
+        bloom_mode: "Off"
     combat:
         combat_speed: 1
     retro_frame:

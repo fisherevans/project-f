@@ -24,22 +24,22 @@ func init() {
 			types.MoveStateRunning: anim.AshaRun(atlas),
 		} {
 			for direction, animation := range animations {
+				cma := NewColorMaskAnimation(animation).WithColorMask(color)
 				renderer.WithMovementStateRenderer(moveState, direction, NewBasicEntityRenderer().
 					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(system, entityId)).
 					WithAnimationOriginOffset(pixel.V(0, 0.25)).
-					WithAnimations(animation).
-					WithAnimationColorMask(color))
+					WithColorMaskAnimations(cma))
 			}
 		}
 		doesMove, horizOnly := true, false
 		idleChance, maxIdle, speed := 0.05, 6.0, 2.0
-		switch mapEntity.GetStringMetadata("movement", "") {
+		switch mapEntity.Properties.GetString("movement", "") {
 		case "static":
 			doesMove = false
 		case "horiz":
 			horizOnly = true
 		}
-		switch mapEntity.GetStringMetadata("speed", "") {
+		switch mapEntity.Properties.GetString("speed", "") {
 		case "fast":
 			speed = 4
 		}
@@ -145,7 +145,7 @@ func (b *NPCBehavior) doMovement(p *EntityPosition, dispatcher Dispatcher) {
 		b.idleDuration = rand.Float64() * b.MaxIdleDuration
 		return
 	}
-	nextLocation := p.Location.Moved(p.FacingDirection)
+	nextLocation := p.GetPrimaryLocation().Moved(p.FacingDirection)
 	isValid, _, _ := b.system.isMovementValid(b.id, nextLocation)
 	if isValid {
 		dispatcher.ProcessEffects(events.Effect{

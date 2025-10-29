@@ -47,7 +47,7 @@ func NewPlayer(animech *rpg.Animech, run *rpg.Run) *Player {
 		Shield:                 NewHealthState(animech.GetMaxShield()),
 		Syncs:                  make(map[int]*HealthState),
 		HealthFlash:            NewDamageFlashMask(),
-		baseAnimation:          anim.Load(atlas, "animech/combat_animech", "default"),
+		baseAnimation:          anim.LoadTilesheetAnimation(atlas, "animech/combat_animech", "default"),
 	}
 }
 

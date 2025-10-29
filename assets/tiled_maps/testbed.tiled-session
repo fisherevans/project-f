@@ -62,7 +62,7 @@
         "map1.tmx"
     ],
     "project": "testbed.tiled-project",
-    "property.type": "object",
+    "property.type": "string",
     "recentFiles": [
         "testing.tmx",
         "snowhex_base.tsx",

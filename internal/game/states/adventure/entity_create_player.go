@@ -16,8 +16,8 @@ func init() {
 	targetRegistration().byTile(tiles.Player).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 		renderer := NewMovementBasedEntityRenderer(entityId, system)
 
-		dashPlayerLight := NewDynamicLight(colors.HexString("#88f"), 1.5, "")
-		normalPlayerLight := NewDynamicLight(colors.HexString("#888"), 1.5, "")
+		dashPlayerLight := NewLight(colors.HexString("#88f"), 1.5)
+		normalPlayerLight := NewLight(colors.HexString("#888"), 1.5)
 		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
 			types.MoveStateIdle:    anim.AshaIdle(atlas),
 			types.MoveStateWalking: anim.AshaWalk(atlas),
@@ -92,7 +92,7 @@ func (b *PlayerBehavior) triggerMovement(dispatcher Dispatcher) {
 
 func (b *PlayerBehavior) triggerInteraction(p *EntityPosition, dispatcher Dispatcher) {
 	b.awaitingInteraction = false
-	interactLocation := p.Location.MovedDelta(p.FacingDirection.GetVector())
+	interactLocation := p.GetPrimaryLocation().MovedDelta(p.FacingDirection.GetVector())
 	for targetEntityId := range b.system.interactableEntityIds(interactLocation) {
 		dispatcher.EmitEvents(events.EventOnInteract{
 			SourceId:              b.id,

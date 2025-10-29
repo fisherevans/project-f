@@ -75,7 +75,7 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 
 	// top right icon
-	icon := anim.Load(atlas, "primortals/"+string(p.Type), "default").Sprite()
+	icon := anim.LoadTilesheetAnimation(atlas, "primortals/"+string(p.Type), "default").Sprite()
 	iconMatrix := pixel.IM.Moved(gfx.TopRight.Align(icon)).Moved(gfx.IVec(screenWidth-detailMargin-primortalIconMargin, screenHeight-detailMargin-primortalIconMargin))
 	w := int(icon.Bounds().W()) + primortalIconMargin*2
 	h := int(icon.Bounds().H()) + primortalIconMargin*2

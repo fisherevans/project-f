@@ -5,17 +5,13 @@ import (
 
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
-	"fisherevans.com/project/f/internal/util/colors"
-	"github.com/gopxl/pixel/v2"
 )
 
 func init() {
-	Register("control_camera", func(props map[string]any) events.EventHandler {
-		controlled := ""
-		if v, ok := props["control_id"]; ok {
-			controlled = v.(string)
-		}
+	Register("control_camera", func(props *util.Properties) events.EventHandler {
+		controlled := props.GetString("control_id", "")
 		return events.BasicHandlerBuilder[None]{
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 				return events.NewOutput().WithEffects(events.Effect{
@@ -77,27 +73,18 @@ func init() {
 			},
 		}.CreateHandler()
 	})
-	Register("control_button", func(props map[string]any) events.EventHandler {
-		colorMask := colors.FromString("#fff")
-		if mask, ok := props["color_mask"]; ok {
-			colorMask = colors.FromString(mask.(string))
-		}
-		action := ""
-		if v, ok := props["action"]; ok {
-			action = v.(string)
-		}
+	Register("control_button", func(props *util.Properties) events.EventHandler {
+		colorMask := props.GetString("color_mask", "#fff")
+		action := props.GetString("action", "")
 		return events.BasicHandlerBuilder[None]{
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 				return events.NewOutput().WithEffects(events.Effect{
 					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithAnimations(map[string][]events.AnimationReference{
+						WithAnimations(map[string][]types.AnimationReference{
 							"": {{
-								Tilesheet: "adventure/doors/button",
-								Name:      "default",
+								Name:      "adventure/doors/button",
+								ColorMask: util.Ptr(colorMask),
 							}},
-						}).
-						WithAnimationColorMasks(map[string]pixel.RGBA{
-							"": colorMask,
 						}),
 				})
 			},

@@ -13,8 +13,38 @@
         {
             "color": "#ffa0a0a4",
             "drawFill": true,
+            "id": 6,
+            "members": [
+            ],
+            "name": "",
+            "type": "class",
+            "useAs": [
+                "property",
+                "map",
+                "layer",
+                "object",
+                "tile",
+                "tileset",
+                "wangcolor",
+                "wangset",
+                "project"
+            ]
+        },
+        {
+            "color": "#ffa0a0a4",
+            "drawFill": true,
             "id": 5,
             "members": [
+                {
+                    "name": "presence_config",
+                    "type": "string",
+                    "value": "#block_ingress: false"
+                },
+                {
+                    "name": "render_config",
+                    "type": "string",
+                    "value": "#animations:\n#  \"mode\":\n#    - name: path/to/tilesheet:default"
+                },
                 {
                     "name": "script_ref",
                     "type": "string",

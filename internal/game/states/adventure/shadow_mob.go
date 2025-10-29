@@ -163,8 +163,8 @@ func NewShadowMobWithConfig(entityId string, location MapLocation, cfg *ShadowMo
 	m := &ShadowMob{
 		Location: pixel.V(float64(location.X), float64(location.Y)),
 		animations: map[ShadowMobState]*anim.AnimatedSprite{
-			ShadowMobStateWandering: anim.Load(atlas, "adventure/entities/shadow_mob/shadow_mob", "wandering"),
-			ShadowMobStateChasing:   anim.Load(atlas, "adventure/entities/shadow_mob/shadow_mob", "chasing"),
+			ShadowMobStateWandering: anim.LoadTilesheetAnimation(atlas, "adventure/entities/shadow_mob/shadow_mob", "wandering"),
+			ShadowMobStateChasing:   anim.LoadTilesheetAnimation(atlas, "adventure/entities/shadow_mob/shadow_mob", "chasing"),
 		},
 
 		// --- Wandering movement tunables (internal defaults) ---

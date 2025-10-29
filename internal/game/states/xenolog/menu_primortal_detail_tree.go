@@ -337,7 +337,7 @@ func skillNodeSprite(state skillNodeState, isHighlighted bool) pixelutil.Bounded
 }
 
 func skillNodeAnimUnlockable(speed string) *anim.AnimatedSprite {
-	return anim.Load(atlas, "xenolog/skill_tree/nodes", fmt.Sprintf("spinning_%s", speed))
+	return anim.LoadTilesheetAnimation(atlas, "xenolog/skill_tree/nodes", fmt.Sprintf("spinning_%s", speed))
 }
 
 var (

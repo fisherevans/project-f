@@ -14,8 +14,9 @@ func init() {
 }
 
 func registerModeBasedEntity(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-	presence := newBlockIngressPresence(true)
+	presence := NewPresenceFromConfig(mapEntity.Properties)
 	renderer := NewModeBasedEntityRenderer(entityId, system)
+	renderer.WithPropConfigurations(mapEntity.Properties)
 	system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
 	return renderer.GenerateEntityContext(), nil
 }
@@ -78,7 +79,7 @@ func (s *State) registerParameterizedEntity(entityId string, location MapLocatio
 		entityContext = events.NewBasicEntityContext(entityId)
 	}
 
-	if scriptRef := mapEntity.GetStringMetadata("script_ref", ""); scriptRef != "" {
+	if scriptRef := mapEntity.Properties.GetString("script_ref", ""); scriptRef != "" {
 		if eventHandler != nil {
 			log.Fatal().Str("entityId", string(entityId)).Msgf("entity has more than one handler configured!")
 		}
@@ -87,7 +88,7 @@ func (s *State) registerParameterizedEntity(entityId string, location MapLocatio
 
 	if eventHandler != nil {
 		s.eventDispatcher.Register(entityContext, eventHandler)
-		log.Info().Msgf("Registered event handler %s", entityId)
+		log.Debug().Msgf("Registered event handler for %s", entityId)
 	}
 
 	return true

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-26T09:38:00-04:00 by go generate
+// Generated at 2025-10-28T21:51:31-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -8,7 +8,6 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
-	"github.com/gopxl/pixel/v2"
 )
 
 func NewFunctionEffect(fn RunnableFunction) *EffectFunction {
@@ -50,26 +49,6 @@ func NewMutateModeBasedEntityEffect(entityId string) *EffectMutateModeBasedEntit
 	return &EffectMutateModeBasedEntity{
 		EntityId: entityId,
 	}
-}
-
-func (e *EffectMutateModeBasedEntity) WithMode(mode string) *EffectMutateModeBasedEntity {
-	e.Mode = &mode
-	return e
-}
-
-func (e *EffectMutateModeBasedEntity) WithAnimations(animations map[string][]AnimationReference) *EffectMutateModeBasedEntity {
-	e.Animations = &animations
-	return e
-}
-
-func (e *EffectMutateModeBasedEntity) WithLights(lights map[string][]LightConfig) *EffectMutateModeBasedEntity {
-	e.Lights = &lights
-	return e
-}
-
-func (e *EffectMutateModeBasedEntity) WithAnimationColorMasks(animationColorMasks map[string]pixel.RGBA) *EffectMutateModeBasedEntity {
-	e.AnimationColorMasks = &animationColorMasks
-	return e
 }
 
 func NewResetModeBasedEntityAnimationEffect(entityId string) *EffectResetModeBasedEntityAnimation {

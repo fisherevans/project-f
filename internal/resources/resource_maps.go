@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"fisherevans.com/project/f/internal/util"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
-
-	"fisherevans.com/project/f/internal/util"
 )
 
 var (
@@ -22,47 +21,19 @@ func GetMap(name string) *Map {
 	return m
 }
 
-type MapLayerName string
-
-const (
-	LayerUnder1 MapLayerName = "under_1"
-	LayerUnder2 MapLayerName = "under_2"
-	LayerUnder3 MapLayerName = "under_3"
-
-	LayerOver1 MapLayerName = "over_1"
-	LayerOver2 MapLayerName = "over_2"
-	LayerOver3 MapLayerName = "over_3"
-
-	LayerCollision = "collision"
-)
-
-var MapLayersUnder = []MapLayerName{
-	LayerUnder1,
-	LayerUnder2,
-	LayerUnder3,
+var TileLayerGroupNames = []string{
+	"under",
+	"over",
 }
 
-var MapLayersOver = []MapLayerName{
-	LayerOver1,
-	LayerOver2,
-	LayerOver3,
-}
-
-var MapLayersUtility = []MapLayerName{
-	LayerCollision,
-}
-
-var MapLayers = util.Concat(
-	MapLayersUnder,
-	MapLayersOver,
-	MapLayersUtility,
-)
+var ControlLayerGroupName = "control"
 
 type Map struct {
-	Layers             map[MapLayerName]*Layer
+	TileLayerGroups    []*TileLayerGroup
 	Entities           map[string]*Entity
-	AmbientLightAreas  []AmbientLightArea
-	Zones              []Zone
+	AmbientLightAreas  []*AmbientLightArea
+	Zones              []*Zone
+	CollisionTiles     []*Tile
 	SceneClearColor    pixel.RGBA
 	LightingClearColor pixel.RGBA
 }
@@ -78,8 +49,14 @@ func (m *Map) RemoveEntity(id string) {
 	delete(m.Entities, id)
 }
 
-type Layer struct {
-	Tiles []*Tile `json:"tiles"`
+type TileLayerGroup struct {
+	GroupName string       `json:"groupName"`
+	Layers    []*TileLayer `json:"layers"`
+}
+
+type TileLayer struct {
+	LayerName string  `json:"layerName"`
+	Tiles     []*Tile `json:"tiles"`
 }
 
 type Tile struct {
@@ -93,10 +70,10 @@ func (t Tile) String() string {
 }
 
 type Entity struct {
-	ID         int            `json:"id"`
-	X          int            `json:"x"`
-	Y          int            `json:"y"`
-	Properties map[string]any `json:"properties"`
+	ID         int              `json:"id"`
+	X          int              `json:"x"`
+	Y          int              `json:"y"`
+	Properties *util.Properties `json:"properties"`
 	SpriteId   *TilesheetSpriteId
 	Class      string
 	SpriteGID  int `json:"sprite_gid,omitempty"`
@@ -113,21 +90,6 @@ func (e *Entity) Copy() *Entity {
 		log.Error().Msgf("Error unmarshalling Entity: %v", err)
 	}
 	return next
-}
-
-func (e *Entity) GetStringMetadata(key, defaultValue string) string {
-	if e.Properties == nil {
-		return defaultValue
-	}
-	value, ok := e.Properties[key]
-	if !ok {
-		return defaultValue
-	}
-	str, ok := value.(string)
-	if !ok {
-		return defaultValue
-	}
-	return str
 }
 
 func (e *Entity) String() string {

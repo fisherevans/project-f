@@ -3,6 +3,7 @@ package anim
 import (
 	"fmt"
 	"math/rand/v2"
+	"strings"
 
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/pixelutil"
@@ -81,7 +82,19 @@ func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecon
 	return animated
 }
 
-func Load(atlas *resources.Atlas, tilesheetName string, animationName string) *AnimatedSprite {
+func Load(atlas *resources.Atlas, name string) *AnimatedSprite {
+	var tilesheet, animName string
+	if index := strings.Index(name, ":"); index != -1 {
+		tilesheet = name[:index]
+		animName = name[index+1:]
+	} else {
+		tilesheet = name
+		animName = "default"
+	}
+	return LoadTilesheetAnimation(atlas, tilesheet, animName)
+}
+
+func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animationName string) *AnimatedSprite {
 	metadata := resources.GetTilesheetAnimation(tilesheetName, animationName)
 	msgf := func(format string, args ...interface{}) string {
 		return fmt.Sprintf(

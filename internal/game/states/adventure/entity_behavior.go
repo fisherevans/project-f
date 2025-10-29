@@ -58,6 +58,7 @@ func NewEntityBehaviorOverride(replacedBehavior EntityBehavior, newBehavior Enti
 	for _, src := range replacedBehavior.DisabledSources() {
 		newBehavior.Disable(src)
 	}
+	replacedBehavior.Reset()
 	return &EntityBehaviorOverride{
 		replacedBehavior: replacedBehavior,
 		newBehavior:      newBehavior,

@@ -91,7 +91,7 @@ func Run() {
 func initWindow() *opengl.Window {
 	cfg := opengl.WindowConfig{
 		Title:     "Project F",
-		Bounds:    pixel.R(0, 0, game.GameWidth*3.1, game.GameHeight*5),
+		Bounds:    pixel.R(0, 0, 1280, 800), // steam deck resolution
 		Resizable: true,
 		VSync:     true,
 	}

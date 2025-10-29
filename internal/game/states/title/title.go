@@ -89,7 +89,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		p.render(target, center, progression, s.elapsed)
 	}
 	ctrls := game.Controls[*State]()
-	if ctrls.ButtonA().IsPressed() || ctrls.ButtonStart().IsPressed() || ctrls.ButtonStart().IsPressed() || ctrls.ButtonSelect().IsPressed() {
+	if ctrls.ButtonA().JustPressed() || ctrls.ButtonStart().JustPressed() || ctrls.ButtonStart().JustPressed() || ctrls.ButtonSelect().JustPressed() {
 		s.exiting = true
 	}
 	if s.exiting && s.elapsed <= 0 {

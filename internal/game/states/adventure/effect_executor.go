@@ -17,32 +17,49 @@ import (
 
 func (s *State) processEffects(effects ...events.DispatchedEffect) {
 	for _, e := range effects {
+		// generic effects first
 		s.processEffectFunction(e.Source, e.Function)
-		s.processEffectDialogue(e.Source, e.Dialogue)
-		s.processEffectTimer(e.Source, e.Timer)
-		s.processEffectYieldElythium(e.Source, e.YieldElythium)
-		s.processEffectChatter(e.Source, e.Chatter)
-		s.processSetWorldState(e.Source, e.SetWorldState)
-		s.processTeleportEntity(e.Source, e.SetEntityLocation)
 		s.processEffectPlan(e.Source, e.Plan)
-		s.processEffectMutateEntityBehavior(e.Source, e.MutateEntityBehavior)
+		s.processEffectTimer(e.Source, e.Timer)
+		s.processSetWorldState(e.Source, e.SetWorldState)
+
+		// adventure state chages
 		s.processEffectFade(e.Source, e.Fade)
 		s.processEffectDeactivateFade(e.Source, e.DeactivateFade)
-		s.processEffectTeleportPlayer(e.Source, e.TeleportPlayer)
-		s.processEffectTriggerMovement(e.Source, e.TriggerMovement)
-		s.processEffectOverrideCamera(e.Source, e.OverrideCamera)
-		s.processEffectPopCameraOverride(e.Source, e.PopCameraOverride)
-		s.processEffectMutateFollowCamera(e.Source, e.MutateFollowCamera)
 		s.processEffectTriggerCombat(e.Source, e.TriggerCombat)
+
+		// chatter and dialogue
+		s.processEffectDialogue(e.Source, e.Dialogue)
+		s.processEffectChatter(e.Source, e.Chatter)
+
+		// rpg effects
+		s.processEffectYieldElythium(e.Source, e.YieldElythium)
+
+		// pop camera before mutating it
+		s.processEffectPopCameraOverride(e.Source, e.PopCameraOverride)
+		s.processEffectOverrideCamera(e.Source, e.OverrideCamera)
+		s.processEffectMutateFollowCamera(e.Source, e.MutateFollowCamera)
+
+		// mutate renderers
+		s.processEffectMutateNPC(e.Source, e.MutateNPC)
 		s.processEffectMutateModeBasedRenderer(e.Source, e.MutateModeBasedEntity)
 		s.processEffectResetModeBasedEntityAnimation(e.Source, e.ResetModeBasedEntityAnimation)
+
+		// mutate presenses before movement stuff
 		s.processEffectMutateBlockingPresence(e.Source, e.MutateBlockingPresence)
-		s.processEffectMutateNPC(e.Source, e.MutateNPC)
-		s.processEffectEntityFaceDirection(e.Source, e.EntityFaceDirection)
-		s.processEffectResetMovement(e.Source, e.ResetMovement)
-		s.processEffectStartScriptedMotion(e.Source, e.StartScriptedMotion)
-		s.processEffectOverrideEntityBehavior(e.Source, e.OverrideEntityBehavior)
+
+		// pop before override
 		s.processEffectPopEntityBehaviorOverride(e.Source, e.PopEntityBehaviorOverride)
+		s.processEffectOverrideEntityBehavior(e.Source, e.OverrideEntityBehavior)
+		s.processEffectMutateEntityBehavior(e.Source, e.MutateEntityBehavior)
+
+		// tweak position/behavior after overrides
+		s.processEffectSetEntityLocation(e.Source, e.SetEntityLocation)
+		s.processEffectTeleportPlayer(e.Source, e.TeleportPlayer)
+		s.processEffectStartScriptedMotion(e.Source, e.StartScriptedMotion)
+		s.processEffectResetMovement(e.Source, e.ResetMovement)
+		s.processEffectEntityFaceDirection(e.Source, e.EntityFaceDirection)
+		s.processEffectTriggerMovement(e.Source, e.TriggerMovement)
 	}
 }
 
@@ -91,18 +108,7 @@ func (s *State) processEffectMutateModeBasedRenderer(source events.EntityContext
 		logEffectWarnf(source, e, "failed to find mode based entity for mutation")
 		return
 	}
-	if e.Mode != nil {
-		modeBased.currentMode = *e.Mode
-	}
-	if e.Animations != nil {
-		modeBased.SetModeAnimations(*e.Animations)
-	}
-	if e.Lights != nil {
-		modeBased.SetModeLights(*e.Lights)
-	}
-	if e.AnimationColorMasks != nil {
-		modeBased.SetColorMasks(*e.AnimationColorMasks)
-	}
+	modeBased.WithConfig(&e.ModeBaseRenderConfig)
 	logEffectInfof(source, e, "mode based entity mutated")
 }
 
@@ -117,7 +123,7 @@ func (s *State) processEffectResetModeBasedEntityAnimation(source events.EntityC
 		return
 	}
 	for _, animation := range modeBased.getBasicEntityRenderer(modeBased.currentMode).animations {
-		animation.Reset()
+		animation.Animation.Reset()
 	}
 	logEffectInfof(source, e, "mode based entity animations reset")
 }
@@ -162,7 +168,7 @@ func (s *State) processSetWorldState(source events.EntityContext, e *events.Effe
 	logEffectInfof(source, e, "world state updated")
 }
 
-func (s *State) processTeleportEntity(source events.EntityContext, e *events.EffectSetEntityLocation) {
+func (s *State) processEffectSetEntityLocation(source events.EntityContext, e *events.EffectSetEntityLocation) {
 	if e == nil {
 		return
 	}
@@ -178,7 +184,7 @@ func (s *State) processTeleportEntity(source events.EntityContext, e *events.Eff
 		toLocation = MapLocation{X: e.ToLocation.X, Y: e.ToLocation.Y}
 	} else if e.ToEntityId != nil {
 		entity := s.entities.GetEntity(*e.ToEntityId)
-		toLocation = entity.Location
+		toLocation = entity.GetPrimaryLocation()
 	} else {
 		logEffectWarnf(source, e, "failed to find teleport destination")
 		return
@@ -289,7 +295,7 @@ func (s *State) processEffectTriggerMovement(source events.EntityContext, e *eve
 	}
 	var location MapLocation
 	if e.Direction != nil {
-		location = entity.Location.Moved(*e.Direction)
+		location = entity.GetPrimaryLocation().Moved(*e.Direction)
 	} else if e.Location != nil {
 		location = MapLocation{
 			X: e.Location.X,
@@ -607,31 +613,20 @@ func (s *State) processEffectStartScriptedMotion(source events.EntityContext, e 
 		logEffectWarnf(source, e, "behavior is not a scripted motion behavior")
 		return
 	}
-	var location MapLocation
+	var target MotionTarget
 	if e.Location != nil {
-		location = LocationFromEvent(*e.Location)
+		target = NewPathfindingMotion(e.MotionId, s.entities, e.EntityId, LocationFromEvent(*e.Location))
 	} else if e.Relative != nil {
-		p, ok := s.entities.positions[e.EntityId]
-		if !ok {
-			logEffectWarnf(source, e, "failed to find position for entity")
-			return
-		}
-		location = p.Location
-		if p.IsMoving() {
-			location = p.MovementTargetLocation
-		}
-		for i := 0; i < e.Relative.Steps; i++ {
-			location = location.Moved(e.Relative.Direction)
-		}
+		target = NewRelativeMotion(e.MotionId, e.Relative.Direction, e.Relative.Steps)
 	} else if e.ToEntityId != nil {
-		p, ok := s.entities.positions[*e.ToEntityId]
+		toPosition, ok := s.entities.positions[*e.ToEntityId]
 		if !ok {
-			logEffectWarnf(source, e, "failed to find position for entity")
+			logEffectWarnf(source, e, "failed to find position for target entity")
 			return
 		}
-		location = p.Location
+		target = NewPathfindingMotion(e.MotionId, s.entities, e.EntityId, toPosition.GetPrimaryLocation())
 	}
-	scripted.SetTarget(e.MotionId, location)
+	scripted.SetTarget(target)
 	logEffectInfof(source, e, "scripted motion started")
 }
 

@@ -23,8 +23,8 @@ type Hud struct {
 func NewHud(elythiumCount func() int) *Hud {
 	return &Hud{
 		ElythiumCount:     elythiumCount,
-		elythiumCountIcon: anim.Load(atlas, "adventure/hud/elythium", "default"),
-		researchIcon:      anim.Load(atlas, "adventure/hud/research", "default"),
+		elythiumCountIcon: anim.LoadTilesheetAnimation(atlas, "adventure/hud/elythium", "default"),
+		researchIcon:      anim.LoadTilesheetAnimation(atlas, "adventure/hud/research", "default"),
 	}
 }
 

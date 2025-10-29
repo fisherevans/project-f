@@ -42,3 +42,11 @@ func (z *zones) ZonesAt(lol MapLocation) []string {
 	}
 	return zoneList
 }
+
+func (z *zones) ZonesAtSet(lol MapLocation) map[string]struct{} {
+	zoneSet, hasAny := z.zones[lol]
+	if !hasAny {
+		return nil
+	}
+	return zoneSet
+}

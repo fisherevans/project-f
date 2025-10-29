@@ -42,7 +42,11 @@ func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
 	}
 }
 
-func NewDynamicLight(color pixel.RGBA, size float64, modifier string) *Light {
+func NewLight(color pixel.RGBA, size float64) *Light {
+	return NewLightWithModifier(color, size, "")
+}
+
+func NewLightWithModifier(color pixel.RGBA, size float64, modifier string) *Light {
 	l := &Light{
 		RenderDetails: []LightRenderDetails{
 			{

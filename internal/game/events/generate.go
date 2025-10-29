@@ -74,10 +74,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Generate chainable effect builder
+	chainBuilderOutput := generateChainableEffectBuilder(effects)
+	chainBuilderPath := "effect_chain_builder.generated.go"
+	if err := os.WriteFile(chainBuilderPath, []byte(chainBuilderOutput), 0644); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing chainable effect builder: %v\n", err)
+		os.Exit(1)
+	}
+
 	fmt.Printf("Generated %s\n", builderPath)
 	fmt.Printf("Generated %s\n", effectStructPath)
 	fmt.Printf("Generated %s\n", validationPath)
 	fmt.Printf("Generated %s\n", buildersPath)
+	fmt.Printf("Generated %s\n", chainBuilderPath)
 }
 
 func parseEventRegistrations(filename string) []EventInfo {
@@ -726,7 +735,6 @@ func generateEffectBuilders(effects []EffectInfo) string {
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/input\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/rpg\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/states/adventure/types\"\n")
-	sb.WriteString("\t\"github.com/gopxl/pixel/v2\"\n")
 	sb.WriteString(")\n\n")
 
 	for _, effect := range effects {
@@ -778,6 +786,62 @@ func generateEffectBuilders(effects []EffectInfo) string {
 			sb.WriteString("}\n\n")
 		}
 	}
+
+	return sb.String()
+}
+
+func generateChainableEffectBuilder(effects []EffectInfo) string {
+	var sb strings.Builder
+
+	sb.WriteString("// AUTO-GENERATED - DO NOT EDIT\n")
+	sb.WriteString(fmt.Sprintf("// Generated at %s by go generate\n", time.Now().Format(time.RFC3339)))
+	sb.WriteString("// Source: internal/game/events/effects.go\n\n")
+
+	sb.WriteString("package events\n\n")
+
+	// Generate NewEffect constructor
+	sb.WriteString("// NewEffect creates a new Effect that can be chained with With methods\n")
+	sb.WriteString("func NewEffect() *Effect {\n")
+	sb.WriteString("\treturn &Effect{}\n")
+	sb.WriteString("}\n\n")
+
+	// Generate With method for each effect type
+	for _, effect := range effects {
+		// Skip helper types - only process Effect* types
+		if !strings.HasPrefix(effect.Name, "Effect") {
+			continue
+		}
+
+		effectName := effect.Name[len("Effect"):] // Remove "Effect" prefix
+
+		sb.WriteString(fmt.Sprintf("// With%s sets the %s field and returns the Effect for chaining\n", effectName, effectName))
+		sb.WriteString(fmt.Sprintf("func (e *Effect) With%s(v *%s) *Effect {\n", effectName, effect.Name))
+		sb.WriteString(fmt.Sprintf("\te.%s = v\n", effectName))
+		sb.WriteString("\treturn e\n")
+		sb.WriteString("}\n\n")
+	}
+
+	// Generate generic With method that accepts any effect pointer
+	sb.WriteString("// With sets an effect field by inspecting the type and returns the Effect for chaining\n")
+	sb.WriteString("func (e *Effect) With(v any) *Effect {\n")
+	sb.WriteString("\tswitch val := v.(type) {\n")
+
+	for _, effect := range effects {
+		// Skip helper types - only process Effect* types
+		if !strings.HasPrefix(effect.Name, "Effect") {
+			continue
+		}
+
+		effectName := effect.Name[len("Effect"):] // Remove "Effect" prefix
+		sb.WriteString(fmt.Sprintf("\tcase *%s:\n", effect.Name))
+		sb.WriteString(fmt.Sprintf("\t\treturn e.With%s(val)\n", effectName))
+	}
+
+	sb.WriteString("\tdefault:\n")
+	sb.WriteString("\t\t// Unknown type, ignore\n")
+	sb.WriteString("\t\treturn e\n")
+	sb.WriteString("\t}\n")
+	sb.WriteString("}\n")
 
 	return sb.String()
 }

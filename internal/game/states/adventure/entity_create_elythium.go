@@ -42,11 +42,11 @@ func init() {
 		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
 			renderer := NewModeBasedEntityRenderer(entityId, system).WithMode("ready")
 			renderer.WithModeRenderer("ready", NewBasicEntityRenderer().WithAnimations(
-				anim.Load(atlas, "adventure/entities/elythium/crystals", "default"),
-				anim.Load(atlas, "adventure/entities/elythium/crystals_sparkle", "default")).
-				WithLights(NewDynamicLight(colors.HexString("#f06"), 1.5, "")))
+				anim.LoadTilesheetAnimation(atlas, "adventure/entities/elythium/crystals", "default"),
+				anim.LoadTilesheetAnimation(atlas, "adventure/entities/elythium/crystals_sparkle", "default")).
+				WithLights(NewLight(colors.HexString("#f06"), 1.5)))
 			renderer.WithModeRenderer("mined", NewBasicEntityRenderer().WithAnimations(
-				anim.Load(atlas, "adventure/entities/elythium/crystals_rock", "default")))
+				anim.LoadTilesheetAnimation(atlas, "adventure/entities/elythium/crystals_rock", "default")))
 			presence := newBlockIngressPresence(true)
 			system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
 			return renderer.GenerateEntityContext(), handler.CreateHandler()

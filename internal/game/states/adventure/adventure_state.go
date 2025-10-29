@@ -50,8 +50,8 @@ type State struct {
 	lightClear pixel.RGBA
 
 	mapWidth, mapHeight int
-	baseRenderLayers    []renderLayer
-	overlayRenderLayers []renderLayer
+	underRenderLayers   []renderLayer
+	overRenderLayers    []renderLayer
 	ambientLightAreas   []resources.AmbientLightArea
 
 	camera Camera
@@ -167,7 +167,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.lightMapBatch.Clear()
 
-	for _, thisRenderLayer := range s.baseRenderLayers {
+	for _, thisRenderLayer := range s.underRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
 	}
 
@@ -179,7 +179,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	// todo limit rendering out of bounds entities
 	s.entities.Render(s.sceneBatch, s.lightMapBatch, cameraMatrix)
 
-	for _, thisRenderLayer := range s.overlayRenderLayers {
+	for _, thisRenderLayer := range s.overRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
 	}
 
