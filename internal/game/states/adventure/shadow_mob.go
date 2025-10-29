@@ -91,45 +91,22 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 		TriggerRadius: 0.8,
 		OnTrigger: func(s *State, m *ShadowMob) {
 			if game.DebugToggles().F5().ToggleState() {
-				s.ExecuteSystemEffects(events.Effect{
-					Plan: &events.EffectPlan{
-						Steps: []events.PlanStep{
-							{
-								Serial: []events.Effect{
-									{
-										TriggerCombat: &events.EffectTriggerCombat{
-											Opponent:   nil,
-											Background: "combat/background_sylvoria",
-										},
-									},
-									{
-										Timer: &events.EffectTimer{
-											DurationSeconds: 15,
-										},
-										Function: &events.EffectFunction{
-											Fn: func() {
-												for i, mob := range s.mobs {
-													if mob == m {
-														s.mobs[i] = s.mobs[len(s.mobs)-1]
-														s.mobs = s.mobs[:len(s.mobs)-1]
-														break
-													}
-												}
-											},
-										},
-									},
-									{
-										Function: &events.EffectFunction{
-											Fn: func() {
-												s.mobs = append(s.mobs, m)
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				})
+				s.ExecuteSystemEffectsInOrder(
+					events.NewTriggerCombatEffect("combat/background_sylvoria"),
+					events.NewTimerEffect(15),
+					events.NewFunctionEffect(func() {
+						for i, mob := range s.mobs {
+							if mob == m {
+								s.mobs[i] = s.mobs[len(s.mobs)-1]
+								s.mobs = s.mobs[:len(s.mobs)-1]
+								break
+							}
+						}
+					}),
+					events.NewFunctionEffect(func() {
+						s.mobs = append(s.mobs, m)
+					}),
+				)
 			} else {
 				game.DebugNotification("Mob caught you! Toggle F5")
 			}

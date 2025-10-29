@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-28T21:51:31-04:00 by go generate
+// Generated at 2025-10-28T22:29:10-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -16,20 +16,28 @@ func NewFunctionEffect(fn RunnableFunction) *EffectFunction {
 	}
 }
 
-func NewDialogueEffect(dialogueId string, text string) *EffectDialogue {
+func NewDialogueEffect(text string) *EffectDialogue {
 	return &EffectDialogue{
-		DialogueId: dialogueId,
 		Text: text,
 	}
 }
 
-func NewChatterEffect(chatterId string, entityId string, durationSeconds float64, message string) *EffectChatter {
+func (e *EffectDialogue) WithDialogueId(dialogueId string) *EffectDialogue {
+	e.DialogueId = dialogueId
+	return e
+}
+
+func NewChatterEffect(entityId string, durationSeconds float64, message string) *EffectChatter {
 	return &EffectChatter{
-		ChatterId: chatterId,
 		EntityId: entityId,
 		DurationSeconds: durationSeconds,
 		Message: message,
 	}
+}
+
+func (e *EffectChatter) WithChatterId(chatterId string) *EffectChatter {
+	e.ChatterId = chatterId
+	return e
 }
 
 func NewYieldElythiumEffect(amount int) *EffectYieldElythium {
@@ -38,11 +46,15 @@ func NewYieldElythiumEffect(amount int) *EffectYieldElythium {
 	}
 }
 
-func NewTimerEffect(timerId string, durationSeconds float64) *EffectTimer {
+func NewTimerEffect(durationSeconds float64) *EffectTimer {
 	return &EffectTimer{
-		TimerId: timerId,
 		DurationSeconds: durationSeconds,
 	}
+}
+
+func (e *EffectTimer) WithTimerId(timerId string) *EffectTimer {
+	e.TimerId = timerId
+	return e
 }
 
 func NewMutateModeBasedEntityEffect(entityId string) *EffectMutateModeBasedEntity {
@@ -126,11 +138,15 @@ func (e *EffectTeleportPlayer) WithTransitionStyle(transitionStyle string) *Effe
 	return e
 }
 
-func NewPlanEffect(planId string, steps []PlanStep) *EffectPlan {
+func NewPlanEffect(steps []PlanStep) *EffectPlan {
 	return &EffectPlan{
-		PlanId: planId,
 		Steps: steps,
 	}
+}
+
+func (e *EffectPlan) WithPlanId(planId string) *EffectPlan {
+	e.PlanId = planId
+	return e
 }
 
 func NewMutateEntityBehaviorEffect(entityId string) *EffectMutateEntityBehavior {
@@ -154,12 +170,16 @@ func (e *EffectMutateEntityBehavior) WithReset(reset bool) *EffectMutateEntityBe
 	return e
 }
 
-func NewFadeEffect(fadeId string, durationSeconds float64, transitions int) *EffectFade {
+func NewFadeEffect(durationSeconds float64, transitions int) *EffectFade {
 	return &EffectFade{
-		FadeId: fadeId,
 		DurationSeconds: durationSeconds,
 		Transitions: transitions,
 	}
+}
+
+func (e *EffectFade) WithFadeId(fadeId string) *EffectFade {
+	e.FadeId = fadeId
+	return e
 }
 
 func (e *EffectFade) WithAutoDeactivate(autoDeactivate bool) *EffectFade {
@@ -252,11 +272,15 @@ func (e *EffectMutateNPC) WithTalkingAtEntityId(talkingAtEntityId string) *Effec
 	return e
 }
 
-func NewTriggerCombatEffect(combatId string, background string) *EffectTriggerCombat {
+func NewTriggerCombatEffect(background string) *EffectTriggerCombat {
 	return &EffectTriggerCombat{
-		CombatId: combatId,
 		Background: background,
 	}
+}
+
+func (e *EffectTriggerCombat) WithCombatId(combatId string) *EffectTriggerCombat {
+	e.CombatId = combatId
+	return e
 }
 
 func (e *EffectTriggerCombat) WithOpponent(opponent rpg.PrimortalType) *EffectTriggerCombat {
@@ -271,11 +295,15 @@ func NewEntityFaceDirectionEffect(entityId string, direction input.Direction) *E
 	}
 }
 
-func NewStartScriptedMotionEffect(motionId string, entityId string) *EffectStartScriptedMotion {
+func NewStartScriptedMotionEffect(entityId string) *EffectStartScriptedMotion {
 	return &EffectStartScriptedMotion{
-		MotionId: motionId,
 		EntityId: entityId,
 	}
+}
+
+func (e *EffectStartScriptedMotion) WithMotionId(motionId string) *EffectStartScriptedMotion {
+	e.MotionId = motionId
+	return e
 }
 
 func (e *EffectStartScriptedMotion) WithLocation(location Location) *EffectStartScriptedMotion {

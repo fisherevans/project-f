@@ -3,7 +3,7 @@ package events
 // HandlerOutput is returned by event handlers to specify state changes and effects
 type HandlerOutput struct {
 	State   any
-	Effects []Effect
+	Effects []Effect // Effect is now an interface
 }
 
 func NewOutput() *HandlerOutput {
@@ -21,15 +21,11 @@ func (o *HandlerOutput) WithEffects(v ...Effect) *HandlerOutput {
 }
 
 func (o *HandlerOutput) WithSerialPlan(v ...Effect) *HandlerOutput {
-	return o.WithEffects(Effect{
-		Plan: NewSerialPlan(v...),
-	})
+	return o.WithEffects(NewSerialPlan(v...))
 }
 
 func (o *HandlerOutput) WithParallelPlan(v ...Effect) *HandlerOutput {
-	return o.WithEffects(Effect{
-		Plan: NewParallelPlan(v...),
-	})
+	return o.WithEffects(NewParallelPlan(v...))
 }
 
 // EventHandler is the interface that all event handlers must implement

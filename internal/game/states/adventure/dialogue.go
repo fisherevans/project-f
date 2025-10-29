@@ -50,8 +50,11 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 	defer ds.flushPending()
 	game.DebugBR("dialogue queue: %d", len(ds.queuedDialogues))
 	if !ds.HasPriority() {
+		s.entities.behaviors[s.player].Enable("dialogue")
 		return
 	}
+	s.entities.behaviors[s.player].Disable("dialogue")
+
 	dialogue := ds.queuedDialogues[0]
 
 	dialogue.Content().Update(timeDelta)

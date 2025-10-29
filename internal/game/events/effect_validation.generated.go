@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-28T21:51:31-04:00 by go generate
+// Generated at 2025-10-28T22:29:10-04:00 by go generate
 // Source: internal/game/events/effect.go
 
 package events
@@ -17,7 +17,7 @@ var fadeCounter atomic.Uint64
 var triggerCombatCounter atomic.Uint64
 var startScriptedMotionCounter atomic.Uint64
 
-func (p *PlanStep) Validate() error {
+func (p *PlanStep) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: type
@@ -25,7 +25,7 @@ func (p *PlanStep) Validate() error {
 	if len(p.Serial) > 0 {
 		typeCount++
 		for i, item := range p.Serial {
-			if err := item.Validate(); err != nil {
+			if err := item.FillDefaultsAndValidate(); err != nil {
 				reporter.sub("serial").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
 			}
 		}
@@ -33,7 +33,7 @@ func (p *PlanStep) Validate() error {
 	if len(p.Parallel) > 0 {
 		typeCount++
 		for i, item := range p.Parallel {
-			if err := item.Validate(); err != nil {
+			if err := item.FillDefaultsAndValidate(); err != nil {
 				reporter.sub("parallel").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
 			}
 		}
@@ -46,14 +46,14 @@ func (p *PlanStep) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectFunction) Validate() error {
+func (e *EffectFunction) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 
 	return reporter.report()
 }
 
-func (e *EffectDialogue) Validate() error {
+func (e *EffectDialogue) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	if e.DialogueId == "" {
@@ -67,7 +67,7 @@ func (e *EffectDialogue) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectChatter) Validate() error {
+func (e *EffectChatter) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	if e.ChatterId == "" {
@@ -82,14 +82,14 @@ func (e *EffectChatter) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectYieldElythium) Validate() error {
+func (e *EffectYieldElythium) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 
 	return reporter.report()
 }
 
-func (e *EffectTimer) Validate() error {
+func (e *EffectTimer) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	if e.TimerId == "" {
@@ -102,7 +102,7 @@ func (e *EffectTimer) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectMutateModeBasedEntity) Validate() error {
+func (e *EffectMutateModeBasedEntity) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -110,7 +110,7 @@ func (e *EffectMutateModeBasedEntity) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectResetModeBasedEntityAnimation) Validate() error {
+func (e *EffectResetModeBasedEntityAnimation) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -118,7 +118,7 @@ func (e *EffectResetModeBasedEntityAnimation) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectMutateBlockingPresence) Validate() error {
+func (e *EffectMutateBlockingPresence) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -126,7 +126,7 @@ func (e *EffectMutateBlockingPresence) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectSetWorldState) Validate() error {
+func (e *EffectSetWorldState) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("key", e.Key)
@@ -134,7 +134,7 @@ func (e *EffectSetWorldState) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectSetEntityLocation) Validate() error {
+func (e *EffectSetEntityLocation) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: destination
@@ -157,7 +157,7 @@ func (e *EffectSetEntityLocation) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectTeleportPlayer) Validate() error {
+func (e *EffectTeleportPlayer) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: destination
@@ -179,7 +179,7 @@ func (e *EffectTeleportPlayer) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectPlan) Validate() error {
+func (e *EffectPlan) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	if e.PlanId == "" {
@@ -189,7 +189,7 @@ func (e *EffectPlan) Validate() error {
 
 	reporter.requireString("planId", e.PlanId)
 	for i, item := range e.Steps {
-		if err := item.Validate(); err != nil {
+		if err := item.FillDefaultsAndValidate(); err != nil {
 			reporter.sub("steps").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
 		}
 	}
@@ -197,7 +197,7 @@ func (e *EffectPlan) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectMutateEntityBehavior) Validate() error {
+func (e *EffectMutateEntityBehavior) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: enablement
@@ -217,7 +217,7 @@ func (e *EffectMutateEntityBehavior) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectFade) Validate() error {
+func (e *EffectFade) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	if e.FadeId == "" {
@@ -230,7 +230,7 @@ func (e *EffectFade) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectDeactivateFade) Validate() error {
+func (e *EffectDeactivateFade) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("fadeId", e.FadeId)
@@ -238,7 +238,7 @@ func (e *EffectDeactivateFade) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectTriggerMovement) Validate() error {
+func (e *EffectTriggerMovement) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: to
@@ -258,7 +258,7 @@ func (e *EffectTriggerMovement) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectResetMovement) Validate() error {
+func (e *EffectResetMovement) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -266,7 +266,7 @@ func (e *EffectResetMovement) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectOverrideCamera) Validate() error {
+func (e *EffectOverrideCamera) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: type
@@ -282,21 +282,21 @@ func (e *EffectOverrideCamera) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectPopCameraOverride) Validate() error {
+func (e *EffectPopCameraOverride) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 
 	return reporter.report()
 }
 
-func (e *EffectMutateFollowCamera) Validate() error {
+func (e *EffectMutateFollowCamera) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 
 	return reporter.report()
 }
 
-func (e *EffectMutateNPC) Validate() error {
+func (e *EffectMutateNPC) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -304,7 +304,7 @@ func (e *EffectMutateNPC) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectTriggerCombat) Validate() error {
+func (e *EffectTriggerCombat) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	if e.CombatId == "" {
@@ -318,7 +318,7 @@ func (e *EffectTriggerCombat) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectEntityFaceDirection) Validate() error {
+func (e *EffectEntityFaceDirection) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -326,7 +326,7 @@ func (e *EffectEntityFaceDirection) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectStartScriptedMotion) Validate() error {
+func (e *EffectStartScriptedMotion) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	if e.MotionId == "" {
@@ -355,7 +355,7 @@ func (e *EffectStartScriptedMotion) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectOverrideEntityBehavior) Validate() error {
+func (e *EffectOverrideEntityBehavior) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: type
@@ -372,7 +372,7 @@ func (e *EffectOverrideEntityBehavior) Validate() error {
 	return reporter.report()
 }
 
-func (e *EffectPopEntityBehaviorOverride) Validate() error {
+func (e *EffectPopEntityBehaviorOverride) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)
@@ -380,168 +380,3 @@ func (e *EffectPopEntityBehaviorOverride) Validate() error {
 	return reporter.report()
 }
 
-// Validate checks that the effect has exactly one effect type set and calls its validator
-func (e Effect) Validate() error {
-	reporter := newIssueReporter()
-	effectCount := 0
-
-	if e.Function != nil {
-		effectCount++
-		if err := e.Function.Validate(); err != nil {
-			reporter.sub("function").addf("", "%v", err)
-		}
-	}
-	if e.Dialogue != nil {
-		effectCount++
-		if err := e.Dialogue.Validate(); err != nil {
-			reporter.sub("dialogue").addf("", "%v", err)
-		}
-	}
-	if e.Chatter != nil {
-		effectCount++
-		if err := e.Chatter.Validate(); err != nil {
-			reporter.sub("chatter").addf("", "%v", err)
-		}
-	}
-	if e.YieldElythium != nil {
-		effectCount++
-		if err := e.YieldElythium.Validate(); err != nil {
-			reporter.sub("yieldElythium").addf("", "%v", err)
-		}
-	}
-	if e.Timer != nil {
-		effectCount++
-		if err := e.Timer.Validate(); err != nil {
-			reporter.sub("timer").addf("", "%v", err)
-		}
-	}
-	if e.MutateModeBasedEntity != nil {
-		effectCount++
-		if err := e.MutateModeBasedEntity.Validate(); err != nil {
-			reporter.sub("mutateModeBasedEntity").addf("", "%v", err)
-		}
-	}
-	if e.ResetModeBasedEntityAnimation != nil {
-		effectCount++
-		if err := e.ResetModeBasedEntityAnimation.Validate(); err != nil {
-			reporter.sub("resetModeBasedEntityAnimation").addf("", "%v", err)
-		}
-	}
-	if e.MutateBlockingPresence != nil {
-		effectCount++
-		if err := e.MutateBlockingPresence.Validate(); err != nil {
-			reporter.sub("mutateBlockingPresence").addf("", "%v", err)
-		}
-	}
-	if e.SetWorldState != nil {
-		effectCount++
-		if err := e.SetWorldState.Validate(); err != nil {
-			reporter.sub("setWorldState").addf("", "%v", err)
-		}
-	}
-	if e.SetEntityLocation != nil {
-		effectCount++
-		if err := e.SetEntityLocation.Validate(); err != nil {
-			reporter.sub("setEntityLocation").addf("", "%v", err)
-		}
-	}
-	if e.TeleportPlayer != nil {
-		effectCount++
-		if err := e.TeleportPlayer.Validate(); err != nil {
-			reporter.sub("teleportPlayer").addf("", "%v", err)
-		}
-	}
-	if e.Plan != nil {
-		effectCount++
-		if err := e.Plan.Validate(); err != nil {
-			reporter.sub("plan").addf("", "%v", err)
-		}
-	}
-	if e.MutateEntityBehavior != nil {
-		effectCount++
-		if err := e.MutateEntityBehavior.Validate(); err != nil {
-			reporter.sub("mutateEntityBehavior").addf("", "%v", err)
-		}
-	}
-	if e.Fade != nil {
-		effectCount++
-		if err := e.Fade.Validate(); err != nil {
-			reporter.sub("fade").addf("", "%v", err)
-		}
-	}
-	if e.DeactivateFade != nil {
-		effectCount++
-		if err := e.DeactivateFade.Validate(); err != nil {
-			reporter.sub("deactivateFade").addf("", "%v", err)
-		}
-	}
-	if e.TriggerMovement != nil {
-		effectCount++
-		if err := e.TriggerMovement.Validate(); err != nil {
-			reporter.sub("triggerMovement").addf("", "%v", err)
-		}
-	}
-	if e.ResetMovement != nil {
-		effectCount++
-		if err := e.ResetMovement.Validate(); err != nil {
-			reporter.sub("resetMovement").addf("", "%v", err)
-		}
-	}
-	if e.OverrideCamera != nil {
-		effectCount++
-		if err := e.OverrideCamera.Validate(); err != nil {
-			reporter.sub("overrideCamera").addf("", "%v", err)
-		}
-	}
-	if e.PopCameraOverride != nil {
-		effectCount++
-		if err := e.PopCameraOverride.Validate(); err != nil {
-			reporter.sub("popCameraOverride").addf("", "%v", err)
-		}
-	}
-	if e.MutateFollowCamera != nil {
-		effectCount++
-		if err := e.MutateFollowCamera.Validate(); err != nil {
-			reporter.sub("mutateFollowCamera").addf("", "%v", err)
-		}
-	}
-	if e.MutateNPC != nil {
-		effectCount++
-		if err := e.MutateNPC.Validate(); err != nil {
-			reporter.sub("mutateNPC").addf("", "%v", err)
-		}
-	}
-	if e.TriggerCombat != nil {
-		effectCount++
-		if err := e.TriggerCombat.Validate(); err != nil {
-			reporter.sub("triggerCombat").addf("", "%v", err)
-		}
-	}
-	if e.EntityFaceDirection != nil {
-		effectCount++
-		if err := e.EntityFaceDirection.Validate(); err != nil {
-			reporter.sub("entityFaceDirection").addf("", "%v", err)
-		}
-	}
-	if e.StartScriptedMotion != nil {
-		effectCount++
-		if err := e.StartScriptedMotion.Validate(); err != nil {
-			reporter.sub("startScriptedMotion").addf("", "%v", err)
-		}
-	}
-	if e.OverrideEntityBehavior != nil {
-		effectCount++
-		if err := e.OverrideEntityBehavior.Validate(); err != nil {
-			reporter.sub("overrideEntityBehavior").addf("", "%v", err)
-		}
-	}
-	if e.PopEntityBehaviorOverride != nil {
-		effectCount++
-		if err := e.PopEntityBehaviorOverride.Validate(); err != nil {
-			reporter.sub("popEntityBehaviorOverride").addf("", "%v", err)
-		}
-	}
-
-	reporter.requirePositive("effectCount", float64(effectCount))
-	return reporter.report()
-}

@@ -85,9 +85,7 @@ func (b *PlayerBehavior) triggerMovement(dispatcher Dispatcher) {
 	if game.Controls[*State]().ButtonB().IsPressed() {
 		moveState = types.MoveStateRunning
 	}
-	dispatcher.ProcessEffects(events.Effect{
-		TriggerMovement: events.NewTriggerMovementEffect(b.id).WithDirection(direction).WithMoveState(moveState),
-	})
+	dispatcher.ProcessEffects(events.NewTriggerMovementEffect(b.id).WithDirection(direction).WithMoveState(moveState))
 }
 
 func (b *PlayerBehavior) triggerInteraction(p *EntityPosition, dispatcher Dispatcher) {

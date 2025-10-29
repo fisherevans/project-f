@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
@@ -24,6 +25,10 @@ func (l *Light) Update(timeDelta float64) {
 }
 
 func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
+	l.RenderAlpha(target, matrix, 1)
+}
+
+func (l *Light) RenderAlpha(target pixel.Target, matrix pixel.Matrix, alpha float64) {
 	if l == nil {
 		return
 	}
@@ -31,13 +36,14 @@ func (l *Light) Render(target pixel.Target, matrix pixel.Matrix) {
 		for _, m := range l.Modifiers {
 			m.Apply(&renderDetails)
 		}
+		mask := colors.WithAlpha(renderDetails.ColorMask, alpha)
 		renderDetails.Sprite.DrawColorMask(
 			target,
 			pixel.IM.
 				Moved(renderDetails.PositionDelta).
 				Scaled(pixel.ZV, renderDetails.SizeScale).
 				Chained(matrix),
-			renderDetails.ColorMask)
+			mask)
 
 	}
 }

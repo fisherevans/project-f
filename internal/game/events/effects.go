@@ -6,6 +6,11 @@ import (
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 )
 
+// Effect is the interface that all effect types must implement
+type Effect interface {
+	FillDefaultsAndValidate() error
+}
+
 type RunnableFunction func()
 
 func (RunnableFunction) String() string {
@@ -120,8 +125,8 @@ func (p *EffectPlan) WithId(id string) *EffectPlan {
 type PlanStep struct {
 	// Serial: effects execute one after another
 	// Parallel: all effects in the list run simultaneously, wait for all to complete
-	Serial   []Effect `one_of:"type"`
-	Parallel []Effect `one_of:"type"`
+	Serial   []Effect `one_of:"type"` // Note: Effect is now an interface
+	Parallel []Effect `one_of:"type"` // Note: Effect is now an interface
 }
 
 type EffectMutateEntityBehavior struct {

@@ -3,6 +3,7 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 )
 
@@ -124,18 +125,28 @@ func (r *BasicEntityRenderer) Update(timeDelta float64) {
 }
 
 func (r *BasicEntityRenderer) RenderToScene(target pixel.Target, matrix pixel.Matrix) {
+	r.RenderToSceneAlpha(target, matrix, 1)
+}
+
+func (r *BasicEntityRenderer) RenderToSceneAlpha(target pixel.Target, matrix pixel.Matrix, alpha float64) {
+	alpha = max(0, min(1, alpha))
 	m := matrix.Moved(r.animationOriginOffset.Scaled(resources.MapTileSize.Float()))
 	for _, a := range r.animations {
-		if a.ColorMask == nil {
-			a.Animation.Sprite().Draw(target, m)
-		} else {
-			a.Animation.Sprite().DrawColorMask(target, m, *a.ColorMask)
+		mask := colors.White.RGBA
+		if a.ColorMask != nil {
+			mask = *a.ColorMask
 		}
+		mask = colors.WithAlpha(mask, alpha)
+		a.Animation.Sprite().DrawColorMask(target, m, mask)
 	}
 }
 
 func (r *BasicEntityRenderer) RenderToLightMap(target pixel.Target, matrix pixel.Matrix) {
+	r.RenderToLightMapAlpha(target, matrix, 1)
+}
+
+func (r *BasicEntityRenderer) RenderToLightMapAlpha(target pixel.Target, matrix pixel.Matrix, alpha float64) {
 	for _, l := range r.lights {
-		l.Render(target, matrix.Moved(r.lightOriginOffset))
+		l.RenderAlpha(target, matrix.Moved(r.lightOriginOffset), alpha)
 	}
 }

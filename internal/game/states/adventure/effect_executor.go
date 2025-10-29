@@ -16,50 +16,81 @@ import (
 )
 
 func (s *State) processEffects(effects ...events.DispatchedEffect) {
-	for _, e := range effects {
+	for _, dispatched := range effects {
+		switch e := dispatched.Effect.(type) {
 		// generic effects first
-		s.processEffectFunction(e.Source, e.Function)
-		s.processEffectPlan(e.Source, e.Plan)
-		s.processEffectTimer(e.Source, e.Timer)
-		s.processSetWorldState(e.Source, e.SetWorldState)
+		case *events.EffectFunction:
+			s.processEffectFunction(dispatched.Source, e)
+		case *events.EffectPlan:
+			s.processEffectPlan(dispatched.Source, e)
+		case *events.EffectTimer:
+			s.processEffectTimer(dispatched.Source, e)
+		case *events.EffectSetWorldState:
+			s.processSetWorldState(dispatched.Source, e)
 
-		// adventure state chages
-		s.processEffectFade(e.Source, e.Fade)
-		s.processEffectDeactivateFade(e.Source, e.DeactivateFade)
-		s.processEffectTriggerCombat(e.Source, e.TriggerCombat)
+		// adventure state changes
+		case *events.EffectFade:
+			s.processEffectFade(dispatched.Source, e)
+		case *events.EffectDeactivateFade:
+			s.processEffectDeactivateFade(dispatched.Source, e)
+		case *events.EffectTriggerCombat:
+			s.processEffectTriggerCombat(dispatched.Source, e)
 
 		// chatter and dialogue
-		s.processEffectDialogue(e.Source, e.Dialogue)
-		s.processEffectChatter(e.Source, e.Chatter)
+		case *events.EffectDialogue:
+			s.processEffectDialogue(dispatched.Source, e)
+		case *events.EffectChatter:
+			s.processEffectChatter(dispatched.Source, e)
 
 		// rpg effects
-		s.processEffectYieldElythium(e.Source, e.YieldElythium)
+		case *events.EffectYieldElythium:
+			s.processEffectYieldElythium(dispatched.Source, e)
 
-		// pop camera before mutating it
-		s.processEffectPopCameraOverride(e.Source, e.PopCameraOverride)
-		s.processEffectOverrideCamera(e.Source, e.OverrideCamera)
-		s.processEffectMutateFollowCamera(e.Source, e.MutateFollowCamera)
+		// camera effects
+		case *events.EffectPopCameraOverride:
+			s.processEffectPopCameraOverride(dispatched.Source, e)
+		case *events.EffectOverrideCamera:
+			s.processEffectOverrideCamera(dispatched.Source, e)
+		case *events.EffectMutateFollowCamera:
+			s.processEffectMutateFollowCamera(dispatched.Source, e)
 
 		// mutate renderers
-		s.processEffectMutateNPC(e.Source, e.MutateNPC)
-		s.processEffectMutateModeBasedRenderer(e.Source, e.MutateModeBasedEntity)
-		s.processEffectResetModeBasedEntityAnimation(e.Source, e.ResetModeBasedEntityAnimation)
+		case *events.EffectMutateNPC:
+			s.processEffectMutateNPC(dispatched.Source, e)
+		case *events.EffectMutateModeBasedEntity:
+			s.processEffectMutateModeBasedRenderer(dispatched.Source, e)
+		case *events.EffectResetModeBasedEntityAnimation:
+			s.processEffectResetModeBasedEntityAnimation(dispatched.Source, e)
 
-		// mutate presenses before movement stuff
-		s.processEffectMutateBlockingPresence(e.Source, e.MutateBlockingPresence)
+		// mutate presences
+		case *events.EffectMutateBlockingPresence:
+			s.processEffectMutateBlockingPresence(dispatched.Source, e)
 
-		// pop before override
-		s.processEffectPopEntityBehaviorOverride(e.Source, e.PopEntityBehaviorOverride)
-		s.processEffectOverrideEntityBehavior(e.Source, e.OverrideEntityBehavior)
-		s.processEffectMutateEntityBehavior(e.Source, e.MutateEntityBehavior)
+		// entity behavior
+		case *events.EffectPopEntityBehaviorOverride:
+			s.processEffectPopEntityBehaviorOverride(dispatched.Source, e)
+		case *events.EffectOverrideEntityBehavior:
+			s.processEffectOverrideEntityBehavior(dispatched.Source, e)
+		case *events.EffectMutateEntityBehavior:
+			s.processEffectMutateEntityBehavior(dispatched.Source, e)
 
-		// tweak position/behavior after overrides
-		s.processEffectSetEntityLocation(e.Source, e.SetEntityLocation)
-		s.processEffectTeleportPlayer(e.Source, e.TeleportPlayer)
-		s.processEffectStartScriptedMotion(e.Source, e.StartScriptedMotion)
-		s.processEffectResetMovement(e.Source, e.ResetMovement)
-		s.processEffectEntityFaceDirection(e.Source, e.EntityFaceDirection)
-		s.processEffectTriggerMovement(e.Source, e.TriggerMovement)
+		// position and movement
+		case *events.EffectSetEntityLocation:
+			s.processEffectSetEntityLocation(dispatched.Source, e)
+		case *events.EffectTeleportPlayer:
+			s.processEffectTeleportPlayer(dispatched.Source, e)
+		case *events.EffectStartScriptedMotion:
+			s.processEffectStartScriptedMotion(dispatched.Source, e)
+		case *events.EffectResetMovement:
+			s.processEffectResetMovement(dispatched.Source, e)
+		case *events.EffectEntityFaceDirection:
+			s.processEffectEntityFaceDirection(dispatched.Source, e)
+		case *events.EffectTriggerMovement:
+			s.processEffectTriggerMovement(dispatched.Source, e)
+
+		default:
+			log.Warn().Type("effect_type", e).Msg("Unknown effect type, ignoring")
+		}
 	}
 }
 
@@ -82,6 +113,7 @@ func (s *State) processEffectFunction(source events.EntityContext, e *events.Eff
 	e.Fn()
 	logEffectInfof(source, e, "function executed")
 }
+
 func (s *State) processEffectDialogue(source events.EntityContext, e *events.EffectDialogue) {
 	if e == nil {
 		return
@@ -341,82 +373,55 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 		var effects []events.Effect
 
 		effects = append(effects,
-			events.Effect{MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithDisableBy(fadeOutId)},
-			events.Effect{Fade: &events.EffectFade{
-				FadeId:          fadeOutId,
-				DurationSeconds: fadeDuration,
-				FromColor:       util.Ptr("#00000000"), // transparent
-				ToColor:         util.Ptr("#000000FF"), // black
-				Transitions:     1,
-				AutoDeactivate:  util.Ptr(false),
-			}},
-			events.Effect{SetEntityLocation: &events.EffectSetEntityLocation{
+			events.NewMutateEntityBehaviorEffect(s.player).WithDisableBy(fadeOutId),
+			events.NewFadeEffect(fadeDuration, 1).
+				WithFadeId(fadeOutId).
+				WithAutoDeactivate(false).
+				WithFromColor("#00000000").
+				WithToColor("#000000FF"),
+			&events.EffectSetEntityLocation{
 				EntityId:    s.player,
 				ToReference: e.ToReference,
 				ToLocation:  e.ToLocation,
 				ToEntityId:  e.ToEntityId,
-			}},
-			events.Effect{MutateFollowCamera: &events.EffectMutateFollowCamera{
-				FollowEntityId: &s.player,
-				ResetPosition:  util.Ptr(true),
-			}},
+			},
+			events.NewMutateFollowCameraEffect().
+				WithFollowEntityId(s.player).
+				WithResetPosition(true),
 		)
 
 		// todo consider adding "wait for idle" for player to stop moving
 
 		if exitDirection != nil && *exitDirection != input.NotPressed {
-			effects = append(effects, events.Effect{
-				MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithReset(true),
-				TriggerMovement:      events.NewTriggerMovementEffect(s.player).WithDirection(*exitDirection),
-			})
+			effects = append(effects,
+				events.NewMutateEntityBehaviorEffect(s.player).WithReset(true),
+				events.NewTriggerMovementEffect(s.player).WithDirection(*exitDirection))
 		}
 
 		effects = append(effects,
-			events.Effect{
-				Fade: &events.EffectFade{
-					DurationSeconds: fadeDuration,
-					AutoDeactivate:  util.Ptr(true),
-					FromColor:       util.Ptr("#000000FF"), // black
-					ToColor:         util.Ptr("#00000000"), // transparent
-					Transitions:     1,
-				},
-				DeactivateFade: &events.EffectDeactivateFade{
-					FadeId: fadeOutId,
-				},
-				MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).
-					WithEnableBy(fadeOutId),
-			},
-		)
-		plan = &events.EffectPlan{
-			Steps: []events.PlanStep{
-				{
-					Serial: effects,
-				},
-			},
-		}
+			events.NewFadeEffect(fadeDuration, 1).
+				WithAutoDeactivate(true).
+				WithFromColor("#000000FF").
+				WithToColor("#00000000"),
+			events.NewDeactivateFadeEffect(fadeOutId),
+			events.NewMutateEntityBehaviorEffect(s.player).
+				WithEnableBy(fadeOutId))
+		plan = events.NewSerialPlan(effects...)
 	case "instant":
 		// Instant teleport with no transition
-		plan = &events.EffectPlan{
-			PlanId: "", // Auto-generated
-			Steps: []events.PlanStep{
-				{Serial: []events.Effect{
-					{SetEntityLocation: &events.EffectSetEntityLocation{
-						EntityId:    s.player,
-						ToReference: e.ToReference,
-						ToLocation:  e.ToLocation,
-						ToEntityId:  e.ToEntityId,
-					}},
-				}},
-			},
-		}
-
+		plan = events.NewSerialPlan(&events.EffectSetEntityLocation{
+			EntityId:    s.player,
+			ToReference: e.ToReference,
+			ToLocation:  e.ToLocation,
+			ToEntityId:  e.ToEntityId,
+		})
 	default:
 		logEffectWarnf(source, e, "unknown transition style, using fade")
 		return
 	}
 
 	// Execute the plan as a system effect
-	s.ExecuteSystemEffects(events.Effect{Plan: plan})
+	s.ExecuteSystemEffects(plan)
 	logEffectInfof(source, e, "player teleport plan started with style: %s", transitionStyle)
 }
 
@@ -507,11 +512,7 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 			State: s,
 		})
 		game.CurrentSave().Animech.AnimechExperience += r.ResearchPoints // todo this isn't right
-		s.ExecuteSystemEffects(events.Effect{
-			DeactivateFade: &events.EffectDeactivateFade{
-				FadeId: "combat_fade",
-			},
-		})
+		s.ExecuteSystemEffects(events.NewDeactivateFadeEffect("combat_fade"))
 		s.eventDispatcher.Dispatch(&events.EventCombatComplete{
 			CombatId: e.CombatId,
 			Result:   "completed", // TODO: serialize result properly
@@ -519,69 +520,51 @@ func (s *State) processEffectTriggerCombat(source events.EntityContext, e *event
 		s.planExecutor.MarkCombatComplete(e.CombatId)
 	}
 
-	s.ExecuteSystemEffects(events.Effect{
-		Plan: &events.EffectPlan{
-			Steps: []events.PlanStep{
-				{
-					Serial: []events.Effect{
-						{
-							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithDisableBy("combat"),
-							Fade: &events.EffectFade{
-								DurationSeconds: 1,
-								AutoDeactivate:  util.Ptr(true),
-								FromColor:       util.Ptr("#00000000"),
-								ToColor:         util.Ptr("#000000FF"),
-								Transitions:     6,
-							},
-						},
-						{
-							Fade: &events.EffectFade{
-								FadeId:          "combat_fade",
-								DurationSeconds: 3,
-								AutoDeactivate:  util.Ptr(false),
-								FromColor:       util.Ptr("#00000000"),
-								ToColor:         util.Ptr("#000000FF"),
-								Transitions:     1,
-							},
-							Function: &events.EffectFunction{
-								Fn: func() {
-									game.SetCustomShader(game.NewSwirlShader(3))
-								},
-							},
-						},
-						{
-							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(s.player).WithEnableBy("combat"),
-							Function: &events.EffectFunction{
-								Fn: func() {
-									s.enteringCombat = false
-									game.RemoveCustomShader()
-									var opponent rpg.PrimortalType
-									if e.Opponent != nil {
-										opponent = *e.Opponent
-									} else {
-										options := []rpg.PrimortalType{
-											rpg.Primortal_Volteel.Type,
-											rpg.Primortal_Toxmidge.Type,
-											rpg.Primortal_Scintail.Type,
-											rpg.Primortal_Myceli.Type,
-											rpg.Primortal_Pumbl.Type,
-										}
-										opponent = options[rand.Intn(len(options))]
-									}
-									game.SetActiveStateIntent(game.CombatIntent{
-										Run:        &rpg.Run{},
-										Opponent:   opponent,
-										Background: e.Background,
-										OnComplete: postCombat,
-									})
-								},
-							},
-						},
-					},
-				},
-			},
+	s.ExecuteSystemEffectsInOrder(
+		events.NewMutateEntityBehaviorEffect(s.player).WithDisableBy("combat"),
+		&events.EffectFade{
+			DurationSeconds: 1,
+			AutoDeactivate:  util.Ptr(true),
+			FromColor:       util.Ptr("#00000000"),
+			ToColor:         util.Ptr("#000000FF"),
+			Transitions:     6,
 		},
-	})
+		&events.EffectFade{
+			FadeId:          "combat_fade",
+			DurationSeconds: 3,
+			AutoDeactivate:  util.Ptr(false),
+			FromColor:       util.Ptr("#00000000"),
+			ToColor:         util.Ptr("#000000FF"),
+			Transitions:     1,
+		},
+		events.NewFunctionEffect(func() {
+			game.SetCustomShader(game.NewSwirlShader(3))
+		}),
+		events.NewMutateEntityBehaviorEffect(s.player).WithEnableBy("combat"),
+		events.NewFunctionEffect(func() {
+			s.enteringCombat = false
+			game.RemoveCustomShader()
+			var opponent rpg.PrimortalType
+			if e.Opponent != nil {
+				opponent = *e.Opponent
+			} else {
+				options := []rpg.PrimortalType{
+					rpg.Primortal_Volteel.Type,
+					rpg.Primortal_Toxmidge.Type,
+					rpg.Primortal_Scintail.Type,
+					rpg.Primortal_Myceli.Type,
+					rpg.Primortal_Pumbl.Type,
+				}
+				opponent = options[rand.Intn(len(options))]
+			}
+			game.SetActiveStateIntent(game.CombatIntent{
+				Run:        &rpg.Run{},
+				Opponent:   opponent,
+				Background: e.Background,
+				OnComplete: postCombat,
+			})
+		}),
+	)
 }
 
 func (s *State) processEffectEntityFaceDirection(source events.EntityContext, e *events.EffectEntityFaceDirection) {

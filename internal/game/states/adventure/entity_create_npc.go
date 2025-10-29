@@ -58,23 +58,10 @@ func init() {
 					return nil
 				}
 				return events.NewOutput().WithSerialPlan(
-					events.Effect{
-						MutateNPC: &events.EffectMutateNPC{
-							EntityId:          ctx.EntityId(),
-							TalkingAtEntityId: util.Ptr(world.GetAsString("player_id")),
-						},
-						Chatter: &events.EffectChatter{
-							EntityId:        ctx.EntityId(),
-							DurationSeconds: 5,
-							Message:         util.OneOffDialogues.Random(),
-						},
-					},
-					events.Effect{
-						MutateNPC: &events.EffectMutateNPC{
-							EntityId:          ctx.EntityId(),
-							TalkingAtEntityId: util.Ptr(""),
-						},
-					},
+					events.NewMutateNPCEffect(ctx.EntityId()).
+						WithTalkingAtEntityId(world.GetAsString("player_id")),
+					events.NewChatterEffect(ctx.EntityId(), 4, util.OneOffDialogues.Random()),
+					events.NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
 				)
 			}).
 			CreateHandler()
@@ -148,11 +135,9 @@ func (b *NPCBehavior) doMovement(p *EntityPosition, dispatcher Dispatcher) {
 	nextLocation := p.GetPrimaryLocation().Moved(p.FacingDirection)
 	isValid, _, _ := b.system.isMovementValid(b.id, nextLocation)
 	if isValid {
-		dispatcher.ProcessEffects(events.Effect{
-			TriggerMovement: events.
-				NewTriggerMovementEffect(b.id).
-				WithLocation(nextLocation.ToEventLocation()),
-		})
+		dispatcher.ProcessEffects(events.
+			NewTriggerMovementEffect(b.id).
+			WithLocation(nextLocation.ToEventLocation()))
 		return
 	}
 	var dir input.Direction
@@ -166,7 +151,5 @@ func (b *NPCBehavior) doMovement(p *EntityPosition, dispatcher Dispatcher) {
 		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
 	}
 	p.FacingDirection = dir
-	dispatcher.ProcessEffects(events.Effect{
-		TriggerMovement: events.NewTriggerMovementEffect(b.id).WithDirection(p.FacingDirection),
-	})
+	dispatcher.ProcessEffects(events.NewTriggerMovementEffect(b.id).WithDirection(p.FacingDirection))
 }

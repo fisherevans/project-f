@@ -27,11 +27,17 @@ func newBaseEntityBehavior(id string, system *EntitySystem) *baseEntityBehavior 
 }
 
 func (b *baseEntityBehavior) Enable(source string) {
+	if _, exists := b.disabledBy[source]; !exists {
+		return
+	}
 	delete(b.disabledBy, source)
 	log.Info().Str("id", b.id).Str("by", source).Msg("behavior enabled")
 }
 
 func (b *baseEntityBehavior) Disable(source string) {
+	if _, exists := b.disabledBy[source]; exists {
+		return
+	}
 	b.disabledBy[source] = struct{}{}
 	b.system.positions[b.id].CancelMovement()
 	log.Info().Str("id", b.id).Str("by", source).Msg("behavior disabled")

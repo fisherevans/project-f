@@ -14,27 +14,26 @@ func init() {
 		controlled := props.GetString("control_id", "")
 		return events.BasicHandlerBuilder[None]{
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
-				return events.NewOutput().WithEffects(events.Effect{
-					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect(ctx.EntityId()).WithIsBlockingIngress(false),
-					OverrideEntityBehavior: events.NewOverrideEntityBehaviorEffect(controlled).
+				return events.NewOutput().WithEffects(
+					events.NewMutateBlockingPresenceEffect(ctx.EntityId()).WithIsBlockingIngress(false),
+					events.NewOverrideEntityBehaviorEffect(controlled).
 						WithScriptedMotion(events.EntityBehaviorScriptedMotion{}),
-					SetWorldState: events.NewSetWorldStateEffect("control_id", controlled),
-				}, events.Effect{
-					MutateBlockingPresence: events.NewMutateBlockingPresenceEffect("control_reset").WithIsBlockingIngress(false),
-				})
+					events.NewSetWorldStateEffect("control_id", controlled),
+					events.NewMutateBlockingPresenceEffect("control_reset").WithIsBlockingIngress(false),
+				)
 			},
 			EntityZoneActivity: func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventEntityZoneActivity) *events.HandlerOutput {
 				if event.ZoneId == "control" && world.GetAsString("player_id") == event.EntityId {
 					if event.IsEntering {
-						return events.NewOutput().WithEffects(events.Effect{
-							OverrideCamera: events.NewOverrideCameraEffect().WithFollow(events.FollowCamera{
+						return events.NewOutput().WithEffects(
+							events.NewOverrideCameraEffect().WithFollow(events.FollowCamera{
 								EntityId: util.Ptr("control_camera"),
 							}),
-						})
+						)
 					} else {
-						return events.NewOutput().WithEffects(events.Effect{
-							PopCameraOverride: events.NewPopCameraOverrideEffect(true),
-						})
+						return events.NewOutput().WithEffects(
+							events.NewPopCameraOverrideEffect(true),
+						)
 					}
 				}
 				playerId := world.GetAsString("player_id")
@@ -50,24 +49,19 @@ func init() {
 						"Do you mind? I just want to go home!",
 					}
 					quip := quips[rand.IntN(len(quips))]
-					return events.NewOutput().WithEffects(events.Effect{
-						Plan: events.NewPlanEffect("", []events.PlanStep{{Serial: []events.Effect{
-							{
-								MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(playerId).WithDisableBy("control"),
-								StartScriptedMotion: events.NewStartScriptedMotionEffect("", world.GetAsString("control_id")).
-									WithToEntityId("control_reset"),
-								OverrideCamera: events.NewOverrideCameraEffect().WithFollow(events.FollowCamera{
-									EntityId: util.Ptr("controlled_npc"),
-								}),
-								Chatter: events.NewChatterEffect("", "controlled_npc", 4, quip),
-							},
-							{
-								MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(playerId).WithEnableBy("control"),
-								PopCameraOverride:    events.NewPopCameraOverrideEffect(true),
-								EntityFaceDirection:  events.NewEntityFaceDirectionEffect("controlled_npc", input.Down),
-							},
-						}}}),
-					})
+					return events.NewOutput().WithSerialPlan(
+						events.NewMutateEntityBehaviorEffect(playerId).WithDisableBy("control"),
+						events.NewOverrideCameraEffect().WithFollow(events.FollowCamera{EntityId: util.Ptr("controlled_npc")}),
+						events.NewParallelPlan(
+							events.NewSerialPlan(
+								events.NewTimerEffect(1),
+								events.NewStartScriptedMotionEffect(world.GetAsString("control_id")).WithToEntityId("control_reset"),
+							),
+							events.NewChatterEffect("controlled_npc", 4, quip),
+						),
+						events.NewMutateEntityBehaviorEffect(playerId).WithEnableBy("control"),
+						events.NewPopCameraOverrideEffect(true),
+						events.NewEntityFaceDirectionEffect("controlled_npc", input.Down))
 				}
 				return nil
 			},
@@ -78,32 +72,29 @@ func init() {
 		action := props.GetString("action", "")
 		return events.BasicHandlerBuilder[None]{
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
-				return events.NewOutput().WithEffects(events.Effect{
-					MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
+				return events.NewOutput().WithEffects(
+					events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithAnimations(map[string][]types.AnimationReference{
 							"": {{
 								Name:      "adventure/doors/button",
 								ColorMask: util.Ptr(colorMask),
 							}},
-						}),
-				})
+						}))
 			},
 			OnInteract: func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
 				if event.TargetId != ctx.EntityId() {
 					return nil
 				}
 				output := func(dir input.Direction) events.Effect {
-					return events.Effect{
-						StartScriptedMotion: events.NewStartScriptedMotionEffect("", world.GetAsString("control_id")).
-							WithRelative(events.RelativeLocation{
-								Direction: dir,
-								Steps:     3,
-							}),
-					}
+					return events.NewStartScriptedMotionEffect(world.GetAsString("control_id")).
+						WithRelative(events.RelativeLocation{
+							Direction: dir,
+							Steps:     3,
+						})
 				}
-				effects := []events.Effect{{
-					ResetModeBasedEntityAnimation: events.NewResetModeBasedEntityAnimationEffect(ctx.EntityId()),
-				}}
+				effects := []events.Effect{
+					events.NewResetModeBasedEntityAnimationEffect(ctx.EntityId()),
+				}
 				switch action {
 				case "down":
 					effects = append(effects, output(input.Down))

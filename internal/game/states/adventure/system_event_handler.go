@@ -53,9 +53,9 @@ func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.W
 func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashGapState, event *events.EventOnInteract) *events.HandlerOutput {
 	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.GetPrimaryLocation())
 	to := events.Location{X: location.X, Y: location.Y}
-	return events.NewOutput().WithEffects(events.Effect{
-		TriggerMovement: events.NewTriggerMovementEffect(event.SourceId).WithLocation(to).WithMoveState(types.MoveStateDashing),
-	})
+	return events.NewOutput().WithEffects(
+		events.NewTriggerMovementEffect(event.SourceId).WithLocation(to).WithMoveState(types.MoveStateDashing),
+	)
 }
 
 func findDashDestination(s *State, direction input.Direction, location MapLocation) MapLocation {
@@ -91,13 +91,5 @@ func (h *SystemEventHandler) onZoneActivity(ctx events.EntityContext, world even
 	if ref == "teleport:" { // todo this is gross
 		return nil
 	}
-	return &events.HandlerOutput{
-		Effects: []events.Effect{
-			{
-				TeleportPlayer: &events.EffectTeleportPlayer{
-					ToReference: &ref,
-				},
-			},
-		},
-	}
+	return events.NewOutput().WithEffects(events.NewTeleportPlayerEffect().WithToReference(ref))
 }

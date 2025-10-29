@@ -21,17 +21,17 @@ func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []Dispatche
 	}
 	var effects []DispatchedEffect
 	for _, effect := range output.Effects {
-		if err := effect.Validate(); err != nil {
+		if err := effect.FillDefaultsAndValidate(); err != nil {
 			log.Err(err).
 				Interface("effect", effect).
 				Str("source", r.ctx.EntityId()).
-				Msg("Invalid effect")
-		} else {
-			effects = append(effects, DispatchedEffect{
-				Source: r.ctx,
-				Effect: effect,
-			})
+				Msg("Effect validation failed, ignoring")
+			continue
 		}
+		effects = append(effects, DispatchedEffect{
+			Source: r.ctx,
+			Effect: effect,
+		})
 	}
 	return effects
 }
@@ -96,7 +96,7 @@ func (d *Dispatcher) handleOutput(handler *registeredEventHandler, output *Handl
 		handler.State = output.State
 	}
 	for _, effect := range output.Effects {
-		if err := effect.Validate(); err != nil {
+		if err := effect.FillDefaultsAndValidate(); err != nil {
 			log.Error().Interface("effect", effect).Msg("Invalid effect, ignoring")
 			continue
 		}
@@ -109,5 +109,5 @@ func (d *Dispatcher) handleOutput(handler *registeredEventHandler, output *Handl
 
 type DispatchedEffect struct {
 	Source EntityContext
-	Effect
+	Effect Effect // Effect is now an interface
 }

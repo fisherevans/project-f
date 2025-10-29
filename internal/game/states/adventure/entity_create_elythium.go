@@ -17,25 +17,16 @@ func init() {
 		}
 		mode := "mined"
 		return events.NewOutput().WithEffects(
-			events.Effect{
-				Timer: &events.EffectTimer{
-					TimerId:         "reset",
-					DurationSeconds: 3,
-				},
-				YieldElythium: &events.EffectYieldElythium{
-					Amount: 3,
-				},
-				MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode(mode),
-			},
+			events.NewTimerEffect(3).WithTimerId("reset"),
+			events.NewYieldElythiumEffect(3),
+			events.NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode(mode),
 		)
 	})
 	handler.WithTimerComplete(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventTimerComplete) *events.HandlerOutput {
 		if event.CreatedBy != ctx.EntityId() || event.TimerId != "reset" {
 			return nil
 		}
-		return events.NewOutput().WithEffects(events.Effect{
-			MutateModeBasedEntity: events.NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("ready"),
-		})
+		return events.NewOutput().WithEffects(events.NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("ready"))
 	})
 	targetRegistration().
 		byTile(tiles.Elythium).

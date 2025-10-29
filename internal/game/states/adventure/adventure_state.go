@@ -68,7 +68,6 @@ type State struct {
 
 	hud *Hud
 
-	blockInput     bool
 	enteringCombat bool
 
 	sceneBatch  *pixel.Batch
@@ -257,16 +256,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	}
 }
 
-func (s *State) inputMode() inputMode {
-	if s.blockInput {
-		return inputModeBlocked
-	}
-	if s.dialogues.HasPriority() {
-		return inputModeDialogue
-	}
-	return inputModePlayerMovement
-}
-
 func (s *State) AddMob(mob *ShadowMob) {
 	s.mobs = append(s.mobs, mob)
 }
@@ -291,7 +280,5 @@ func (s *State) ExecuteSystemEffects(effects ...events.Effect) {
 }
 
 func (s *State) ExecuteSystemEffectsInOrder(effects ...events.Effect) {
-	s.ExecuteSystemEffects(events.Effect{
-		Plan: events.NewSerialPlan(effects...),
-	})
+	s.ExecuteSystemEffects(events.NewSerialPlan(effects...))
 }

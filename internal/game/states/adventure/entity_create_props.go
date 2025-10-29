@@ -37,30 +37,14 @@ func init() {
 					}
 					if world.GetRun().Elythium < requiredElythium {
 						msg := fmt.Sprintf("You need %d Elythium to travel home!", requiredElythium)
-						return events.NewOutput().WithEffects(events.Effect{
-							Dialogue: &events.EffectDialogue{
-								Text: msg,
-							},
-						})
+						return events.NewOutput().WithEffects(events.NewDialogueEffect(msg))
 					}
 					return events.NewOutput().WithSerialPlan(
-						events.Effect{
-							Dialogue: &events.EffectDialogue{
-								Text: "You've managed to escape!",
-							},
-							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("rocket"),
-						},
-						events.Effect{
-							YieldElythium: &events.EffectYieldElythium{
-								Amount: -requiredElythium,
-							},
-							TeleportPlayer: &events.EffectTeleportPlayer{
-								ToReference: &dest,
-							},
-						},
-						events.Effect{
-							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("rocket"),
-						},
+						events.NewDialogueEffect("You've managed to escape!"),
+						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("rocket"),
+						events.NewYieldElythiumEffect(-requiredElythium),
+						events.NewTeleportPlayerEffect().WithToReference(dest),
+						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("rocket"),
 					)
 				})
 			return nil, handler.CreateHandler()
@@ -82,28 +66,16 @@ func init() {
 			quipTimerId := "dummy-quips-trigger"
 			handler := events.NewBasicHandler(None{}).
 				WithInit(func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
-					return events.NewOutput().WithEffects(events.Effect{
-						Timer: &events.EffectTimer{
-							TimerId:         quipTimerId,
-							DurationSeconds: 10 + rand.Float64()*10,
-						},
-					})
+					return events.NewOutput().WithEffects(events.
+						NewTimerEffect(10 + rand.Float64()*10).WithTimerId(quipTimerId))
 				}).
 				WithTimerComplete(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventTimerComplete) *events.HandlerOutput {
 					if event.TimerId != quipTimerId {
 						return nil
 					}
-					return events.NewOutput().WithEffects(events.Effect{
-						Chatter: &events.EffectChatter{
-							EntityId:        string(entityId),
-							DurationSeconds: 4,
-							Message:         dummyQuips[rand.Intn(len(dummyQuips))],
-						},
-						Timer: &events.EffectTimer{
-							TimerId:         quipTimerId,
-							DurationSeconds: 10 + rand.Float64()*10,
-						},
-					})
+					return events.NewOutput().WithEffects(
+						events.NewChatterEffect(entityId, 4, dummyQuips[rand.Intn(len(dummyQuips))]),
+						events.NewTimerEffect(10+rand.Float64()*10).WithTimerId(quipTimerId))
 				}).
 				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
 					if ctx.EntityId() != event.TargetId {
@@ -118,24 +90,12 @@ func init() {
 						message += s
 					}
 					return events.NewOutput().WithSerialPlan(
-						events.Effect{
-							Dialogue: &events.EffectDialogue{
-								Text: message,
-							},
-							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("robot"),
-						},
-						events.Effect{
-							TriggerCombat: &events.EffectTriggerCombat{
-								Opponent:   &rpg.Primortal_Dummy.Type,
-								Background: "combat/background_space_base",
-							},
-						},
-						events.Effect{
-							Dialogue: &events.EffectDialogue{
-								Text: "Well, butter my bolts... you actually did it.",
-							},
-							MutateEntityBehavior: events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("robot"),
-						},
+						events.NewDialogueEffect(message),
+						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("robot"),
+						events.NewTriggerCombatEffect("combat/background_space_base").
+							WithOpponent(rpg.Primortal_Dummy.Type),
+						events.NewDialogueEffect("Well, butter my bolts... you actually did it."),
+						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("robot"),
 					)
 				})
 			return nil, handler.CreateHandler()

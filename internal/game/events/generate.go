@@ -50,13 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Generate Effect struct
-	effectStructOutput := generateEffectStruct(effects)
-	effectStructPath := "effect_struct.generated.go"
-	if err := os.WriteFile(effectStructPath, []byte(effectStructOutput), 0644); err != nil {
-		fmt.Fprintf(os.Stderr, "Error writing effect struct: %v\n", err)
-		os.Exit(1)
-	}
+	// Note: Effect struct is no longer generated - Effect is now an interface defined in effects.go
 
 	// Generate effect validation
 	validationOutput := generateEffectValidation(effects)
@@ -83,7 +77,6 @@ func main() {
 	}
 
 	fmt.Printf("Generated %s\n", builderPath)
-	fmt.Printf("Generated %s\n", effectStructPath)
 	fmt.Printf("Generated %s\n", validationPath)
 	fmt.Printf("Generated %s\n", buildersPath)
 	fmt.Printf("Generated %s\n", chainBuilderPath)
@@ -527,30 +520,7 @@ func generateEffectValidation(effects []EffectInfo) string {
 		generateValidateMethod(&sb, effect, typesWithValidation)
 	}
 
-	// Generate Validate method for Effect union
-	sb.WriteString("// Validate checks that the effect has exactly one effect type set and calls its validator\n")
-	sb.WriteString("func (e Effect) Validate() error {\n")
-	sb.WriteString("\treporter := newIssueReporter()\n")
-	sb.WriteString("\teffectCount := 0\n\n")
-
-	for _, effect := range effects {
-		// Skip helper types - only process Effect* types
-		if !strings.HasPrefix(effect.Name, "Effect") {
-			continue
-		}
-
-		fieldName := effect.Name[len("Effect"):] // Remove "Effect" prefix to get field name
-		sb.WriteString(fmt.Sprintf("\tif e.%s != nil {\n", fieldName))
-		sb.WriteString("\t\teffectCount++\n")
-		sb.WriteString(fmt.Sprintf("\t\tif err := e.%s.Validate(); err != nil {\n", fieldName))
-		sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(fieldName)))
-		sb.WriteString("\t\t}\n")
-		sb.WriteString("\t}\n")
-	}
-
-	sb.WriteString("\n\treporter.requirePositive(\"effectCount\", float64(effectCount))\n")
-	sb.WriteString("\treturn reporter.report()\n")
-	sb.WriteString("}\n")
+	// Note: No longer generating Effect union validation - Effect is now an interface
 
 	return sb.String()
 }
@@ -571,7 +541,7 @@ func generateValidateMethod(sb *strings.Builder, effect EffectInfo, typesWithVal
 		return typesWithValidation[goType]
 	}
 
-	sb.WriteString(fmt.Sprintf("func (%s *%s) Validate() error {\n", receiverName, effect.Name))
+	sb.WriteString(fmt.Sprintf("func (%s *%s) FillDefaultsAndValidate() error {\n", receiverName, effect.Name))
 	sb.WriteString("\treporter := newIssueReporter()\n\n")
 
 	// Auto-generate fields (only for Effect* types)
@@ -617,13 +587,13 @@ func generateValidateMethod(sb *strings.Builder, effect EffectInfo, typesWithVal
 				elemType := strings.TrimPrefix(fieldType, "[]")
 				if needsValidation(elemType) {
 					sb.WriteString(fmt.Sprintf("\t\tfor i, item := range %s.%s {\n", receiverName, field.Name))
-					sb.WriteString("\t\t\tif err := item.Validate(); err != nil {\n")
+					sb.WriteString("\t\t\tif err := item.FillDefaultsAndValidate(); err != nil {\n")
 					sb.WriteString(fmt.Sprintf("\t\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
 					sb.WriteString("\t\t\t}\n")
 					sb.WriteString("\t\t}\n")
 				}
 			} else if needsValidation(fieldType) {
-				sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.Validate(); err != nil {\n", receiverName, field.Name))
+				sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.FillDefaultsAndValidate(); err != nil {\n", receiverName, field.Name))
 				sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
 				sb.WriteString("\t\t}\n")
 			}
@@ -652,14 +622,14 @@ func generateValidateMethod(sb *strings.Builder, effect EffectInfo, typesWithVal
 			elemType := strings.TrimPrefix(fieldType, "[]")
 			if needsValidation(elemType) {
 				sb.WriteString(fmt.Sprintf("\tfor i, item := range %s.%s {\n", receiverName, field.Name))
-				sb.WriteString("\t\tif err := item.Validate(); err != nil {\n")
+				sb.WriteString("\t\tif err := item.FillDefaultsAndValidate(); err != nil {\n")
 				sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
 				sb.WriteString("\t\t}\n")
 				sb.WriteString("\t}\n")
 			}
 		} else if needsValidation(fieldType) {
 			// For struct types that need validation
-			sb.WriteString(fmt.Sprintf("\tif err := %s.%s.Validate(); err != nil {\n", receiverName, field.Name))
+			sb.WriteString(fmt.Sprintf("\tif err := %s.%s.FillDefaultsAndValidate(); err != nil {\n", receiverName, field.Name))
 			sb.WriteString(fmt.Sprintf("\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
 			sb.WriteString("\t}\n")
 		}
@@ -674,7 +644,7 @@ func generateValidateMethod(sb *strings.Builder, effect EffectInfo, typesWithVal
 		fieldType := strings.TrimPrefix(field.GoType, "*")
 		if needsValidation(fieldType) {
 			sb.WriteString(fmt.Sprintf("\tif %s.%s != nil {\n", receiverName, field.Name))
-			sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.Validate(); err != nil {\n", receiverName, field.Name))
+			sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.FillDefaultsAndValidate(); err != nil {\n", receiverName, field.Name))
 			sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
 			sb.WriteString("\t\t}\n")
 			sb.WriteString("\t}\n")
@@ -745,12 +715,15 @@ func generateEffectBuilders(effects []EffectInfo) string {
 
 		effectName := effect.Name[len("Effect"):] // Remove "Effect" prefix
 
-		// Separate required (non-pointer) and optional (pointer) fields
+		// Separate required (non-pointer, non-auto-generated) and optional (pointer or auto-generated) fields
 		var requiredFields []FieldInfo
 		var optionalFields []FieldInfo
 
 		for _, field := range effect.Fields {
-			if strings.HasPrefix(field.GoType, "*") {
+			// Auto-generated fields are always optional (handled via With* methods)
+			if field.AutoGenerate {
+				optionalFields = append(optionalFields, field)
+			} else if strings.HasPrefix(field.GoType, "*") {
 				optionalFields = append(optionalFields, field)
 			} else {
 				requiredFields = append(requiredFields, field)
@@ -773,7 +746,7 @@ func generateEffectBuilders(effects []EffectInfo) string {
 		sb.WriteString("\t}\n")
 		sb.WriteString("}\n\n")
 
-		// Generate With* methods for optional fields
+		// Generate With* methods for optional fields (including auto-generated ones)
 		for _, field := range optionalFields {
 			methodName := "With" + field.Name
 			paramType := strings.TrimPrefix(field.GoType, "*")
@@ -781,7 +754,15 @@ func generateEffectBuilders(effects []EffectInfo) string {
 
 			sb.WriteString(fmt.Sprintf("func (e *%s) %s(%s %s) *%s {\n",
 				effect.Name, methodName, paramName, paramType, effect.Name))
-			sb.WriteString(fmt.Sprintf("\te.%s = &%s\n", field.Name, paramName))
+			
+			// If the field is a pointer type, take address of parameter
+			if strings.HasPrefix(field.GoType, "*") {
+				sb.WriteString(fmt.Sprintf("\te.%s = &%s\n", field.Name, paramName))
+			} else {
+				// For non-pointer fields (like auto-generated strings), assign directly
+				sb.WriteString(fmt.Sprintf("\te.%s = %s\n", field.Name, paramName))
+			}
+			
 			sb.WriteString("\treturn e\n")
 			sb.WriteString("}\n\n")
 		}
@@ -799,49 +780,9 @@ func generateChainableEffectBuilder(effects []EffectInfo) string {
 
 	sb.WriteString("package events\n\n")
 
-	// Generate NewEffect constructor
-	sb.WriteString("// NewEffect creates a new Effect that can be chained with With methods\n")
-	sb.WriteString("func NewEffect() *Effect {\n")
-	sb.WriteString("\treturn &Effect{}\n")
-	sb.WriteString("}\n\n")
-
-	// Generate With method for each effect type
-	for _, effect := range effects {
-		// Skip helper types - only process Effect* types
-		if !strings.HasPrefix(effect.Name, "Effect") {
-			continue
-		}
-
-		effectName := effect.Name[len("Effect"):] // Remove "Effect" prefix
-
-		sb.WriteString(fmt.Sprintf("// With%s sets the %s field and returns the Effect for chaining\n", effectName, effectName))
-		sb.WriteString(fmt.Sprintf("func (e *Effect) With%s(v *%s) *Effect {\n", effectName, effect.Name))
-		sb.WriteString(fmt.Sprintf("\te.%s = v\n", effectName))
-		sb.WriteString("\treturn e\n")
-		sb.WriteString("}\n\n")
-	}
-
-	// Generate generic With method that accepts any effect pointer
-	sb.WriteString("// With sets an effect field by inspecting the type and returns the Effect for chaining\n")
-	sb.WriteString("func (e *Effect) With(v any) *Effect {\n")
-	sb.WriteString("\tswitch val := v.(type) {\n")
-
-	for _, effect := range effects {
-		// Skip helper types - only process Effect* types
-		if !strings.HasPrefix(effect.Name, "Effect") {
-			continue
-		}
-
-		effectName := effect.Name[len("Effect"):] // Remove "Effect" prefix
-		sb.WriteString(fmt.Sprintf("\tcase *%s:\n", effect.Name))
-		sb.WriteString(fmt.Sprintf("\t\treturn e.With%s(val)\n", effectName))
-	}
-
-	sb.WriteString("\tdefault:\n")
-	sb.WriteString("\t\t// Unknown type, ignore\n")
-	sb.WriteString("\t\treturn e\n")
-	sb.WriteString("\t}\n")
-	sb.WriteString("}\n")
+	sb.WriteString("// Note: Effect is now an interface, not a struct.\n")
+	sb.WriteString("// Use the New*Effect() constructors to create specific effect types.\n")
+	sb.WriteString("// The chainable builder pattern is no longer needed with the interface approach.\n")
 
 	return sb.String()
 }

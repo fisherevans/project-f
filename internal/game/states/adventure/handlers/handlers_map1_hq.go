@@ -15,14 +15,11 @@ func init() {
 				if event.ZoneId != "captains_area" || pId != event.EntityId || !event.IsEntering {
 					return nil
 				}
-				return events.NewOutput().WithEffects(
-					*events.NewEffect().
-						With(events.NewOverrideEntityBehaviorEffect(pId).WithScriptedMotion(events.EntityBehaviorScriptedMotion{})).
-						With(events.NewStartScriptedMotionEffect("", pId).WithToEntityId("captain_chair_front")),
-					*events.NewEffect().
-						With(events.NewPopEntityBehaviorOverrideEffect(pId)),
-					*events.NewEffect().
-						With(events.NewEntityFaceDirectionEffect(pId, input.Right)),
+				return events.NewOutput().WithSerialPlan(
+					events.NewOverrideEntityBehaviorEffect(pId).WithScriptedMotion(events.EntityBehaviorScriptedMotion{}),
+					events.NewStartScriptedMotionEffect(pId).WithToEntityId("captain_chair_front"),
+					events.NewPopEntityBehaviorOverrideEffect(pId),
+					events.NewEntityFaceDirectionEffect(pId, input.Right),
 				)
 			},
 		}.CreateHandler()
