@@ -4,12 +4,10 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
 )
 
 type MovementBasedEntityRenderer struct {
-	id     string
-	system *EntitySystem
+	entity Entity
 
 	lastRenderMode movementRenderState
 	renderers      map[movementRenderState]*BasicEntityRenderer
@@ -20,23 +18,19 @@ type movementRenderState struct {
 	moveState types.MoveState
 }
 
-func NewMovementBasedEntityRenderer(id string, system *EntitySystem) *MovementBasedEntityRenderer {
-	return &MovementBasedEntityRenderer{
-		id:        id,
-		system:    system,
+func AttachMovementBasedEntityRenderer(entity Entity) *MovementBasedEntityRenderer {
+	renderer := &MovementBasedEntityRenderer{
+		entity:    entity,
 		renderers: map[movementRenderState]*BasicEntityRenderer{},
 	}
+	entity.SetRenderer(renderer)
+	return renderer
 }
 
 func (r *MovementBasedEntityRenderer) getRenderState() movementRenderState {
-	p, ok := r.system.positions[r.id]
-	if !ok {
-		log.Warn().Str("id", r.id).Msg("failed to find entity position in movement renderer")
-		return movementRenderState{}
-	}
 	return movementRenderState{
-		direction: p.FacingDirection,
-		moveState: p.MovementState,
+		direction: r.entity.GetFacingDirection(),
+		moveState: r.entity.GetMovementState(),
 	}
 }
 

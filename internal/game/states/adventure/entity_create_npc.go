@@ -16,7 +16,8 @@ import (
 
 func init() {
 	targetRegistration().byClass("NPC").byTile(tiles.NPC).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-		renderer := NewMovementBasedEntityRenderer(entityId, system)
+		entity := system.RegisterEntity(entityId, location)
+		renderer := AttachMovementBasedEntityRenderer(entity)
 		color := colors.HSLToRGBA(rand.Float64(), 1, 0.65)
 		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
 			types.MoveStateIdle:    anim.AshaIdle(atlas),
@@ -26,7 +27,7 @@ func init() {
 			for direction, animation := range animations {
 				cma := NewColorMaskAnimation(animation).WithColorMask(color)
 				renderer.WithMovementStateRenderer(moveState, direction, NewBasicEntityRenderer().
-					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(system, entityId)).
+					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
 					WithAnimationOriginOffset(pixel.V(0, 0.25)).
 					WithColorMaskAnimations(cma))
 			}
@@ -43,13 +44,10 @@ func init() {
 		case "fast":
 			speed = 4
 		}
-		presence := newBlockIngressPresence(true)
-		behavior := NewNPCBehavior(entityId, system, doesMove, horizOnly, idleChance, maxIdle)
-		position := system.RegisterEntity(entityId, location, presence, behavior, renderer, nil)
-		position.MovementSpeeds = map[types.MoveState]float64{
-			types.MoveStateWalking: speed,
-		}
-		return behavior.GenerateEntityContext(), events.NewBasicHandler(None{}).
+		AttachBlockIngressPresence(entity, true)
+		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle)
+		entity.SetMovementSpeed(types.MoveStateWalking, speed)
+		return entity.GetEntityContext(), events.NewBasicHandler(None{}).
 			WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
 					return nil
@@ -69,7 +67,7 @@ func init() {
 }
 
 type NPCBehavior struct {
-	*baseEntityBehavior
+	entity Entity
 
 	talkingTowards string
 	idleDuration   float64
@@ -80,14 +78,16 @@ type NPCBehavior struct {
 	MaxIdleDuration float64
 }
 
-func NewNPCBehavior(id string, system *EntitySystem, doesMove, horizOnly bool, idleChance, maxIdleDuration float64) *NPCBehavior {
-	return &NPCBehavior{
-		baseEntityBehavior: newBaseEntityBehavior(id, system),
-		DoesMove:           doesMove,
-		HorizOnly:          horizOnly,
-		IdleChance:         idleChance,
-		MaxIdleDuration:    maxIdleDuration,
+func AttachNPCBehavior(entity Entity, doesMove, horizOnly bool, idleChance, maxIdleDuration float64) *NPCBehavior {
+	b := &NPCBehavior{
+		entity:          entity,
+		DoesMove:        doesMove,
+		HorizOnly:       horizOnly,
+		IdleChance:      idleChance,
+		MaxIdleDuration: maxIdleDuration,
 	}
+	entity.PushBehavior(b)
+	return b
 }
 
 func (b *NPCBehavior) Reset() {
@@ -95,33 +95,27 @@ func (b *NPCBehavior) Reset() {
 	b.idleDuration = 0
 }
 
-func (b *NPCBehavior) GenerateEntityContext() *events.BasicEntityContext {
-	return events.NewBasicEntityContext(b.id).WithMetadata(types.MetadataKeyIsTalking, func() any {
-		return b.talkingTowards != ""
-	})
-}
-
 func (b *NPCBehavior) MovementComplete(dispatcher Dispatcher) {
-	b.doMovement(b.system.positions[b.id], dispatcher)
+	b.doMovement(dispatcher)
 }
 
-func (b *NPCBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Dispatcher) {
+func (b *NPCBehavior) Update(timeDelta float64, dispatcher Dispatcher) {
 	if b.idleDuration > 0 {
 		b.idleDuration -= timeDelta
 		return
 	}
-	b.doMovement(p, dispatcher)
+	b.doMovement(dispatcher)
 }
 
-func (b *NPCBehavior) doMovement(p *EntityPosition, dispatcher Dispatcher) {
-	if p.IsMoving() {
+func (b *NPCBehavior) doMovement(dispatcher Dispatcher) {
+	if b.entity.IsMoving() {
 		return
 	}
 	if b.talkingTowards != "" {
-		talkingTowardsEnt, exists := b.system.positions[b.talkingTowards]
+		talkingTowardsEnt, exists := b.entity.GetSystem().GetEntity(b.talkingTowards)
 		if exists {
-			// todo effect?
-			p.FacingDirection = DirectionTowards(p.PreciseLocation(), talkingTowardsEnt.PreciseLocation())
+			faceDir := DirectionTowards(b.entity.GetPreciseLocation(), talkingTowardsEnt.GetPreciseLocation())
+			dispatcher.ProcessEffects(events.NewEntityFaceDirectionEffect(b.entity.GetId(), faceDir))
 		}
 		return
 	}
@@ -132,24 +126,26 @@ func (b *NPCBehavior) doMovement(p *EntityPosition, dispatcher Dispatcher) {
 		b.idleDuration = rand.Float64() * b.MaxIdleDuration
 		return
 	}
-	nextLocation := p.GetPrimaryLocation().Moved(p.FacingDirection)
-	isValid, _, _ := b.system.isMovementValid(b.id, nextLocation)
+	nextLocation := b.entity.GetLocation().Moved(b.entity.GetFacingDirection())
+	isValid, _ := b.entity.GetSystem().isMovementValid(b.entity, nextLocation)
 	if isValid {
 		dispatcher.ProcessEffects(events.
-			NewTriggerMovementEffect(b.id).
+			NewTriggerMovementEffect(b.entity.GetId()).
 			WithLocation(nextLocation.ToEventLocation()))
 		return
 	}
 	var dir input.Direction
 	if b.HorizOnly {
-		if p.FacingDirection == input.NotPressed {
+		if b.entity.GetFacingDirection() == input.NotPressed {
 			dir = input.Left
 		} else {
-			dir = p.FacingDirection.Opposite()
+			dir = b.entity.GetFacingDirection().Opposite()
 		}
 	} else {
 		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
 	}
-	p.FacingDirection = dir
-	dispatcher.ProcessEffects(events.NewTriggerMovementEffect(b.id).WithDirection(p.FacingDirection))
+	dispatcher.ProcessEffects(
+		events.NewEntityFaceDirectionEffect(b.entity.GetId(), dir),
+		events.NewTriggerMovementEffect(b.entity.GetId()).WithDirection(dir),
+	)
 }

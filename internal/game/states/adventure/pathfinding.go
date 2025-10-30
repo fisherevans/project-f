@@ -18,18 +18,17 @@ type Path struct {
 }
 
 type pathfindingContext struct {
-	entityId string
-	system   *EntitySystem
+	entity Entity
 }
 
 func (l MapLocation) PathNeighbors(ctx pathfindingContext) []MapLocation {
 	var neighbors []MapLocation
 	for _, d := range input.Directions {
 		neighbor := l.Moved(d)
-		if !ctx.system.isValidTransition(ctx.entityId, l, d, false) {
+		if !ctx.entity.GetSystem().isValidTransition(ctx.entity, l, d, false) {
 			continue
 		}
-		if !ctx.system.isValidTransition(ctx.entityId, neighbor, d, true) {
+		if !ctx.entity.GetSystem().isValidTransition(ctx.entity, neighbor, d, true) {
 			continue
 		}
 		neighbors = append(neighbors, neighbor)
@@ -47,12 +46,11 @@ func (l MapLocation) PathEstimatedCost(ctx pathfindingContext, to MapLocation) f
 	return math.Abs(float64(dx)) + math.Abs(float64(dy))
 }
 
-func (es *EntitySystem) FindPath(from, to MapLocation, entityId string) Path {
+func (es *EntitySystem) FindPath(from, to MapLocation, entity Entity) Path {
 	start := time.Now()
 
 	ctx := pathfindingContext{
-		entityId: entityId,
-		system:   es,
+		entity: entity,
 	}
 
 	pathers, distance, found := astar.Path(from, to, ctx)

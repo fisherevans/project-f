@@ -14,6 +14,7 @@ func init() {
 	targetRegistration().
 		byTile(tiles.Torch, tiles.TorchRight, tiles.TorchLeft).
 		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
+			entity := system.RegisterEntity(entityId, location)
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewLightWithModifier(colors.FromString("#db9a3d"), 2, "flicker"))
 			switch *mapEntity.SpriteId {
@@ -28,20 +29,21 @@ func init() {
 				renderer.WithLightOriginOffset(pixel.V(-float64(resources.MapTileSize/2), 0))
 				renderer.WithZPriority(10)
 			}
-			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
-			return nil, nil
+			entity.SetRenderer(renderer)
+			return entity.GetEntityContext(), nil
 		})
 	targetRegistration().
 		byTile(tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR).
 		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
+			entity := system.RegisterEntity(entityId, location)
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewLight(colors.FromString("#fff"), 1.333))
 			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *mapEntity.SpriteId))
 			if *mapEntity.SpriteId == tiles.LightFork {
 				renderer.WithZPriority(10)
 			}
-			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
-			return nil, nil
+			entity.SetRenderer(renderer)
+			return entity.GetEntityContext(), nil
 		})
 	targetRegistration().
 		byTile(tiles.GlowRed, tiles.GlowOrange, tiles.GlowAqua, tiles.GlowPurple, tiles.GlowPink, tiles.GlowTBD).
@@ -60,12 +62,13 @@ func init() {
 			case tiles.GlowPink:
 				colorMask = colors.HexString("#e050cb")
 			}
+			entity := system.RegisterEntity(entityId, location)
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewLight(colorMask, 2))
 			if *mapEntity.SpriteId == tiles.LightFork {
 				renderer.WithZPriority(10)
 			}
-			system.RegisterEntity(entityId, location, nil, nil, renderer, nil)
-			return nil, nil
+			entity.SetRenderer(renderer)
+			return entity.GetEntityContext(), nil
 		})
 }

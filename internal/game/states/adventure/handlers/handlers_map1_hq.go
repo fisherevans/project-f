@@ -7,7 +7,6 @@ import (
 )
 
 func init() {
-
 	Register("captain_chair_front", func(props *util.Properties) events.EventHandler {
 		return events.BasicHandlerBuilder[None]{
 			EntityZoneActivity: func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventEntityZoneActivity) *events.HandlerOutput {
@@ -16,9 +15,9 @@ func init() {
 					return nil
 				}
 				return events.NewOutput().WithSerialPlan(
-					events.NewOverrideEntityBehaviorEffect(pId).WithScriptedMotion(events.EntityBehaviorScriptedMotion{}),
+					events.NewPushEntityBehaviorEffect(pId).WithScriptedMotion(events.EntityBehaviorScriptedMotion{}),
 					events.NewStartScriptedMotionEffect(pId).WithToEntityId("captain_chair_front"),
-					events.NewPopEntityBehaviorOverrideEffect(pId),
+					events.NewPopEntityBehaviorEffect(pId),
 					events.NewEntityFaceDirectionEffect(pId, input.Right),
 				)
 			},

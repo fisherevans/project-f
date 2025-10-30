@@ -2,7 +2,6 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -10,31 +9,25 @@ import (
 )
 
 type ModeBasedEntityRenderer struct {
-	id     string
-	system *EntitySystem
+	entity Entity
 
 	currentMode    string
 	lastRenderMode string
 	modes          map[string]*BasicEntityRenderer
 }
 
-func NewModeBasedEntityRenderer(id string, system *EntitySystem) *ModeBasedEntityRenderer {
-	return &ModeBasedEntityRenderer{
-		id:     id,
-		system: system,
+func AttachModeBasedEntityRenderer(entity Entity) *ModeBasedEntityRenderer {
+	renderer := &ModeBasedEntityRenderer{
+		entity: entity,
 		modes:  map[string]*BasicEntityRenderer{},
 	}
+	entity.SetRenderer(renderer)
+	return renderer
 }
 
 func (r *ModeBasedEntityRenderer) WithMode(mode string) *ModeBasedEntityRenderer {
 	r.currentMode = mode
 	return r
-}
-
-func (r *ModeBasedEntityRenderer) GenerateEntityContext() *events.BasicEntityContext {
-	return events.NewBasicEntityContext(r.id).WithMetadata(types.MetadataKeyMode, func() any {
-		return r.currentMode
-	})
 }
 
 func (r *ModeBasedEntityRenderer) getBasicEntityRenderer(mode string) *BasicEntityRenderer {

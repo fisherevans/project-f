@@ -4,6 +4,7 @@ import (
 	"slices"
 	"sort"
 
+	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
@@ -11,76 +12,86 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Entity struct {
-	Id string
-	EntityPresence
-	EntityBehavior
-	EntityRenderer
-	EntityState
-	*EntityPosition
-}
-
 type EntitySystem struct {
 	state *State
 
-	entityIds map[string]struct{}
+	// exist for all entities
 
-	presences map[string]EntityPresence
-	renderers map[string]EntityRenderer
-	behaviors map[string]EntityBehavior
-	states    map[string]EntityState
+	movements   map[string]*EntityMovement
+	occupations *Positions
+	contexts    map[string]*events.BasicEntityContext
 
-	positions   map[string]*EntityPosition
-	occupations *Occupation
+	// optional traits
+
+	presences         map[string]EntityPresence
+	renderers         map[string]EntityRenderer
+	behaviors         map[string][]EntityBehavior
+	disabledBehaviors map[string]map[string]struct{}
+
+	states map[string]EntityState
 }
 
 func NewEntitySystem(state *State) *EntitySystem {
 	return &EntitySystem{
 		state: state,
 
-		entityIds: map[string]struct{}{},
-
-		presences: map[string]EntityPresence{},
-		renderers: map[string]EntityRenderer{},
-		behaviors: map[string]EntityBehavior{},
-		states:    map[string]EntityState{},
-
-		positions:   map[string]*EntityPosition{},
+		movements:   map[string]*EntityMovement{},
 		occupations: NewOccupation(state),
+		contexts:    map[string]*events.BasicEntityContext{},
+
+		presences:         map[string]EntityPresence{},
+		renderers:         map[string]EntityRenderer{},
+		behaviors:         map[string][]EntityBehavior{},
+		disabledBehaviors: map[string]map[string]struct{}{},
+		states:            map[string]EntityState{},
 	}
 }
 
-func (es *EntitySystem) RegisterEntity(id string, location MapLocation, presence EntityPresence, behavior EntityBehavior, renderer EntityRenderer, state EntityState) *EntityPosition {
-	if _, exists := es.entityIds[id]; exists {
+func (es *EntitySystem) RegisterEntity(id string, location MapLocation) Entity {
+	if _, exists := es.movements[id]; exists {
 		log.Fatal().Str("id", id).Msg("entity already exists")
 	}
-	es.entityIds[id] = struct{}{}
-	es.positions[id] = NewEntityPosition(id, es, location)
-	if presence != nil {
-		es.presences[id] = presence
-	}
-	if behavior != nil {
-		es.behaviors[id] = behavior
-	}
-	if renderer != nil {
-		es.renderers[id] = renderer
-	}
-	if state != nil {
-		es.states[id] = state
-	}
+	es.contexts[id] = events.NewBasicEntityContext(id)
+	es.movements[id] = NewEntityMovement(id, es, location)
 	es.occupations.Occupy(id, location)
-	return es.positions[id]
+	entity, _ := es.GetEntity(id)
+	initializeMetadata(es.contexts[id], entity)
+	return entity
 }
 
-func (es *EntitySystem) GetEntity(id string) Entity {
-	return Entity{
-		Id:             id,
-		EntityPresence: es.presences[id],
-		EntityBehavior: es.behaviors[id],
-		EntityRenderer: es.renderers[id],
-		EntityState:    es.states[id],
-		EntityPosition: es.positions[id],
+func initializeMetadata(context *events.BasicEntityContext, entity Entity) {
+	context.WithMetadata(types.MetadataKeyIsTalking, func() any {
+		behavior, ok := entity.GetBehavior()
+		if !ok {
+			return nil
+		}
+		npc, ok := behavior.(*NPCBehavior)
+		if !ok {
+			return nil
+		}
+		return npc.talkingTowards != ""
+	})
+	context.WithMetadata(types.MetadataKeyMode, func() any {
+		renderer, ok := entity.GetRenderer()
+		if !ok {
+			return nil
+		}
+		modeBasedRenderer, ok := renderer.(*ModeBasedEntityRenderer)
+		if !ok {
+			return nil
+		}
+		return modeBasedRenderer.currentMode
+	})
+}
+
+func (es *EntitySystem) GetEntity(id string) (Entity, bool) {
+	if _, exists := es.movements[id]; !exists {
+		return nil, false
 	}
+	return &entityReference{
+		system: es,
+		id:     id,
+	}, true
 }
 
 func (es *EntitySystem) interactableEntityIds(loc MapLocation) map[string]struct{} {
@@ -97,75 +108,61 @@ func (es *EntitySystem) interactableEntityIds(loc MapLocation) map[string]struct
 	return out
 }
 
-func (es *EntitySystem) TeleportEntity(id string, toLocation MapLocation) {
-	warnLog := log.Log().Str("id", id).Any("location", toLocation)
-	position, exists := es.positions[id]
-	if !exists {
-		warnLog.Msgf("no position for entity")
-		return
-	}
-	if position.GetPrimaryLocation() == toLocation {
-		warnLog.Msgf("attempted movement to same location")
-		return
-	}
-	if position.IsMoving() {
-		position.CancelMovement()
-	}
-	es.occupations.Vacate(id, position.GetPrimaryLocation())
-	position.SetPrimaryLocation(toLocation, true)
-}
-
 var validAttemptMovementStates = []types.MoveState{types.MoveStateWalking, types.MoveStateRunning, types.MoveStateDashing}
 
+// todo move?
 func (es *EntitySystem) AttemptMovement(id string, targetLocation MapLocation, movementState types.MoveState) bool {
-	log := log.Debug().Str("id", id).Any("state", movementState).Any("target", targetLocation)
+	debugLog := log.Debug().Str("id", id).Any("state", movementState).Any("target", targetLocation)
 	if !slices.Contains(validAttemptMovementStates, movementState) {
-		log.Msgf("movement state not valid")
+		debugLog.Msgf("movement state not valid")
 		return false
 	}
-	isValid, position, movementDirection := es.isMovementValid(id, targetLocation)
+	entity, ok := es.GetEntity(id)
+	if !ok {
+		log.Warn().Str("entityId", id).Msg("no entity for id, skipping")
+		return false
+	}
+	isValid, movementDirection := es.isMovementValid(entity, targetLocation)
 	if !isValid {
-		log.Msgf("movement not valid")
+		debugLog.Msgf("movement not valid")
 		return false
 	}
 	es.occupations.Occupy(id, targetLocation) // emit enter events within movement update - don't "enter" until primary is updated
-	position.MovementTargetLocation = targetLocation
-	position.MovementState = movementState
-	position.FacingDirection = movementDirection
-	distance := position.GetPrimaryLocation().DistanceTo(targetLocation)
-	position.MovementProgressionScale = 1.0 / distance
+	// todo messy
+	movement := es.movements[entity.GetId()]
+	movement.TargetLocation = targetLocation
+	movement.MovementState = movementState
+	movement.FacingDirection = movementDirection
+	distance := entity.GetLocation().DistanceTo(targetLocation)
+	movement.ProgressionScale = 1.0 / distance
 	return true
 }
-func (es *EntitySystem) isMovementValid(id string, targetLocation MapLocation) (bool, *EntityPosition, input.Direction) {
-	log := log.Debug().Str("id", id)
-	position, exists := es.positions[id]
-	if !exists {
-		log.Msgf("no position for entity")
-		return false, position, input.NotPressed
+
+func (es *EntitySystem) isMovementValid(entity Entity, targetLocation MapLocation) (bool, input.Direction) {
+	debugLog := log.Debug().Str("id", entity.GetId())
+	movementDirection := entity.GetLocation().DirectionTowards(targetLocation)
+	if entity.IsMoving() {
+		debugLog.Msgf("entity is already moving")
+		return false, movementDirection
 	}
-	movementDirection := position.GetPrimaryLocation().DirectionTowards(targetLocation)
-	if position.IsMoving() {
-		log.Msgf("entity is already moving")
-		return false, position, movementDirection
+	if entity.GetLocation() == targetLocation {
+		debugLog.Msgf("attempted movement to same location")
+		return false, movementDirection
 	}
-	if position.GetPrimaryLocation() == targetLocation {
-		log.Msgf("attempted movement to same location")
-		return false, position, movementDirection
+	if !es.isValidTransition(entity, targetLocation, movementDirection, true) {
+		debugLog.Msgf("movement ingress not valid")
+		return false, movementDirection
 	}
-	if !es.isValidTransition(id, targetLocation, movementDirection, true) {
-		log.Msgf("movement ingress not valid")
-		return false, position, movementDirection
+	if !es.isValidTransition(entity, entity.GetLocation(), movementDirection, false) {
+		debugLog.Msgf("movement egress not valid")
+		return false, movementDirection
 	}
-	if !es.isValidTransition(id, position.GetPrimaryLocation(), movementDirection, false) {
-		log.Msgf("movement egress not valid")
-		return false, position, movementDirection
-	}
-	return true, position, movementDirection
+	return true, movementDirection
 }
 
-func (es *EntitySystem) isValidTransition(id string, loc MapLocation, movementDirection input.Direction, isIngress bool) bool {
-	for _, occupiedById := range es.occupations.OccupyingEntityList(loc) {
-		if occupiedById == id {
+func (es *EntitySystem) isValidTransition(entity Entity, location MapLocation, movementDirection input.Direction, isIngress bool) bool {
+	for _, occupiedById := range es.occupations.OccupyingEntityList(location) {
+		if occupiedById == entity.GetId() {
 			continue
 		}
 		presence, exists := es.presences[occupiedById]
@@ -178,7 +175,7 @@ func (es *EntitySystem) isValidTransition(id string, loc MapLocation, movementDi
 			doesAllow = presence.AllowsIngress
 			side = movementDirection.Opposite()
 		}
-		if !doesAllow(side, id) {
+		if !doesAllow(side, entity.GetId()) {
 			return false
 		}
 	}
@@ -189,29 +186,27 @@ func (es *EntitySystem) Update(timeDelta float64) {
 	dispatcher := &stateDispatcher{
 		s: es.state,
 	}
-	for id, _ := range es.entityIds { // todo consider tracking just update-able entities (basic collisions are included here)
-		position, hasPosition := es.positions[id]
-		behavior, hasBehavior := es.behaviors[id]
+	for id, _ := range es.movements { // todo consider tracking just update-able entities (basic collisions are included here)
+		entity, _ := es.GetEntity(id)
+		movement := es.movements[id]
 		renderer, hasRenderer := es.renderers[id]
-		if hasPosition {
-			remaining := timeDelta
-			var lastRemaining float64 // prevent infinite loops if movement is not making progress
-			for remaining > 0 && remaining != lastRemaining {
-				remaining = position.ProgressMovement(timeDelta)
-				if remaining > 0 && hasBehavior && behavior.IsEnabled() {
-					behavior.MovementComplete(dispatcher)
-				}
-				lastRemaining = remaining
-			}
+		behaviors, _ := es.behaviors[id]
+		var behavior EntityBehavior
+		if len(behaviors) > 0 {
+			behavior = behaviors[len(behaviors)-1]
 		}
-		if hasBehavior {
-			if hasPosition {
-				if behavior.IsEnabled() {
-					behavior.Update(timeDelta, position, dispatcher)
-				}
-			} else {
-				log.Warn().Str("entityId", id).Msg("no position for entity with behavior, skipping")
+		hasBehavior := behavior != nil
+		remaining := timeDelta
+		var lastRemaining float64 // prevent infinite loops if movement is not making progress
+		for remaining > 0 && remaining != lastRemaining {
+			remaining = movement.ProgressMovement(timeDelta)
+			if remaining > 0 && hasBehavior && entity.IsBehaviorEnabled() {
+				behavior.MovementComplete(dispatcher)
 			}
+			lastRemaining = remaining
+		}
+		if hasBehavior && entity.IsBehaviorEnabled() {
+			behavior.Update(timeDelta, dispatcher)
 		}
 		if hasRenderer {
 			renderer.Update(timeDelta)
@@ -222,71 +217,40 @@ func (es *EntitySystem) Update(timeDelta float64) {
 func (es *EntitySystem) Render(sceneTarget, lightMapTarget pixel.Target, cameraMatrix pixel.Matrix) {
 	entities := es.locationSortedRenderers()
 	for _, entity := range entities {
-		renderMatrix := cameraMatrix.Moved(entity.position.PreciseLocation().Scaled(resources.MapTileSize.Float()))
-		entity.renderer.RenderToScene(sceneTarget, renderMatrix)
-		entity.renderer.RenderToLightMap(lightMapTarget, renderMatrix)
+		renderer, _ := entity.GetRenderer()
+		renderMatrix := cameraMatrix.Moved(entity.GetPreciseLocation().Scaled(resources.MapTileSize.Float()))
+		renderer.RenderToScene(sceneTarget, renderMatrix)
+		renderer.RenderToLightMap(lightMapTarget, renderMatrix)
 	}
 }
 
-type sortedRenderableEntity struct {
-	id       string
-	renderer EntityRenderer
-	presence EntityPresence
-	position *EntityPosition
-}
-
-func (es *EntitySystem) locationSortedRenderers() []sortedRenderableEntity {
-	sorted := make([]sortedRenderableEntity, 0, len(es.renderers))
-	for entityId, renderer := range es.renderers {
-		position, hasPosition := es.positions[entityId]
-		if !hasPosition {
-			log.Warn().Str("entityId", entityId).Msg("no position for entity with renderer, skipping")
+func (es *EntitySystem) locationSortedRenderers() []Entity {
+	sorted := make([]Entity, 0, len(es.renderers))
+	for entityId, _ := range es.renderers {
+		entity, ok := es.GetEntity(entityId)
+		if !ok {
+			log.Error().Str("entityId", entityId).Msg("entity with renderer does not exist, skipping")
 			continue
 		}
-		sorted = append(sorted, sortedRenderableEntity{
-			id:       entityId,
-			renderer: renderer,
-			position: position,
-		})
+		sorted = append(sorted, entity)
 	}
-	sort.Slice(sorted, func(i, j int) bool {
-		iZ, jZ := sorted[i].renderer.ZPriority(), sorted[j].renderer.ZPriority()
+	sort.Slice(sorted, func(iId, jId int) bool {
+		i, j := sorted[iId], sorted[jId]
+		iRenderer, _ := es.renderers[i.GetId()]
+		jRenderer, _ := es.renderers[j.GetId()]
+		iZ, jZ := iRenderer.ZPriority(), jRenderer.ZPriority()
 		if iZ != jZ {
 			return iZ < jZ
 		}
 		// todo do we need to account for offsets here?
-		iL, jL := sorted[i].position.PreciseLocation(), sorted[j].position.PreciseLocation()
+		iL, jL := i.GetPreciseLocation(), j.GetPreciseLocation()
 		if iL.Y != jL.Y {
 			return iL.Y > jL.Y
 		}
 		if iL.X != jL.X {
 			return iL.X < jL.X
 		}
-		return i < j
+		return i.GetId() < j.GetId()
 	})
 	return sorted
-}
-
-func (es *EntitySystem) OverrideBehavior(id string, behavior EntityBehavior) {
-	existing, exists := es.behaviors[id]
-	if !exists {
-		es.behaviors[id] = behavior
-		log.Warn().Str("entityId", id).Msg("no behavior for entity, just setting")
-		return
-	}
-	es.behaviors[id] = NewEntityBehaviorOverride(existing, behavior)
-}
-
-func (es *EntitySystem) PopOverrideBehavior(id string) {
-	existing, exists := es.behaviors[id]
-	if !exists {
-		log.Warn().Str("entityId", id).Msg("no behavior for entity, can't pop")
-		return
-	}
-	override, ok := existing.(*EntityBehaviorOverride)
-	if !ok {
-		log.Warn().Str("entityId", id).Msg("behavior isn't overridden, just removing")
-		delete(es.behaviors, id)
-	}
-	es.behaviors[id] = override.replacedBehavior
 }

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-28T22:29:10-04:00 by go generate
+// Generated at 2025-10-29T23:31:56-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -321,19 +321,19 @@ func (e *EffectStartScriptedMotion) WithRelative(relative RelativeLocation) *Eff
 	return e
 }
 
-func NewOverrideEntityBehaviorEffect(entityId string) *EffectOverrideEntityBehavior {
-	return &EffectOverrideEntityBehavior{
+func NewPushEntityBehaviorEffect(entityId string) *EffectPushEntityBehavior {
+	return &EffectPushEntityBehavior{
 		EntityId: entityId,
 	}
 }
 
-func (e *EffectOverrideEntityBehavior) WithScriptedMotion(scriptedMotion EntityBehaviorScriptedMotion) *EffectOverrideEntityBehavior {
+func (e *EffectPushEntityBehavior) WithScriptedMotion(scriptedMotion EntityBehaviorScriptedMotion) *EffectPushEntityBehavior {
 	e.ScriptedMotion = &scriptedMotion
 	return e
 }
 
-func NewPopEntityBehaviorOverrideEffect(entityId string) *EffectPopEntityBehaviorOverride {
-	return &EffectPopEntityBehaviorOverride{
+func NewPopEntityBehaviorEffect(entityId string) *EffectPopEntityBehavior {
+	return &EffectPopEntityBehavior{
 		EntityId: entityId,
 	}
 }

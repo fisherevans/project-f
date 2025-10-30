@@ -133,9 +133,11 @@ func (b *basicEntityChatter) Content() *textbox.Content {
 
 func (b *basicEntityChatter) Update(s *State, timeDelta float64) {
 	b.elapsedTime += timeDelta
-	if position, ok := s.entities.positions[b.target]; ok {
-		b.renderLocation = position.PreciseLocation()
+	entity, ok := s.entities.GetEntity(b.target)
+	if !ok {
+		return
 	}
+	b.renderLocation = entity.GetPreciseLocation()
 }
 
 func newBasicEntityChatter(target string, displayTime float64, message string, id string) Chatter {

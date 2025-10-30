@@ -14,11 +14,11 @@ func init() {
 }
 
 func registerModeBasedEntity(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-	presence := NewPresenceFromConfig(mapEntity.Properties)
-	renderer := NewModeBasedEntityRenderer(entityId, system)
-	renderer.WithPropConfigurations(mapEntity.Properties)
-	system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
-	return renderer.GenerateEntityContext(), nil
+	entity := system.RegisterEntity(entityId, location)
+	AttachPresenceFromConfig(entity, mapEntity.Properties)
+	AttachModeBasedEntityRenderer(entity).
+		WithPropConfigurations(mapEntity.Properties)
+	return entity.GetEntityContext(), nil
 }
 
 type entityRegistrar func(string, MapLocation, *resources.Entity, *EntitySystem) (events.EntityContext, events.EventHandler)

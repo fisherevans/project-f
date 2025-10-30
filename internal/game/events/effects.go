@@ -211,7 +211,7 @@ type RelativeLocation struct {
 	Steps     int
 }
 
-type EffectOverrideEntityBehavior struct {
+type EffectPushEntityBehavior struct {
 	EntityId       string
 	ScriptedMotion *EntityBehaviorScriptedMotion `one_of:"type"`
 }
@@ -225,6 +225,6 @@ type EntityBehaviorNPC struct {
 type EntityBehaviorScriptedMotion struct {
 }
 
-type EffectPopEntityBehaviorOverride struct {
+type EffectPopEntityBehavior struct {
 	EntityId string
 }

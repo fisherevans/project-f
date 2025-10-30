@@ -3,6 +3,7 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
@@ -49,11 +50,16 @@ var dialogueBox = textbox.NewInstance(
 func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
 	game.DebugBR("dialogue queue: %d", len(ds.queuedDialogues))
-	if !ds.HasPriority() {
-		s.entities.behaviors[s.player].Enable("dialogue")
+	entity, ok := s.entities.GetEntity(s.player)
+	if !ok {
+		log.Error().Str("player", string(s.player)).Msg("player not found in state")
 		return
 	}
-	s.entities.behaviors[s.player].Disable("dialogue")
+	if !ds.HasPriority() {
+		entity.EnableBehavior("dialogue")
+		return
+	}
+	entity.DisableBehavior("dialogue")
 
 	dialogue := ds.queuedDialogues[0]
 

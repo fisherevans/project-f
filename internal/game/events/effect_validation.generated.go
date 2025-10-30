@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-28T22:29:10-04:00 by go generate
+// Generated at 2025-10-29T23:31:56-04:00 by go generate
 // Source: internal/game/events/effect.go
 
 package events
@@ -355,7 +355,7 @@ func (e *EffectStartScriptedMotion) FillDefaultsAndValidate() error {
 	return reporter.report()
 }
 
-func (e *EffectOverrideEntityBehavior) FillDefaultsAndValidate() error {
+func (e *EffectPushEntityBehavior) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	// Validate one_of group: type
@@ -372,7 +372,7 @@ func (e *EffectOverrideEntityBehavior) FillDefaultsAndValidate() error {
 	return reporter.report()
 }
 
-func (e *EffectPopEntityBehaviorOverride) FillDefaultsAndValidate() error {
+func (e *EffectPopEntityBehavior) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("entityId", e.EntityId)

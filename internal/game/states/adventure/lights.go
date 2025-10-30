@@ -40,7 +40,7 @@ func (l *Light) RenderAlpha(target pixel.Target, matrix pixel.Matrix, alpha floa
 		renderDetails.Sprite.DrawColorMask(
 			target,
 			pixel.IM.
-				Moved(renderDetails.PositionDelta).
+				Moved(renderDetails.movementDelta).
 				Scaled(pixel.ZV, renderDetails.SizeScale).
 				Chained(matrix),
 			mask)
@@ -113,7 +113,7 @@ type LightRenderDetails struct {
 	Sprite        pixelutil.BoundedDrawable
 	SizeScale     float64
 	ColorMask     pixel.RGBA
-	PositionDelta pixel.Vec
+	movementDelta pixel.Vec
 }
 
 type LightModifier interface {

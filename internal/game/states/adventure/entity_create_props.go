@@ -15,19 +15,19 @@ import (
 func init() {
 	targetRegistration().byTile(tiles.RedCoin).
 		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			renderer := NewBasicEntityRenderer().
+			entity := system.RegisterEntity(entityId, location)
+			entity.SetRenderer(NewBasicEntityRenderer().
 				WithAnimations(anim.RedCoin(atlas)).
-				WithLights(NewLightWithModifier(colors.FromString("#f00"), 0.5, "pulse_slow"))
-			presence := newBlockIngressPresence(false)
-			system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
-			return nil, nil
+				WithLights(NewLightWithModifier(colors.FromString("#f00"), 0.5, "pulse_slow")))
+			AttachBlockIngressPresence(entity, false)
+			return entity.GetEntityContext(), nil
 		})
 	targetRegistration().byTile(tiles.Rocket).
 		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			renderer := NewBasicEntityRenderer().
-				WithAnimations(anim.NewStaticAnimation(tiles.Rocket.From(atlas)))
-			presence := newBlockIngressPresence(true)
-			system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
+			entity := system.RegisterEntity(entityId, location)
+			entity.SetRenderer(NewBasicEntityRenderer().
+				WithAnimations(anim.NewStaticAnimation(tiles.Rocket.From(atlas))))
+			AttachBlockIngressPresence(entity, true)
 			dest := "teleport:" + mapEntity.Properties.GetString("destination", "")
 			requiredElythium := 2
 			handler := events.NewBasicHandler(None{}).
@@ -47,14 +47,14 @@ func init() {
 						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("rocket"),
 					)
 				})
-			return nil, handler.CreateHandler()
+			return entity.GetEntityContext(), handler.CreateHandler()
 		})
 	targetRegistration().byTile(tiles.DummyFightRobot).
 		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			renderer := NewBasicEntityRenderer().
-				WithAnimations(anim.NewStaticAnimation(atlas.GetSprite("primortals/dummy_entity")))
-			presence := newBlockIngressPresence(true)
-			system.RegisterEntity(entityId, location, presence, nil, renderer, nil)
+			entity := system.RegisterEntity(entityId, location)
+			entity.SetRenderer(NewBasicEntityRenderer().
+				WithAnimations(anim.NewStaticAnimation(atlas.GetSprite("primortals/dummy_entity"))))
+			AttachBlockIngressPresence(entity, true)
 			var dummyQuips = []string{
 				"Practice those steps - then try me.",
 				"Come close - I don't bite... yet.",

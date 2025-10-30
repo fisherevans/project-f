@@ -38,12 +38,16 @@ func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.W
 	if event.SourceId != h.State.player {
 		log.Warn().Msgf("system event: got interact event for a non-player entity %s", ctx.EntityId())
 	}
-
-	targetEntity := h.State.entities.GetEntity(event.TargetId)
-	if targetEntity.EntityState == nil {
+	targetEntity, ok := h.State.entities.GetEntity(event.TargetId)
+	if !ok {
+		log.Warn().Msgf("system event: got interact event for a non-existent entity %s", event.TargetId)
 		return nil
 	}
-	switch state := targetEntity.EntityState.(type) {
+	state, ok := targetEntity.GetState()
+	if !ok {
+		return nil
+	}
+	switch state := state.(type) {
 	case DashGapState:
 		return h.onInteractDashGap(targetEntity, state, event)
 	}
@@ -51,7 +55,7 @@ func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.W
 }
 
 func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashGapState, event *events.EventOnInteract) *events.HandlerOutput {
-	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.GetPrimaryLocation())
+	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.GetLocation())
 	to := events.Location{X: location.X, Y: location.Y}
 	return events.NewOutput().WithEffects(
 		events.NewTriggerMovementEffect(event.SourceId).WithLocation(to).WithMoveState(types.MoveStateDashing),
@@ -62,11 +66,15 @@ func findDashDestination(s *State, direction input.Direction, location MapLocati
 	for {
 		moved := false
 		for _, entityId := range s.entities.occupations.OccupyingEntityList(location) {
-			entity := s.entities.GetEntity(entityId)
-			if entity.EntityState == nil {
+			entity, ok := s.entities.GetEntity(entityId)
+			if !ok {
 				continue
 			}
-			_, ok := entity.EntityState.(DashGapState) // todo consider direction config in state once supported
+			state, ok := entity.GetState()
+			if !ok {
+				continue
+			}
+			_, ok = state.(DashGapState) // todo consider direction config in state once supported
 			if !ok {
 				continue
 			}

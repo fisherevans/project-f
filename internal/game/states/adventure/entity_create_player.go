@@ -14,7 +14,8 @@ import (
 
 func init() {
 	targetRegistration().byTile(tiles.Player).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-		renderer := NewMovementBasedEntityRenderer(entityId, system)
+		entity := system.RegisterEntity(entityId, location)
+		renderer := AttachMovementBasedEntityRenderer(entity)
 
 		dashPlayerLight := NewLight(colors.HexString("#88f"), 1.5)
 		normalPlayerLight := NewLight(colors.HexString("#888"), 1.5)
@@ -26,7 +27,7 @@ func init() {
 		} {
 			for direction, animation := range animations {
 				moveStateRenderer := NewBasicEntityRenderer().WithAnimations(animation).
-					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(system, entityId)).
+					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
 					WithAnimationOriginOffset(pixel.V(0, 0.25))
 				if moveState == types.MoveStateDashing {
 					moveStateRenderer.WithLights(dashPlayerLight)
@@ -36,14 +37,11 @@ func init() {
 				renderer.WithMovementStateRenderer(moveState, direction, moveStateRenderer)
 			}
 		}
-		presence := newBlockIngressPresence(false)
-		behavior := NewPlayerBehavior(entityId, system)
-		position := system.RegisterEntity(entityId, location, presence, behavior, renderer, nil)
-		position.MovementSpeeds = map[types.MoveState]float64{
-			types.MoveStateWalking: characterSpeed,
-			types.MoveStateRunning: characterSpeed * 1.75,
-			types.MoveStateDashing: characterSpeed * 3,
-		}
+		AttachBlockIngressPresence(entity, false)
+		AttachPlayerBehavior(entity)
+		entity.SetMovementSpeed(types.MoveStateWalking, characterSpeed)
+		entity.SetMovementSpeed(types.MoveStateRunning, characterSpeed*1.75)
+		entity.SetMovementSpeed(types.MoveStateDashing, characterSpeed*3)
 		// todo this seems gross
 		system.state.player = entityId
 		system.state.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
@@ -53,16 +51,19 @@ func init() {
 }
 
 type PlayerBehavior struct {
-	*baseEntityBehavior
+	entity Entity
+
 	intentDirection     input.Direction
 	intentDuration      float64
 	awaitingInteraction bool
 }
 
-func NewPlayerBehavior(id string, system *EntitySystem) *PlayerBehavior {
-	return &PlayerBehavior{
-		baseEntityBehavior: newBaseEntityBehavior(id, system),
+func AttachPlayerBehavior(entity Entity) *PlayerBehavior {
+	b := &PlayerBehavior{
+		entity: entity,
 	}
+	entity.PushBehavior(b)
+	return b
 }
 
 func (b *PlayerBehavior) Reset() {
@@ -85,36 +86,33 @@ func (b *PlayerBehavior) triggerMovement(dispatcher Dispatcher) {
 	if game.Controls[*State]().ButtonB().IsPressed() {
 		moveState = types.MoveStateRunning
 	}
-	dispatcher.ProcessEffects(events.NewTriggerMovementEffect(b.id).WithDirection(direction).WithMoveState(moveState))
+	dispatcher.ProcessEffects(
+		events.NewTriggerMovementEffect(b.entity.GetId()).
+			WithDirection(direction).
+			WithMoveState(moveState))
 }
 
-func (b *PlayerBehavior) triggerInteraction(p *EntityPosition, dispatcher Dispatcher) {
+func (b *PlayerBehavior) triggerInteraction(dispatcher Dispatcher) {
 	b.awaitingInteraction = false
-	interactLocation := p.GetPrimaryLocation().MovedDelta(p.FacingDirection.GetVector())
-	for targetEntityId := range b.system.interactableEntityIds(interactLocation) {
-		dispatcher.EmitEvents(events.EventOnInteract{
-			SourceId:              b.id,
-			SourceFacingDirection: p.FacingDirection,
-			TargetId:              targetEntityId,
-		})
-	}
+	interactLocation := b.entity.GetLocation().MovedDelta(b.entity.GetFacingDirection().GetVector())
+	b.entity.InteractsWith(interactLocation)
 }
 
-func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher Dispatcher) {
+func (b *PlayerBehavior) Update(timeDelta float64, dispatcher Dispatcher) {
 	// trigger running or face new direction after movement
-	if p.IsMoving() {
+	if b.entity.IsMoving() {
 		// todo - make effects?
 		if game.Controls[*State]().DPad().IsPressed() {
 			b.intentDirection = game.Controls[*State]().DPad().GetDirection()
 			b.intentDuration += timeDelta
 		}
 		if game.Controls[*State]().ButtonB().IsPressed() {
-			if p.MovementState == types.MoveStateWalking {
-				p.MovementState = types.MoveStateRunning
+			if b.entity.GetMovementState() == types.MoveStateWalking {
+				b.entity.AlterMovementState(types.MoveStateRunning)
 			}
 		} else {
-			if p.MovementState == types.MoveStateRunning {
-				p.MovementState = types.MoveStateWalking
+			if b.entity.GetMovementState() == types.MoveStateRunning {
+				b.entity.AlterMovementState(types.MoveStateWalking)
 			}
 		}
 		if game.Controls[*State]().ButtonA().JustPressedOrRepeated() {
@@ -123,13 +121,13 @@ func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher
 		return
 	}
 	// face direction of intent after movement
-	if b.intentDirection != input.NotPressed && b.intentDirection != p.FacingDirection {
-		p.FacingDirection = b.intentDirection
+	if b.intentDirection != input.NotPressed && b.intentDirection != b.entity.GetFacingDirection() {
+		dispatcher.ProcessEffects(events.NewEntityFaceDirectionEffect(b.entity.GetId(), b.intentDirection))
 	}
 	// trigger movement if player is pressing a direction
 	if game.Controls[*State]().DPad().IsPressed() {
 		direction := game.Controls[*State]().DPad().GetDirection()
-		p.FacingDirection = direction
+		dispatcher.ProcessEffects(events.NewEntityFaceDirectionEffect(b.entity.GetId(), b.intentDirection))
 		if b.intentDirection != direction {
 			b.intentDirection = direction
 			b.intentDuration = 0
@@ -137,12 +135,12 @@ func (b *PlayerBehavior) Update(timeDelta float64, p *EntityPosition, dispatcher
 		b.intentDuration += timeDelta
 	}
 	if b.awaitingInteraction {
-		b.triggerInteraction(p, dispatcher)
+		b.triggerInteraction(dispatcher)
 		return
 	}
 	// interact with item if player is pressing A
-	if game.Controls[*State]().ButtonA().JustPressedOrRepeated() && p.FacingDirection != input.NotPressed {
-		b.triggerInteraction(p, dispatcher)
+	if game.Controls[*State]().ButtonA().JustPressedOrRepeated() && b.entity.GetFacingDirection() != input.NotPressed {
+		b.triggerInteraction(dispatcher)
 	} else {
 		b.triggerMovement(dispatcher)
 	}

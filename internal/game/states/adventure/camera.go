@@ -82,11 +82,11 @@ func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *E
 }
 
 func (c *EntityCamera) Update(s *State, timeDelta float64) {
-	target, found := s.entities.positions[c.target]
+	target, found := s.entities.GetEntity(c.target)
 	if !found {
 		return
 	}
-	targetLocation := target.PreciseLocation()
+	targetLocation := target.GetPreciseLocation()
 	if c.speed == EntityCameraSpeedNoLag {
 		c.location = targetLocation
 		return

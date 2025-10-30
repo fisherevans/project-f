@@ -7,6 +7,7 @@ import (
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
@@ -203,9 +204,14 @@ func NewShadowMob(entityId string, location MapLocation) *ShadowMob {
 
 // --- Internal helpers to keep Update() focused ---
 
-// playerPosFromState isolates how we fetch the player's position.
+// playerPosFromState isolates how we fetch the player's movement.
 func playerPosFromState(s *State) pixel.Vec {
-	ml := s.entities.GetEntity(s.player).PreciseLocation()
+	entity, ok := s.entities.GetEntity(s.player)
+	if !ok {
+		log.Error().Str("player", string(s.player)).Msg("player not found in state")
+		return pixel.ZV
+	}
+	ml := entity.GetPreciseLocation()
 	return pixel.V(float64(ml.X), float64(ml.Y))
 }
 
@@ -239,12 +245,12 @@ func (m *ShadowMob) steer(dt float64) {
 	m.vel = m.vel.Add(m.targetVel.Sub(m.vel).Scaled(t))
 }
 
-// proposeMove integrates position using current velocity.
+// proposeMove integrates movement using current velocity.
 func (m *ShadowMob) proposeMove(dt float64) pixel.Vec {
 	return m.Location.Add(m.vel.Scaled(dt))
 }
 
-// leashClamp optionally clamps the proposed position to the leash, and updates targetVel to bias inward (or toward player while chasing).
+// leashClamp optionally clamps the proposed movement to the leash, and updates targetVel to bias inward (or toward player while chasing).
 func (m *ShadowMob) leashClamp(proposed pixel.Vec, toPlayer pixel.Vec) (pixel.Vec, bool) {
 	if m.leashRadius <= 0 {
 		return proposed, false
@@ -353,7 +359,7 @@ func (m *ShadowMob) Update(s *State, timeDelta float64) {
 	// Smoothly steer current velocity toward target velocity
 	m.steer(timeDelta)
 
-	// Integrate position in floating space (not snapped to tiles), then leash clamp
+	// Integrate movement in floating space (not snapped to tiles), then leash clamp
 	proposed := m.proposeMove(timeDelta)
 	if clamped, hit := m.leashClamp(proposed, toPlayer); hit {
 		proposed = clamped
@@ -405,7 +411,7 @@ func (m *ShadowMob) canTraverse(s *State, from, to pixel.Vec, radius float64) bo
 	return true
 }
 
-// sampleCircleAgainstTiles checks this center position against all tiles that could intersect the circle.
+// sampleCircleAgainstTiles checks this center movement against all tiles that could intersect the circle.
 func (m *ShadowMob) sampleCircleAgainstTiles(s *State, center pixel.Vec, radius float64) bool {
 	// Tiles are 1x1 squares centered on integer coords: [ix-0.5, ix+0.5] x [iy-0.5, iy+0.5]
 	// Cover all candidate tile centers within the circle's AABB.
@@ -431,7 +437,8 @@ func (m *ShadowMob) sampleCircleAgainstTiles(s *State, center pixel.Vec, radius 
 
 func (s *State) canMobTraverse(x, y int) bool {
 	// todo mob entity id? direction?
-	return s.entities.isValidTransition("", MapLocation{X: x, Y: y}, input.Down, true)
+	p, _ := s.entities.GetEntity(s.player)
+	return s.entities.isValidTransition(p, MapLocation{X: x, Y: y}, input.Down, true)
 }
 
 // tileCircleIntersects checks if a circle at `center` with squared radius `rr` intersects a unit tile centered at (tx,ty), extents [tx-0.5,tx+0.5] x [ty-0.5,ty+0.5].

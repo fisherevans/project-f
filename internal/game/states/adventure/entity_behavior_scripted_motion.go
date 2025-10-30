@@ -8,22 +8,24 @@ import (
 )
 
 type ScriptedMotionBehavior struct {
-	*baseEntityBehavior
+	entity Entity
 	target MotionTarget
 }
 
-func NewScriptedMotionBehavior(id string, system *EntitySystem) *ScriptedMotionBehavior {
-	return &ScriptedMotionBehavior{
-		baseEntityBehavior: newBaseEntityBehavior(id, system),
+func AttachScriptedMotionBehavior(entity Entity) *ScriptedMotionBehavior {
+	behavior := &ScriptedMotionBehavior{
+		entity: entity,
 	}
+	entity.PushBehavior(behavior)
+	return behavior
 }
 
 func (s *ScriptedMotionBehavior) MovementComplete(dispatcher Dispatcher) {
-	s.triggerMovement(s.system.positions[s.id])
+	s.triggerMovement()
 }
 
-func (s *ScriptedMotionBehavior) Update(timeDelta float64, position *EntityPosition, dispatcher Dispatcher) {
-	s.triggerMovement(position)
+func (s *ScriptedMotionBehavior) Update(timeDelta float64, dispatcher Dispatcher) {
+	s.triggerMovement()
 }
 
 func (s *ScriptedMotionBehavior) Reset() {
@@ -38,25 +40,25 @@ func (s *ScriptedMotionBehavior) SetTarget(target MotionTarget) {
 	s.target = target
 }
 
-func (s *ScriptedMotionBehavior) triggerMovement(position *EntityPosition) {
-	if position.IsMoving() || s.target == nil {
+func (s *ScriptedMotionBehavior) triggerMovement() {
+	if s.entity.IsMoving() || s.target == nil {
 		return
 	}
-	if position.GetPrimaryLocation() == s.target.TargetLocation(position.GetPrimaryLocation()) {
+	if s.entity.GetLocation() == s.target.TargetLocation(s.entity.GetLocation()) {
 		s.onComplete(false)
 		return
 	}
-	warnLog := log.Warn().Str("entity", s.id).Str("motion", s.target.MotionId())
-	next, isTargetInvalid := s.target.NextLocation(position.GetPrimaryLocation())
+	warnLog := log.Warn().Str("entity", s.entity.GetId()).Str("motion", s.target.MotionId())
+	next, isTargetInvalid := s.target.NextLocation(s.entity.GetLocation())
 	if isTargetInvalid {
 		warnLog.Msgf("next location could not be computed, canceling motion")
 		s.onComplete(true)
 		return
 	}
-	movementStarted := s.system.AttemptMovement(s.id, next, types.MoveStateWalking)
+	movementStarted := s.entity.GetSystem().AttemptMovement(s.entity.GetId(), next, types.MoveStateWalking)
 	if !movementStarted {
 		warnLog.Msgf("next location was invalid, canceling motion")
-		log.Warn().Str("id", s.id).Msg("next move was invalid")
+		log.Warn().Str("id", s.entity.GetId()).Msg("next move was invalid")
 		s.onComplete(true)
 	}
 }
@@ -70,12 +72,12 @@ func (s *ScriptedMotionBehavior) onComplete(wasCanceled bool) {
 	if motionId == "" {
 		return
 	}
-	s.system.state.eventDispatcher.Dispatch(events.EventScriptedMotionComplete{
-		EntityId:    s.id,
+	s.entity.GetSystem().state.eventDispatcher.Dispatch(events.EventScriptedMotionComplete{
+		EntityId:    s.entity.GetId(),
 		MotionId:    motionId,
 		WasCanceled: wasCanceled,
 	})
-	s.system.state.planExecutor.MarkMotionComplete(motionId)
+	s.entity.GetSystem().state.planExecutor.MarkMotionComplete(motionId)
 }
 
 type MotionTarget interface {
@@ -123,16 +125,14 @@ func (r *RelativeMotion) TargetLocation(currentLocation MapLocation) MapLocation
 // - currently doing it every step as it takes less than 1ms
 type PathfindingMotion struct {
 	motionId string
-	es       *EntitySystem
-	entityId string
+	entity   Entity
 	target   MapLocation
 }
 
-func NewPathfindingMotion(motionId string, es *EntitySystem, entityId string, to MapLocation) *PathfindingMotion {
+func NewPathfindingMotion(motionId string, entity Entity, to MapLocation) *PathfindingMotion {
 	m := &PathfindingMotion{
 		motionId: motionId,
-		es:       es,
-		entityId: entityId,
+		entity:   entity,
 		target:   to,
 	}
 	return m
@@ -146,7 +146,7 @@ func (p *PathfindingMotion) NextLocation(currentLocation MapLocation) (MapLocati
 	if currentLocation == p.target {
 		return currentLocation, false
 	}
-	path := p.es.FindPath(currentLocation, p.target, p.entityId)
+	path := p.entity.GetSystem().FindPath(currentLocation, p.target, p.entity)
 	if !path.PathFound || len(path.Tiles) == 0 {
 		return currentLocation, true
 	}

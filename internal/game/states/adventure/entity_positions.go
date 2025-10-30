@@ -2,31 +2,31 @@ package adventure
 
 import "fisherevans.com/project/f/internal/game/events"
 
-type Occupation struct {
+type Positions struct {
 	state *State
+
+	entityPositions map[string]MapLocation
 
 	entitiesWithinLocations    map[MapLocation]map[string]struct{}
 	locationsEntitiesAreWithin map[string]map[MapLocation]struct{}
-
-	entityPrimaryLocation map[string]MapLocation
 }
 
-func NewOccupation(state *State) *Occupation {
-	return &Occupation{
+func NewOccupation(state *State) *Positions {
+	return &Positions{
 		state:                      state,
 		entitiesWithinLocations:    map[MapLocation]map[string]struct{}{},
 		locationsEntitiesAreWithin: map[string]map[MapLocation]struct{}{},
-		entityPrimaryLocation:      map[string]MapLocation{},
+		entityPositions:            map[string]MapLocation{},
 	}
 }
 
-func (o *Occupation) ForEachOccupiedLocation(entityId string, handler func(location MapLocation)) {
+func (o *Positions) ForEachOccupiedLocation(entityId string, handler func(location MapLocation)) {
 	for loc := range o.locationsEntitiesAreWithin[entityId] {
 		handler(loc)
 	}
 }
 
-func (o *Occupation) OccupiedLocationsList(entityId string) []MapLocation {
+func (o *Positions) OccupiedLocationsList(entityId string) []MapLocation {
 	var out []MapLocation
 	for loc := range o.locationsEntitiesAreWithin[entityId] {
 		out = append(out, loc)
@@ -34,13 +34,13 @@ func (o *Occupation) OccupiedLocationsList(entityId string) []MapLocation {
 	return out
 }
 
-func (o *Occupation) ForEachOccupyingEntity(loc MapLocation, handler func(entityId string)) {
+func (o *Positions) ForEachOccupyingEntity(loc MapLocation, handler func(entityId string)) {
 	for entityId := range o.entitiesWithinLocations[loc] {
 		handler(entityId)
 	}
 }
 
-func (o *Occupation) OccupyingEntityList(loc MapLocation) []string {
+func (o *Positions) OccupyingEntityList(loc MapLocation) []string {
 	var out []string
 	for id := range o.entitiesWithinLocations[loc] {
 		out = append(out, id)
@@ -48,7 +48,7 @@ func (o *Occupation) OccupyingEntityList(loc MapLocation) []string {
 	return out
 }
 
-func (o *Occupation) Occupy(id string, loc MapLocation) bool {
+func (o *Positions) Occupy(id string, loc MapLocation) bool {
 	if _, exists := o.entitiesWithinLocations[loc]; !exists {
 		o.entitiesWithinLocations[loc] = map[string]struct{}{}
 	}
@@ -63,7 +63,7 @@ func (o *Occupation) Occupy(id string, loc MapLocation) bool {
 	return true
 }
 
-func (o *Occupation) Vacate(id string, loc MapLocation) bool {
+func (o *Positions) Vacate(id string, loc MapLocation) bool {
 	if _, exists := o.locationsEntitiesAreWithin[id]; !exists {
 		return false
 	}
@@ -81,13 +81,13 @@ func (o *Occupation) Vacate(id string, loc MapLocation) bool {
 	return true
 }
 
-func (o *Occupation) GetPrimaryLocation(id string) MapLocation {
-	return o.entityPrimaryLocation[id]
+func (o *Positions) GetPosition(id string) MapLocation {
+	return o.entityPositions[id]
 }
 
-func (o *Occupation) SetPrimaryLocation(id string, newLocation MapLocation, wasTeleported bool) {
+func (o *Positions) SetPosition(id string, newLocation MapLocation, wasTeleported bool) {
 	o.Occupy(id, newLocation)
-	priorZones := o.state.zones.ZonesAtSet(o.GetPrimaryLocation(id))
+	priorZones := o.state.zones.ZonesAtSet(o.GetPosition(id))
 	nextZones := o.state.zones.ZonesAtSet(newLocation)
 
 	emitZoneEvent := func(zoneId string, isEntering bool) {
@@ -113,5 +113,5 @@ func (o *Occupation) SetPrimaryLocation(id string, newLocation MapLocation, wasT
 		}
 	}
 
-	o.entityPrimaryLocation[id] = newLocation
+	o.entityPositions[id] = newLocation
 }

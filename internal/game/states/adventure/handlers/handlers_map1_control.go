@@ -16,7 +16,7 @@ func init() {
 			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
 				return events.NewOutput().WithEffects(
 					events.NewMutateBlockingPresenceEffect(ctx.EntityId()).WithIsBlockingIngress(false),
-					events.NewOverrideEntityBehaviorEffect(controlled).
+					events.NewPushEntityBehaviorEffect(controlled).
 						WithScriptedMotion(events.EntityBehaviorScriptedMotion{}),
 					events.NewSetWorldStateEffect("control_id", controlled),
 					events.NewMutateBlockingPresenceEffect("control_reset").WithIsBlockingIngress(false),

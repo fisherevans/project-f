@@ -15,7 +15,7 @@ func initializeMap(a *State, m *resources.Map) {
 	a.sceneClear = m.SceneClearColor
 	a.lightClear = m.LightingClearColor
 
-	// get world bounds first, in order to adjust position of other object
+	// get world bounds first, in order to adjust movement of other object
 	var minX, maxX, minY, maxY int
 	for _, g := range m.TileLayerGroups {
 		for _, l := range g.Layers {
@@ -78,11 +78,14 @@ func initializeMap(a *State, m *resources.Map) {
 		id := fmt.Sprintf("collision-%d-%d", location.X, location.Y)
 		switch collisionTile.SpriteId {
 		case resources.TileCollisionBlock:
-			a.entities.RegisterEntity(id, location, newBlockIngressPresence(false), nil, nil, nil)
+			entity := a.entities.RegisterEntity(id, location)
+			AttachBlockIngressPresence(entity, false)
 		case resources.TileCollisionJumpHorizontal,
 			resources.TileCollisionJumpVertical,
 			resources.TileCollisionJumpAll:
-			a.entities.RegisterEntity(id, location, newBlockIngressPresence(true), nil, nil, DashGapState{})
+			entity := a.entities.RegisterEntity(id, location)
+			AttachBlockIngressPresence(entity, false)
+			entity.SetState(DashGapState{})
 		}
 	}
 	for entityId, mapEntity := range m.Entities {

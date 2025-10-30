@@ -19,19 +19,17 @@ type AnimationSpeedScaler interface {
 }
 
 type MoveAnimationSpeedScaler struct {
-	system *EntitySystem
-	id     string
+	entity Entity
 }
 
-func NewMoveAnimationSpeedScaler(system *EntitySystem, id string) *MoveAnimationSpeedScaler {
+func NewMoveAnimationSpeedScaler(entity Entity) *MoveAnimationSpeedScaler {
 	return &MoveAnimationSpeedScaler{
-		system: system,
-		id:     id,
+		entity: entity,
 	}
 }
 
 func (s *MoveAnimationSpeedScaler) GetAnimationSpeedScale() float64 {
-	return s.system.positions[s.id].MovementSpeeds[s.system.positions[s.id].MovementState]
+	return s.entity.GetMovementSpeed(s.entity.GetMovementState())
 }
 
 type BasicEntityRenderer struct {
@@ -41,6 +39,10 @@ type BasicEntityRenderer struct {
 	animations            []ColorMaskAnimation
 	animationOriginOffset pixel.Vec
 	animationSpeedScaler  AnimationSpeedScaler
+}
+
+func NewBasicEntityRenderer() *BasicEntityRenderer {
+	return &BasicEntityRenderer{}
 }
 
 type ColorMaskAnimation struct {
@@ -57,10 +59,6 @@ func NewColorMaskAnimation(animation *anim.AnimatedSprite) ColorMaskAnimation {
 func (cma ColorMaskAnimation) WithColorMask(mask pixel.RGBA) ColorMaskAnimation {
 	cma.ColorMask = &mask
 	return cma
-}
-
-func NewBasicEntityRenderer() *BasicEntityRenderer {
-	return &BasicEntityRenderer{}
 }
 
 func (r *BasicEntityRenderer) WithZPriority(zPriority int) *BasicEntityRenderer {
