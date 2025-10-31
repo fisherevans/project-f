@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-29T23:31:56-04:00 by go generate
+// Generated at 2025-10-30T16:28:58-04:00 by go generate
 // Source: internal/game/events/effect.go
 
 package events
@@ -12,39 +12,11 @@ import (
 var dialogueCounter atomic.Uint64
 var chatterCounter atomic.Uint64
 var timerCounter atomic.Uint64
-var planCounter atomic.Uint64
+var batchCounter atomic.Uint64
 var fadeCounter atomic.Uint64
 var triggerCombatCounter atomic.Uint64
 var startScriptedMotionCounter atomic.Uint64
-
-func (p *PlanStep) FillDefaultsAndValidate() error {
-	reporter := newIssueReporter()
-
-	// Validate one_of group: type
-	typeCount := 0
-	if len(p.Serial) > 0 {
-		typeCount++
-		for i, item := range p.Serial {
-			if err := item.FillDefaultsAndValidate(); err != nil {
-				reporter.sub("serial").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
-			}
-		}
-	}
-	if len(p.Parallel) > 0 {
-		typeCount++
-		for i, item := range p.Parallel {
-			if err := item.FillDefaultsAndValidate(); err != nil {
-				reporter.sub("parallel").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
-			}
-		}
-	}
-	if typeCount != 1 {
-		reporter.addf("type", "exactly one of [serial, parallel] must be set")
-	}
-
-
-	return reporter.report()
-}
+var registerEntityCounter atomic.Uint64
 
 func (e *EffectFunction) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
@@ -179,18 +151,18 @@ func (e *EffectTeleportPlayer) FillDefaultsAndValidate() error {
 	return reporter.report()
 }
 
-func (e *EffectPlan) FillDefaultsAndValidate() error {
+func (e *EffectBatch) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
-	if e.PlanId == "" {
-		id := planCounter.Add(1)
-		e.PlanId = fmt.Sprintf("plan-%05d", id)
+	if e.BatchId == "" {
+		id := batchCounter.Add(1)
+		e.BatchId = fmt.Sprintf("batch-%05d", id)
 	}
 
-	reporter.requireString("planId", e.PlanId)
-	for i, item := range e.Steps {
+	reporter.requireString("batchId", e.BatchId)
+	for i, item := range e.Effects {
 		if err := item.FillDefaultsAndValidate(); err != nil {
-			reporter.sub("steps").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
+			reporter.sub("effects").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
 		}
 	}
 
@@ -374,6 +346,39 @@ func (e *EffectPushEntityBehavior) FillDefaultsAndValidate() error {
 
 func (e *EffectPopEntityBehavior) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectDeleteEntity) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectRegisterEntity) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	if e.EntityId == "" {
+		id := registerEntityCounter.Add(1)
+		e.EntityId = fmt.Sprintf("register-entity-%05d", id)
+	}
+
+	// Validate one_of group: location
+	locationCount := 0
+	if e.MapLocation != nil {
+		locationCount++
+	}
+	if e.EntityLocation != nil {
+		locationCount++
+	}
+	if locationCount != 1 {
+		reporter.addf("location", "exactly one of [mapLocation, entityLocation] must be set")
+	}
 
 	reporter.requireString("entityId", e.EntityId)
 

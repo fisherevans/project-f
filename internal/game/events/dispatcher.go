@@ -39,13 +39,14 @@ func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []Dispatche
 type Dispatcher struct {
 	worldState         WorldState
 	effectDispatcher   EffectDispatcher
-	registeredHandlers []*registeredEventHandler
+	registeredHandlers map[string]*registeredEventHandler
 }
 
 func NewDispatcher(worldState WorldState, effectDispatcher EffectDispatcher) *Dispatcher {
 	return &Dispatcher{
-		worldState:       worldState,
-		effectDispatcher: effectDispatcher,
+		worldState:         worldState,
+		effectDispatcher:   effectDispatcher,
+		registeredHandlers: make(map[string]*registeredEventHandler),
 	}
 }
 
@@ -56,11 +57,26 @@ func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
 	if handler == nil {
 		log.Fatal().Msgf("Event handler for %s is nil", ctx.EntityId())
 	}
-	d.registeredHandlers = append(d.registeredHandlers, &registeredEventHandler{
+	if _, exists := d.registeredHandlers[ctx.EntityId()]; exists {
+		log.Fatal().Msgf("Event handler for %s is already registered", ctx.EntityId())
+	}
+	d.registeredHandlers[ctx.EntityId()] = &registeredEventHandler{
 		ctx:     ctx,
 		Handler: handler,
 		State:   nil,
-	})
+	}
+}
+
+func (d *Dispatcher) GetHandler(ctx EntityContext) (EventHandler, bool) {
+	rh, ok := d.registeredHandlers[ctx.EntityId()]
+	if ok {
+		return rh.Handler, true
+	}
+	return nil, false
+}
+
+func (d *Dispatcher) Unregister(ctx EntityContext) {
+	delete(d.registeredHandlers, ctx.EntityId())
 }
 
 func (d *Dispatcher) Dispatch(events ...any) {

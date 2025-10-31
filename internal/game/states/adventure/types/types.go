@@ -32,6 +32,7 @@ type AnimationReference struct {
 }
 
 type PresenceConfig struct {
-	IsInteractable *bool `yaml:"is_interactable"`
-	BlockIngress   *bool `yaml:"block_ingress"`
+	IsInteractable *bool    `yaml:"is_interactable"`
+	BlockIngress   *bool    `yaml:"block_ingress"`
+	Impedance      *float64 `yaml:"impedance"`
 }

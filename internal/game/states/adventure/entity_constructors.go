@@ -4,24 +4,25 @@ import (
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/states/adventure/handlers"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
 
 type None struct{}
 
 func init() {
-	targetRegistration().byClass("ModeBasedEntity").registrar(registerModeBasedEntity)
+	newRegistrarBuilder().byClass("ModeBasedEntity").registrar(registerModeBasedEntity)
 }
 
-func registerModeBasedEntity(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-	entity := system.RegisterEntity(entityId, location)
-	AttachPresenceFromConfig(entity, mapEntity.Properties)
+func registerModeBasedEntity(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+	entity := system.RegisterEntity(params.EntityId, params.Location)
+	AttachPresenceFromConfig(entity, params.Properties)
 	AttachModeBasedEntityRenderer(entity).
-		WithPropConfigurations(mapEntity.Properties)
-	return entity.GetEntityContext(), nil
+		WithPropConfigurations(params.Properties)
+	return entity, nil
 }
 
-type entityRegistrar func(string, MapLocation, *resources.Entity, *EntitySystem) (events.EntityContext, events.EventHandler)
+type entityRegistrar func(NewEntityParams, *EntitySystem) (Entity, events.EventHandler)
 
 var registrarsByClass = map[string]entityRegistrar{}
 var registrarsEntitiesByTile = map[resources.TilesheetSpriteId]entityRegistrar{}
@@ -31,7 +32,7 @@ type entityRegistrarTargets struct {
 	tiles   []resources.TilesheetSpriteId
 }
 
-func targetRegistration() entityRegistrarTargets {
+func newRegistrarBuilder() entityRegistrarTargets {
 	return entityRegistrarTargets{}
 }
 
@@ -60,36 +61,48 @@ func (r entityRegistrarTargets) registrar(registrar entityRegistrar) {
 	}
 }
 
-func (s *State) registerParameterizedEntity(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) bool {
+func (s *State) registerParameterizedEntity(params NewEntityParams) bool {
 	var registerer entityRegistrar
 	var exists bool
 
-	if mapEntity.SpriteId != nil {
-		registerer, exists = registrarsEntitiesByTile[*mapEntity.SpriteId]
+	if params.SpriteId != nil {
+		registerer, exists = registrarsEntitiesByTile[*params.SpriteId]
 	}
 	if !exists {
-		registerer, exists = registrarsByClass[mapEntity.Class]
+		registerer, exists = registrarsByClass[params.Class]
 	}
 	if registerer == nil {
 		return false
 	}
 
-	entityContext, eventHandler := registerer(entityId, location, mapEntity, system)
-	if entityContext == nil {
-		entityContext = events.NewBasicEntityContext(entityId)
-	}
-
-	if scriptRef := mapEntity.Properties.GetString("script_ref", ""); scriptRef != "" {
+	entity, eventHandler := registerer(params, s.entities)
+	if entity == nil {
 		if eventHandler != nil {
-			log.Fatal().Str("entityId", string(entityId)).Msgf("entity has more than one handler configured!")
+			log.Fatal().Str("entityId", string(params.EntityId)).Msgf("entity was not created but an event handler was")
 		}
-		eventHandler = handlers.Get(scriptRef, mapEntity.Properties)
+		return false
+	}
+	log.Debug().Msgf("Registered entity %s", params.EntityId)
+
+	if scriptRef := params.Properties.GetString("script_ref", ""); scriptRef != "" {
+		if eventHandler != nil {
+			log.Fatal().Str("entityId", string(params.EntityId)).Msgf("entity has more than one handler configured!")
+		}
+		eventHandler = handlers.Get(scriptRef, params.Properties)
 	}
 
 	if eventHandler != nil {
-		s.eventDispatcher.Register(entityContext, eventHandler)
-		log.Debug().Msgf("Registered event handler for %s", entityId)
+		s.eventDispatcher.Register(entity.GetEntityContext(), eventHandler)
+		log.Debug().Msgf("Registered event handler for %s", params.EntityId)
 	}
 
 	return true
+}
+
+type NewEntityParams struct {
+	EntityId   string
+	Class      string
+	SpriteId   *resources.TilesheetSpriteId
+	Location   MapLocation
+	Properties *util.Properties
 }

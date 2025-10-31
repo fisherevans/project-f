@@ -3,13 +3,16 @@ package adventure
 import (
 	"math"
 
-	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 )
+
+// todo camera follow equlibrium causes jitter between pixels in a stable state due to slight variations in time delta
+// setting speed to 0 (instant follow), show none of this issue
+// unclear how to avoid this problem with a camera with "momentum"...
 
 type Camera interface {
 	SetLocation(location pixel.Vec)
@@ -40,9 +43,7 @@ func (c *cameraLocation) ComputeRenderDetails(s *State, targetBounds pixel.Rect)
 		MaxY: util.MinInt(s.mapHeight-1, cameraMapY+cameraRenderDistanceY),
 	}
 	// avoid screen tearing by moving the camera only by full pixels
-	moveDeltaX := -int(math.Round(c.location.X * resources.MapTileSize.Float()))
-	moveDeltaY := -int(math.Round(c.location.Y * resources.MapTileSize.Float()))
-	moveDelta := gfx.IVec(moveDeltaX, moveDeltaY)
+	moveDelta := normalizeRenderMoveDelta(c.location, -resources.MapTileSize)
 	renderMatrix := pixel.IM.
 		Moved(moveDelta).
 		Moved(targetBounds.Center())
@@ -148,4 +149,11 @@ func getCameraToMutate(c Camera) Camera {
 		return override.newCamera
 	}
 	return c
+}
+
+func normalizeRenderMoveDelta(vec pixel.Vec, tileSize resources.Pixels) pixel.Vec {
+	return pixel.Vec{
+		X: math.Round(vec.X * float64(tileSize)),
+		Y: math.Round(vec.Y * float64(tileSize)),
+	}
 }

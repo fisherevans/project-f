@@ -7,6 +7,7 @@ import (
 )
 
 type EntityPresence interface {
+	PathfindingImpedance
 	IsInteractable() bool
 	AllowsEgress(side input.Direction, id string) bool
 	AllowsIngress(side input.Direction, id string) bool
@@ -14,8 +15,9 @@ type EntityPresence interface {
 
 func AttachPresenceFromConfig(entity Entity, properties *util.Properties) EntityPresence {
 	cfg := &types.PresenceConfig{}
+	impedanceWeight := ImpedanceExtreme
 	if !properties.LoadStructFromKey("presence_config", cfg) {
-		return AttachBlockIngressPresence(entity, true)
+		return AttachBlockIngressPresence(entity, true, NewStaticImpedance(impedanceWeight))
 	}
 	isInteractable, blockIngress := false, false
 	if cfg.IsInteractable != nil {
@@ -24,21 +26,26 @@ func AttachPresenceFromConfig(entity Entity, properties *util.Properties) Entity
 	if cfg.BlockIngress != nil {
 		blockIngress = *cfg.BlockIngress
 	}
-	p := AttachBlockIngressPresence(entity, isInteractable)
+	if cfg.Impedance != nil {
+		impedanceWeight = *cfg.Impedance
+	}
+	p := AttachBlockIngressPresence(entity, isInteractable, NewStaticImpedance(impedanceWeight))
 	p.isBlockingIngress = blockIngress
 	entity.SetPresence(p)
 	return p
 }
 
 type BlockIngressPresence struct {
+	PathfindingImpedance
 	isInteractable    bool
 	isBlockingIngress bool
 }
 
-func AttachBlockIngressPresence(entity Entity, isInteractable bool) *BlockIngressPresence {
+func AttachBlockIngressPresence(entity Entity, isInteractable bool, impedance PathfindingImpedance) *BlockIngressPresence {
 	presence := &BlockIngressPresence{
-		isInteractable:    isInteractable,
-		isBlockingIngress: true,
+		PathfindingImpedance: impedance,
+		isInteractable:       isInteractable,
+		isBlockingIngress:    true,
 	}
 	entity.SetPresence(presence)
 	return presence
@@ -57,14 +64,16 @@ func (p *BlockIngressPresence) AllowsIngress(side input.Direction, id string) bo
 }
 
 type DirectionalPresence struct {
+	PathfindingImpedance
 	isInteractable bool
 	blockedSides   map[input.Direction]bool
 }
 
-func AttachDirectionalPresence(entity Entity, isInteractable bool, blockedSides map[input.Direction]bool) *DirectionalPresence {
+func AttachDirectionalPresence(entity Entity, isInteractable bool, impedance PathfindingImpedance, blockedSides map[input.Direction]bool) *DirectionalPresence {
 	presence := &DirectionalPresence{
-		isInteractable: isInteractable,
-		blockedSides:   blockedSides,
+		PathfindingImpedance: impedance,
+		isInteractable:       isInteractable,
+		blockedSides:         blockedSides,
 	}
 	entity.SetPresence(presence)
 	return presence
@@ -89,16 +98,18 @@ func (p *DirectionalPresence) AllowsIngress(side input.Direction, id string) boo
 }
 
 type BidirectionalPresence struct {
+	PathfindingImpedance
 	isInteractable      bool
 	blockedEgressSides  map[input.Direction]bool
 	blockedIngressSides map[input.Direction]bool
 }
 
-func AttachBidirectionalPresence(entity Entity, isInteractable bool, blockedEgressSides map[input.Direction]bool, blockedIngressSides map[input.Direction]bool) *BidirectionalPresence {
+func AttachBidirectionalPresence(entity Entity, isInteractable bool, impedance PathfindingImpedance, blockedEgressSides map[input.Direction]bool, blockedIngressSides map[input.Direction]bool) *BidirectionalPresence {
 	presence := &BidirectionalPresence{
-		isInteractable:      isInteractable,
-		blockedEgressSides:  blockedEgressSides,
-		blockedIngressSides: blockedIngressSides,
+		PathfindingImpedance: impedance,
+		isInteractable:       isInteractable,
+		blockedEgressSides:   blockedEgressSides,
+		blockedIngressSides:  blockedIngressSides,
 	}
 	entity.SetPresence(presence)
 	return presence
@@ -120,4 +131,32 @@ func (p *BidirectionalPresence) AllowsIngress(side input.Direction, id string) b
 		return false
 	}
 	return p.blockedIngressSides[side]
+}
+
+type ConditionalBlockIngressPresence struct {
+	PathfindingImpedance
+	isInteractable bool
+	doBlock        func(id string) bool
+}
+
+func AttachConditionalBlockIngressPresence(entity Entity, isInteractable bool, impedance PathfindingImpedance, doBlock func(id string) bool) *ConditionalBlockIngressPresence {
+	presence := &ConditionalBlockIngressPresence{
+		PathfindingImpedance: impedance,
+		isInteractable:       isInteractable,
+		doBlock:              doBlock,
+	}
+	entity.SetPresence(presence)
+	return presence
+}
+
+func (p *ConditionalBlockIngressPresence) IsInteractable() bool {
+	return p.isInteractable
+}
+
+func (p *ConditionalBlockIngressPresence) AllowsEgress(side input.Direction, id string) bool {
+	return true
+}
+
+func (p *ConditionalBlockIngressPresence) AllowsIngress(side input.Direction, id string) bool {
+	return !p.doBlock(id)
 }

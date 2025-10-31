@@ -7,7 +7,6 @@ import (
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
@@ -15,8 +14,8 @@ import (
 )
 
 func init() {
-	targetRegistration().byClass("NPC").byTile(tiles.NPC).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-		entity := system.RegisterEntity(entityId, location)
+	newRegistrarBuilder().byClass("NPC").byTile(tiles.NPC).registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+		entity := system.RegisterEntity(params.EntityId, params.Location)
 		renderer := AttachMovementBasedEntityRenderer(entity)
 		color := colors.HSLToRGBA(rand.Float64(), 1, 0.65)
 		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
@@ -34,20 +33,20 @@ func init() {
 		}
 		doesMove, horizOnly := true, false
 		idleChance, maxIdle, speed := 0.05, 6.0, 2.0
-		switch mapEntity.Properties.GetString("movement", "") {
+		switch params.Properties.GetString("movement", "") {
 		case "static":
 			doesMove = false
 		case "horiz":
 			horizOnly = true
 		}
-		switch mapEntity.Properties.GetString("speed", "") {
+		switch params.Properties.GetString("speed", "") {
 		case "fast":
 			speed = 4
 		}
-		AttachBlockIngressPresence(entity, true)
+		AttachBlockIngressPresence(entity, true, NewStaticImpedance(ImpedanceHigh))
 		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle)
 		entity.SetMovementSpeed(types.MoveStateWalking, speed)
-		return entity.GetEntityContext(), events.NewBasicHandler(None{}).
+		return entity, events.NewBasicHandler(None{}).
 			WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
 					return nil

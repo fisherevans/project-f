@@ -1,6 +1,10 @@
 package adventure
 
-import "fisherevans.com/project/f/internal/game/events"
+import (
+	"math"
+
+	"fisherevans.com/project/f/internal/game/events"
+)
 
 type Positions struct {
 	state *State
@@ -11,13 +15,29 @@ type Positions struct {
 	locationsEntitiesAreWithin map[string]map[MapLocation]struct{}
 }
 
-func NewOccupation(state *State) *Positions {
+func NewPositions(state *State) *Positions {
 	return &Positions{
 		state:                      state,
 		entitiesWithinLocations:    map[MapLocation]map[string]struct{}{},
 		locationsEntitiesAreWithin: map[string]map[MapLocation]struct{}{},
 		entityPositions:            map[string]MapLocation{},
 	}
+}
+
+func (o *Positions) RemoveEntity(id string) {
+	var toVacate []MapLocation
+	for loc := range o.locationsEntitiesAreWithin[id] {
+		toVacate = append(toVacate, loc)
+	}
+	for _, loc := range toVacate {
+		o.Vacate(id, loc)
+		o.SetPosition(id, MapLocation{
+			X: math.MinInt,
+			Y: math.MinInt,
+		}, true)
+	}
+	delete(o.entityPositions, id)
+	delete(o.locationsEntitiesAreWithin, id)
 }
 
 func (o *Positions) ForEachOccupiedLocation(entityId string, handler func(location MapLocation)) {

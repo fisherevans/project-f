@@ -6,15 +6,15 @@ import (
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
 	"github.com/gopxl/pixel/v2"
 )
 
 func init() {
-	targetRegistration().byTile(tiles.Player).registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-		entity := system.RegisterEntity(entityId, location)
+	newRegistrarBuilder().byTile(tiles.Player).registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+
+		entity := system.RegisterEntity(params.EntityId, params.Location)
 		renderer := AttachMovementBasedEntityRenderer(entity)
 
 		dashPlayerLight := NewLight(colors.HexString("#88f"), 1.5)
@@ -37,15 +37,15 @@ func init() {
 				renderer.WithMovementStateRenderer(moveState, direction, moveStateRenderer)
 			}
 		}
-		AttachBlockIngressPresence(entity, false)
+		AttachBlockIngressPresence(entity, false, NewStaticImpedance(ImpedanceHigh))
 		AttachPlayerBehavior(entity)
 		entity.SetMovementSpeed(types.MoveStateWalking, characterSpeed)
 		entity.SetMovementSpeed(types.MoveStateRunning, characterSpeed*1.75)
 		entity.SetMovementSpeed(types.MoveStateDashing, characterSpeed*3)
 		// todo this seems gross
-		system.state.player = entityId
-		system.state.camera = NewFollowCamera(entityId, location.ToVec(), EntityCameraSpeedPlayerDefault)
-		system.state.worldState.Set("player_id", entityId)
+		system.state.player = params.EntityId
+		system.state.camera = NewFollowCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium)
+		system.state.worldState.Set("player_id", system.state.player)
 		return nil, nil
 	})
 }

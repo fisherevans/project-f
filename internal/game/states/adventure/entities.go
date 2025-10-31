@@ -36,7 +36,7 @@ func NewEntitySystem(state *State) *EntitySystem {
 		state: state,
 
 		movements:   map[string]*EntityMovement{},
-		occupations: NewOccupation(state),
+		occupations: NewPositions(state),
 		contexts:    map[string]*events.BasicEntityContext{},
 
 		presences:         map[string]EntityPresence{},
@@ -57,6 +57,17 @@ func (es *EntitySystem) RegisterEntity(id string, location MapLocation) Entity {
 	entity, _ := es.GetEntity(id)
 	initializeMetadata(es.contexts[id], entity)
 	return entity
+}
+
+func (es *EntitySystem) DeleteEntity(id string) {
+	es.occupations.RemoveEntity(id)
+	delete(es.states, id)
+	delete(es.movements, id)
+	delete(es.contexts, id)
+	delete(es.presences, id)
+	delete(es.renderers, id)
+	delete(es.behaviors, id)
+	delete(es.disabledBehaviors, id)
 }
 
 func initializeMetadata(context *events.BasicEntityContext, entity Entity) {
@@ -149,18 +160,20 @@ func (es *EntitySystem) isMovementValid(entity Entity, targetLocation MapLocatio
 		debugLog.Msgf("attempted movement to same location")
 		return false, movementDirection
 	}
-	if !es.isValidTransition(entity, targetLocation, movementDirection, true) {
+	if validEgress, _ := es.isValidTransition(entity, targetLocation, movementDirection, true); !validEgress {
 		debugLog.Msgf("movement ingress not valid")
 		return false, movementDirection
 	}
-	if !es.isValidTransition(entity, entity.GetLocation(), movementDirection, false) {
+	if validIngress, _ := es.isValidTransition(entity, entity.GetLocation(), movementDirection, false); !validIngress {
 		debugLog.Msgf("movement egress not valid")
 		return false, movementDirection
 	}
 	return true, movementDirection
 }
 
-func (es *EntitySystem) isValidTransition(entity Entity, location MapLocation, movementDirection input.Direction, isIngress bool) bool {
+func (es *EntitySystem) isValidTransition(entity Entity, location MapLocation, movementDirection input.Direction, isIngress bool) (bool, float64) {
+	totalImpedanceWeight := 0.
+	isValid := true
 	for _, occupiedById := range es.occupations.OccupyingEntityList(location) {
 		if occupiedById == entity.GetId() {
 			continue
@@ -176,10 +189,11 @@ func (es *EntitySystem) isValidTransition(entity Entity, location MapLocation, m
 			side = movementDirection.Opposite()
 		}
 		if !doesAllow(side, entity.GetId()) {
-			return false
+			isValid = false
+			totalImpedanceWeight += presence.PathfindingImpedanceWeight(entity.GetId())
 		}
 	}
-	return true
+	return isValid, totalImpedanceWeight
 }
 
 func (es *EntitySystem) Update(timeDelta float64) {
@@ -218,7 +232,8 @@ func (es *EntitySystem) Render(sceneTarget, lightMapTarget pixel.Target, cameraM
 	entities := es.locationSortedRenderers()
 	for _, entity := range entities {
 		renderer, _ := entity.GetRenderer()
-		renderMatrix := cameraMatrix.Moved(entity.GetPreciseLocation().Scaled(resources.MapTileSize.Float()))
+		moveDelta := normalizeRenderMoveDelta(entity.GetPreciseLocation(), resources.MapTileSize)
+		renderMatrix := cameraMatrix.Moved(moveDelta)
 		renderer.RenderToScene(sceneTarget, renderMatrix)
 		renderer.RenderToLightMap(lightMapTarget, renderMatrix)
 	}

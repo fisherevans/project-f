@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"sync/atomic"
+
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
@@ -44,8 +47,8 @@ func init() {
 					state.Ready {
 					state.Ready = false
 					return events.NewOutput().WithState(state).WithEffects(
-						events.NewTimerEffect(10).WithTimerId("reset"),
 						events.NewChatterEffect(world.GetAsString("player_id"), 5, "I should turn around..."),
+						events.NewTimerEffect(10).WithTimerId("reset"),
 					)
 				}
 				return nil
@@ -135,6 +138,45 @@ func init() {
 						events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
 							WithMode("closed"))
 				}
+			},
+		}.CreateHandler()
+	})
+}
+
+var nextSpawnedEntityId = atomic.Int64{}
+
+func init() {
+	Register("spawn_entity", func(_ *util.Properties) events.EventHandler {
+		return events.BasicHandlerBuilder[None]{
+			Init: func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
+				return events.NewOutput().WithEffects(
+					events.NewMutateModeBasedEntityEffect(ctx.EntityId()).
+						WithAnimations(map[string][]types.AnimationReference{
+							"": {{
+								Name: "adventure/doors/button",
+							}},
+						}))
+			},
+			OnInteract: func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
+				if ctx.EntityId() != event.TargetId {
+					return nil
+				}
+				id := fmt.Sprintf("spawned-%d", nextSpawnedEntityId.Add(1))
+				return events.NewOutput().WithEffects(
+					events.NewResetModeBasedEntityAnimationEffect(ctx.EntityId()),
+					events.NewSerialPlan(
+						events.NewRegisterEntityEffect().
+							WithEntityId(id).
+							WithClass("NPC").
+							WithProperties(util.NewProps(map[string]any{
+								"movement": "static",
+							})).
+							WithEntityLocation("spawned_entity_start"),
+						events.NewPushEntityBehaviorEffect(id).WithScriptedMotion(events.EntityBehaviorScriptedMotion{}),
+						events.NewStartScriptedMotionEffect(id).WithToEntityId("spawned_entity_end"),
+						events.NewDeleteEntityEffect(id),
+					),
+				)
 			},
 		}.CreateHandler()
 	})

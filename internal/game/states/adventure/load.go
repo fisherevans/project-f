@@ -77,14 +77,21 @@ func initializeMap(a *State, m *resources.Map) {
 		location := adjustedLocation(collisionTile.X, collisionTile.Y)
 		id := fmt.Sprintf("collision-%d-%d", location.X, location.Y)
 		switch collisionTile.SpriteId {
+		case resources.TileNPCCollisionBlock:
+			entity := a.entities.RegisterEntity(id, location)
+			targetNonPlayers := func(id string) bool {
+				return id != a.player
+			}
+			impedance := NewConditionalImpedance(ImpedanceImpassable, targetNonPlayers)
+			AttachConditionalBlockIngressPresence(entity, false, impedance, targetNonPlayers)
 		case resources.TileCollisionBlock:
 			entity := a.entities.RegisterEntity(id, location)
-			AttachBlockIngressPresence(entity, false)
+			AttachBlockIngressPresence(entity, false, NewImpassableImpedance())
 		case resources.TileCollisionJumpHorizontal,
 			resources.TileCollisionJumpVertical,
 			resources.TileCollisionJumpAll:
 			entity := a.entities.RegisterEntity(id, location)
-			AttachBlockIngressPresence(entity, false)
+			AttachBlockIngressPresence(entity, false, NewImpassableImpedance())
 			entity.SetState(DashGapState{})
 		}
 	}
@@ -94,7 +101,14 @@ func initializeMap(a *State, m *resources.Map) {
 			continue
 		}
 		location := adjustedLocation(mapEntity.X, mapEntity.Y)
-		if a.registerParameterizedEntity(entityId, location, mapEntity, a.entities) {
+		newEntityParams := NewEntityParams{
+			EntityId:   entityId,
+			Class:      mapEntity.Class,
+			SpriteId:   mapEntity.SpriteId,
+			Location:   location,
+			Properties: mapEntity.Properties,
+		}
+		if a.registerParameterizedEntity(newEntityParams) {
 			log.Debug().Msgf("added parameterized entity '%s'", entityId)
 			continue
 		}

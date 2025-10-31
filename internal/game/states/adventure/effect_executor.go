@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"math/rand"
+	"sync/atomic"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/events"
@@ -21,8 +22,8 @@ func (s *State) processEffects(effects ...events.DispatchedEffect) {
 		// generic effects first
 		case *events.EffectFunction:
 			s.processEffectFunction(dispatched.Source, e)
-		case *events.EffectPlan:
-			s.processEffectPlan(dispatched.Source, e)
+		case *events.EffectBatch:
+			s.processEffectBatch(dispatched.Source, e)
 		case *events.EffectTimer:
 			s.processEffectTimer(dispatched.Source, e)
 		case *events.EffectSetWorldState:
@@ -87,6 +88,12 @@ func (s *State) processEffects(effects ...events.DispatchedEffect) {
 			s.processEffectEntityFaceDirection(dispatched.Source, e)
 		case *events.EffectTriggerMovement:
 			s.processEffectTriggerMovement(dispatched.Source, e)
+
+		// entity lifecycles
+		case *events.EffectDeleteEntity:
+			s.processEffectDeleteEntity(dispatched.Source, e)
+		case *events.EffectRegisterEntity:
+			s.processEffectRegisterEntity(dispatched.Source, e)
 
 		default:
 			log.Warn().Type("effect_type", e).Msg("Unknown effect type, ignoring")
@@ -260,13 +267,13 @@ func (s *State) processEffectSetEntityLocation(source events.EntityContext, e *e
 	entity.Teleport(toLocation)
 }
 
-// processEffectPlan starts a new plan (effects are dispatched internally by the plan executor)
-func (s *State) processEffectPlan(source events.EntityContext, e *events.EffectPlan) {
+// processEffectBatch starts a new batch (effects are dispatched internally by the plan executor)
+func (s *State) processEffectBatch(source events.EntityContext, e *events.EffectBatch) {
 	if e == nil {
 		return
 	}
 	s.planExecutor.StartPlan(source, e)
-	logEffectInfof(source, e, "plan started")
+	logEffectInfof(source, e, "batch started")
 }
 
 // processEffectBlockInput blocks or unblocks input
@@ -407,8 +414,8 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 		}
 	}
 
-	// Build the teleport plan based on transition style
-	var plan *events.EffectPlan
+	// Build the teleport batch based on transition style
+	var batch *events.EffectBatch
 
 	switch transitionStyle {
 	case "fade":
@@ -451,10 +458,10 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 			events.NewDeactivateFadeEffect(fadeOutId),
 			events.NewMutateEntityBehaviorEffect(s.player).
 				WithEnableBy(fadeOutId))
-		plan = events.NewSerialPlan(effects...)
+		batch = events.NewSerialPlan(effects...)
 	case "instant":
 		// Instant teleport with no transition
-		plan = events.NewSerialPlan(&events.EffectSetEntityLocation{
+		batch = events.NewSerialPlan(&events.EffectSetEntityLocation{
 			EntityId:    s.player,
 			ToReference: e.ToReference,
 			ToLocation:  e.ToLocation,
@@ -465,9 +472,8 @@ func (s *State) processEffectTeleportPlayer(source events.EntityContext, e *even
 		return
 	}
 
-	// Execute the plan as a system effect
-	s.ExecuteSystemEffects(plan)
-	logEffectInfof(source, e, "player teleport plan started with style: %s", transitionStyle)
+	s.ExecuteSystemEffects(batch)
+	logEffectInfof(source, e, "player teleport batch started with style: %s", transitionStyle)
 }
 
 func (s *State) processEffectOverrideCamera(source events.EntityContext, e *events.EffectOverrideCamera) {
@@ -490,7 +496,7 @@ func (s *State) processEffectOverrideCamera(source events.EntityContext, e *even
 	if e.Follow.ResetPosition {
 		location = target.GetPreciseLocation()
 	}
-	camera := NewFollowCamera(target.GetId(), location, EntityCameraSpeedPlayerDefault)
+	camera := NewFollowCamera(target.GetId(), location, EntityCameraSpeedMedium)
 	s.OverrideCamera(camera)
 	logEffectInfof(source, e, "camera overriden")
 }
@@ -705,4 +711,55 @@ func (s *State) processEffectPopEntityBehaviorOverride(source events.EntityConte
 	}
 	entity.PopBehavior()
 	logEffectInfof(source, e, "entity behavior override popped")
+}
+
+func (s *State) processEffectDeleteEntity(source events.EntityContext, e *events.EffectDeleteEntity) {
+	if e == nil {
+		return
+	}
+	entity, ok := s.entities.GetEntity(e.EntityId)
+	if !ok {
+		logEffectWarnf(source, e, "failed to find entity to delete")
+		return
+	}
+	s.eventDispatcher.Unregister(entity.GetEntityContext())
+	s.entities.DeleteEntity(e.EntityId)
+	logEffectInfof(source, e, "entity deleted")
+}
+
+var nextNewEntityId = atomic.Int64{}
+
+func (s *State) processEffectRegisterEntity(source events.EntityContext, e *events.EffectRegisterEntity) {
+	if e == nil {
+		return
+	}
+	params := NewEntityParams{
+		EntityId: e.EntityId,
+	}
+	if e.Class != nil {
+		params.Class = *e.Class
+	}
+	if e.SpriteId != nil {
+		params.SpriteId = e.SpriteId
+	}
+	if e.Properties != nil {
+		params.Properties = *e.Properties
+	}
+
+	// location
+	if e.MapLocation != nil {
+		params.Location = LocationFromEvent(*e.MapLocation)
+	} else if e.EntityLocation != nil {
+		toEntity, ok := s.entities.GetEntity(*e.EntityLocation)
+		if !ok {
+			logEffectWarnf(source, e, "failed to find entity to set location based on")
+			return
+		}
+		params.Location = toEntity.GetLocation()
+	}
+	if !s.registerParameterizedEntity(params) {
+		logEffectWarnf(source, e, "failed to register entity")
+		return
+	}
+	logEffectInfof(source, e, "entity registered: %v", params)
 }

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-29T23:31:56-04:00 by go generate
+// Generated at 2025-10-30T16:28:58-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events

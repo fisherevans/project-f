@@ -23,12 +23,15 @@ func NewProps(kvs map[string]any) *Properties {
 }
 
 func (p *Properties) Get(key string) (any, bool) {
+	if p == nil {
+		return nil, false
+	}
 	v, ok := p.kvs[key]
 	return v, ok
 }
 
 func (p *Properties) GetString(key string, defaultValue string) string {
-	v, ok := p.kvs[key]
+	v, ok := p.Get(key)
 	if !ok {
 		return defaultValue
 	}
@@ -39,7 +42,7 @@ func (p *Properties) GetString(key string, defaultValue string) string {
 }
 
 func (p *Properties) GetInt(key string, defaultValue int) int {
-	v, ok := p.kvs[key]
+	v, ok := p.Get(key)
 	if !ok {
 		return defaultValue
 	}
@@ -59,7 +62,7 @@ func (p *Properties) GetInt(key string, defaultValue int) int {
 }
 
 func (p *Properties) GetFloat(key string, defaultValue float64) float64 {
-	v, ok := p.kvs[key]
+	v, ok := p.Get(key)
 	if !ok {
 		return defaultValue
 	}
@@ -81,7 +84,7 @@ func (p *Properties) GetFloat(key string, defaultValue float64) float64 {
 }
 
 func (p *Properties) GetBool(key string, defaultValue bool) bool {
-	v, ok := p.kvs[key]
+	v, ok := p.Get(key)
 	if !ok {
 		return defaultValue
 	}
@@ -96,19 +99,8 @@ func (p *Properties) GetBool(key string, defaultValue bool) bool {
 	return defaultValue
 }
 
-func (p *Properties) LoadStruct(target any) bool {
-	data, err := yaml.Marshal(p.kvs)
-	if err != nil {
-		return false
-	}
-	if err := yaml.Unmarshal(data, target); err != nil {
-		return false
-	}
-	return true
-}
-
 func (p *Properties) LoadStructFromKey(key string, target any) bool {
-	v, ok := p.kvs[key]
+	v, ok := p.Get(key)
 	if !ok {
 		return false
 	}

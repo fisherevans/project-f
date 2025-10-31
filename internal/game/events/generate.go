@@ -409,7 +409,79 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 
 	sb.WriteString("\t}\n")
 	sb.WriteString("\treturn nil\n")
-	sb.WriteString("}\n")
+	sb.WriteString("}\n\n")
+
+	// Generate TypedEventHandler interface
+	sb.WriteString("// TypedEventHandler defines the typed interface for event handlers\n")
+	sb.WriteString("// This interface is primarily for IDE autocomplete and documentation.\n")
+	sb.WriteString("// When you embed BaseHandler[T] and start typing a method name, your IDE will\n")
+	sb.WriteString("// suggest the correct signature from this interface.\n")
+	sb.WriteString("//\n")
+	sb.WriteString("// Note: Override TypedInit (not Init) and the typed event methods.\n")
+	sb.WriteString("// BaseHandler will automatically call your TypedInit from Init.\n")
+	sb.WriteString("type TypedEventHandler[T any] interface {\n")
+	sb.WriteString("\tTypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput\n")
+	for _, event := range events {
+		sb.WriteString(fmt.Sprintf("\t%s(ctx EntityContext, world WorldStateReader, state T, event *%s) *HandlerOutput\n",
+			event.JSFunctionName, event.TypeName))
+	}
+	sb.WriteString("}\n\n")
+
+	// Generate BaseHandler struct with no-op implementations
+	sb.WriteString("// BaseHandler provides a base implementation with no-op methods for all events\n")
+	sb.WriteString("// Embed this in your custom handler and override only the methods you need\n")
+	sb.WriteString("type BaseHandler[T any] struct {\n")
+	sb.WriteString("\tDefaultState func() T\n")
+	sb.WriteString("}\n\n")
+
+	// Generate convertState for BaseHandler
+	sb.WriteString("func (h *BaseHandler[T]) convertState(original any) T {\n")
+	sb.WriteString("\tif original == nil {\n")
+	sb.WriteString("\t\tif h.DefaultState != nil {\n")
+	sb.WriteString("\t\t\treturn h.DefaultState()\n")
+	sb.WriteString("\t\t}\n")
+	sb.WriteString("\t\tvar zero T\n")
+	sb.WriteString("\t\treturn zero\n")
+	sb.WriteString("\t}\n")
+	sb.WriteString("\tv, ok := original.(T)\n")
+	sb.WriteString("\tif !ok {\n")
+	sb.WriteString("\t\tvar zero T\n")
+	sb.WriteString("\t\treturn zero\n")
+	sb.WriteString("\t}\n")
+	sb.WriteString("\treturn v\n")
+	sb.WriteString("}\n\n")
+
+	// Generate Init method for BaseHandler (calls TypedInit)
+	sb.WriteString("func (h *BaseHandler[T]) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {\n")
+	sb.WriteString("\treturn h.TypedInit(ctx, world, h.convertState(state))\n")
+	sb.WriteString("}\n\n")
+
+	// Generate TypedInit method for BaseHandler
+	sb.WriteString("func (h *BaseHandler[T]) TypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput {\n")
+	sb.WriteString("\treturn nil\n")
+	sb.WriteString("}\n\n")
+
+	// Generate HandleEvent method for BaseHandler
+	sb.WriteString("func (h *BaseHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {\n")
+	sb.WriteString("\tconvertedState := h.convertState(state)\n")
+	sb.WriteString("\tswitch e := event.(type) {\n")
+
+	for _, event := range events {
+		sb.WriteString(fmt.Sprintf("\tcase *%s:\n", event.TypeName))
+		sb.WriteString(fmt.Sprintf("\t\treturn h.%s(ctx, world, convertedState, e)\n", event.JSFunctionName))
+	}
+
+	sb.WriteString("\t}\n")
+	sb.WriteString("\treturn nil\n")
+	sb.WriteString("}\n\n")
+
+	// Generate no-op event handler methods for BaseHandler
+	for _, event := range events {
+		sb.WriteString(fmt.Sprintf("func (h *BaseHandler[T]) %s(ctx EntityContext, world WorldStateReader, state T, event *%s) *HandlerOutput {\n",
+			event.JSFunctionName, event.TypeName))
+		sb.WriteString("\treturn nil\n")
+		sb.WriteString("}\n\n")
+	}
 
 	return sb.String()
 }
@@ -705,6 +777,8 @@ func generateEffectBuilders(effects []EffectInfo) string {
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/input\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/rpg\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/states/adventure/types\"\n")
+	sb.WriteString("\t\"fisherevans.com/project/f/internal/resources\"\n")
+	sb.WriteString("\t\"fisherevans.com/project/f/internal/util\"\n")
 	sb.WriteString(")\n\n")
 
 	for _, effect := range effects {
@@ -754,7 +828,7 @@ func generateEffectBuilders(effects []EffectInfo) string {
 
 			sb.WriteString(fmt.Sprintf("func (e *%s) %s(%s %s) *%s {\n",
 				effect.Name, methodName, paramName, paramType, effect.Name))
-			
+
 			// If the field is a pointer type, take address of parameter
 			if strings.HasPrefix(field.GoType, "*") {
 				sb.WriteString(fmt.Sprintf("\te.%s = &%s\n", field.Name, paramName))
@@ -762,7 +836,7 @@ func generateEffectBuilders(effects []EffectInfo) string {
 				// For non-pointer fields (like auto-generated strings), assign directly
 				sb.WriteString(fmt.Sprintf("\te.%s = %s\n", field.Name, paramName))
 			}
-			
+
 			sb.WriteString("\treturn e\n")
 			sb.WriteString("}\n\n")
 		}

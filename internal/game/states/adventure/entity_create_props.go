@@ -7,28 +7,29 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
 
 func init() {
-	targetRegistration().byTile(tiles.RedCoin).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			entity := system.RegisterEntity(entityId, location)
+	newRegistrarBuilder().byTile(tiles.RedCoin).
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+
+			entity := system.RegisterEntity(params.EntityId, params.Location)
 			entity.SetRenderer(NewBasicEntityRenderer().
 				WithAnimations(anim.RedCoin(atlas)).
 				WithLights(NewLightWithModifier(colors.FromString("#f00"), 0.5, "pulse_slow")))
-			AttachBlockIngressPresence(entity, false)
-			return entity.GetEntityContext(), nil
+			AttachBlockIngressPresence(entity, false, NewImpassableImpedance())
+			return entity, nil
 		})
-	targetRegistration().byTile(tiles.Rocket).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			entity := system.RegisterEntity(entityId, location)
+	newRegistrarBuilder().byTile(tiles.Rocket).
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+
+			entity := system.RegisterEntity(params.EntityId, params.Location)
 			entity.SetRenderer(NewBasicEntityRenderer().
 				WithAnimations(anim.NewStaticAnimation(tiles.Rocket.From(atlas))))
-			AttachBlockIngressPresence(entity, true)
-			dest := "teleport:" + mapEntity.Properties.GetString("destination", "")
+			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
+			dest := "teleport:" + params.Properties.GetString("destination", "")
 			requiredElythium := 2
 			handler := events.NewBasicHandler(None{}).
 				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
@@ -47,14 +48,14 @@ func init() {
 						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("rocket"),
 					)
 				})
-			return entity.GetEntityContext(), handler.CreateHandler()
+			return entity, handler.CreateHandler()
 		})
-	targetRegistration().byTile(tiles.DummyFightRobot).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			entity := system.RegisterEntity(entityId, location)
+	newRegistrarBuilder().byTile(tiles.DummyFightRobot).
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+			entity := system.RegisterEntity(params.EntityId, params.Location)
 			entity.SetRenderer(NewBasicEntityRenderer().
 				WithAnimations(anim.NewStaticAnimation(atlas.GetSprite("primortals/dummy_entity"))))
-			AttachBlockIngressPresence(entity, true)
+			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 			var dummyQuips = []string{
 				"Practice those steps - then try me.",
 				"Come close - I don't bite... yet.",
@@ -74,7 +75,7 @@ func init() {
 						return nil
 					}
 					return events.NewOutput().WithEffects(
-						events.NewChatterEffect(entityId, 4, dummyQuips[rand.Intn(len(dummyQuips))]),
+						events.NewChatterEffect(params.EntityId, 4, dummyQuips[rand.Intn(len(dummyQuips))]),
 						events.NewTimerEffect(10+rand.Float64()*10).WithTimerId(quipTimerId))
 				}).
 				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
@@ -98,6 +99,6 @@ func init() {
 						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("robot"),
 					)
 				})
-			return nil, handler.CreateHandler()
+			return entity, handler.CreateHandler()
 		})
 }

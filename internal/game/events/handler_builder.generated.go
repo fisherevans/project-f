@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-29T23:31:56-04:00 by go generate
+// Generated at 2025-10-30T16:28:58-04:00 by go generate
 // Source: internal/game/events/handler.go
 
 package events
@@ -153,3 +153,108 @@ func (h *basicHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader,
 	}
 	return nil
 }
+
+// TypedEventHandler defines the typed interface for event handlers
+// This interface is primarily for IDE autocomplete and documentation.
+// When you embed BaseHandler[T] and start typing a method name, your IDE will
+// suggest the correct signature from this interface.
+//
+// Note: Override TypedInit (not Init) and the typed event methods.
+// BaseHandler will automatically call your TypedInit from Init.
+type TypedEventHandler[T any] interface {
+	TypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput
+	OnInteract(ctx EntityContext, world WorldStateReader, state T, event *EventOnInteract) *HandlerOutput
+	DialogueComplete(ctx EntityContext, world WorldStateReader, state T, event *EventDialogueComplete) *HandlerOutput
+	ChatterComplete(ctx EntityContext, world WorldStateReader, state T, event *EventChatterComplete) *HandlerOutput
+	TimerComplete(ctx EntityContext, world WorldStateReader, state T, event *EventTimerComplete) *HandlerOutput
+	EntityZoneActivity(ctx EntityContext, world WorldStateReader, state T, event *EventEntityZoneActivity) *HandlerOutput
+	WorldStateUpdated(ctx EntityContext, world WorldStateReader, state T, event *EventWorldStateUpdated) *HandlerOutput
+	CombatComplete(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput
+	ScriptedMotionComplete(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput
+}
+
+// BaseHandler provides a base implementation with no-op methods for all events
+// Embed this in your custom handler and override only the methods you need
+type BaseHandler[T any] struct {
+	DefaultState func() T
+}
+
+func (h *BaseHandler[T]) convertState(original any) T {
+	if original == nil {
+		if h.DefaultState != nil {
+			return h.DefaultState()
+		}
+		var zero T
+		return zero
+	}
+	v, ok := original.(T)
+	if !ok {
+		var zero T
+		return zero
+	}
+	return v
+}
+
+func (h *BaseHandler[T]) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
+	return h.TypedInit(ctx, world, h.convertState(state))
+}
+
+func (h *BaseHandler[T]) TypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {
+	convertedState := h.convertState(state)
+	switch e := event.(type) {
+	case *EventOnInteract:
+		return h.OnInteract(ctx, world, convertedState, e)
+	case *EventDialogueComplete:
+		return h.DialogueComplete(ctx, world, convertedState, e)
+	case *EventChatterComplete:
+		return h.ChatterComplete(ctx, world, convertedState, e)
+	case *EventTimerComplete:
+		return h.TimerComplete(ctx, world, convertedState, e)
+	case *EventEntityZoneActivity:
+		return h.EntityZoneActivity(ctx, world, convertedState, e)
+	case *EventWorldStateUpdated:
+		return h.WorldStateUpdated(ctx, world, convertedState, e)
+	case *EventCombatComplete:
+		return h.CombatComplete(ctx, world, convertedState, e)
+	case *EventScriptedMotionComplete:
+		return h.ScriptedMotionComplete(ctx, world, convertedState, e)
+	}
+	return nil
+}
+
+func (h *BaseHandler[T]) OnInteract(ctx EntityContext, world WorldStateReader, state T, event *EventOnInteract) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) DialogueComplete(ctx EntityContext, world WorldStateReader, state T, event *EventDialogueComplete) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) ChatterComplete(ctx EntityContext, world WorldStateReader, state T, event *EventChatterComplete) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) TimerComplete(ctx EntityContext, world WorldStateReader, state T, event *EventTimerComplete) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) EntityZoneActivity(ctx EntityContext, world WorldStateReader, state T, event *EventEntityZoneActivity) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) WorldStateUpdated(ctx EntityContext, world WorldStateReader, state T, event *EventWorldStateUpdated) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) CombatComplete(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) ScriptedMotionComplete(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput {
+	return nil
+}
+

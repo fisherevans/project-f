@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"fisherevans.com/project/f/internal/game/events"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -67,9 +68,8 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matri
 		}
 		incompleteChatters = append(incompleteChatters, chatter)
 
-		renderMatrix := matrix.Moved(chatter.RenderAbove().
-			Scaled(resources.MapTileSize.Float()).
-			Add(pixel.V(0, resources.MapTileSize.Float())))
+		moveDelta := normalizeRenderMoveDelta(chatter.RenderAbove(), resources.MapTileSize)
+		renderMatrix := matrix.Moved(moveDelta.Add(gfx.IVec(0, resources.MapTileSize.Int())))
 
 		frameWidth := chatter.Content().Width() + chatterFrame.HorizontalPadding()
 		frameHeight := chatter.Content().Height() + chatterFrame.VerticalPadding()

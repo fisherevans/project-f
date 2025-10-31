@@ -4,7 +4,6 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
@@ -28,10 +27,10 @@ func init() {
 		}
 		return events.NewOutput().WithEffects(events.NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("ready"))
 	})
-	targetRegistration().
+	newRegistrarBuilder().
 		byTile(tiles.Elythium).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			entity := system.RegisterEntity(entityId, location)
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+			entity := system.RegisterEntity(params.EntityId, params.Location)
 
 			AttachModeBasedEntityRenderer(entity).WithMode("ready").
 				WithModeRenderer("ready", NewBasicEntityRenderer().WithAnimations(
@@ -41,8 +40,8 @@ func init() {
 				WithModeRenderer("mined", NewBasicEntityRenderer().WithAnimations(
 					anim.LoadTilesheetAnimation(atlas, "adventure/entities/elythium/crystals_rock", "default")))
 
-			AttachBlockIngressPresence(entity, true)
+			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 
-			return entity.GetEntityContext(), handler.CreateHandler()
+			return entity, handler.CreateHandler()
 		})
 }

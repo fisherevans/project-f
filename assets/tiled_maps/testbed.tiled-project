@@ -36,6 +36,11 @@
             "id": 5,
             "members": [
                 {
+                    "name": "entity_id",
+                    "type": "string",
+                    "value": ""
+                },
+                {
                     "name": "presence_config",
                     "type": "string",
                     "value": "#block_ingress: false"
@@ -72,6 +77,11 @@
             "members": [
                 {
                     "name": "animation",
+                    "type": "string",
+                    "value": ""
+                },
+                {
+                    "name": "entity_id",
                     "type": "string",
                     "value": ""
                 }

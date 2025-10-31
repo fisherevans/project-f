@@ -4,6 +4,8 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util"
 )
 
 // Effect is the interface that all effect types must implement
@@ -91,42 +93,34 @@ type EffectTeleportPlayer struct {
 	TransitionStyle *string
 }
 
-// Plan execution: serial and parallel effect coordination
-type EffectPlan struct {
-	PlanId string `auto_generate:"true"`
-	Steps  []PlanStep
+// Batch execution: serial and parallel effect coordination
+type EffectBatch struct {
+	BatchId           string `auto_generate:"true"`
+	Effects           []Effect
+	ExecuteInParallel *bool // defaults to false (serial)
 }
 
-func NewSerialPlan(effects ...Effect) *EffectPlan {
-	return &EffectPlan{
-		Steps: []PlanStep{
-			{
-				Serial: effects,
-			},
-		},
+func NewSerialPlan(effects ...Effect) *EffectBatch {
+	return &EffectBatch{
+		Effects: effects,
 	}
 }
 
-func NewParallelPlan(effects ...Effect) *EffectPlan {
-	return &EffectPlan{
-		Steps: []PlanStep{
-			{
-				Parallel: effects,
-			},
-		},
+func NewParallelPlan(effects ...Effect) *EffectBatch {
+	parallel := true
+	return &EffectBatch{
+		Effects:           effects,
+		ExecuteInParallel: &parallel,
 	}
 }
 
-func (p *EffectPlan) WithId(id string) *EffectPlan {
-	p.PlanId = id
-	return p
+func (b *EffectBatch) WithId(id string) *EffectBatch {
+	b.BatchId = id
+	return b
 }
 
-type PlanStep struct {
-	// Serial: effects execute one after another
-	// Parallel: all effects in the list run simultaneously, wait for all to complete
-	Serial   []Effect `one_of:"type"` // Note: Effect is now an interface
-	Parallel []Effect `one_of:"type"` // Note: Effect is now an interface
+func (b *EffectBatch) IsParallel() bool {
+	return b.ExecuteInParallel != nil && *b.ExecuteInParallel
 }
 
 type EffectMutateEntityBehavior struct {
@@ -227,4 +221,19 @@ type EntityBehaviorScriptedMotion struct {
 
 type EffectPopEntityBehavior struct {
 	EntityId string
+}
+
+type EffectDeleteEntity struct {
+	EntityId string
+}
+
+type EffectRegisterEntity struct {
+	EntityId string `auto_generate:"true"`
+
+	Class      *string
+	SpriteId   *resources.TilesheetSpriteId
+	Properties **util.Properties
+
+	MapLocation    *Location `one_of:"location"`
+	EntityLocation *string   `one_of:"location"`
 }

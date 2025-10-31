@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-29T23:31:56-04:00 by go generate
+// Generated at 2025-10-30T16:28:58-04:00 by go generate
 // Source: internal/game/events/effects.go
 
 package events
@@ -8,6 +8,8 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util"
 )
 
 func NewFunctionEffect(fn RunnableFunction) *EffectFunction {
@@ -138,14 +140,19 @@ func (e *EffectTeleportPlayer) WithTransitionStyle(transitionStyle string) *Effe
 	return e
 }
 
-func NewPlanEffect(steps []PlanStep) *EffectPlan {
-	return &EffectPlan{
-		Steps: steps,
+func NewBatchEffect(effects []Effect) *EffectBatch {
+	return &EffectBatch{
+		Effects: effects,
 	}
 }
 
-func (e *EffectPlan) WithPlanId(planId string) *EffectPlan {
-	e.PlanId = planId
+func (e *EffectBatch) WithBatchId(batchId string) *EffectBatch {
+	e.BatchId = batchId
+	return e
+}
+
+func (e *EffectBatch) WithExecuteInParallel(executeInParallel bool) *EffectBatch {
+	e.ExecuteInParallel = &executeInParallel
 	return e
 }
 
@@ -336,5 +343,46 @@ func NewPopEntityBehaviorEffect(entityId string) *EffectPopEntityBehavior {
 	return &EffectPopEntityBehavior{
 		EntityId: entityId,
 	}
+}
+
+func NewDeleteEntityEffect(entityId string) *EffectDeleteEntity {
+	return &EffectDeleteEntity{
+		EntityId: entityId,
+	}
+}
+
+func NewRegisterEntityEffect() *EffectRegisterEntity {
+	return &EffectRegisterEntity{
+	}
+}
+
+func (e *EffectRegisterEntity) WithEntityId(entityId string) *EffectRegisterEntity {
+	e.EntityId = entityId
+	return e
+}
+
+func (e *EffectRegisterEntity) WithClass(class string) *EffectRegisterEntity {
+	e.Class = &class
+	return e
+}
+
+func (e *EffectRegisterEntity) WithSpriteId(spriteId resources.TilesheetSpriteId) *EffectRegisterEntity {
+	e.SpriteId = &spriteId
+	return e
+}
+
+func (e *EffectRegisterEntity) WithProperties(properties *util.Properties) *EffectRegisterEntity {
+	e.Properties = &properties
+	return e
+}
+
+func (e *EffectRegisterEntity) WithMapLocation(mapLocation Location) *EffectRegisterEntity {
+	e.MapLocation = &mapLocation
+	return e
+}
+
+func (e *EffectRegisterEntity) WithEntityLocation(entityLocation string) *EffectRegisterEntity {
+	e.EntityLocation = &entityLocation
+	return e
 }
 

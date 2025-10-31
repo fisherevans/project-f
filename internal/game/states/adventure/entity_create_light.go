@@ -11,13 +11,13 @@ import (
 )
 
 func init() {
-	targetRegistration().
+	newRegistrarBuilder().
 		byTile(tiles.Torch, tiles.TorchRight, tiles.TorchLeft).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			entity := system.RegisterEntity(entityId, location)
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+			entity := system.RegisterEntity(params.EntityId, params.Location)
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewLightWithModifier(colors.FromString("#db9a3d"), 2, "flicker"))
-			switch *mapEntity.SpriteId {
+			switch *params.SpriteId {
 			case tiles.Torch:
 				renderer.WithAnimations(anim.Torch(atlas))
 			case tiles.TorchRight:
@@ -30,27 +30,27 @@ func init() {
 				renderer.WithZPriority(10)
 			}
 			entity.SetRenderer(renderer)
-			return entity.GetEntityContext(), nil
+			return entity, nil
 		})
-	targetRegistration().
+	newRegistrarBuilder().
 		byTile(tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
-			entity := system.RegisterEntity(entityId, location)
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+			entity := system.RegisterEntity(params.EntityId, params.Location)
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewLight(colors.FromString("#fff"), 1.333))
-			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *mapEntity.SpriteId))
-			if *mapEntity.SpriteId == tiles.LightFork {
+			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *params.SpriteId))
+			if *params.SpriteId == tiles.LightFork {
 				renderer.WithZPriority(10)
 			}
 			entity.SetRenderer(renderer)
-			return entity.GetEntityContext(), nil
+			return entity, nil
 		})
-	targetRegistration().
+	newRegistrarBuilder().
 		byTile(tiles.GlowRed, tiles.GlowOrange, tiles.GlowAqua, tiles.GlowPurple, tiles.GlowPink, tiles.GlowTBD).
-		registrar(func(entityId string, location MapLocation, mapEntity *resources.Entity, system *EntitySystem) (events.EntityContext, events.EventHandler) {
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
 			colorMask := colors.HexString("#fff")
-			mapEntity.Properties.GetFloat("size", 2)
-			switch *mapEntity.SpriteId {
+			params.Properties.GetFloat("size", 2)
+			switch *params.SpriteId {
 			case tiles.GlowRed:
 				colorMask = colors.HexString("#e05050")
 			case tiles.GlowOrange:
@@ -62,13 +62,14 @@ func init() {
 			case tiles.GlowPink:
 				colorMask = colors.HexString("#e050cb")
 			}
-			entity := system.RegisterEntity(entityId, location)
+
+			entity := system.RegisterEntity(params.EntityId, params.Location)
 			renderer := NewBasicEntityRenderer()
 			renderer.WithLights(NewLight(colorMask, 2))
-			if *mapEntity.SpriteId == tiles.LightFork {
+			if *params.SpriteId == tiles.LightFork {
 				renderer.WithZPriority(10)
 			}
 			entity.SetRenderer(renderer)
-			return entity.GetEntityContext(), nil
+			return entity, nil
 		})
 }

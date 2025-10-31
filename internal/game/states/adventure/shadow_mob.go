@@ -438,7 +438,8 @@ func (m *ShadowMob) sampleCircleAgainstTiles(s *State, center pixel.Vec, radius 
 func (s *State) canMobTraverse(x, y int) bool {
 	// todo mob entity id? direction?
 	p, _ := s.entities.GetEntity(s.player)
-	return s.entities.isValidTransition(p, MapLocation{X: x, Y: y}, input.Down, true)
+	isValid, _ := s.entities.isValidTransition(p, MapLocation{X: x, Y: y}, input.Down, true)
+	return isValid
 }
 
 // tileCircleIntersects checks if a circle at `center` with squared radius `rr` intersects a unit tile centered at (tx,ty), extents [tx-0.5,tx+0.5] x [ty-0.5,ty+0.5].

@@ -1,11 +1,19 @@
 package astar
 
-import "container/heap"
+import (
+	"container/heap"
+
+	"github.com/rs/zerolog/log"
+)
 
 type Pather[T any, C any] interface {
-	PathNeighbors(ctx C) []T
-	PathNeighborCost(ctx C, to T) float64
-	PathEstimatedCost(ctx C, to T) float64
+	PathNeighbors(ctx C) []WeightedNeighbor[T]
+	PathHeuristic(ctx C, to T) float64
+}
+
+type WeightedNeighbor[T any] struct {
+	Neighbor T
+	Cost     float64
 }
 
 type node[T any] struct {
@@ -63,7 +71,7 @@ func (pq *priorityQueue[T]) Pop() interface{} {
 	return item
 }
 
-func Path[T comparable, C any](from, to T, ctx C) (path []T, distance float64, found bool) {
+func Path[T comparable, C any](from, to T, ctx C, maxNodes int) (path []T, distance float64, found bool) {
 	if _, ok := any(from).(Pather[T, C]); !ok {
 		return nil, 0, false
 	}
@@ -76,6 +84,7 @@ func Path[T comparable, C any](from, to T, ctx C) (path []T, distance float64, f
 	fromNode.open = true
 	heap.Push(nq, fromNode)
 
+	nodesChecked := 0
 	for {
 		if nq.Len() == 0 {
 			return nil, 0, false
@@ -83,6 +92,13 @@ func Path[T comparable, C any](from, to T, ctx C) (path []T, distance float64, f
 		current := heap.Pop(nq).(*node[T])
 		current.open = false
 		current.closed = true
+
+		nodesChecked++
+		if maxNodes > 0 && nodesChecked >= maxNodes {
+			// Exceeded node limit, path not found
+			log.Warn().Int("max_nodes", maxNodes).Msg("exceeded node limit, path not found")
+			return nil, 0, false
+		}
 
 		if current.pather == to {
 			p := []T{}
@@ -95,15 +111,16 @@ func Path[T comparable, C any](from, to T, ctx C) (path []T, distance float64, f
 		}
 
 		currentPather := any(current.pather).(Pather[T, C])
-		for _, neighbor := range currentPather.PathNeighbors(ctx) {
-			cost := current.cost + currentPather.PathNeighborCost(ctx, neighbor)
+		for _, weightedNeighbor := range currentPather.PathNeighbors(ctx) {
+			neighbor := weightedNeighbor.Neighbor
+			cost := current.cost + weightedNeighbor.Cost
 			neighborNode := nm.get(neighbor)
-			
+
 			// Skip if already processed with a better cost
 			if neighborNode.closed && cost >= neighborNode.cost {
 				continue
 			}
-			
+
 			// If we found a better path, update it
 			if cost < neighborNode.cost {
 				if neighborNode.open {
@@ -111,7 +128,7 @@ func Path[T comparable, C any](from, to T, ctx C) (path []T, distance float64, f
 				}
 				neighborPather := any(neighbor).(Pather[T, C])
 				neighborNode.cost = cost
-				neighborNode.rank = cost + neighborPather.PathEstimatedCost(ctx, to)
+				neighborNode.rank = cost + neighborPather.PathHeuristic(ctx, to)
 				neighborNode.parent = current
 				neighborNode.open = true
 				neighborNode.closed = false
