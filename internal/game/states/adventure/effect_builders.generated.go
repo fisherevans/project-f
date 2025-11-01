@@ -1,8 +1,8 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-30T16:28:58-04:00 by go generate
-// Source: internal/game/events/effects.go
+// Generated at 2025-10-31T22:26:33-04:00 by go generate
+// Source: internal/game/adventure/effect.go
 
-package events
+package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
@@ -100,7 +100,7 @@ func (e *EffectSetEntityLocation) WithToReference(toReference string) *EffectSet
 	return e
 }
 
-func (e *EffectSetEntityLocation) WithToLocation(toLocation Location) *EffectSetEntityLocation {
+func (e *EffectSetEntityLocation) WithToLocation(toLocation MapLocation) *EffectSetEntityLocation {
 	e.ToLocation = &toLocation
 	return e
 }
@@ -120,7 +120,7 @@ func (e *EffectTeleportPlayer) WithToReference(toReference string) *EffectTelepo
 	return e
 }
 
-func (e *EffectTeleportPlayer) WithToLocation(toLocation Location) *EffectTeleportPlayer {
+func (e *EffectTeleportPlayer) WithToLocation(toLocation MapLocation) *EffectTeleportPlayer {
 	e.ToLocation = &toLocation
 	return e
 }
@@ -221,7 +221,7 @@ func (e *EffectTriggerMovement) WithDirection(direction input.Direction) *Effect
 	return e
 }
 
-func (e *EffectTriggerMovement) WithLocation(location Location) *EffectTriggerMovement {
+func (e *EffectTriggerMovement) WithLocation(location MapLocation) *EffectTriggerMovement {
 	e.Location = &location
 	return e
 }
@@ -313,7 +313,7 @@ func (e *EffectStartScriptedMotion) WithMotionId(motionId string) *EffectStartSc
 	return e
 }
 
-func (e *EffectStartScriptedMotion) WithLocation(location Location) *EffectStartScriptedMotion {
+func (e *EffectStartScriptedMotion) WithLocation(location MapLocation) *EffectStartScriptedMotion {
 	e.Location = &location
 	return e
 }
@@ -376,13 +376,24 @@ func (e *EffectRegisterEntity) WithProperties(properties *util.Properties) *Effe
 	return e
 }
 
-func (e *EffectRegisterEntity) WithMapLocation(mapLocation Location) *EffectRegisterEntity {
+func (e *EffectRegisterEntity) WithMapLocation(mapLocation MapLocation) *EffectRegisterEntity {
 	e.MapLocation = &mapLocation
 	return e
 }
 
 func (e *EffectRegisterEntity) WithEntityLocation(entityLocation string) *EffectRegisterEntity {
 	e.EntityLocation = &entityLocation
+	return e
+}
+
+func NewWaitForConditionEffect(check ConditionCheck) *EffectWaitForCondition {
+	return &EffectWaitForCondition{
+		Check: check,
+	}
+}
+
+func (e *EffectWaitForCondition) WithConditionId(conditionId string) *EffectWaitForCondition {
+	e.ConditionId = conditionId
 	return e
 }
 

@@ -2,10 +2,10 @@ package adventure
 
 const (
 	ImpedanceImpassable = 1e100
-	ImpedanceLow        = 10.
-	ImpedanceNormal     = 20.
-	ImpedanceHigh       = 40.
-	ImpedanceExtreme    = 100.
+	ImpedanceLow        = 1e2
+	ImpedanceBase       = 1e3
+	ImpedanceHigh       = 1e4
+	ImpedanceExtreme    = 1e5
 )
 
 type PathfindingImpedance interface {
@@ -28,6 +28,26 @@ func (s *StaticImpedance) PathfindingImpedanceWeight(id string) float64 {
 	return s.impedance
 }
 
+type MovementAwareImpedance struct {
+	entity                         Entity
+	idleImpedance, movingImpedance float64
+}
+
+func NewMovementAwareImpedance(entity Entity, idleImpedance, movingImpedance float64) PathfindingImpedance {
+	return &MovementAwareImpedance{
+		entity:          entity,
+		idleImpedance:   idleImpedance,
+		movingImpedance: movingImpedance,
+	}
+}
+
+func (m *MovementAwareImpedance) PathfindingImpedanceWeight(id string) float64 {
+	if m.entity.IsMoving() {
+		return m.movingImpedance
+	}
+	return m.idleImpedance
+}
+
 type ConditionalImpedance struct {
 	impedance float64
 	doImpede  func(id string) bool
@@ -41,5 +61,5 @@ func (c *ConditionalImpedance) PathfindingImpedanceWeight(id string) float64 {
 	if c.doImpede(id) {
 		return c.impedance
 	}
-	return ImpedanceNormal
+	return ImpedanceBase
 }

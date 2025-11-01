@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"github.com/rs/zerolog/log"
@@ -11,30 +10,30 @@ type SystemEventHandler struct {
 	State *State
 }
 
-func newSystemEventHandler(s *State) events.EventHandler {
+func newSystemEventHandler(s *State) EventHandler {
 	return &SystemEventHandler{
 		State: s,
 	}
 }
 
-func (h *SystemEventHandler) Init(ctx events.EntityContext, world events.WorldStateReader, state any) *events.HandlerOutput {
+func (h *SystemEventHandler) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
 	return nil
 }
 
-func (h *SystemEventHandler) HandleEvent(ctx events.EntityContext, world events.WorldStateReader, state any, event any) *events.HandlerOutput {
+func (h *SystemEventHandler) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {
 	if event == nil {
 		return nil
 	}
 	switch e := event.(type) {
-	case *events.EventEntityZoneActivity:
+	case *EventEntityZoneActivity:
 		return h.onZoneActivity(ctx, world, state, e)
-	case *events.EventOnInteract:
+	case *EventOnInteract:
 		return h.onInteract(ctx, world, state, e)
 	}
 	return nil
 }
 
-func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.WorldStateReader, _ any, event *events.EventOnInteract) *events.HandlerOutput {
+func (h *SystemEventHandler) onInteract(ctx EntityContext, world WorldStateReader, _ any, event *EventOnInteract) *HandlerOutput {
 	if event.SourceId != h.State.player {
 		log.Warn().Msgf("system event: got interact event for a non-player entity %s", ctx.EntityId())
 	}
@@ -54,11 +53,10 @@ func (h *SystemEventHandler) onInteract(ctx events.EntityContext, world events.W
 	return nil
 }
 
-func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashGapState, event *events.EventOnInteract) *events.HandlerOutput {
+func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashGapState, event *EventOnInteract) *HandlerOutput {
 	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.GetLocation())
-	to := events.Location{X: location.X, Y: location.Y}
-	return events.NewOutput().WithEffects(
-		events.NewTriggerMovementEffect(event.SourceId).WithLocation(to).WithMoveState(types.MoveStateDashing),
+	return NewOutput().WithEffects(
+		NewTriggerMovementEffect(event.SourceId).WithLocation(location).WithMoveState(types.MoveStateDashing),
 	)
 }
 
@@ -87,7 +85,7 @@ func findDashDestination(s *State, direction input.Direction, location MapLocati
 	}
 }
 
-func (h *SystemEventHandler) onZoneActivity(ctx events.EntityContext, world events.WorldStateReader, _ any, event *events.EventEntityZoneActivity) *events.HandlerOutput {
+func (h *SystemEventHandler) onZoneActivity(ctx EntityContext, world WorldStateReader, _ any, event *EventEntityZoneActivity) *HandlerOutput {
 	if !event.IsEntering || event.EntityId != h.State.player || event.WasTeleported {
 		return nil
 	}
@@ -99,5 +97,5 @@ func (h *SystemEventHandler) onZoneActivity(ctx events.EntityContext, world even
 	if ref == "teleport:" { // todo this is gross
 		return nil
 	}
-	return events.NewOutput().WithEffects(events.NewTeleportPlayerEffect().WithToReference(ref))
+	return NewOutput().WithEffects(NewTeleportPlayerEffect().WithToReference(ref))
 }

@@ -3,7 +3,12 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
+)
+
+var (
+	renderPathFinderFuture = false
 )
 
 type MovementBasedEntityRenderer struct {
@@ -37,7 +42,7 @@ func (r *MovementBasedEntityRenderer) getRenderState() movementRenderState {
 func (r *MovementBasedEntityRenderer) getRenderer(state movementRenderState) *BasicEntityRenderer {
 	_, ok := r.renderers[state]
 	if !ok {
-		r.renderers[state] = NewBasicEntityRenderer()
+		r.renderers[state] = NewBasicEntityRenderer(r.entity)
 	}
 	return r.renderers[state]
 }
@@ -66,6 +71,37 @@ func (r *MovementBasedEntityRenderer) RenderToScene(target pixel.Target, matrix 
 	}
 	r.lastRenderMode = renderState
 	renderer.RenderToScene(target, matrix)
+
+	if !renderPathFinderFuture {
+		return
+	}
+	b, ok := r.entity.GetBehavior()
+	if !ok {
+		return
+	}
+	sm, ok := b.(*ScriptedMotionBehavior)
+	if !ok || sm.target == nil {
+		return
+	}
+	pm, ok := sm.target.(*PathfindingMotion)
+	if !ok || pm.path == nil || len(pm.path.Tiles) <= 1 {
+		return
+	}
+	l := r.entity.GetPreciseLocation()
+	maxTilesAhead := 12
+	maxAlpha := 0.5
+	for id, t := range pm.path.Tiles[1:] {
+		if id > maxTilesAhead {
+			break
+		}
+		alpha := maxAlpha * float64(maxTilesAhead-id) / float64(maxTilesAhead)
+		delta := pixel.V(
+			float64(t.X)-l.X,
+			float64(t.Y)-l.Y,
+		).Scaled(resources.MapTileSize.Float())
+
+		renderer.RenderToSceneAlpha(target, matrix.Moved(delta), alpha)
+	}
 }
 
 func (r *MovementBasedEntityRenderer) RenderToLightMap(target pixel.Target, matrix pixel.Matrix) {

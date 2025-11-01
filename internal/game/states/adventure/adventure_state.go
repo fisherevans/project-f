@@ -5,7 +5,6 @@ import (
 	"math"
 	"sort"
 
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
@@ -59,12 +58,13 @@ type State struct {
 
 	entities *EntitySystem
 
-	teleports map[TeleportReference]Teleport
-	chatters  *ChatterSystem
-	dialogues *DialogueSystem
-	overlays  *OverlaySystem
-	timers    *timers
-	zones     *zones
+	teleports  map[TeleportReference]Teleport
+	chatters   *ChatterSystem
+	dialogues  *DialogueSystem
+	overlays   *OverlaySystem
+	timers     *timers
+	conditions *Conditions
+	zones      *zones
 
 	hud *Hud
 
@@ -83,9 +83,9 @@ type State struct {
 	hudBatch *pixel.Batch
 	mobs     []*ShadowMob
 
-	eventDispatcher *events.Dispatcher
-	worldState      events.WorldState
-	planExecutor    *events.PlanExecutor
+	eventDispatcher *Dispatcher
+	worldState      WorldState
+	planExecutor    *PlanExecutor
 	run             *rpg.Run
 }
 
@@ -117,11 +117,12 @@ func New(i game.AdventureIntent) game.State {
 
 		hudBatch: atlas.NewBatch(),
 	}
-	a.planExecutor = events.NewPlanExecutor(a.processEffects)
+	a.conditions = NewConditions(a)
+	a.planExecutor = NewPlanExecutor(a.processEffects)
 	a.entities = NewEntitySystem(a)
 	a.hud = NewHud(func() int { return a.run.Elythium })
-	a.worldState = events.NewWorldState(a.run)
-	a.eventDispatcher = events.NewDispatcher(a.worldState, a.processEffects)
+	a.worldState = NewWorldState(a.run)
+	a.eventDispatcher = NewDispatcher(a.worldState, a.processEffects)
 
 	a.bloom.Threshold = 1.0
 	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
@@ -133,7 +134,7 @@ func New(i game.AdventureIntent) game.State {
 		colors.HexString("#ed3579"), // red led
 		colors.HexString("#4CC9F0"), // blue led
 	)
-	a.eventDispatcher.Register(events.NewBasicEntityContext("system"), newSystemEventHandler(a))
+	a.eventDispatcher.Register(NewBasicEntityContext("system"), newSystemEventHandler(a))
 
 	initializeMap(a, m)
 	return a
@@ -147,6 +148,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	game.DebugTL("delta: %.3f", timeDelta)
 
 	s.entities.Update(timeDelta)
+	s.conditions.Update(timeDelta)
 
 	for _, mob := range s.mobs {
 		mob.Update(s, timeDelta)
@@ -263,22 +265,22 @@ func (s *State) AddMob(mob *ShadowMob) {
 func (s *State) setWorldState(key string, value any, id string) {
 	oldValue := s.worldState.Get(key)
 	s.worldState.Set(key, value)
-	s.eventDispatcher.Dispatch(&events.EventWorldStateUpdated{
+	s.eventDispatcher.Dispatch(&EventWorldStateUpdated{
 		Key:      key,
 		NewValue: value,
 		OldValue: oldValue,
 	})
 }
 
-func (s *State) ExecuteSystemEffects(effects ...events.Effect) {
+func (s *State) ExecuteSystemEffects(effects ...Effect) {
 	for _, e := range effects {
-		s.processEffects(events.DispatchedEffect{
-			Source: events.NewBasicEntityContext("system"),
+		s.processEffects(DispatchedEffect{
+			Source: NewBasicEntityContext("system"),
 			Effect: e,
 		})
 	}
 }
 
-func (s *State) ExecuteSystemEffectsInOrder(effects ...events.Effect) {
-	s.ExecuteSystemEffects(events.NewSerialPlan(effects...))
+func (s *State) ExecuteSystemEffectsInOrder(effects ...Effect) {
+	s.ExecuteSystemEffects(NewSerialPlan(effects...))
 }

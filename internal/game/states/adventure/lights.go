@@ -142,7 +142,6 @@ type LightModifierFlicker struct {
 	SizeVariation       float64
 	BrightnessVariation float64
 
-	// todo parameterize
 	sizeMultiplier       float64
 	brightnessMultiplier float64
 }

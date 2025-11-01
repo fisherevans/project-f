@@ -1,4 +1,4 @@
-package events
+package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"

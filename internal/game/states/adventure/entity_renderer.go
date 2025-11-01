@@ -33,6 +33,7 @@ func (s *MoveAnimationSpeedScaler) GetAnimationSpeedScale() float64 {
 }
 
 type BasicEntityRenderer struct {
+	entity                Entity
 	zPriority             int
 	lights                []*Light
 	lightOriginOffset     pixel.Vec
@@ -41,8 +42,10 @@ type BasicEntityRenderer struct {
 	animationSpeedScaler  AnimationSpeedScaler
 }
 
-func NewBasicEntityRenderer() *BasicEntityRenderer {
-	return &BasicEntityRenderer{}
+func NewBasicEntityRenderer(entity Entity) *BasicEntityRenderer {
+	return &BasicEntityRenderer{
+		entity: entity,
+	}
 }
 
 type ColorMaskAnimation struct {

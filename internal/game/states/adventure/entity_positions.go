@@ -2,8 +2,6 @@ package adventure
 
 import (
 	"math"
-
-	"fisherevans.com/project/f/internal/game/events"
 )
 
 type Positions struct {
@@ -111,7 +109,7 @@ func (o *Positions) SetPosition(id string, newLocation MapLocation, wasTeleporte
 	nextZones := o.state.zones.ZonesAtSet(newLocation)
 
 	emitZoneEvent := func(zoneId string, isEntering bool) {
-		o.state.eventDispatcher.Dispatch(events.EventEntityZoneActivity{
+		o.state.eventDispatcher.Dispatch(EventEntityZoneActivity{
 			EntityId:      id,
 			ZoneId:        zoneId,
 			IsEntering:    isEntering,

@@ -1,8 +1,8 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-30T16:28:58-04:00 by go generate
-// Source: internal/game/events/effect.go
+// Generated at 2025-10-31T22:26:33-04:00 by go generate
+// Source: internal/game/adventure/effect.go
 
-package events
+package adventure
 
 import (
 	"fmt"
@@ -17,6 +17,7 @@ var fadeCounter atomic.Uint64
 var triggerCombatCounter atomic.Uint64
 var startScriptedMotionCounter atomic.Uint64
 var registerEntityCounter atomic.Uint64
+var waitForConditionCounter atomic.Uint64
 
 func (e *EffectFunction) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
@@ -381,6 +382,19 @@ func (e *EffectRegisterEntity) FillDefaultsAndValidate() error {
 	}
 
 	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectWaitForCondition) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	if e.ConditionId == "" {
+		id := waitForConditionCounter.Add(1)
+		e.ConditionId = fmt.Sprintf("wait-for-condition-%05d", id)
+	}
+
+	reporter.requireString("conditionId", e.ConditionId)
 
 	return reporter.report()
 }

@@ -1,7 +1,8 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/events"
+	"slices"
+
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util/interp"
@@ -26,7 +27,8 @@ type Entity interface {
 	GetMovementSpeed(state types.MoveState) float64
 	SetMovementSpeed(state types.MoveState, speed float64)
 	Teleport(toLocation MapLocation)
-	GetEntityContext() events.EntityContext
+	AttemptMovement(targetLocation MapLocation, movementState types.MoveState) bool
+	GetEntityContext() EntityContext
 	SetEntityContextMetadata(key string, accessor func() any)
 
 	// optional traits
@@ -107,7 +109,7 @@ func (e *entityReference) SetEntityContextMetadata(key string, accessor func() a
 func (e *entityReference) InteractsWith(location MapLocation) {
 	direction := e.GetLocation().DirectionTowards(location)
 	for targetEntityId := range e.system.interactableEntityIds(location) {
-		e.system.state.eventDispatcher.Dispatch(events.EventOnInteract{
+		e.system.state.eventDispatcher.Dispatch(EventOnInteract{
 			SourceId:              e.id,
 			SourceFacingDirection: direction,
 			TargetId:              targetEntityId,
@@ -115,8 +117,30 @@ func (e *entityReference) InteractsWith(location MapLocation) {
 	}
 }
 
-func (e *entityReference) GetEntityContext() events.EntityContext {
+func (e *entityReference) GetEntityContext() EntityContext {
 	return e.system.contexts[e.id]
+}
+
+func (e *entityReference) AttemptMovement(targetLocation MapLocation, movementState types.MoveState) bool {
+	debugLog := log.Debug().Str("id", e.id).Any("state", movementState).Any("target", targetLocation)
+	if !slices.Contains(validAttemptMovementStates, movementState) {
+		debugLog.Msgf("movement state not valid")
+		return false
+	}
+	isValid, movementDirection := e.system.isMovementValid(e, targetLocation)
+	if !isValid {
+		debugLog.Msgf("movement not valid")
+		return false
+	}
+	e.system.occupations.Occupy(e.GetId(), targetLocation) // emit enter events within movement update - don't "enter" until primary is updated
+	// todo messy
+	movement := e.system.movements[e.GetId()]
+	movement.TargetLocation = targetLocation
+	movement.MovementState = movementState
+	movement.FacingDirection = movementDirection
+	distance := e.GetLocation().DistanceTo(targetLocation)
+	movement.ProgressionScale = 1.0 / distance
+	return true
 }
 
 func (e *entityReference) Teleport(toLocation MapLocation) {

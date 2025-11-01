@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
@@ -13,9 +12,9 @@ import (
 func init() {
 	newRegistrarBuilder().
 		byTile(tiles.Torch, tiles.TorchRight, tiles.TorchLeft).
-		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
-			renderer := NewBasicEntityRenderer()
+			renderer := NewBasicEntityRenderer(entity)
 			renderer.WithLights(NewLightWithModifier(colors.FromString("#db9a3d"), 2, "flicker"))
 			switch *params.SpriteId {
 			case tiles.Torch:
@@ -34,9 +33,9 @@ func init() {
 		})
 	newRegistrarBuilder().
 		byTile(tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR).
-		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
-			renderer := NewBasicEntityRenderer()
+			renderer := NewBasicEntityRenderer(entity)
 			renderer.WithLights(NewLight(colors.FromString("#fff"), 1.333))
 			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *params.SpriteId))
 			if *params.SpriteId == tiles.LightFork {
@@ -47,7 +46,7 @@ func init() {
 		})
 	newRegistrarBuilder().
 		byTile(tiles.GlowRed, tiles.GlowOrange, tiles.GlowAqua, tiles.GlowPurple, tiles.GlowPink, tiles.GlowTBD).
-		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			colorMask := colors.HexString("#fff")
 			params.Properties.GetFloat("size", 2)
 			switch *params.SpriteId {
@@ -64,7 +63,7 @@ func init() {
 			}
 
 			entity := system.RegisterEntity(params.EntityId, params.Location)
-			renderer := NewBasicEntityRenderer()
+			renderer := NewBasicEntityRenderer(entity)
 			renderer.WithLights(NewLight(colorMask, 2))
 			if *params.SpriteId == tiles.LightFork {
 				renderer.WithZPriority(10)

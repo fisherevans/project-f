@@ -1,7 +1,5 @@
 //go:build ignore
 
-//go:generate go run generate.go
-
 package main
 
 import (
@@ -39,18 +37,18 @@ func main() {
 	// Parse events.go to extract event registrations
 	events := parseEventRegistrations("events.go")
 
-	// Parse effects.go to extract effect types
-	effects := parseEffectTypes("effects.go")
+	// Parse effect.go to extract effect types
+	effects := parseEffectTypes("effect.go")
 
 	// Generate Go BasicHandlerBuilder
 	builderOutput := generateBasicHandlerBuilder(events)
-	builderPath := "handler_builder.generated.go"
+	builderPath := "events_handler_builder.generated.go"
 	if err := os.WriteFile(builderPath, []byte(builderOutput), 0644); err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing builder: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Note: Effect struct is no longer generated - Effect is now an interface defined in effects.go
+	// Note: Effect struct is no longer generated - Effect is now an interface defined in effect.go
 
 	// Generate effect validation
 	validationOutput := generateEffectValidation(effects)
@@ -316,9 +314,9 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 
 	sb.WriteString("// AUTO-GENERATED - DO NOT EDIT\n")
 	sb.WriteString(fmt.Sprintf("// Generated at %s by go generate\n", time.Now().Format(time.RFC3339)))
-	sb.WriteString("// Source: internal/game/events/handler.go\n\n")
+	sb.WriteString("// Source: internal/game/adventure/events_handler.go\n\n")
 
-	sb.WriteString("package events\n\n")
+	sb.WriteString("package adventure\n\n")
 
 	// Generate BasicHandlerBuilder struct
 	sb.WriteString("// BasicHandlerBuilder provides a simple way to build event handlers with type-safe state\n")
@@ -491,9 +489,9 @@ func generateEffectStruct(effects []EffectInfo) string {
 
 	sb.WriteString("// AUTO-GENERATED - DO NOT EDIT\n")
 	sb.WriteString(fmt.Sprintf("// Generated at %s by go generate\n", time.Now().Format(time.RFC3339)))
-	sb.WriteString("// Source: internal/game/events/effects.go\n\n")
+	sb.WriteString("// Source: internal/game/adventure/effect.go\n\n")
 
-	sb.WriteString("package events\n\n")
+	sb.WriteString("package adventure\n\n")
 
 	sb.WriteString("// Effect represents a single effect that can be applied\n")
 	sb.WriteString("// Only one effect type should be set per Effect instance\n")
@@ -519,9 +517,9 @@ func generateEffectValidation(effects []EffectInfo) string {
 
 	sb.WriteString("// AUTO-GENERATED - DO NOT EDIT\n")
 	sb.WriteString(fmt.Sprintf("// Generated at %s by go generate\n", time.Now().Format(time.RFC3339)))
-	sb.WriteString("// Source: internal/game/events/effect.go\n\n")
+	sb.WriteString("// Source: internal/game/adventure/effect.go\n\n")
 
-	sb.WriteString("package events\n\n")
+	sb.WriteString("package adventure\n\n")
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"fmt\"\n")
 	sb.WriteString("\t\"sync/atomic\"\n")
@@ -770,9 +768,9 @@ func generateEffectBuilders(effects []EffectInfo) string {
 
 	sb.WriteString("// AUTO-GENERATED - DO NOT EDIT\n")
 	sb.WriteString(fmt.Sprintf("// Generated at %s by go generate\n", time.Now().Format(time.RFC3339)))
-	sb.WriteString("// Source: internal/game/events/effects.go\n\n")
+	sb.WriteString("// Source: internal/game/adventure/effect.go\n\n")
 
-	sb.WriteString("package events\n\n")
+	sb.WriteString("package adventure\n\n")
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/input\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/rpg\"\n")
@@ -850,9 +848,9 @@ func generateChainableEffectBuilder(effects []EffectInfo) string {
 
 	sb.WriteString("// AUTO-GENERATED - DO NOT EDIT\n")
 	sb.WriteString(fmt.Sprintf("// Generated at %s by go generate\n", time.Now().Format(time.RFC3339)))
-	sb.WriteString("// Source: internal/game/events/effects.go\n\n")
+	sb.WriteString("// Source: internal/game/adventure/effect.go\n\n")
 
-	sb.WriteString("package events\n\n")
+	sb.WriteString("package adventure\n\n")
 
 	sb.WriteString("// Note: Effect is now an interface, not a struct.\n")
 	sb.WriteString("// Use the New*Effect() constructors to create specific effect types.\n")

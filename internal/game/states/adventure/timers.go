@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/events"
 	"github.com/rs/zerolog/log"
 )
 
@@ -33,7 +32,7 @@ func (t *timers) AddTimer(createdBy string, id string, durationSeconds float64) 
 	t.inProgress = append(t.inProgress, newTimer)
 }
 
-func (t *timers) Update(deltaSeconds float64, dispatcher *events.Dispatcher, state *State) {
+func (t *timers) Update(deltaSeconds float64, dispatcher *Dispatcher, state *State) {
 	for id, timer := range t.inProgress {
 		timer.elapsed += deltaSeconds
 		if timer.elapsed < timer.duration {
@@ -46,7 +45,7 @@ func (t *timers) Update(deltaSeconds float64, dispatcher *events.Dispatcher, sta
 			log.Info().Msgf("Removing timer: %s/%s", timer.createdBy, timer.id)
 			t.inProgress = append(t.inProgress[:id], t.inProgress[id+1:]...)
 		}
-		dispatcher.Dispatch(events.EventTimerComplete{
+		dispatcher.Dispatch(EventTimerComplete{
 			CreatedBy:       timer.createdBy,
 			TimerId:         timer.id,
 			DurationSeconds: timer.duration,

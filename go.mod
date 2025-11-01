@@ -27,6 +27,7 @@ require (
 	github.com/gopxl/mainthread/v2 v2.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/ojrac/opensimplex-go v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/exp/shiny v0.0.0-20250606033433-dcc06ee1d476 // indirect
 	golang.org/x/mobile v0.0.0-20250606033058-a2a15c67f36f // indirect

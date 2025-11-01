@@ -3,7 +3,6 @@ package adventure
 import (
 	"sort"
 
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 
@@ -57,7 +56,7 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matri
 	for _, chatter := range c.chatters {
 		chatter.Update(s, timeDelta)
 		if chatter.State() == ChatterComplete {
-			e := events.EventChatterComplete{
+			e := EventChatterComplete{
 				ChatterId: chatter.Id(),
 				EntityId:  chatter.EntityId(),
 			}

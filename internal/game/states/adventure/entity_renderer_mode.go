@@ -32,7 +32,7 @@ func (r *ModeBasedEntityRenderer) WithMode(mode string) *ModeBasedEntityRenderer
 
 func (r *ModeBasedEntityRenderer) getBasicEntityRenderer(mode string) *BasicEntityRenderer {
 	if _, ok := r.modes[mode]; !ok {
-		r.modes[mode] = NewBasicEntityRenderer()
+		r.modes[mode] = NewBasicEntityRenderer(r.entity)
 	}
 	return r.modes[mode]
 }

@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/events"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
@@ -90,7 +89,7 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 		if dialogue.Content().IsContentFullyDisplayed() {
 			if a || bJustPressed {
 				ds.queuedDialogues = ds.queuedDialogues[1:]
-				s.eventDispatcher.Dispatch(events.EventDialogueComplete{
+				s.eventDispatcher.Dispatch(EventDialogueComplete{
 					DialogueId: dialogue.EntityId(),
 				})
 				s.planExecutor.MarkDialogueComplete(dialogue.EntityId())

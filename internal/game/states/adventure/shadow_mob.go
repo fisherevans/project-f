@@ -4,7 +4,6 @@ import (
 	"math"
 	"math/rand"
 
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
@@ -93,9 +92,9 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 		OnTrigger: func(s *State, m *ShadowMob) {
 			if game.DebugToggles().F5().ToggleState() {
 				s.ExecuteSystemEffectsInOrder(
-					events.NewTriggerCombatEffect("combat/background_sylvoria"),
-					events.NewTimerEffect(15),
-					events.NewFunctionEffect(func() {
+					NewTriggerCombatEffect("combat/background_sylvoria"),
+					NewTimerEffect(15),
+					NewFunctionEffect(func() {
 						for i, mob := range s.mobs {
 							if mob == m {
 								s.mobs[i] = s.mobs[len(s.mobs)-1]
@@ -104,7 +103,7 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 							}
 						}
 					}),
-					events.NewFunctionEffect(func() {
+					NewFunctionEffect(func() {
 						s.mobs = append(s.mobs, m)
 					}),
 				)

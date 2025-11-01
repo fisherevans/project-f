@@ -1,4 +1,4 @@
-package events
+package adventure
 
 import (
 	"fmt"
@@ -127,17 +127,17 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityContext, batch *Eff
 				Effect: *effect,
 			})
 		}
-		
+
 		// Mark all parallel effects as dispatched
 		ab.nextEffectIndex = len(batch.Effects)
-		
+
 		// If any parallel effects are blocking, queue the batch
 		if len(ab.waitingFor) > 0 {
 			pe.activeBatches = append(pe.activeBatches, ab)
 			return effects
 		}
 	}
-	
+
 	// All effects completed without blocking
 	return effects
 }
@@ -218,7 +218,7 @@ func (pe *PlanExecutor) Update() {
 
 // MarkComplete marks an effect as complete (called when timers/overlays/etc finish)
 func (pe *PlanExecutor) MarkComplete(completionId string) {
-	log.Debug().Str("completionId", completionId).Msg("Effect marked complete")
+	log.Info().Str("completionId", completionId).Msg("Effect marked complete")
 
 	for _, ab := range pe.activeBatches {
 		if ab.waitingFor[completionId] {
@@ -288,6 +288,10 @@ func GetCompletionIds(effect Effect) []string {
 		if e.MotionId != "" {
 			ids = append(ids, MakeMotionCompletionId(e.MotionId))
 		}
+	case *EffectWaitForCondition:
+		if e.ConditionId != "" {
+			ids = append(ids, MakeConditionCompleteId(e.ConditionId))
+		}
 	}
 
 	return ids
@@ -320,6 +324,10 @@ func MakeCombatCompletionId(combatId string) string {
 
 func MakeMotionCompletionId(motionId string) string {
 	return fmt.Sprintf("motion:%s", motionId)
+}
+
+func MakeConditionCompleteId(motionId string) string {
+	return fmt.Sprintf("condition:%s", motionId)
 }
 
 // MarkDialogueComplete marks a dialogue as complete
@@ -360,5 +368,11 @@ func (pe *PlanExecutor) MarkCombatComplete(combatId string) {
 func (pe *PlanExecutor) MarkMotionComplete(motionId string) {
 	if motionId != "" {
 		pe.MarkComplete(MakeMotionCompletionId(motionId))
+	}
+}
+
+func (pe *PlanExecutor) MarkConditionComplete(conditionId string) {
+	if conditionId != "" {
+		pe.MarkComplete(MakeConditionCompleteId(conditionId))
 	}
 }

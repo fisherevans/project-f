@@ -1,4 +1,4 @@
-package events
+package adventure
 
 // HandlerOutput is returned by event handlers to specify state changes and effects
 type HandlerOutput struct {

@@ -1,4 +1,4 @@
-package events
+package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
@@ -80,15 +80,15 @@ type EffectSetWorldState struct {
 
 type EffectSetEntityLocation struct {
 	EntityId    string
-	ToReference *string   `one_of:"destination"`
-	ToLocation  *Location `one_of:"destination"`
-	ToEntityId  *string   `one_of:"destination"`
+	ToReference *string      `one_of:"destination"`
+	ToLocation  *MapLocation `one_of:"destination"`
+	ToEntityId  *string      `one_of:"destination"`
 }
 
 type EffectTeleportPlayer struct {
-	ToReference     *string   `one_of:"destination"`
-	ToLocation      *Location `one_of:"destination"`
-	ToEntityId      *string   `one_of:"destination"`
+	ToReference     *string      `one_of:"destination"`
+	ToLocation      *MapLocation `one_of:"destination"`
+	ToEntityId      *string      `one_of:"destination"`
 	ExitDirection   *input.Direction
 	TransitionStyle *string
 }
@@ -146,7 +146,7 @@ type EffectDeactivateFade struct {
 type EffectTriggerMovement struct {
 	EntityId  string
 	Direction *input.Direction `one_of:"to"`
-	Location  *Location        `one_of:"to"`
+	Location  *MapLocation     `one_of:"to"`
 	MoveState *types.MoveState
 }
 
@@ -188,14 +188,10 @@ type EffectEntityFaceDirection struct {
 	Direction input.Direction
 }
 
-// todo implement handlers for these
-// todo register motion id in plan system!
-// todo script some motion!
-
 type EffectStartScriptedMotion struct {
 	MotionId   string `auto_generate:"true"`
 	EntityId   string
-	Location   *Location         `one_of:"target"`
+	Location   *MapLocation      `one_of:"target"`
 	ToEntityId *string           `one_of:"target"`
 	Relative   *RelativeLocation `one_of:"target"`
 }
@@ -234,6 +230,11 @@ type EffectRegisterEntity struct {
 	SpriteId   *resources.TilesheetSpriteId
 	Properties **util.Properties
 
-	MapLocation    *Location `one_of:"location"`
-	EntityLocation *string   `one_of:"location"`
+	MapLocation    *MapLocation `one_of:"location"`
+	EntityLocation *string      `one_of:"location"`
+}
+
+type EffectWaitForCondition struct {
+	ConditionId string `auto_generate:"true"`
+	Check       ConditionCheck
 }

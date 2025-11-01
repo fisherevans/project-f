@@ -1,8 +1,6 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/events"
-	"fisherevans.com/project/f/internal/game/states/adventure/handlers"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
@@ -14,7 +12,7 @@ func init() {
 	newRegistrarBuilder().byClass("ModeBasedEntity").registrar(registerModeBasedEntity)
 }
 
-func registerModeBasedEntity(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+func registerModeBasedEntity(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 	entity := system.RegisterEntity(params.EntityId, params.Location)
 	AttachPresenceFromConfig(entity, params.Properties)
 	AttachModeBasedEntityRenderer(entity).
@@ -22,7 +20,7 @@ func registerModeBasedEntity(params NewEntityParams, system *EntitySystem) (Enti
 	return entity, nil
 }
 
-type entityRegistrar func(NewEntityParams, *EntitySystem) (Entity, events.EventHandler)
+type entityRegistrar func(NewEntityParams, *EntitySystem) (Entity, EventHandler)
 
 var registrarsByClass = map[string]entityRegistrar{}
 var registrarsEntitiesByTile = map[resources.TilesheetSpriteId]entityRegistrar{}
@@ -88,7 +86,7 @@ func (s *State) registerParameterizedEntity(params NewEntityParams) bool {
 		if eventHandler != nil {
 			log.Fatal().Str("entityId", string(params.EntityId)).Msgf("entity has more than one handler configured!")
 		}
-		eventHandler = handlers.Get(scriptRef, params.Properties)
+		eventHandler = Get(scriptRef, params.Properties)
 	}
 
 	if eventHandler != nil {

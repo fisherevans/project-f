@@ -5,7 +5,6 @@ import (
 	"math/rand"
 
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
@@ -13,47 +12,47 @@ import (
 
 func init() {
 	newRegistrarBuilder().byTile(tiles.RedCoin).
-		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 
 			entity := system.RegisterEntity(params.EntityId, params.Location)
-			entity.SetRenderer(NewBasicEntityRenderer().
+			entity.SetRenderer(NewBasicEntityRenderer(entity).
 				WithAnimations(anim.RedCoin(atlas)).
 				WithLights(NewLightWithModifier(colors.FromString("#f00"), 0.5, "pulse_slow")))
 			AttachBlockIngressPresence(entity, false, NewImpassableImpedance())
 			return entity, nil
 		})
 	newRegistrarBuilder().byTile(tiles.Rocket).
-		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 
 			entity := system.RegisterEntity(params.EntityId, params.Location)
-			entity.SetRenderer(NewBasicEntityRenderer().
+			entity.SetRenderer(NewBasicEntityRenderer(entity).
 				WithAnimations(anim.NewStaticAnimation(tiles.Rocket.From(atlas))))
 			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 			dest := "teleport:" + params.Properties.GetString("destination", "")
 			requiredElythium := 2
-			handler := events.NewBasicHandler(None{}).
-				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
+			handler := NewBasicHandler(None{}).
+				WithOnInteract(func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
 					if event.TargetId != ctx.EntityId() {
 						return nil
 					}
 					if world.GetRun().Elythium < requiredElythium {
 						msg := fmt.Sprintf("You need %d Elythium to travel home!", requiredElythium)
-						return events.NewOutput().WithEffects(events.NewDialogueEffect(msg))
+						return NewOutput().WithEffects(NewDialogueEffect(msg))
 					}
-					return events.NewOutput().WithSerialPlan(
-						events.NewDialogueEffect("You've managed to escape!"),
-						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("rocket"),
-						events.NewYieldElythiumEffect(-requiredElythium),
-						events.NewTeleportPlayerEffect().WithToReference(dest),
-						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("rocket"),
+					return NewOutput().WithSerialPlan(
+						NewDialogueEffect("You've managed to escape!"),
+						NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("rocket"),
+						NewYieldElythiumEffect(-requiredElythium),
+						NewTeleportPlayerEffect().WithToReference(dest),
+						NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("rocket"),
 					)
 				})
 			return entity, handler.CreateHandler()
 		})
 	newRegistrarBuilder().byTile(tiles.DummyFightRobot).
-		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
-			entity.SetRenderer(NewBasicEntityRenderer().
+			entity.SetRenderer(NewBasicEntityRenderer(entity).
 				WithAnimations(anim.NewStaticAnimation(atlas.GetSprite("primortals/dummy_entity"))))
 			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 			var dummyQuips = []string{
@@ -65,20 +64,19 @@ func init() {
 				"Come fight me, big guy.",
 			}
 			quipTimerId := "dummy-quips-trigger"
-			handler := events.NewBasicHandler(None{}).
-				WithInit(func(ctx events.EntityContext, world events.WorldStateReader, state None) *events.HandlerOutput {
-					return events.NewOutput().WithEffects(events.
-						NewTimerEffect(10 + rand.Float64()*10).WithTimerId(quipTimerId))
+			handler := NewBasicHandler(None{}).
+				WithInit(func(ctx EntityContext, world WorldStateReader, state None) *HandlerOutput {
+					return NewOutput().WithEffects(NewTimerEffect(10 + rand.Float64()*10).WithTimerId(quipTimerId))
 				}).
-				WithTimerComplete(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventTimerComplete) *events.HandlerOutput {
+				WithTimerComplete(func(ctx EntityContext, world WorldStateReader, state None, event *EventTimerComplete) *HandlerOutput {
 					if event.TimerId != quipTimerId {
 						return nil
 					}
-					return events.NewOutput().WithEffects(
-						events.NewChatterEffect(params.EntityId, 4, dummyQuips[rand.Intn(len(dummyQuips))]),
-						events.NewTimerEffect(10+rand.Float64()*10).WithTimerId(quipTimerId))
+					return NewOutput().WithEffects(
+						NewChatterEffect(params.EntityId, 4, dummyQuips[rand.Intn(len(dummyQuips))]),
+						NewTimerEffect(10+rand.Float64()*10).WithTimerId(quipTimerId))
 				}).
-				WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
+				WithOnInteract(func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
 					if ctx.EntityId() != event.TargetId {
 						return nil
 					}
@@ -90,13 +88,13 @@ func init() {
 						}
 						message += s
 					}
-					return events.NewOutput().WithSerialPlan(
-						events.NewDialogueEffect(message),
-						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("robot"),
-						events.NewTriggerCombatEffect("combat/background_space_base").
+					return NewOutput().WithSerialPlan(
+						NewDialogueEffect(message),
+						NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithDisableBy("robot"),
+						NewTriggerCombatEffect("combat/background_space_base").
 							WithOpponent(rpg.Primortal_Dummy.Type),
-						events.NewDialogueEffect("Well, butter my bolts... you actually did it."),
-						events.NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("robot"),
+						NewDialogueEffect("Well, butter my bolts... you actually did it."),
+						NewMutateEntityBehaviorEffect(world.GetAsString("player_id")).WithEnableBy("robot"),
 					)
 				})
 			return entity, handler.CreateHandler()

@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"fmt"
+	"hash/fnv"
 	"math"
 	"slices"
 	"time"
@@ -13,6 +14,7 @@ import (
 
 const (
 	MaxPathfindingNodes = 100000
+	PathJitterAmount    = 0.1
 )
 
 type Path struct {
@@ -35,6 +37,7 @@ func (l MapLocation) PathNeighbors(ctx pathfindingContext) []astar.WeightedNeigh
 		if (!validIngress || !validEgress) && cost >= ImpedanceImpassable {
 			continue
 		}
+		cost += getPathJitter(ctx.entity.GetId(), neighbor)
 		neighbors = append(neighbors, astar.WeightedNeighbor[MapLocation]{
 			Neighbor: neighbor,
 			Cost:     cost,
@@ -43,10 +46,22 @@ func (l MapLocation) PathNeighbors(ctx pathfindingContext) []astar.WeightedNeigh
 	return neighbors
 }
 
+// getPathJitter returns a deterministic jitter value in range [-PathJitterAmount, +PathJitterAmount]
+// based on entity ID and location. This ensures each NPC has consistent but unique path preferences.
+func getPathJitter(entityId string, loc MapLocation) float64 {
+	h := fnv.New64a()
+	h.Write([]byte(entityId))
+	h.Write([]byte(fmt.Sprintf("%d,%d", loc.X, loc.Y)))
+	hash := h.Sum64()
+	// Map hash to [-1, 1] range
+	normalized := float64(hash%10000) / 10000.0      // [0, 1)
+	return (normalized*2.0 - 1.0) * PathJitterAmount // [-PathJitterAmount, +PathJitterAmount]
+}
+
 func (l MapLocation) PathHeuristic(ctx pathfindingContext, to MapLocation) float64 {
 	dx := l.X - to.X
 	dy := l.Y - to.Y
-	return math.Abs(float64(dx)) + math.Abs(float64(dy))
+	return (math.Abs(float64(dx)) + math.Abs(float64(dy))) * ImpedanceBase
 }
 
 func (es *EntitySystem) FindPath(from, to MapLocation, entity Entity) Path {

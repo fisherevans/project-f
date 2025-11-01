@@ -4,7 +4,6 @@ import (
 	"math/rand"
 
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
@@ -14,7 +13,7 @@ import (
 )
 
 func init() {
-	newRegistrarBuilder().byClass("NPC").byTile(tiles.NPC).registrar(func(params NewEntityParams, system *EntitySystem) (Entity, events.EventHandler) {
+	newRegistrarBuilder().byClass("NPC").byTile(tiles.NPC).registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 		entity := system.RegisterEntity(params.EntityId, params.Location)
 		renderer := AttachMovementBasedEntityRenderer(entity)
 		color := colors.HSLToRGBA(rand.Float64(), 1, 0.65)
@@ -25,7 +24,7 @@ func init() {
 		} {
 			for direction, animation := range animations {
 				cma := NewColorMaskAnimation(animation).WithColorMask(color)
-				renderer.WithMovementStateRenderer(moveState, direction, NewBasicEntityRenderer().
+				renderer.WithMovementStateRenderer(moveState, direction, NewBasicEntityRenderer(entity).
 					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
 					WithAnimationOriginOffset(pixel.V(0, 0.25)).
 					WithColorMaskAnimations(cma))
@@ -43,22 +42,22 @@ func init() {
 		case "fast":
 			speed = 4
 		}
-		AttachBlockIngressPresence(entity, true, NewStaticImpedance(ImpedanceHigh))
+		AttachBlockIngressPresence(entity, true, NewMovementAwareImpedance(entity, ImpedanceBase, ImpedanceHigh))
 		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle)
 		entity.SetMovementSpeed(types.MoveStateWalking, speed)
-		return entity, events.NewBasicHandler(None{}).
-			WithOnInteract(func(ctx events.EntityContext, world events.WorldStateReader, state None, event *events.EventOnInteract) *events.HandlerOutput {
+		return entity, NewBasicHandler(None{}).
+			WithOnInteract(func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
 					return nil
 				}
 				if ctx.GetBoolMetadata(types.MetadataKeyIsTalking) {
 					return nil
 				}
-				return events.NewOutput().WithSerialPlan(
-					events.NewMutateNPCEffect(ctx.EntityId()).
+				return NewOutput().WithSerialPlan(
+					NewMutateNPCEffect(ctx.EntityId()).
 						WithTalkingAtEntityId(world.GetAsString("player_id")),
-					events.NewChatterEffect(ctx.EntityId(), 4, util.OneOffDialogues.Random()),
-					events.NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
+					NewChatterEffect(ctx.EntityId(), 4, util.OneOffDialogues.Random()),
+					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
 				)
 			}).
 			CreateHandler()
@@ -94,19 +93,19 @@ func (b *NPCBehavior) Reset() {
 	b.idleDuration = 0
 }
 
-func (b *NPCBehavior) MovementComplete(dispatcher Dispatcher) {
-	b.doMovement(dispatcher)
+func (b *NPCBehavior) MovementComplete() {
+	b.doMovement()
 }
 
-func (b *NPCBehavior) Update(timeDelta float64, dispatcher Dispatcher) {
+func (b *NPCBehavior) Update(timeDelta float64) {
 	if b.idleDuration > 0 {
 		b.idleDuration -= timeDelta
 		return
 	}
-	b.doMovement(dispatcher)
+	b.doMovement()
 }
 
-func (b *NPCBehavior) doMovement(dispatcher Dispatcher) {
+func (b *NPCBehavior) doMovement() {
 	if b.entity.IsMoving() {
 		return
 	}
@@ -114,7 +113,7 @@ func (b *NPCBehavior) doMovement(dispatcher Dispatcher) {
 		talkingTowardsEnt, exists := b.entity.GetSystem().GetEntity(b.talkingTowards)
 		if exists {
 			faceDir := DirectionTowards(b.entity.GetPreciseLocation(), talkingTowardsEnt.GetPreciseLocation())
-			dispatcher.ProcessEffects(events.NewEntityFaceDirectionEffect(b.entity.GetId(), faceDir))
+			b.entity.GetSystem().state.ExecuteSystemEffects(NewEntityFaceDirectionEffect(b.entity.GetId(), faceDir))
 		}
 		return
 	}
@@ -128,9 +127,8 @@ func (b *NPCBehavior) doMovement(dispatcher Dispatcher) {
 	nextLocation := b.entity.GetLocation().Moved(b.entity.GetFacingDirection())
 	isValid, _ := b.entity.GetSystem().isMovementValid(b.entity, nextLocation)
 	if isValid {
-		dispatcher.ProcessEffects(events.
-			NewTriggerMovementEffect(b.entity.GetId()).
-			WithLocation(nextLocation.ToEventLocation()))
+		b.entity.GetSystem().state.ExecuteSystemEffects(NewTriggerMovementEffect(b.entity.GetId()).
+			WithLocation(nextLocation))
 		return
 	}
 	var dir input.Direction
@@ -143,8 +141,8 @@ func (b *NPCBehavior) doMovement(dispatcher Dispatcher) {
 	} else {
 		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
 	}
-	dispatcher.ProcessEffects(
-		events.NewEntityFaceDirectionEffect(b.entity.GetId(), dir),
-		events.NewTriggerMovementEffect(b.entity.GetId()).WithDirection(dir),
+	b.entity.GetSystem().state.ExecuteSystemEffects(
+		NewEntityFaceDirectionEffect(b.entity.GetId(), dir),
+		NewTriggerMovementEffect(b.entity.GetId()).WithDirection(dir),
 	)
 }

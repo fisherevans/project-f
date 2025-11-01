@@ -1,10 +1,8 @@
 package adventure
 
 import (
-	"slices"
 	"sort"
 
-	"fisherevans.com/project/f/internal/game/events"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
@@ -19,7 +17,7 @@ type EntitySystem struct {
 
 	movements   map[string]*EntityMovement
 	occupations *Positions
-	contexts    map[string]*events.BasicEntityContext
+	contexts    map[string]*BasicEntityContext
 
 	// optional traits
 
@@ -37,7 +35,7 @@ func NewEntitySystem(state *State) *EntitySystem {
 
 		movements:   map[string]*EntityMovement{},
 		occupations: NewPositions(state),
-		contexts:    map[string]*events.BasicEntityContext{},
+		contexts:    map[string]*BasicEntityContext{},
 
 		presences:         map[string]EntityPresence{},
 		renderers:         map[string]EntityRenderer{},
@@ -51,7 +49,7 @@ func (es *EntitySystem) RegisterEntity(id string, location MapLocation) Entity {
 	if _, exists := es.movements[id]; exists {
 		log.Fatal().Str("id", id).Msg("entity already exists")
 	}
-	es.contexts[id] = events.NewBasicEntityContext(id)
+	es.contexts[id] = NewBasicEntityContext(id)
 	es.movements[id] = NewEntityMovement(id, es, location)
 	es.occupations.Occupy(id, location)
 	entity, _ := es.GetEntity(id)
@@ -70,7 +68,7 @@ func (es *EntitySystem) DeleteEntity(id string) {
 	delete(es.disabledBehaviors, id)
 }
 
-func initializeMetadata(context *events.BasicEntityContext, entity Entity) {
+func initializeMetadata(context *BasicEntityContext, entity Entity) {
 	context.WithMetadata(types.MetadataKeyIsTalking, func() any {
 		behavior, ok := entity.GetBehavior()
 		if !ok {
@@ -121,34 +119,6 @@ func (es *EntitySystem) interactableEntityIds(loc MapLocation) map[string]struct
 
 var validAttemptMovementStates = []types.MoveState{types.MoveStateWalking, types.MoveStateRunning, types.MoveStateDashing}
 
-// todo move?
-func (es *EntitySystem) AttemptMovement(id string, targetLocation MapLocation, movementState types.MoveState) bool {
-	debugLog := log.Debug().Str("id", id).Any("state", movementState).Any("target", targetLocation)
-	if !slices.Contains(validAttemptMovementStates, movementState) {
-		debugLog.Msgf("movement state not valid")
-		return false
-	}
-	entity, ok := es.GetEntity(id)
-	if !ok {
-		log.Warn().Str("entityId", id).Msg("no entity for id, skipping")
-		return false
-	}
-	isValid, movementDirection := es.isMovementValid(entity, targetLocation)
-	if !isValid {
-		debugLog.Msgf("movement not valid")
-		return false
-	}
-	es.occupations.Occupy(id, targetLocation) // emit enter events within movement update - don't "enter" until primary is updated
-	// todo messy
-	movement := es.movements[entity.GetId()]
-	movement.TargetLocation = targetLocation
-	movement.MovementState = movementState
-	movement.FacingDirection = movementDirection
-	distance := entity.GetLocation().DistanceTo(targetLocation)
-	movement.ProgressionScale = 1.0 / distance
-	return true
-}
-
 func (es *EntitySystem) isMovementValid(entity Entity, targetLocation MapLocation) (bool, input.Direction) {
 	debugLog := log.Debug().Str("id", entity.GetId())
 	movementDirection := entity.GetLocation().DirectionTowards(targetLocation)
@@ -193,13 +163,13 @@ func (es *EntitySystem) isValidTransition(entity Entity, location MapLocation, m
 			totalImpedanceWeight += presence.PathfindingImpedanceWeight(entity.GetId())
 		}
 	}
+	if totalImpedanceWeight == 0 {
+		totalImpedanceWeight = ImpedanceBase // a tile with no impediments == base
+	}
 	return isValid, totalImpedanceWeight
 }
 
 func (es *EntitySystem) Update(timeDelta float64) {
-	dispatcher := &stateDispatcher{
-		s: es.state,
-	}
 	for id, _ := range es.movements { // todo consider tracking just update-able entities (basic collisions are included here)
 		entity, _ := es.GetEntity(id)
 		movement := es.movements[id]
@@ -215,12 +185,12 @@ func (es *EntitySystem) Update(timeDelta float64) {
 		for remaining > 0 && remaining != lastRemaining {
 			remaining = movement.ProgressMovement(timeDelta)
 			if remaining > 0 && hasBehavior && entity.IsBehaviorEnabled() {
-				behavior.MovementComplete(dispatcher)
+				behavior.MovementComplete()
 			}
 			lastRemaining = remaining
 		}
 		if hasBehavior && entity.IsBehaviorEnabled() {
-			behavior.Update(timeDelta, dispatcher)
+			behavior.Update(timeDelta)
 		}
 		if hasRenderer {
 			renderer.Update(timeDelta)
@@ -257,7 +227,6 @@ func (es *EntitySystem) locationSortedRenderers() []Entity {
 		if iZ != jZ {
 			return iZ < jZ
 		}
-		// todo do we need to account for offsets here?
 		iL, jL := i.GetPreciseLocation(), j.GetPreciseLocation()
 		if iL.Y != jL.Y {
 			return iL.Y > jL.Y
