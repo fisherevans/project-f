@@ -32,7 +32,7 @@ type Atlas struct {
 func DefaultAtlas() *Atlas {
 	if defaultAtlas == nil {
 		defaultAtlas = CreateAtlas(AtlasFilter{
-			DoIncludeSprite: IgnoreSpritePrefix("title/"),
+			DoIncludeSprite: IgnoreSpritePrefix("title/", "startup/"),
 			FontNames: []string{
 				FontNameM3x6,
 				FontNameM5x7,
@@ -296,7 +296,7 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		// Find a free rectangle that can fit this image
 		fi := findRect(w, h)
 		if fi == -1 {
-			log.Fatal().Msgf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing", atlasWidth, atlasHeight, len(sourceImages), id)
+			panic(fmt.Sprintf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing", atlasWidth, atlasHeight, len(sourceImages), id))
 			return nil, nil
 		}
 

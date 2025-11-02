@@ -58,7 +58,7 @@ func Initialize(window *opengl.Window, saveId string) {
 		panic("Save not found: " + saveId)
 	}
 	ctx = &context{
-		stateIntent:  TitleIntent{},
+		stateIntent:  StartupDeviceIntent{},
 		window:       window,
 		save:         save,
 		debugToggles: newToggles(),

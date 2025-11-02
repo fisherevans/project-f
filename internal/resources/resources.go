@@ -22,24 +22,29 @@ var (
 	resources = []LocalResource{
 		{
 			FileRoot:        "maps",
-			FileExtension:   "json",
+			FileExtensions:  []string{"json"},
 			FileLoader:      unmarshaler(&maps, json.Unmarshal),
 			ResourceEncoder: jsonEncoder,
 		},
 		{
-			FileRoot:      "fonts",
-			FileExtension: "ttf",
-			FileLoader:    loadFont,
+			FileRoot:       "fonts",
+			FileExtensions: []string{"ttf"},
+			FileLoader:     loadFont,
 		},
 		{
-			FileRoot:      "sprites",
-			FileExtension: "png",
-			FileLoader:    loadSpriteResource,
+			FileRoot:       "sprites",
+			FileExtensions: []string{"png"},
+			FileLoader:     loadSpriteResource,
 		},
 		{
-			FileRoot:      "tiled_maps",
-			FileExtension: "tmx",
-			FileLoader:    loadTiledMap,
+			FileRoot:       "tiled_maps",
+			FileExtensions: []string{"tmx"},
+			FileLoader:     loadTiledMap,
+		},
+		{
+			FileRoot:       "audio/sounds",
+			FileExtensions: []string{"wav", "mp3", "ogg"},
+			FileLoader:     loadSound,
 		},
 	}
 )
@@ -50,7 +55,7 @@ type resourceEncoder func(resource any) ([]byte, error)
 
 type LocalResource struct {
 	FileRoot        string
-	FileExtension   string
+	FileExtensions  []string
 	FileLoader      fileLoader
 	PostProcessing  func() error
 	ResourceEncoder resourceEncoder
@@ -78,9 +83,13 @@ func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error)
 			return fmt.Errorf("error accessing file %s: %w", path, err)
 		}
 
-		extensionSuffix := "." + localResource.FileExtension
+		if d.Name() != strings.ToLower(d.Name()) {
+			log.Warn().Str("path", path).Msgf("skipping file with upper case letters %s", path)
+			return nil
+		}
 
-		if d.IsDir() || !strings.HasSuffix(d.Name(), extensionSuffix) {
+		doLoad, extension := doLoadFile(d, localResource)
+		if !doLoad {
 			return nil
 		}
 
@@ -89,7 +98,7 @@ func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error)
 			return fmt.Errorf("failed to read file %s: %w", path, err)
 		}
 
-		resourceName := strings.TrimSuffix(strings.TrimPrefix(path, localResource.FileRoot+string(filepath.Separator)), extensionSuffix)
+		resourceName := strings.TrimSuffix(strings.TrimPrefix(path, localResource.FileRoot+string(filepath.Separator)), "."+extension)
 
 		err = localResource.FileLoader(path, resourceName, data)
 		if err == nil {
@@ -100,6 +109,20 @@ func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error)
 
 		return err
 	}
+}
+
+func doLoadFile(d fs.DirEntry, resource LocalResource) (bool, string) {
+	if d.IsDir() {
+		return false, ""
+	}
+	for _, extension := range resource.FileExtensions {
+		lowerExt := strings.ToLower(extension)
+		suffix := "." + lowerExt
+		if strings.HasSuffix(d.Name(), suffix) {
+			return true, lowerExt
+		}
+	}
+	return false, ""
 }
 
 type postProcessor[T any] func(resourceName string, newResource T) error

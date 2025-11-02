@@ -3,6 +3,7 @@ package state_selector
 import (
 	"fmt"
 
+	"fisherevans.com/project/f/internal/game/audio"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -50,11 +51,13 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 		if s.selected < 0 {
 			s.selected = 0
 		}
+		audio.GetSystem().PlayUI("ui/click")
 	case input.Down:
 		s.selected++
 		if s.selected >= len(s.states) {
 			s.selected = len(s.states) - 1
 		}
+		audio.GetSystem().PlayUI("ui/click")
 
 	}
 

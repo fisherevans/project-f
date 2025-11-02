@@ -1,0 +1,289 @@
+package startup
+
+import (
+	"cmp"
+	"math"
+	"slices"
+
+	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/interp"
+	"fisherevans.com/project/f/internal/util/pixelutil"
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
+
+	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
+)
+
+var atlas = resources.CreateAtlas(resources.AtlasFilter{
+	DoIncludeSprite: resources.RequireSpritePrefix("startup/", "2x2"),
+	FontNames: []string{
+		resources.FontNameFF,
+	},
+})
+
+type letter struct {
+	sprite                  pixelutil.BoundedDrawable
+	dx                      int
+	timeOffset              float64
+	duration                float64
+	animationMatrixFunction func(float64) pixel.Matrix
+	colorFunction           func(float64) pixel.RGBA
+}
+
+type State struct {
+	game.BaseState
+	elapsed float64
+
+	letters  []letter
+	thanadox pixelutil.BoundedDrawable
+
+	spriteBatch  *pixel.Batch
+	spriteCanvas *opengl.Canvas
+
+	rayBatch  *pixel.Batch
+	rayCanvas *opengl.Canvas
+}
+
+const baseOffset = 0.2
+const normalAnimationDuration = 1.75
+
+func NewDevice(_ game.StartupDeviceIntent) game.State {
+	s := &State{
+		spriteBatch:  atlas.NewBatch(),
+		spriteCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
+		rayBatch:     atlas.NewBatch(),
+		rayCanvas:    opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
+		thanadox:     atlas.GetSprite("startup/device_thanadox"),
+		letters: []letter{
+			{ // n
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 1, 1),
+				dx:                      0,
+				timeOffset:              baseOffset * 7,
+				duration:                normalAnimationDuration,
+				animationMatrixFunction: rotateIn(true),
+				colorFunction:           rainbowColor,
+			},
+			{ // a
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 2, 1),
+				dx:                      29 - 8,
+				timeOffset:              baseOffset * 5,
+				duration:                normalAnimationDuration,
+				animationMatrixFunction: rotateIn(true),
+				colorFunction:           rainbowColor,
+			},
+			{ // n
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 3, 1),
+				dx:                      53 - 4,
+				timeOffset:              baseOffset * 3,
+				duration:                normalAnimationDuration,
+				animationMatrixFunction: rotateIn(true),
+				colorFunction:           rainbowColor,
+			},
+			{ // O
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 4, 1),
+				dx:                      77 - 9,
+				timeOffset:              baseOffset * 1,
+				duration:                normalAnimationDuration * 0.85,
+				animationMatrixFunction: oAnimation,
+				colorFunction:           rainbowColor,
+			},
+			{ // d
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 5, 1),
+				dx:                      88,
+				timeOffset:              baseOffset * 2,
+				duration:                normalAnimationDuration,
+				animationMatrixFunction: rotateIn(false),
+				colorFunction:           rainbowColor,
+			},
+			{ // e
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 6, 1),
+				dx:                      122 - 9,
+				timeOffset:              baseOffset * 4,
+				duration:                normalAnimationDuration,
+				animationMatrixFunction: rotateIn(false),
+				colorFunction:           rainbowColor,
+			},
+			{ // c
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 7, 1),
+				dx:                      142 - 9,
+				timeOffset:              baseOffset * 6,
+				duration:                normalAnimationDuration,
+				animationMatrixFunction: rotateIn(false),
+				colorFunction:           rainbowColor,
+			},
+			{ // k
+				sprite:                  atlas.GetTilesheetSprite("startup/device_letters", 8, 1),
+				dx:                      161 - 8,
+				timeOffset:              baseOffset * 8,
+				duration:                normalAnimationDuration,
+				animationMatrixFunction: rotateIn(false),
+				colorFunction:           rainbowColor,
+			},
+		},
+	}
+	slices.SortFunc(s.letters, func(a, b letter) int {
+		return cmp.Compare(a.timeOffset, b.timeOffset)
+	})
+	return s
+}
+
+var centerMatrix = gfx.Moved(game.GameWidth/2, game.GameHeight/2)
+
+func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+	if game.Controls[*State]().ButtonA().JustPressed() {
+		game.SetActiveStateIntent(game.StartupDeviceIntent{})
+	}
+	s.elapsed += timeDelta
+
+	s.spriteBatch.Clear()
+
+	tAlpha := 0.0
+	tStart, tEnd := baseOffset*2, baseOffset*8
+	if s.elapsed > tStart {
+		p := (s.elapsed - tStart) / (tEnd - tStart)
+		tAlpha = interp.Smoothstep(p)
+	}
+	tMask := colors.FromString("#af0068")
+	tMask = colors.WithAlpha(tMask, tAlpha)
+	s.thanadox.DrawColorMask(s.spriteBatch, gfx.Moved(73, 35).Moved(gfx.BottomLeft.Align(s.thanadox)), tMask)
+
+	x, y := 26+20, 82+16 // botom left of N, accounting for centering of sprite
+	for _, l := range s.letters {
+		progress := max(min((s.elapsed-l.timeOffset)/l.duration, 1.0), 0.0)
+		m := gfx.Moved(x+l.dx, y)
+		m = l.animationMatrixFunction(progress).Chained(m)
+		mask := l.colorFunction(progress)
+		l.sprite.DrawColorMask(s.spriteBatch, m, mask)
+	}
+
+	s.spriteCanvas.Clear(pixel.RGBA{})
+	s.spriteCanvas.SetComposeMethod(pixel.ComposeOver)
+	s.spriteBatch.Draw(s.spriteCanvas)
+
+	s.rayBatch.Clear()
+	drawRays(s.elapsed, s.rayBatch)
+	s.rayCanvas.Clear(colors.White.RGBA)
+	s.rayCanvas.SetComposeMethod(pixel.ComposeCopy)
+	s.rayBatch.Draw(s.rayCanvas)
+
+	s.spriteCanvas.SetComposeMethod(pixel.ComposeMultiply)
+	s.rayCanvas.Draw(s.spriteCanvas, centerMatrix)
+
+	bgProgress := interp.Smoothstep(min(s.elapsed/(baseOffset*6), 1.0))
+	bgFrom := colors.FromString("#444")
+	bgTo := colors.FromString("#eee")
+	bg := colors.Lerp(bgFrom, bgTo, bgProgress)
+	target.Clear(bg)
+	s.spriteCanvas.Draw(target, centerMatrix)
+}
+
+type ray struct {
+	w, p, a float64
+}
+
+var rays []ray
+var raysWidth float64
+
+func init() {
+	start := []ray{
+		{w: 1, p: 6, a: 0.5},
+		{w: 1, p: 6, a: 0.6},
+		{w: 2, p: 7, a: 0.7},
+		{w: 4, p: 3, a: 0.8},
+		{w: 6, p: 3, a: 0.8},
+		{w: 10, p: 3, a: 0.9},
+	}
+	middle := ray{w: 20, p: 2, a: 1.0}
+	end := make([]ray, len(start))
+	copy(end, start)
+	slices.Reverse(end)
+	rays = append(start, middle)
+	rays = append(start, end...)
+	raysWidth = 0.0
+	for _, r := range rays {
+		raysWidth += r.p*2 + r.w
+	}
+}
+
+const rayMaxEffect = 0.5
+const rayAngle = 60 * math.Pi / 180
+const rayPanPct = 0.175
+const rayDx = -20
+
+func drawRays(elapsed float64, target pixel.Target) {
+	raysFrom, raysTo := baseOffset*12, baseOffset*30
+	p := max(min((elapsed-raysFrom)/(raysTo-raysFrom), 1.0), 0.0)
+	x := float64(game.GameWidth)*p*rayPanPct - raysWidth/2 + (1-rayPanPct)/2.0*float64(game.GameWidth) + rayDx
+	y := float64(game.GameHeight / 2)
+	easeInOut := 0.5 * (1 + math.Cos(2*math.Pi*p)) // 1 > 0 > 1
+	scale := 1.0 + p*0.6
+	for _, r := range rays {
+		pad, width := r.p, r.w*scale
+		x += pad
+		m := pixel.IM.ScaledXY(pixel.ZV, pixel.V(game.GameWidth, width)).
+			Rotated(pixel.ZV, rayAngle).
+			Moved(pixel.V(x, y))
+		effect := rayMaxEffect * r.a
+		alpha := (1.0 - effect) + effect*easeInOut
+		mask := colors.WithAlpha(colors.White.RGBA, alpha)
+		atlas.GetSprite("2x2").DrawColorMask(target, m, mask)
+		x += width + pad
+	}
+}
+
+const rainbowFadeInPeriod = 0.5
+const rainbowTargetHue = 0.65
+const rainbowHueSwing = 0.175
+
+func rainbowColor(p float64) pixel.RGBA {
+	alpha := 1.0
+	if p < rainbowFadeInPeriod {
+		alpha = interp.Smootherstep(p / rainbowFadeInPeriod)
+	}
+	hue := math.Mod(rainbowTargetHue+math.Sin(-(1.0-p)*math.Pi*2)*rainbowHueSwing, 1.0)
+	return colors.WithAlpha(colors.HSLToRGBA(hue, 1.0, 0.5), alpha)
+}
+
+const rotateInScaleFrom = 3.5
+const rotateInScalePeriod = 0.75
+const rotateInArcPeriod = 0.9
+const rotateInArcRadius = 100.0
+const rotateInArcAmount = 0.4
+
+func rotateIn(fromTop bool) func(p float64) pixel.Matrix {
+	return func(p float64) pixel.Matrix {
+		p = interp.Smootherstep(p)
+		// Scale animation
+		scale := 1.0
+		if p < rotateInScalePeriod {
+			scale = rotateInScaleFrom - (p / rotateInScalePeriod * (rotateInScaleFrom - 1.0))
+		}
+
+		// Arc motion: travel along a circular arc and end at (0, 0)
+		dx, dy := 0.0, 0.0
+		if p < rotateInArcPeriod {
+			progress := p / rotateInArcPeriod
+			// Start at the beginning of the arc, end at (0,0)
+			// angle goes from rotateInArcAmount * 2π down to 0
+			angleProgress := -(1 - progress) * rotateInArcAmount * 2 * math.Pi
+			size := rotateInArcRadius
+			if fromTop {
+				angleProgress += math.Pi
+			}
+
+			// Position along the arc
+			dx = math.Cos(angleProgress) * size * (1 - progress)
+			dy = math.Sin(angleProgress) * size * (1 - progress)
+		}
+
+		return pixel.IM.Scaled(pixel.ZV, scale).Moved(pixel.V(dx, dy))
+	}
+}
+
+func oAnimation(p float64) pixel.Matrix {
+	scale := p + math.Sin(math.Pi*p)*1.0
+	return pixel.IM.Scaled(pixel.ZV, scale)
+}

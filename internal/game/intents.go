@@ -2,8 +2,10 @@ package game
 
 import "fisherevans.com/project/f/internal/game/rpg"
 
-type TitleIntent struct {
-}
+type StartupDeviceIntent struct{}
+type StartupCopyrightsIntent struct{}
+type StartupDeveloperIntent struct{}
+type TitleIntent struct{}
 
 type SelectIntent struct {
 	Destinations []SelectIntentDestination

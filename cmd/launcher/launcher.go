@@ -12,6 +12,7 @@ import (
 	"fisherevans.com/project/f/internal/game/states/adventure"
 	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/menu"
+	"fisherevans.com/project/f/internal/game/states/startup"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
 	"fisherevans.com/project/f/internal/game/states/title"
 	"fisherevans.com/project/f/internal/game/states/xenolog"
@@ -27,5 +28,6 @@ func main() {
 	game.RegisterStateFactory(xenolog.New)
 	game.RegisterStateFactory(state_selector.New)
 	game.RegisterStateFactory(title.New)
+	game.RegisterStateFactory(startup.NewDevice)
 	opengl.Run(runtime.Run)
 }

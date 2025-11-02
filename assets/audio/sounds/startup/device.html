@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Startup Sting (GBA‑style homage) – Tone.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+    <style>
+        :root{--bg:#0b0f14;--card:#121822;--fg:#e6eef8;--muted:#9fb3c8;--accent:#58a6ff}
+        *{box-sizing:border-box}
+        body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;background:linear-gradient(180deg,#0b0f14,#0e141c);color:var(--fg)}
+        .wrap{max-width:980px;margin:24px auto;padding:16px}
+        .row{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+        .card{grid-column:1/-1;background:var(--card);border:1px solid #1b2636;border-radius:16px;padding:16px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+        .card h2{margin:0 0 10px;font-size:18px;color:#d7e3f1}
+        .controls{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+        .ctl{grid-column:span 4;background:#0e1520;border:1px solid #1a2536;border-radius:12px;padding:10px}
+        .ctl label{font-size:12px;color:var(--muted)}
+        .ctl input[type=range]{width:100%}
+        .note{font-size:12px;color:var(--muted);margin-top:6px}
+        .btns{display:flex;gap:10px;align-items:center}
+        button{all:unset;background:linear-gradient(180deg,#2b76ff,#1953b7);padding:10px 14px;border-radius:12px;border:1px solid #1a3d86;color:white;font-weight:600;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+        button:active{transform:translateY(1px)}
+        .ghost{background:#0e1520;border:1px solid #223049}
+        .grid-6{grid-column:span 6}
+        .grid-4{grid-column:span 4}
+        .grid-3{grid-column:span 3}
+        .spacer{height:4px}
+        .badge{display:inline-block;background:#152033;color:#9cc2ff;border:1px solid #223049;border-radius:999px;padding:2px 8px;font-size:12px;margin-left:8px}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="row">
+        <div class="card">
+            <h2>GBA‑Style Startup Sting <span class="badge">glide → arpeggio → hum</span></h2>
+            <div class="btns">
+                <button id="playBtn">▶ Play</button>
+                <button id="stopBtn" class="ghost">■ Stop</button>
+                <div class="note">Tip: first click may prompt your browser to allow audio.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Glide (Phase 1)</h2>
+            <div class="controls">
+                <div class="ctl grid-3">
+                    <label>Start Note (MIDI)
+                        <input id="glideStart" type="range" min="36" max="84" step="1" value="67">
+                    </label>
+                    <div class="note"><span id="glideStartVal">67</span></div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>End Note (MIDI)
+                        <input id="glideEnd" type="range" min="36" max="96" step="1" value="72">
+                    </label>
+                    <div class="note"><span id="glideEndVal">72</span></div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Duration (s)
+                        <input id="glideDur" type="range" min="0.15" max="1.8" step="0.01" value="0.55">
+                    </label>
+                    <div class="note"><span id="glideDurVal">0.55</span>s</div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Wave Blend (sine ⇄ triangle)
+                        <input id="glideBlend" type="range" min="0" max="1" step="0.01" value="0.4">
+                    </label>
+                    <div class="note">triangle mix: <span id="glideBlendVal">0.40</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Arpeggio (Phase 2)</h2>
+            <div class="controls">
+                <div class="ctl grid-3">
+                    <label>Root Note (MIDI)
+                        <input id="arpRoot" type="range" min="36" max="84" step="1" value="62">
+                    </label>
+                    <div class="note"><span id="arpRootVal">62</span></div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Intervals (semitones)
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+                            <label><input type="checkbox" class="arpInt" value="3"> +3</label>
+                            <label><input type="checkbox" class="arpInt" value="4" checked> +4</label>
+                            <label><input type="checkbox" class="arpInt" value="7" checked> +7</label>
+                            <label><input type="checkbox" class="arpInt" value="12"> +12</label>
+                        </div>
+                    </label>
+                    <div class="note">Pick at least one.</div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Note Duration (s)
+                        <input id="arpDur" type="range" min="0.04" max="0.25" step="0.005" value="0.075">
+                    </label>
+                    <div class="note"><span id="arpDurVal">0.075</span>s</div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Timbre (sine ⇄ square)
+                        <input id="arpBlend" type="range" min="0" max="1" step="0.01" value="0.25">
+                    </label>
+                    <div class="note">square mix: <span id="arpBlendVal">0.25</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Hum Tail (Phase 3)</h2>
+            <div class="controls">
+                <div class="ctl grid-3">
+                    <label>Base Note (MIDI)
+                        <input id="humNote" type="range" min="24" max="72" step="1" value="45">
+                    </label>
+                    <div class="note"><span id="humNoteVal">45</span></div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Duration (s)
+                        <input id="humDur" type="range" min="0.2" max="2.0" step="0.01" value="0.70">
+                    </label>
+                    <div class="note"><span id="humDurVal">0.70</span>s</div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Noise Mix
+                        <input id=\"noiseMix\" type=\"range\" min=\"0\" max=\"1\" step=\"0.01\" value=\"0.08\">
+                    </label>
+                    <div class="note"><span id=\"noiseMixVal\">0.08</span></div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Hum Wave
+                        <select id="humWave">
+                            <option value=\"square\">square</option>\n                <option value=\"sawtooth\">sawtooth</option>\n                <option value=\"triangle\" selected>triangle</option>\n                <option value=\"sine\">sine</option>
+                        </select>
+                    </label>
+                    <div class="note">Low‑pass filtered.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Global FX & Output</h2>
+            <div class="controls">
+                <div class="ctl grid-3">
+                    <label>BitCrusher (bits)
+                        <input id=\"bits\" type=\"range\" min=\"8\" max=\"16\" step=\"1\" value=\"14\">
+                    </label>
+                    <div class="note"><span id=\"bitsVal\">14</span>‑bit</div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>LPF Cutoff (Hz)
+                        <input id=\"cutoff\" type=\"range\" min=\"150\" max=\"4000\" step=\"10\" value=\"1400\">
+                    </label>
+                    <div class="note"><span id=\"cutoffVal\">1400</span> Hz</div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Small Reverb (mix)
+                        <input id=\"verb\" type=\"range\" min=\"0\" max=\"1\" step=\"0.01\" value=\"0.12\">
+                    </label>
+                    <div class="note"><span id=\"verbVal\">0.12</span> wet</div>
+                </div>
+                <div class="ctl grid-3">
+                    <label>Master Volume (dB)
+                        <input id="vol" type="range" min="-36" max="0" step="1" value="-6">
+                    </label>
+                    <div class="note"><span id="volVal">-6</span> dB</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- Helpers ---
+    const el = id => document.getElementById(id);
+    const midiToFreq = m => 440 * Math.pow(2, (m - 69) / 12);
+
+    const bind = (id, fmt = v=>v) => {
+        const r = el(id);
+        const v = el(id+"Val");
+        const sync = () => v && (v.textContent = fmt(r.value));
+        r.addEventListener('input', sync);
+        sync();
+        return r;
+    };
+
+    // UI elements
+    const glideStart = bind('glideStart');
+    const glideEnd = bind('glideEnd');
+    const glideDur = bind('glideDur', v=>Number(v).toFixed(2));
+    const glideBlend = bind('glideBlend', v=>Number(v).toFixed(2));
+
+    const arpRoot = bind('arpRoot');
+    const arpDur = bind('arpDur', v=>Number(v).toFixed(3));
+    const arpBlend = bind('arpBlend', v=>Number(v).toFixed(2));
+
+    const humNote = bind('humNote');
+    const humDur = bind('humDur', v=>Number(v).toFixed(2));
+    const noiseMix = bind('noiseMix', v=>Number(v).toFixed(2));
+    const humWave = el('humWave');
+
+    const bits = bind('bits');
+    const cutoff = bind('cutoff');
+    const verb = bind('verb', v=>Number(v).toFixed(2));
+    const vol = bind('vol');
+
+    const getIntervals = () => Array.from(document.querySelectorAll('.arpInt:checked')).map(i=>Number(i.value));
+
+    // current nodes (for disposal)
+    let live = [];
+
+    function disposeLive(){
+        for(const n of live){try{n.dispose && n.dispose()}catch(_){}
+            try{n.disconnect && n.disconnect()}catch(_){}
+        }
+        live = [];
+    }
+
+    async function ensureAudio(){
+        await Tone.start();
+        Tone.Destination.volume.value = Number(vol.value);
+    }
+
+    function makeChain(){
+        const crusher = new Tone.BitCrusher({bits:Number(bits.value)});
+        const lpf = new Tone.Filter({type:'lowpass', frequency:Number(cutoff.value), Q:0.8});
+        const rev = new Tone.Reverb({decay:1.2, wet:Number(verb.value)});
+        // connect graph end
+        crusher.connect(lpf).connect(rev).connect(Tone.Destination);
+        live.push(crusher, lpf, rev);
+        return { crusher, lpf, rev };
+    }
+
+    function schedule(){
+        const now = Tone.now() + 0.1;
+        const gDur = Number(glideDur.value);
+        const aDur = Number(arpDur.value);
+        const hDur = Number(humDur.value);
+
+        const { crusher, lpf } = makeChain();
+
+        // --- Phase 1: Glide ---
+        const glideEnv = new Tone.AmplitudeEnvelope({attack:0.01, decay:0.12, sustain:0.85, release:0.04}).connect(crusher);
+        const glideMix = Number(glideBlend.value);
+        const oscSine = new Tone.Oscillator({type:'sine', frequency:midiToFreq(Number(glideStart.value))}).connect(glideEnv);
+        const oscTri = new Tone.Oscillator({type:'triangle', frequency:midiToFreq(Number(glideStart.value))}).connect(glideEnv);
+        live.push(glideEnv, oscSine, oscTri);
+
+        // start, then ramp both oscillators to end freq
+        const gStart = now;
+        const gEnd = now + gDur;
+        oscSine.start(gStart); oscTri.start(gStart);
+        // relative gains to blend timbre
+        oscSine.volume.value = Tone.gainToDb(1 - glideMix);
+        oscTri.volume.value  = Tone.gainToDb(glideMix);
+
+        const gStartFreq = midiToFreq(Number(glideStart.value));
+        const gEndFreq = midiToFreq(Number(glideEnd.value));
+        oscSine.frequency.setValueAtTime(gStartFreq, gStart);
+        oscTri.frequency.setValueAtTime(gStartFreq, gStart);
+        oscSine.frequency.exponentialRampToValueAtTime(gEndFreq, gEnd);
+        oscTri.frequency.exponentialRampToValueAtTime(gEndFreq, gEnd);
+
+        glideEnv.triggerAttackRelease(gDur, gStart);
+
+        // --- Phase 2: Arpeggio ---
+        const intervals = getIntervals();
+        const arpSynth = new Tone.Synth({
+            oscillator:{type:'sine'},
+            envelope:{attack:0.005, decay:0.08, sustain:0.7, release:0.03}
+        }).connect(crusher);
+        const arpSquare = new Tone.Synth({
+            oscillator:{type:'square'},
+            envelope:{attack:0.005, decay:0.08, sustain:0.7, release:0.03}
+        }).connect(crusher);
+        // blend
+        arpSynth.volume.value = Tone.gainToDb(1 - Number(arpBlend.value));
+        arpSquare.volume.value = Tone.gainToDb(Number(arpBlend.value));
+        live.push(arpSynth, arpSquare);
+
+        const root = Number(arpRoot.value);
+        const notes = [root, ...intervals.map(iv=>root+iv)];
+        let t = gEnd + 0.02; // a tiny breath after glide
+        for(const m of notes){
+            const f = midiToFreq(m);
+            arpSynth.triggerAttackRelease(f, aDur, t);
+            arpSquare.triggerAttackRelease(f, aDur, t);
+            t += aDur;
+        }
+
+        // --- Phase 3: Hum Tail ---
+        // close the global LPF slightly during the tail to soften highs
+        lpf.frequency.setValueAtTime(Number(cutoff.value), now);
+
+        const humOsc = new Tone.Oscillator({
+            type: humWave.value,
+            frequency: midiToFreq(Number(humNote.value))
+        });
+        const humGain = new Tone.Gain(0).connect(crusher);
+        humOsc.connect(humGain);
+
+        const noise = new Tone.Noise('pink');
+        const noiseFilt = new Tone.Filter({type:'lowpass', frequency:600});
+        const noiseGain = new Tone.Gain(Number(noiseMix.value));
+        noise.connect(noiseFilt).connect(noiseGain).connect(crusher);
+
+        live.push(humOsc, humGain, noise, noiseFilt, noiseGain);
+
+        const hStart = t + 0.02;
+        const hEnd = hStart + hDur;
+        humOsc.start(hStart);
+        noise.start(hStart);
+
+        // fade in quickly, then out over duration
+        humGain.gain.setValueAtTime(0.0001, hStart);
+        humGain.gain.exponentialRampToValueAtTime(0.5, hStart + 0.03);
+        humGain.gain.exponentialRampToValueAtTime(0.0001, hEnd);
+        noiseGain.gain.setValueAtTime(Number(noiseMix.value), hStart + 0.02);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, hEnd);
+
+        // stop/cleanup a bit after the end
+        Tone.Transport.scheduleOnce(() => {
+            try{oscSine.stop();oscTri.stop();humOsc.stop();noise.stop();}catch(_){ }
+            setTimeout(disposeLive, 200);
+        }, hEnd + 0.05);
+    }
+
+    el('playBtn').addEventListener('click', async () => {
+        await ensureAudio();
+        disposeLive();
+        schedule();
+    });
+
+    el('stopBtn').addEventListener('click', () => {
+        try{Tone.Transport.stop();}catch(_){ }
+        disposeLive();
+    });
+
+    // live reflect for selects
+    humWave.addEventListener('change', ()=>{});
+</script>
+</body>
+</html>
