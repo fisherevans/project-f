@@ -29,5 +29,7 @@ func main() {
 	game.RegisterStateFactory(state_selector.New)
 	game.RegisterStateFactory(title.New)
 	game.RegisterStateFactory(startup.NewDevice)
+	game.RegisterStateFactory(startup.NewCopyright)
+	game.RegisterStateFactory(startup.NewDeveloper)
 	opengl.Run(runtime.Run)
 }

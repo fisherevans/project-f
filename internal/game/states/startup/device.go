@@ -13,16 +13,8 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 )
-
-var atlas = resources.CreateAtlas(resources.AtlasFilter{
-	DoIncludeSprite: resources.RequireSpritePrefix("startup/", "2x2"),
-	FontNames: []string{
-		resources.FontNameFF,
-	},
-})
 
 type letter struct {
 	sprite                  pixelutil.BoundedDrawable
@@ -45,6 +37,8 @@ type State struct {
 
 	rayBatch  *pixel.Batch
 	rayCanvas *opengl.Canvas
+
+	blendCanvas *shaders.Canvas
 }
 
 const baseOffset = 0.2
@@ -56,6 +50,7 @@ func NewDevice(_ game.StartupDeviceIntent) game.State {
 		spriteCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
 		rayBatch:     atlas.NewBatch(),
 		rayCanvas:    opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
+		blendCanvas:  shaders.NewCanvas(game.GameWidth, game.GameHeight),
 		thanadox:     atlas.GetSprite("startup/device_thanadox"),
 		letters: []letter{
 			{ // n
@@ -127,19 +122,29 @@ func NewDevice(_ game.StartupDeviceIntent) game.State {
 	slices.SortFunc(s.letters, func(a, b letter) int {
 		return cmp.Compare(a.timeOffset, b.timeOffset)
 	})
+	s.blendCanvas.SetMaskBrightenShader(s.rayCanvas.Texture())
 	return s
 }
 
-var centerMatrix = gfx.Moved(game.GameWidth/2, game.GameHeight/2)
-
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	if game.Controls[*State]().ButtonA().JustPressed() {
+	if game.Controls[*State]().ButtonB().JustPressed() {
 		game.SetActiveStateIntent(game.StartupDeviceIntent{})
 	}
 	s.elapsed += timeDelta
+	if s.elapsed > baseOffset*35 || game.Controls[*State]().ButtonA().JustPressed() {
+		game.SetActiveStateIntent(game.StartupCopyrightsIntent{})
+	}
+
+	// generate rays
+
+	s.rayBatch.Clear()
+	drawRays(s.elapsed, s.rayBatch)
+	s.rayCanvas.Clear(colors.Black.RGBA)
+	s.rayBatch.Draw(s.rayCanvas)
+
+	// sprites
 
 	s.spriteBatch.Clear()
-
 	tAlpha := 0.0
 	tStart, tEnd := baseOffset*2, baseOffset*8
 	if s.elapsed > tStart {
@@ -160,24 +165,21 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	}
 
 	s.spriteCanvas.Clear(pixel.RGBA{})
-	s.spriteCanvas.SetComposeMethod(pixel.ComposeOver)
 	s.spriteBatch.Draw(s.spriteCanvas)
 
-	s.rayBatch.Clear()
-	drawRays(s.elapsed, s.rayBatch)
-	s.rayCanvas.Clear(colors.White.RGBA)
-	s.rayCanvas.SetComposeMethod(pixel.ComposeCopy)
-	s.rayBatch.Draw(s.rayCanvas)
-
-	s.spriteCanvas.SetComposeMethod(pixel.ComposeMultiply)
-	s.rayCanvas.Draw(s.spriteCanvas, centerMatrix)
+	// clear background on target
 
 	bgProgress := interp.Smoothstep(min(s.elapsed/(baseOffset*6), 1.0))
 	bgFrom := colors.FromString("#444")
 	bgTo := colors.FromString("#eee")
 	bg := colors.Lerp(bgFrom, bgTo, bgProgress)
 	target.Clear(bg)
-	s.spriteCanvas.Draw(target, centerMatrix)
+
+	// draw sprites to target
+
+	s.blendCanvas.Clear(pixel.RGBA{})
+	s.spriteCanvas.Draw(s.blendCanvas, centerMatrix)
+	s.blendCanvas.Draw(target, centerMatrix) // shader setup references sprite texture
 }
 
 type ray struct {
@@ -208,29 +210,40 @@ func init() {
 	}
 }
 
-const rayMaxEffect = 0.5
+const rayMaxEffect = 0.33
 const rayAngle = 60 * math.Pi / 180
 const rayPanPct = 0.175
-const rayDx = -20
+const rayDx = -55
 
 func drawRays(elapsed float64, target pixel.Target) {
 	raysFrom, raysTo := baseOffset*12, baseOffset*30
 	p := max(min((elapsed-raysFrom)/(raysTo-raysFrom), 1.0), 0.0)
 	x := float64(game.GameWidth)*p*rayPanPct - raysWidth/2 + (1-rayPanPct)/2.0*float64(game.GameWidth) + rayDx
 	y := float64(game.GameHeight / 2)
-	easeInOut := 0.5 * (1 + math.Cos(2*math.Pi*p)) // 1 > 0 > 1
-	scale := 1.0 + p*0.6
+	easeInOut := 0.5 * (1 - math.Cos(2*math.Pi*p)) // 0 > 1 > 0
+	widthScale := 1.0 + p*3
+	paddingScale := 1.0 + p
+
+	angleRange := rayAngle * 0.5
+	angleDelta := (angleRange * p) - angleRange/2.0
+	angle := rayAngle + angleDelta
+
 	for _, r := range rays {
-		pad, width := r.p, r.w*scale
+		pad, renderWidth := r.p*paddingScale, r.w*widthScale
 		x += pad
-		m := pixel.IM.ScaledXY(pixel.ZV, pixel.V(game.GameWidth, width)).
-			Rotated(pixel.ZV, rayAngle).
+		m := pixel.IM.ScaledXY(pixel.ZV, pixel.V(game.GameWidth, renderWidth)).
+			Rotated(pixel.ZV, angle).
 			Moved(pixel.V(x, y))
 		effect := rayMaxEffect * r.a
-		alpha := (1.0 - effect) + effect*easeInOut
-		mask := colors.WithAlpha(colors.White.RGBA, alpha)
-		atlas.GetSprite("2x2").DrawColorMask(target, m, mask)
-		x += width + pad
+		amount := effect * easeInOut
+		color := pixel.RGBA{
+			R: amount,
+			G: amount,
+			B: amount,
+			A: amount,
+		}
+		atlas.GetSprite("1x1").DrawColorMask(target, m, color)
+		x += r.w + pad
 	}
 }
 

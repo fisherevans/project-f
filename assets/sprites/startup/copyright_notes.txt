@@ -1,0 +1,3 @@
+font used:
+pixel tactics
+size 8px
