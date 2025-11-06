@@ -233,6 +233,12 @@ func (a *Atlas) NewBatch() *pixel.Batch {
 }
 
 func (a *Atlas) Dump(dir, name string) {
+	// Ensure the directory exists
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		log.Error().Msgf("Failed to create directory %s: %v", dir, err)
+		return
+	}
+	
 	f, err := os.Create(path.Join(dir, fmt.Sprintf("%s.png", name)))
 	if err != nil {
 		log.Error().Msgf("Failed to create atlas file %s: %v", name, err)

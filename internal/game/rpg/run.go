@@ -1,7 +1,15 @@
 package rpg
 
+const (
+	RunStateKeyElythium = "elythium"
+)
+
 type Run struct {
-	ExperiencePoints        int
-	PrimortalResearchPoints map[PrimortalType]int
-	Elythium                int
+	State *State
+}
+
+func NewRun() *Run {
+	return &Run{
+		State: NewState(),
+	}
 }

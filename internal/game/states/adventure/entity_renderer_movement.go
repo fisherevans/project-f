@@ -1,14 +1,11 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
-)
-
-var (
-	renderPathFinderFuture = false
 )
 
 type MovementBasedEntityRenderer struct {
@@ -72,7 +69,7 @@ func (r *MovementBasedEntityRenderer) RenderToScene(target pixel.Target, matrix 
 	r.lastRenderMode = renderState
 	renderer.RenderToScene(target, matrix)
 
-	if !renderPathFinderFuture {
+	if !game.CurrentSave().SystemSettings.Debugging.ShowPathfindingDebugging {
 		return
 	}
 	b, ok := r.entity.GetBehavior()

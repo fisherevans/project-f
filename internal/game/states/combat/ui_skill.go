@@ -135,7 +135,7 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
 	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).Draw(target, centerMatrix)
 	s.combatArrowAlpha -= timeDelta * 0.75
-	game.DebugTR("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
+	game.DebugTRf("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
 		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
 	}
@@ -164,11 +164,11 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 	}
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {
-		game.DebugNotification("TODO - add stats xenolog")
+		game.DebugNotificationf("TODO - add stats xenolog")
 	}
 
 	if game.Controls[*State]().ButtonStart().JustPressed() {
-		game.DebugNotification("TODO - add combat xenolog")
+		game.DebugNotificationf("TODO - add combat xenolog")
 	}
 }
 

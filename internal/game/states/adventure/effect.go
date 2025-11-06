@@ -78,6 +78,11 @@ type EffectSetWorldState struct {
 	Value any
 }
 
+type EffectSetRunState struct {
+	Key   string
+	Value any
+}
+
 type EffectSetEntityLocation struct {
 	EntityId    string
 	ToReference *string      `one_of:"destination"`
@@ -204,6 +209,7 @@ type RelativeLocation struct {
 type EffectPushEntityBehavior struct {
 	EntityId       string
 	ScriptedMotion *EntityBehaviorScriptedMotion `one_of:"type"`
+	FacingEntity   *EntityBehaviorFacingEntity   `one_of:"type"`
 }
 
 type EntityBehaviorPlayer struct {
@@ -213,6 +219,10 @@ type EntityBehaviorNPC struct {
 }
 
 type EntityBehaviorScriptedMotion struct {
+}
+
+type EntityBehaviorFacingEntity struct {
+	EntityId *string
 }
 
 type EffectPopEntityBehavior struct {
@@ -237,4 +247,12 @@ type EffectRegisterEntity struct {
 type EffectWaitForCondition struct {
 	ConditionId string `auto_generate:"true"`
 	Check       ConditionCheck
+}
+
+type EffectLoadMap struct {
+	MapName string
+}
+
+type EffectSendEvent struct {
+	Event any
 }

@@ -18,7 +18,7 @@ func createMainMenu(s *State) *Menu {
 				s.PushMenu(createSettingsMenu(s))
 			}),
 			newSimpleSelectionOption(s, "Quit", func(s *State) {
-				game.SetActiveStateIntent(game.TitleIntent{})
+				game.SetActiveStateIntent(game.StartupDeviceIntent{})
 			}),
 		},
 	}
@@ -28,6 +28,7 @@ func createSettingsMenu(s *State) *Menu {
 	return &Menu{
 		state: s,
 		items: []MenuItem{
+			newItemBoolToggle(s, "Pathfinding Debug", "On", "Off", &game.CurrentSave().SystemSettings.Debugging.ShowPathfindingDebugging),
 			newItemEnumToggle[rpg.LightingMode](s, "Lighting", []itemEnumToggleOption[rpg.LightingMode]{
 				newEnumToggleOption[rpg.LightingMode]("Blended", rpg.LightingModeBlended),
 				newEnumToggleOption[rpg.LightingMode]("Over", rpg.LightingModeOver),

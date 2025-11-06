@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
 )
 
 // Event types - add new events here and run go generate
@@ -37,8 +38,54 @@ type EventEntityZoneActivity struct {
 
 type EventWorldStateUpdated struct {
 	Key      string
-	NewValue any
-	OldValue any
+	NewValue *rpg.StateValue
+	OldValue *rpg.StateValue
+}
+
+func NewEventWorldStateUpdated(key string, newValue, oldValue *rpg.StateValue) any {
+	return EventWorldStateUpdated{
+		Key:      key,
+		NewValue: newValue,
+		OldValue: oldValue,
+	}
+}
+
+type EventWorldStateDeleted struct {
+	Key      string
+	OldValue *rpg.StateValue
+}
+
+func NewEventWorldStateDeleted(key string, oldValue *rpg.StateValue) any {
+	return EventWorldStateDeleted{
+		Key:      key,
+		OldValue: oldValue,
+	}
+}
+
+type EventRunStateUpdated struct {
+	Key      string
+	NewValue *rpg.StateValue
+	OldValue *rpg.StateValue
+}
+
+func NewEventRunStateUpdated(key string, newValue, oldValue *rpg.StateValue) any {
+	return EventRunStateUpdated{
+		Key:      key,
+		NewValue: newValue,
+		OldValue: oldValue,
+	}
+}
+
+type EventRunStateDeleted struct {
+	Key      string
+	OldValue *rpg.StateValue
+}
+
+func NewEventRunStateDeleted(key string, oldValue *rpg.StateValue) any {
+	return EventRunStateDeleted{
+		Key:      key,
+		OldValue: oldValue,
+	}
 }
 
 type EventCombatComplete struct {

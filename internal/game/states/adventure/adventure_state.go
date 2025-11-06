@@ -9,6 +9,7 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/image/colornames"
 
 	"fisherevans.com/project/f/internal/game"
@@ -19,7 +20,8 @@ import (
 )
 
 const (
-	characterSpeed = 3.0
+	characterSpeed      = 3.0
+	runStateKeyPlayerId = "player_id"
 )
 
 var (
@@ -84,9 +86,11 @@ type State struct {
 	mobs     []*ShadowMob
 
 	eventDispatcher *Dispatcher
-	worldState      WorldState
 	planExecutor    *PlanExecutor
 	run             *rpg.Run
+
+	worldState *observedMutableState
+	runState   *observedMutableState
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -99,7 +103,7 @@ func New(i game.AdventureIntent) game.State {
 		overlays:  NewOverlaySystem(),
 		timers:    newTimers(),
 		zones:     newZones(),
-		run:       &rpg.Run{},
+		run:       rpg.NewRun(),
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -120,9 +124,8 @@ func New(i game.AdventureIntent) game.State {
 	a.conditions = NewConditions(a)
 	a.planExecutor = NewPlanExecutor(a.processEffects)
 	a.entities = NewEntitySystem(a)
-	a.hud = NewHud(func() int { return a.run.Elythium })
-	a.worldState = NewWorldState(a.run)
-	a.eventDispatcher = NewDispatcher(a.worldState, a.processEffects)
+	a.hud = NewHud(a)
+	a.eventDispatcher = NewDispatcher(a, a.processEffects)
 
 	a.bloom.Threshold = 1.0
 	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
@@ -136,8 +139,23 @@ func New(i game.AdventureIntent) game.State {
 	)
 	a.eventDispatcher.Register(NewBasicEntityContext("system"), newSystemEventHandler(a))
 
+	a.worldState = newObservedMutableState(a.eventDispatcher, game.CurrentSave().State, NewEventWorldStateUpdated, NewEventWorldStateDeleted)
+	a.runState = newObservedMutableState(a.eventDispatcher, a.run.State, NewEventRunStateUpdated, NewEventRunStateDeleted)
+
 	initializeMap(a, m)
+
+	a.ExecuteSystemEffects(NewFadeEffect(1, 1).
+		WithFromColor("#000f").
+		WithToColor("#0000"))
 	return a
+}
+
+func (s *State) WorldState() rpg.ReadableState {
+	return s.worldState
+}
+
+func (s *State) RunState() rpg.ReadableState {
+	return s.runState
 }
 
 func (s *State) ClearColor() color.Color {
@@ -145,7 +163,7 @@ func (s *State) ClearColor() color.Color {
 }
 
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	game.DebugTL("delta: %.3f", timeDelta)
+	game.DebugTLf("delta: %.3f", timeDelta)
 
 	s.entities.Update(timeDelta)
 	s.conditions.Update(timeDelta)
@@ -186,12 +204,14 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.sceneBatch.Draw(s.sceneCanvas)
 
+	playerEntity, _ := s.entities.GetEntity(s.player)
 	var locations []string
 	s.entities.occupations.ForEachOccupiedLocation(s.player, func(location MapLocation) {
 		locations = append(locations, location.String())
 	})
 	sort.Strings(locations)
-	game.DebugBL("player locations: %v", locations)
+	game.DebugBLf("player locations: %v", locations)
+	game.DebugBLf("player behavior enabled: %t (%v)", playerEntity.IsBehaviorEnabled(), s.entities.disabledBehaviors[s.player])
 
 	// LIGHTING
 
@@ -262,18 +282,12 @@ func (s *State) AddMob(mob *ShadowMob) {
 	s.mobs = append(s.mobs, mob)
 }
 
-func (s *State) setWorldState(key string, value any, id string) {
-	oldValue := s.worldState.Get(key)
-	s.worldState.Set(key, value)
-	s.eventDispatcher.Dispatch(&EventWorldStateUpdated{
-		Key:      key,
-		NewValue: value,
-		OldValue: oldValue,
-	})
-}
-
 func (s *State) ExecuteSystemEffects(effects ...Effect) {
 	for _, e := range effects {
+		if err := e.FillDefaultsAndValidate(); err != nil {
+			log.Error().Err(err).Msg("failed to validate effect")
+			continue
+		}
 		s.processEffects(DispatchedEffect{
 			Source: NewBasicEntityContext("system"),
 			Effect: e,

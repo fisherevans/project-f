@@ -33,7 +33,8 @@ func (t *timers) AddTimer(createdBy string, id string, durationSeconds float64) 
 }
 
 func (t *timers) Update(deltaSeconds float64, dispatcher *Dispatcher, state *State) {
-	for id, timer := range t.inProgress {
+	for i := len(t.inProgress) - 1; i >= 0; i-- {
+		timer := t.inProgress[i]
 		timer.elapsed += deltaSeconds
 		if timer.elapsed < timer.duration {
 			continue
@@ -43,7 +44,7 @@ func (t *timers) Update(deltaSeconds float64, dispatcher *Dispatcher, state *Sta
 		timer.triggerCount++
 		if timer.triggerCount == timer.repeatCount {
 			log.Info().Msgf("Removing timer: %s/%s", timer.createdBy, timer.id)
-			t.inProgress = append(t.inProgress[:id], t.inProgress[id+1:]...)
+			t.inProgress = append(t.inProgress[:i], t.inProgress[i+1:]...)
 		}
 		dispatcher.Dispatch(EventTimerComplete{
 			CreatedBy:       timer.createdBy,

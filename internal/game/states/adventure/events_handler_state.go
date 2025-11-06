@@ -4,61 +4,42 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 )
 
-type WorldStateReader interface {
-	Get(key string) any
-	GetAsString(key string) string
-	Has(key string) bool
-	GetRun() *rpg.Run
+type GameState interface {
+	WorldState() rpg.ReadableState
+	RunState() rpg.ReadableState
 }
 
-type WorldState interface {
-	WorldStateReader
-	Set(key string, value any)
-	Delete(key string)
+type observedMutableState struct {
+	dispatcher     *Dispatcher
+	state          rpg.MutableState
+	createSetEvent func(key string, newValue, oldValue *rpg.StateValue) any
+	createDelete   func(key string, oldValue *rpg.StateValue) any
 }
 
-func NewWorldState(run *rpg.Run) WorldState {
-	return &mapState{
-		run: run,
+func newObservedMutableState(dispatcher *Dispatcher, state rpg.MutableState, createSetEvent func(key string, newValue, oldValue *rpg.StateValue) any, createDelete func(key string, oldValue *rpg.StateValue) any) *observedMutableState {
+	return &observedMutableState{
+		dispatcher:     dispatcher,
+		state:          state,
+		createSetEvent: createSetEvent,
+		createDelete:   createDelete,
 	}
 }
 
-type mapState struct {
-	data map[string]any
-	run  *rpg.Run
+func (s *observedMutableState) Set(key string, value any) *rpg.StateValue {
+	oldValue := s.state.Set(key, value)
+	newValue := s.state.Get(key)
+	event := s.createSetEvent(key, newValue, oldValue)
+	s.dispatcher.Dispatch(event)
+	return oldValue
 }
 
-func (s *mapState) GetRun() *rpg.Run {
-	return s.run
+func (s *observedMutableState) Delete(key string) *rpg.StateValue {
+	oldValue := s.state.Delete(key)
+	event := s.createDelete(key, oldValue)
+	s.dispatcher.Dispatch(event)
+	return oldValue
 }
 
-func (s *mapState) Has(key string) bool {
-	_, exists := s.getMap()[key]
-	return exists
-}
-
-func (s *mapState) Get(key string) any {
-	val, _ := s.getMap()[key]
-	return val
-}
-
-func (s *mapState) GetAsString(key string) string {
-	val := s.Get(key)
-	str, _ := val.(string)
-	return str
-}
-
-func (s *mapState) Set(key string, value any) {
-	s.getMap()[key] = value
-}
-
-func (s *mapState) Delete(key string) {
-	delete(s.getMap(), key)
-}
-
-func (s *mapState) getMap() map[string]any {
-	if s.data == nil {
-		s.data = make(map[string]any)
-	}
-	return s.data
+func (s *observedMutableState) Get(key string) *rpg.StateValue {
+	return s.state.Get(key)
 }

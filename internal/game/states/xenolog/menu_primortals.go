@@ -194,7 +194,7 @@ type primortalListItem struct {
 
 func (p *primortalListItem) RenderWasSkipped(m *primortalsMenu, wasAbove bool) {
 	if p.xenologIndex == 9 {
-		game.DebugBL("skipped")
+		game.DebugBLf("skipped")
 	}
 	m.wasSkipped = true
 	if p.upgradeAvailable() {
@@ -342,7 +342,7 @@ func (m *primortalsMenu) OnTick(target pixel.Target, timeDelta float64) {
 		dx, _ := smallText.render("UPGRADE Below", screenWidth-tooltipMargin, tooltipMargin, flashingHighlight(), tbcfg.RenderFrom(gfx.BottomRight))
 		arrowDown.Draw(target, pixel.IM.Moved(gfx.IVec(screenWidth-dx-tooltipMargin*2, tooltipMargin)).Moved(gfx.BottomRight.Align(arrowDown)))
 	}
-	game.DebugBL("upgrade above: %v, upgrade below: %v, skipped :%v", m.upgradeAbove, m.upgradeBelow, m.wasSkipped)
+	game.DebugBLf("upgrade above: %v, upgrade below: %v, skipped :%v", m.upgradeAbove, m.upgradeBelow, m.wasSkipped)
 }
 
 func (m *primortalsMenu) ScrollToNextUpgrade() {

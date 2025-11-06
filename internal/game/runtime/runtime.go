@@ -9,6 +9,7 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
@@ -49,6 +50,9 @@ func Run() {
 		// Handle exit
 		if window.JustPressed(pixel.KeyF4) {
 			os.Exit(0)
+		}
+		if window.JustPressed(pixel.KeySlash) {
+			log.Info().Msg("----------------------------------------------------------------------------------------------")
 		}
 
 		// Update game state
@@ -149,9 +153,9 @@ func compositeToWindow(window *opengl.Window, sceneCanvas, pixelGridCanvas *shad
 
 func renderDebugInfo(window *opengl.Window, m *runtime.MemStats, frameStats, gameLogicStats *util.FloatStats, deltaTime float64) {
 	runtime.ReadMemStats(m)
-	game.DebugTL("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
-	game.DebugTL("%s", frameStats.SummaryFPS())
-	game.DebugTL("Game Logic %s", gameLogicStats.SummaryMS())
+	game.DebugTLf("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
+	game.DebugTLf("%s", frameStats.SummaryFPS())
+	game.DebugTLf("Game Logic %s", gameLogicStats.SummaryMS())
 	game.RenderDebugLines(window, game.PopDebugLines())
 	game.RenderNotifications(window, game.PopNotifications(deltaTime))
 }
@@ -177,14 +181,14 @@ func handleCaptureHotkeys(window *opengl.Window, sceneCanvas *shaders.Canvas, sc
 func captureRecordingFrames(sceneRecorder, pixelGridRecorder *Recorder, deltaTime float64) {
 	if sceneRecorder.IsRecording() {
 		if err := sceneRecorder.CaptureFrame(deltaTime); err != nil {
-			game.DebugNotification("Frame capture error: %v", err)
+			game.DebugNotificationf("Frame capture error: %v", err)
 			sceneRecorder.Stop()
 		}
 	}
 
 	if pixelGridRecorder.IsRecording() {
 		if err := pixelGridRecorder.CaptureFrame(deltaTime); err != nil {
-			game.DebugNotification("Frame capture error: %v", err)
+			game.DebugNotificationf("Frame capture error: %v", err)
 			pixelGridRecorder.Stop()
 		}
 	}

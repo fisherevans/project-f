@@ -4,6 +4,7 @@ type SystemSettings struct {
 	Lighting   *SystemSettingsLighting   `yaml:"lighting"`
 	Combat     *SystemSettingsCombat     `yaml:"combat"`
 	RetroFrame *SystemSettingsRetroFrame `yaml:"retro_frame"`
+	Debugging  *SystemSettingsDebugging  `yaml:"debugging"`
 }
 
 func (s *SystemSettings) FillDefaults() {
@@ -18,6 +19,10 @@ func (s *SystemSettings) FillDefaults() {
 	if s.RetroFrame == nil {
 		s.RetroFrame = &SystemSettingsRetroFrame{}
 	}
+	if s.Debugging == nil {
+		s.Debugging = &SystemSettingsDebugging{}
+	}
+	s.Debugging.FillDefaults()
 	s.RetroFrame.FillDefaults()
 }
 
@@ -113,4 +118,11 @@ var BloomModes = []BloomMode{
 	BloomModeOverBlurred,
 	BloomModeOverThreshold,
 	BloomModeOff,
+}
+
+type SystemSettingsDebugging struct {
+	ShowPathfindingDebugging bool `yaml:"show_pathfinding_debugging"`
+}
+
+func (s *SystemSettingsDebugging) FillDefaults() {
 }

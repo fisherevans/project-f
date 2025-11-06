@@ -5,6 +5,7 @@ import (
 	"math"
 	"slices"
 
+	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/interp"
 	"fisherevans.com/project/f/internal/util/pixelutil"
@@ -27,7 +28,8 @@ type letter struct {
 
 type State struct {
 	game.BaseState
-	elapsed float64
+	elapsed     float64
+	initialized bool
 
 	letters  []letter
 	thanadox pixelutil.BoundedDrawable
@@ -39,10 +41,11 @@ type State struct {
 	rayCanvas *opengl.Canvas
 
 	blendCanvas *shaders.Canvas
+	stopper     *audio.Stopper
 }
 
-const baseOffset = 0.2
-const normalAnimationDuration = 1.75
+const baseOffset = 0.15
+const normalAnimationDuration = 1.5
 
 func NewDevice(_ game.StartupDeviceIntent) game.State {
 	s := &State{
@@ -126,13 +129,22 @@ func NewDevice(_ game.StartupDeviceIntent) game.State {
 	return s
 }
 
+const initializeDeviceAfter = 0.3
+
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+	s.elapsed += timeDelta
+	if !s.initialized && s.elapsed > initializeDeviceAfter {
+		s.initialized = true
+		s.stopper = audio.GetSystem().PlaySFX("startup/device", 0)
+	}
+
 	if game.Controls[*State]().ButtonB().JustPressed() {
 		game.SetActiveStateIntent(game.StartupDeviceIntent{})
+		s.stopper.Stop()
 	}
-	s.elapsed += timeDelta
 	if s.elapsed > baseOffset*35 || game.Controls[*State]().ButtonA().JustPressed() {
 		game.SetActiveStateIntent(game.StartupCopyrightsIntent{})
+		s.stopper.Stop()
 	}
 
 	// generate rays

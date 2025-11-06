@@ -58,7 +58,8 @@ func Initialize(window *opengl.Window, saveId string) {
 		panic("Save not found: " + saveId)
 	}
 	ctx = &context{
-		stateIntent:  StartupDeviceIntent{},
+		stateIntent: AdventureIntent{MapName: "intro"},
+		//stateIntent: StartupDeviceIntent{},
 		window:       window,
 		save:         save,
 		debugToggles: newToggles(),
@@ -114,23 +115,23 @@ type AppliedShader interface {
 	Apply(shaderOptions shaders.Options, timeDelta float64)
 }
 
-func DebugNotification(format string, args ...any) {
+func DebugNotificationf(format string, args ...any) {
 	ctx.Notify(format, args...)
 }
 
-func DebugTL(format string, a ...any) {
+func DebugTLf(format string, a ...any) {
 	ctx.Debug(AreaTopLeft, format, a...)
 }
 
-func DebugBL(format string, a ...any) {
+func DebugBLf(format string, a ...any) {
 	ctx.Debug(AreaBottomLeft, format, a...)
 }
 
-func DebugTR(format string, a ...any) {
+func DebugTRf(format string, a ...any) {
 	ctx.Debug(AreaTopRight, format, a...)
 }
 
-func DebugBR(format string, a ...any) {
+func DebugBRf(format string, a ...any) {
 	ctx.Debug(AreaBottomRight, format, a...)
 }
 

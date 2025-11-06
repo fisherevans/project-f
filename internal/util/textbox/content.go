@@ -262,6 +262,7 @@ func (c *Content) String() string {
 }
 
 func (tb *Instance) NewSimpleContent(msg string, opts ...ContentOpt) *Content {
+	msg = messageSanitizer.Replace(msg)
 	var characters []*character
 	for _, c := range []byte(msg) {
 		characters = append(characters, newCharacter(c, 1, tb.text, cStyle{}))

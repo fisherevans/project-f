@@ -9,9 +9,9 @@ import (
 )
 
 func init() {
-	Register("map1", func(_ *util.Properties) EventHandler {
+	registerHandlerReference("map1", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
 					return nil
 				}
@@ -25,24 +25,24 @@ func init() {
 	type ExitChatterState struct {
 		Ready bool
 	}
-	Register("exit_chatter", func(_ *util.Properties) EventHandler {
+	registerHandlerReference("exit_chatter", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[ExitChatterState]{
-			Init: func(ctx EntityContext, world WorldStateReader, state ExitChatterState) *HandlerOutput {
+			Init: func(ctx EntityContext, gameState GameState, state ExitChatterState) *HandlerOutput {
 				return NewOutput().WithState(ExitChatterState{
 					Ready: true,
 				})
 			},
-			TimerComplete: func(ctx EntityContext, world WorldStateReader, state ExitChatterState, event *EventTimerComplete) *HandlerOutput {
+			TimerComplete: func(ctx EntityContext, gameState GameState, state ExitChatterState, event *EventTimerComplete) *HandlerOutput {
 				if event.CreatedBy != ctx.EntityId() || event.TimerId != "reset" {
 					return nil
 				}
 				state.Ready = true
 				return NewOutput().WithState(state)
 			},
-			EntityZoneActivity: func(ctx EntityContext, world WorldStateReader, state ExitChatterState, event *EventEntityZoneActivity) *HandlerOutput {
+			EntityZoneActivity: func(ctx EntityContext, gameState GameState, state ExitChatterState, event *EventEntityZoneActivity) *HandlerOutput {
 				if event.ZoneId == "exit" &&
 					event.IsEntering &&
-					event.EntityId == world.GetAsString("player_id") &&
+					event.EntityId == gameState.RunState().Get(runStateKeyPlayerId).AsString("unknown") &&
 					state.Ready {
 					state.Ready = false
 					return NewOutput().WithState(state).WithEffects(
@@ -51,7 +51,7 @@ func init() {
 								e, _ := s.entities.GetEntity(s.player)
 								return !e.IsMoving()
 							}),
-							NewChatterEffect(world.GetAsString("player_id"), 5, "I should turn around..."),
+							NewChatterEffect(gameState.RunState().Get(runStateKeyPlayerId).AsString("unknown"), 5, "I should turn around..."),
 							NewTimerEffect(10).WithTimerId("reset"),
 						),
 					)
@@ -62,87 +62,81 @@ func init() {
 	})
 }
 
+const doorStateKey = "door_state"
+const doorOpen, doorClosed = "open", "closed"
+
+func doorState(gameState GameState) string {
+	return gameState.WorldState().Get(doorStateKey).AsString(doorClosed)
+}
+
 func init() {
-	Register("door_lever", func(_ *util.Properties) EventHandler {
+	registerHandlerReference("door_lever", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			Init: func(ctx EntityContext, world WorldStateReader, state None) *HandlerOutput {
+			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithMode("off").
+						WithMode(doorState(gameState)).
 						WithAnimations(map[string][]types.AnimationReference{
-							"on": {
+							doorClosed: {
 								{Name: "adventure/doors/lever_horizontal:on"},
 							},
-							"off": {
+							doorOpen: {
 								{Name: "adventure/doors/lever_horizontal:off"},
 							},
 						}),
-					NewSetWorldStateEffect("door_open", false),
 				)
 			},
-			OnInteract: func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != ctx.EntityId() {
 					return nil
 				}
-
-				if ctx.GetStringMetadata(types.MetadataKeyMode) == "off" {
-					return NewOutput().WithEffects(
-						NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("on"),
-						NewSetWorldStateEffect("door_open", true),
-					)
-				} else {
-					return NewOutput().WithEffects(
-						NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("off"),
-						NewSetWorldStateEffect("door_open", false),
-					)
+				newValue := doorOpen
+				if doorState(gameState) == doorOpen {
+					newValue = doorClosed
 				}
+				return NewOutput().WithEffects(
+					NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode(newValue),
+					NewSetWorldStateEffect(doorStateKey, newValue),
+				)
 			},
 		}.CreateHandler()
 	})
 }
 
 func init() {
-	Register("door", func(_ *util.Properties) EventHandler {
+	registerHandlerReference("door", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			Init: func(ctx EntityContext, world WorldStateReader, state None) *HandlerOutput {
+			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateBlockingPresenceEffect(ctx.EntityId()).
-						WithIsBlockingIngress(true),
+						WithIsBlockingIngress(doorState(gameState) == doorClosed),
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithMode("closed").
+						WithMode(doorState(gameState)).
 						WithAnimations(map[string][]types.AnimationReference{
-							"closed": {
+							doorClosed: {
 								{Name: "adventure/doors/shield_front_1:closed"},
 								{Name: "adventure/doors/shield_front_1:waves"},
 							},
-							"open": {
+							doorOpen: {
 								{Name: "adventure/doors/shield_front_1:open"},
 							},
 						}).
 						WithLights(map[string][]types.LightConfig{
-							"closed": {
+							doorClosed: {
 								{Color: "#127fd7", Size: 1.5, Modifier: util.Ptr("pulse_slow")},
 							},
 						}),
 				)
 			},
-			WorldStateUpdated: func(ctx EntityContext, world WorldStateReader, state None, event *EventWorldStateUpdated) *HandlerOutput {
-				if event.Key != "door_open" {
+			WorldStateUpdated: func(ctx EntityContext, gameState GameState, state None, event *EventWorldStateUpdated) *HandlerOutput {
+				if event.Key != doorStateKey {
 					return nil
 				}
-				if doorOpen, ok := event.NewValue.(bool); ok && doorOpen {
-					return NewOutput().WithEffects(
-						NewMutateBlockingPresenceEffect(ctx.EntityId()).
-							WithIsBlockingIngress(false),
-						NewMutateModeBasedEntityEffect(ctx.EntityId()).
-							WithMode("open"))
-				} else {
-					return NewOutput().WithEffects(
-						NewMutateBlockingPresenceEffect(ctx.EntityId()).
-							WithIsBlockingIngress(true),
-						NewMutateModeBasedEntityEffect(ctx.EntityId()).
-							WithMode("closed"))
-				}
+				return NewOutput().WithEffects(
+					NewMutateBlockingPresenceEffect(ctx.EntityId()).
+						WithIsBlockingIngress(doorState(gameState) == doorClosed),
+					NewMutateModeBasedEntityEffect(ctx.EntityId()).
+						WithMode(doorState(gameState)))
 			},
 		}.CreateHandler()
 	})
@@ -151,9 +145,9 @@ func init() {
 var nextSpawnedEntityId = atomic.Int64{}
 
 func init() {
-	Register("spawn_entity", func(_ *util.Properties) EventHandler {
+	registerHandlerReference("spawn_entity", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			Init: func(ctx EntityContext, world WorldStateReader, state None) *HandlerOutput {
+			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithAnimations(map[string][]types.AnimationReference{
@@ -162,7 +156,7 @@ func init() {
 							}},
 						}))
 			},
-			OnInteract: func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
 					return nil
 				}

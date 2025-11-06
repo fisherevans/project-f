@@ -49,6 +49,8 @@ The following commands are supported:
 - Wildcard: {+u}{+c:warm_5}Hello{-*} - only valid with '-' to reset all template values.
 */
 func (tb *Instance) NewComplexContent(template string, opts ...ContentOpt) *Content {
+	template = messageSanitizer.Replace(template)
+
 	var paragraphs [][]*character
 	var currentParagraph []*character
 

@@ -9,7 +9,7 @@ import (
 
 func init() {
 	handler := NewBasicHandler(None{})
-	handler.WithOnInteract(func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
+	handler.WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 		if event.TargetId != ctx.EntityId() || ctx.GetMetadata(types.MetadataKeyMode) == "mined" {
 			return nil
 		}
@@ -20,7 +20,7 @@ func init() {
 			NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode(mode),
 		)
 	})
-	handler.WithTimerComplete(func(ctx EntityContext, world WorldStateReader, state None, event *EventTimerComplete) *HandlerOutput {
+	handler.WithTimerComplete(func(ctx EntityContext, gameState GameState, state None, event *EventTimerComplete) *HandlerOutput {
 		if event.CreatedBy != ctx.EntityId() || event.TimerId != "reset" {
 			return nil
 		}

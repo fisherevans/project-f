@@ -3,6 +3,7 @@ package adventure
 import (
 	"fmt"
 
+	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -14,15 +15,15 @@ import (
 )
 
 type Hud struct {
-	ElythiumCount     func() int
+	state             *State
 	elythiumCountIcon *anim.AnimatedSprite
 
 	researchIcon *anim.AnimatedSprite
 }
 
-func NewHud(elythiumCount func() int) *Hud {
+func NewHud(state *State) *Hud {
 	return &Hud{
-		ElythiumCount:     elythiumCount,
+		state:             state,
 		elythiumCountIcon: anim.LoadTilesheetAnimation(atlas, "adventure/hud/elythium", "default"),
 		researchIcon:      anim.LoadTilesheetAnimation(atlas, "adventure/hud/research", "default"),
 	}
@@ -42,7 +43,7 @@ func (h *Hud) OnTick(s *State, target pixel.Target, matrix pixel.Matrix, bounds 
 	counts := []topRightCount{
 		{
 			icon:   h.elythiumCountIcon,
-			count:  h.ElythiumCount(),
+			count:  h.state.run.State.Get(rpg.RunStateKeyElythium).AsInt(0),
 			stroke: "#3d1632",
 			fg:     "#edb2dc",
 		},
@@ -89,7 +90,7 @@ func (h *Hud) onTickElythiumCount(s *State, target pixel.Target, matrix pixel.Ma
 	topRight := pixel.IM.Moved(pixel.V(game.GameWidth-padding, game.GameHeight-padding))
 	h.elythiumCountIcon.Sprite().Draw(target, topRight.Moved(gfx.TopRight.Align(sprite)))
 
-	content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:#3d1632,+c:#edb2dc}%d", h.ElythiumCount()))
+	content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:#3d1632,+c:#edb2dc}%d", h.state.run.State.Get(rpg.RunStateKeyElythium).AsInt(0)))
 	txtVNudge := -1.0 // push it down or up to align with sprite
 	txtVNudge -= (sprite.Bounds().H() - content.Bounds().H()) / 2
 	txtHNudge := -1.0 // padding between number and sprite

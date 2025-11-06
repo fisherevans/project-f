@@ -81,7 +81,7 @@ func (si *SkillInstance) OnTick(s *State, tickId int, source Combatant, target C
 		}
 		if effect.Damage != nil {
 			result := rpg.ComputeDamage(*effect.Damage, sourceStats, targetStats)
-			game.DebugNotification("damage from %d to %d", effect.Damage.Amount, result.TargetDamage)
+			game.DebugNotificationf("damage from %d to %d", effect.Damage.Amount, result.TargetDamage)
 			s.AdjustHealth(-result.TargetDamage, target, nil)
 			s.AdjustHealth(-result.SourceDamage, source, nil)
 			target.GetStatuses().ReduceResult(result.TargetStatusStackReductions)

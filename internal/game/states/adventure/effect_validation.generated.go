@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-31T22:26:33-04:00 by go generate
+// Generated at 2025-11-05T15:38:48-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -100,6 +100,14 @@ func (e *EffectMutateBlockingPresence) FillDefaultsAndValidate() error {
 }
 
 func (e *EffectSetWorldState) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("key", e.Key)
+
+	return reporter.report()
+}
+
+func (e *EffectSetRunState) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("key", e.Key)
@@ -336,8 +344,11 @@ func (e *EffectPushEntityBehavior) FillDefaultsAndValidate() error {
 	if e.ScriptedMotion != nil {
 		typeCount++
 	}
+	if e.FacingEntity != nil {
+		typeCount++
+	}
 	if typeCount != 1 {
-		reporter.addf("type", "exactly one of [scriptedMotion] must be set")
+		reporter.addf("type", "exactly one of [scriptedMotion, facingEntity] must be set")
 	}
 
 	reporter.requireString("entityId", e.EntityId)
@@ -395,6 +406,21 @@ func (e *EffectWaitForCondition) FillDefaultsAndValidate() error {
 	}
 
 	reporter.requireString("conditionId", e.ConditionId)
+
+	return reporter.report()
+}
+
+func (e *EffectLoadMap) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("mapName", e.MapName)
+
+	return reporter.report()
+}
+
+func (e *EffectSendEvent) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
 
 	return reporter.report()
 }

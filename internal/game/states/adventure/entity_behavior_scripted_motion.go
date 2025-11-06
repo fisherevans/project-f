@@ -144,9 +144,9 @@ type PathfindingMotion struct {
 	timeStuck            float64
 }
 
-const stableRecalcInterval = 1.
+const stableRecalcInterval = 5.
 const invalidRecalcInitialInterval = 0.1
-const recalcMaxInterval = 10.
+const recalcMaxInterval = 5.
 
 func NewPathfindingMotion(motionId string, entity Entity, to MapLocation) *PathfindingMotion {
 	m := &PathfindingMotion{

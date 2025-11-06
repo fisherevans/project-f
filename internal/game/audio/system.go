@@ -21,8 +21,9 @@ type Bus struct {
 type System struct {
 	mu sync.Mutex
 
-	Master *effects.Volume
-	Buses  struct {
+	Master    *effects.Volume
+	MasterTee *TeeStreamer // Tee for capturing audio samples
+	Buses     struct {
 		SFX, UI, Music, Amb *Bus
 	}
 
@@ -55,8 +56,12 @@ func newSystem() (*System, error) {
 	masterMix.Add(sys.Buses.SFX.vol, sys.Buses.UI.vol, sys.Buses.Music.vol, sys.Buses.Amb.vol)
 
 	sys.Master = &effects.Volume{Streamer: masterMix, Base: 2, Volume: 0} // master gain
+	
+	// Wrap master in a tee for audio capture
+	sys.MasterTee = NewTeeStreamer(sys.Master)
+	
 	// Start the persistent graph once.
-	speaker.Play(sys.Master)
+	speaker.Play(sys.MasterTee)
 	return sys, nil
 }
 

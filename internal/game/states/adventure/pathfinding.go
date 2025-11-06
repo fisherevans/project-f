@@ -90,8 +90,9 @@ func (es *EntitySystem) FindPath(from, to MapLocation, entity Entity) Path {
 		log.Warn().Str("elapsed", fmt.Sprintf("%dus", dur.Microseconds())).
 			Any("from", from).
 			Any("to", to).
-			Int("direct_distance", int(from.PathHeuristic(ctx, to))).
-			Int("path_distance", path.TotalDistance).
+			Int("direct_cost", int(from.PathHeuristic(ctx, to))).
+			Int("approx_direct_distance", int(from.PathHeuristic(ctx, to)/ImpedanceBase)).
+			Int("path_cost", path.TotalDistance).
 			Bool("found", path.PathFound).
 			Msgf("pathfinding took a long time")
 	}

@@ -1,11 +1,11 @@
 package adventure
 
 const (
-	ImpedanceImpassable = 1e100
-	ImpedanceLow        = 1e2
-	ImpedanceBase       = 1e3
-	ImpedanceHigh       = 1e4
-	ImpedanceExtreme    = 1e5
+	ImpedanceImpassable float64 = 1e100
+	ImpedanceLow        float64 = 100
+	ImpedanceBase       float64 = 1000
+	ImpedanceHigh       float64 = 10000
+	ImpedanceExtreme    float64 = 100000
 )
 
 type PathfindingImpedance interface {

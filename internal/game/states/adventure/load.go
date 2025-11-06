@@ -84,6 +84,13 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			impedance := NewConditionalImpedance(ImpedanceImpassable, targetNonPlayers)
 			AttachConditionalBlockIngressPresence(entity, false, impedance, targetNonPlayers)
+		case resources.TilePlayerCollisionBlock:
+			entity := a.entities.RegisterEntity(id, location)
+			targetPlayer := func(id string) bool {
+				return id == a.player
+			}
+			impedance := NewConditionalImpedance(ImpedanceImpassable, targetPlayer)
+			AttachConditionalBlockIngressPresence(entity, false, impedance, targetPlayer)
 		case resources.TileCollisionBlock:
 			entity := a.entities.RegisterEntity(id, location)
 			AttachBlockIngressPresence(entity, false, NewImpassableImpedance())
@@ -139,5 +146,5 @@ func initializeMap(a *State, m *resources.Map) {
 			log.Warn().Msgf("Unknown entity type: %s / %s", entityId, entityType)
 		}
 	}
-	a.eventDispatcher.Init(a.worldState)
+	a.eventDispatcher.Init()
 }

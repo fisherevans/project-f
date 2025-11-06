@@ -8,6 +8,9 @@ import (
 type StringList []string
 
 func (s StringList) Random() string {
+	if len(s) == 0 {
+		return ""
+	}
 	return s[rand.Intn(len(s))]
 }
 
@@ -15,6 +18,7 @@ func (s StringList) Randomf(args ...interface{}) string {
 	return fmt.Sprintf(s.Random(), args...)
 }
 
+// these examples average about 10–14 words or 60–90 characters each
 var OneOffDialogues = StringList{
 	"Don't trust the company. Trust me. Actually, don't trust me either.",
 	"You smell like off-world dust. Been exploring?",

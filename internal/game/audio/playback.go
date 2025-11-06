@@ -11,31 +11,68 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// PlaySFX plays a cached SFX on the SFX bus (polyphonic). `gainDB` adjusts per call, e.g., -6 for softer.
-func (a *System) PlaySFX(name string, gainDB float64) {
-	a.PlaySoundOnBus(name, a.Buses.SFX, gainDB)
+const fadeOutDuration = 100 * time.Millisecond
+
+// Stopper allows stopping a sound with a fade-out to avoid pops
+type Stopper struct {
+	sys      *System
+	vol      *effects.Volume
+	stoppable *stoppableStreamer
 }
 
-// PlayUI plays a one-shot UI sound on UI bus
-func (a *System) PlayUI(name string) { a.PlaySoundOnBus(name, a.Buses.UI, 0) }
+// Stop fades out the sound over 0.1s and then stops it
+func (s *Stopper) Stop() {
+	if s == nil || s.stoppable == nil {
+		return
+	}
+	go func() {
+		speaker.Lock()
+		currentVol := s.vol.Volume
+		speaker.Unlock()
+		s.sys.fade(s.vol, currentVol, -60, fadeOutDuration)
+		s.stoppable.Stop()
+	}()
+}
 
-// PlaySoundOnBus plays a cached SFX on a specific bus
-func (a *System) PlaySoundOnBus(name string, bus *Bus, gainDB float64) {
+// PlaySFX plays a cached SFX on the SFX bus (polyphonic). `gainDB` adjusts per call, e.g., -6 for softer.
+// Returns a Stopper that can fade out and stop the sound early.
+func (a *System) PlaySFX(name string, gainDB float64) *Stopper {
+	return a.PlaySoundOnBus(name, a.Buses.SFX, gainDB)
+}
+
+// PlayUI plays a one-shot UI sound on UI bus. Returns a Stopper.
+func (a *System) PlayUI(name string) *Stopper { return a.PlaySoundOnBus(name, a.Buses.UI, 0) }
+
+// PlaySoundOnBus plays a cached SFX on a specific bus. Returns a Stopper.
+func (a *System) PlaySoundOnBus(name string, bus *Bus, gainDB float64) *Stopper {
 	a.mu.Lock()
 	buf := a.cache[name]
 	a.mu.Unlock()
 	if buf == nil {
 		log.Warn().Str("name", name).Msgf("unable to find cached audio buffer")
-		return
+		return nil
 	}
 	var s beep.Streamer = buf.Streamer(0, buf.Len())
-	// Optional per-instance volume (fast)
-	if gainDB != 0 {
-		s = &effects.Volume{Streamer: s, Base: 2, Volume: gainDB}
+	
+	// Wrap in stoppable so we can stop it mid-playback
+	stoppable := &stoppableStreamer{s: s}
+	
+	// Wrap in volume control for both initial gain and fade-out
+	vol := &effects.Volume{
+		Streamer: stoppable,
+		Base:     2,
+		Volume:   gainDB,
 	}
+	
 	speaker.Lock()
-	bus.mix.Add(s)
+	bus.mix.Add(vol)
 	speaker.Unlock()
+	
+	return &Stopper{
+		sys:      a,
+		vol:      vol,
+		stoppable: stoppable,
+	}
 }
 
 // PlayMusic starts looping music from file; returns a stop func.

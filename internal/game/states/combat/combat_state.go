@@ -151,8 +151,8 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.Player.GetTempo().Render(s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.6)))
 	s.Opponent.GetTempo().Render(s.batch, pixel.IM.Moved(pixel.V(8+game.GameWidth/2, game.GameHeight*0.6)))
 
-	game.DebugBL("player status: %s", s.Player.GetStatuses().String())
-	game.DebugBL("opponent status: %s", s.Opponent.GetStatuses().String())
+	game.DebugBLf("player status: %s", s.Player.GetStatuses().String())
+	game.DebugBLf("opponent status: %s", s.Opponent.GetStatuses().String())
 
 	if s.phase == PhaseComplete {
 		overlay := "Battle complete!"

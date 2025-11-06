@@ -61,14 +61,14 @@ func (e *entityReference) IsBehaviorEnabled() bool {
 }
 
 func (e *entityReference) DisableBehavior(source string) {
-	if _, ok := e.system.disabledBehaviors[e.id][source]; !ok {
+	if _, ok := e.system.disabledBehaviors[e.id]; !ok {
 		e.system.disabledBehaviors[e.id] = map[string]struct{}{}
 	}
 	e.system.disabledBehaviors[e.id][source] = struct{}{}
 }
 
 func (e *entityReference) EnableBehavior(source string) {
-	if _, ok := e.system.disabledBehaviors[e.id][source]; !ok {
+	if _, ok := e.system.disabledBehaviors[e.id]; !ok {
 		return
 	}
 	delete(e.system.disabledBehaviors[e.id], source)

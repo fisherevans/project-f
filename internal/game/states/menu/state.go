@@ -60,7 +60,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.transition = math.Min(1, s.transition+transitionDt*(1.0/transitionTime))
 	if s.exiting && s.transition <= 0 {
 		if err := game.CurrentSave().Save(); err != nil {
-			game.DebugNotification("failed to save: " + err.Error())
+			game.DebugNotificationf("failed to save: " + err.Error())
 		}
 		game.SetActiveStateIntent(game.SwapStateIntent{
 			State: s.background,
@@ -88,7 +88,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.batch.Draw(target)
 
-	game.DebugBL("retro frame: %v", game.CurrentSave().SystemSettings.RetroFrame)
+	game.DebugBLf("retro frame: %v", game.CurrentSave().SystemSettings.RetroFrame)
 }
 
 func (s *State) PopMenu() {

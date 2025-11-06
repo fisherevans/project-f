@@ -144,7 +144,7 @@ var statBoxContentPadding = 1
 func (sb *StatBox) Draw(target pixel.Target, matrix pixel.Matrix, frameWidth int) {
 	frameHeight := sb.FrameHeight()
 
-	game.DebugBR("frame height: %d", frameHeight)
+	game.DebugBRf("frame height: %d", frameHeight)
 
 	switch sb.originLocation {
 	case StatBoxOriginTopLeft:

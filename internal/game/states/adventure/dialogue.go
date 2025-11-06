@@ -48,7 +48,7 @@ var dialogueBox = textbox.NewInstance(
 
 func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
-	game.DebugBR("dialogue queue: %d", len(ds.queuedDialogues))
+	game.DebugBRf("dialogue queue: %d", len(ds.queuedDialogues))
 	entity, ok := s.entities.GetEntity(s.player)
 	if !ok {
 		log.Error().Str("player", string(s.player)).Msg("player not found in state")

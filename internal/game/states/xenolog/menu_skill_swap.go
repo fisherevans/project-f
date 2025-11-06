@@ -166,7 +166,7 @@ func (p *skillListItemAction) Height() int {
 
 func (p *skillListItemAction) ButtonAJustPressed(m *skillSwapMenu) {
 	if p.handler == nil {
-		game.DebugNotification("todo - implement sort and filter")
+		game.DebugNotificationf("todo - implement sort and filter")
 		return
 	}
 	p.handler(m)

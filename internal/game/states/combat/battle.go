@@ -31,10 +31,10 @@ func (b *Battle) GetOpponentCurrentTickProgress() float64 {
 }
 
 func (b *Battle) Update(s *State, timeDelta float64) {
-	game.DebugBR(fmt.Sprintf("PendingProgress: %f", b.PendingProgress))
-	game.DebugBR(fmt.Sprintf("TickPlayerNext: %t", b.TickPlayerNext))
-	game.DebugBR(fmt.Sprintf("PlayerSkill: %s", s.Player.GetCurrentSkill()))
-	game.DebugBR(fmt.Sprintf("OpponentSkill: %s", s.Opponent.GetCurrentSkill()))
+	game.DebugBRf(fmt.Sprintf("PendingProgress: %f", b.PendingProgress))
+	game.DebugBRf(fmt.Sprintf("TickPlayerNext: %t", b.TickPlayerNext))
+	game.DebugBRf(fmt.Sprintf("PlayerSkill: %s", s.Player.GetCurrentSkill()))
+	game.DebugBRf(fmt.Sprintf("OpponentSkill: %s", s.Opponent.GetCurrentSkill()))
 
 	if b.TickPlayerNext && s.Player.GetCurrentSkill() == nil {
 		if s.Player.PeekNextSkill() == nil || !s.Player.IsNextSkillCommitted() {

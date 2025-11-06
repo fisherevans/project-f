@@ -175,5 +175,5 @@ func (o SkillFightOption) OptionName() string {
 }
 
 func (o SkillFightOption) Trigger(s *State) {
-	game.DebugNotification("Triggering skill: %s", o.Name)
+	game.DebugNotificationf("Triggering skill: %s", o.Name)
 }

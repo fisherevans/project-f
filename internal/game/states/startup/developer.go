@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
@@ -23,11 +24,13 @@ type phase struct {
 
 type DeveloperState struct {
 	game.BaseState
+	initialized    bool
 	elapsed        float64
 	phases         []phase
 	effects        []*effect
 	random         *rand.Rand
 	effectTriggers []int
+	stopper        *audio.Stopper
 }
 
 func NewDeveloper(_ game.StartupDeveloperIntent) game.State {
@@ -41,6 +44,7 @@ func NewDeveloper(_ game.StartupDeveloperIntent) game.State {
 		{render: s.renderEffects, from: 0, until: 10},
 		{render: s.renderShootingIcon, from: 0.1, until: 2.5, fn: interp.Linear},
 		{render: s.renderBars, from: 0, until: 0.45},
+		{render: s.renderFade, from: 7, until: developerEnd},
 	}
 	effectDelta := game.GameWidth / 30
 	for x := game.GameWidth - effectDelta; x > 0; x -= effectDelta {
@@ -49,11 +53,25 @@ func NewDeveloper(_ game.StartupDeveloperIntent) game.State {
 	return s
 }
 
+const initializeDeveloperAfter = 0.2
+const developerEnd = 8.0
+
 func (s *DeveloperState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+	s.elapsed += timeDelta
+	if !s.initialized && s.elapsed > initializeDeveloperAfter {
+		s.initialized = true
+		s.stopper = audio.GetSystem().PlaySFX("startup/developer", 0)
+	}
+
 	if game.Controls[*DeveloperState]().ButtonB().JustPressed() {
 		game.SetActiveStateIntent(game.StartupDeviceIntent{})
+		s.stopper.Stop()
 	}
-	s.elapsed += timeDelta
+	if s.elapsed > developerEnd || game.Controls[*DeveloperState]().ButtonA().JustPressed() {
+		game.SetActiveStateIntent(game.TitleIntent{})
+		s.stopper.Stop()
+	}
+
 	target.Clear(colors.FromString("#563da6"))
 
 	for _, p := range s.phases {
@@ -72,8 +90,8 @@ func (s *DeveloperState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect,
 func (s *DeveloperState) renderBars(target pixel.Target, progression, _ float64) {
 	bannerHeight := 24
 	dy := int((float64(game.GameHeight/2) - float64(bannerHeight) + 2) * (1.0 - progression))
-	game.DebugBL("prog: %f", progression)
-	game.DebugBL("dy: %d", dy)
+	game.DebugBLf("prog: %f", progression)
+	game.DebugBLf("dy: %d", dy)
 	gfx.DrawRect(atlas, target, gfx.Moved(0, +dy+bannerHeight), gfx.TopLeft, game.GameWidth, game.GameHeight, colors.Black.RGBA)
 	gfx.DrawRect(atlas, target, gfx.Moved(0, game.GameHeight-dy-bannerHeight), gfx.BottomLeft, game.GameWidth, game.GameHeight, colors.Black.RGBA)
 }
@@ -193,4 +211,8 @@ func (s *DeveloperState) renderShootingIcon(target pixel.Target, progression flo
 		maxAge:        s.random.Float64()*maxAge/2.0 + maxAge/2.0,
 		mask:          colors.WithAlpha(baseColor, 1.0-maxAlphaCull*s.random.Float64()),
 	})
+}
+
+func (s *DeveloperState) renderFade(target pixel.Target, progression float64, delta float64) {
+	gfx.DrawRect(atlas, target, gfx.Moved(0, 0), gfx.BottomLeft, game.GameWidth, game.GameHeight, colors.WithAlpha(colors.Black.RGBA, progression))
 }

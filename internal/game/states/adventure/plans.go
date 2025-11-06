@@ -89,6 +89,7 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityContext, batch *Eff
 				Int("effectIndex", ab.nextEffectIndex).
 				Int("totalEffects", len(batch.Effects)).
 				Int("completionIds", len(completionIds)).
+				Type("effectType", effect).
 				Msg("Executing serial effect")
 
 			for _, completionId := range completionIds {
@@ -171,6 +172,7 @@ func (pe *PlanExecutor) Update() {
 					Int("effectIndex", ab.nextEffectIndex).
 					Int("totalEffects", len(ab.batch.Effects)).
 					Int("completionIds", len(completionIds)).
+					Type("effectType", effect).
 					Msg("Executing serial effect")
 
 				for _, completionId := range completionIds {

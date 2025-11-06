@@ -86,7 +86,7 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 		optionTextbox.Render(target, gfx.Moved(10, int(targetBounds.H())-35-15*index), optionContent)
 	}
 
-	game.DebugBR("enter: select")
-	game.DebugBR("w/s/up/down: change")
-	game.DebugBR("esc: cancel")
+	game.DebugBRf("enter: select")
+	game.DebugBRf("w/s/up/down: change")
+	game.DebugBRf("esc: cancel")
 }

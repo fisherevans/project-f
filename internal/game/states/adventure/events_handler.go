@@ -30,12 +30,12 @@ func (o *HandlerOutput) WithParallelPlan(v ...Effect) *HandlerOutput {
 
 // EventHandler is the interface that all event handlers must implement
 type EventHandler interface {
-	Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput
-	HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput
+	Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput
+	HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput
 }
 
 // EventHandlerFunc is a function that handles a specific event type
-type EventHandlerFunc func(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput
+type EventHandlerFunc func(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput
 
 type EntityContext interface {
 	EntityId() string

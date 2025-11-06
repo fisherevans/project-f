@@ -322,10 +322,10 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("// BasicHandlerBuilder provides a simple way to build event handlers with type-safe state\n")
 	sb.WriteString("type BasicHandlerBuilder[T any] struct {\n")
 	sb.WriteString("\tDefaultState func() T\n\n")
-	sb.WriteString("\tInit func(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput\n\n")
+	sb.WriteString("\tInit func(ctx EntityContext, gameState GameState, state T) *HandlerOutput\n\n")
 
 	for _, event := range events {
-		sb.WriteString(fmt.Sprintf("\t%s func(ctx EntityContext, world WorldStateReader, state T, event *%s) *HandlerOutput\n",
+		sb.WriteString(fmt.Sprintf("\t%s func(ctx EntityContext, gameState GameState, state T, event *%s) *HandlerOutput\n",
 			event.JSFunctionName, event.TypeName))
 	}
 	sb.WriteString("}\n\n")
@@ -340,14 +340,14 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("}\n\n")
 
 	// Generate fluent builder methods
-	sb.WriteString("func (b *BasicHandlerBuilder[T]) WithInit(init func(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput) *BasicHandlerBuilder[T] {\n")
+	sb.WriteString("func (b *BasicHandlerBuilder[T]) WithInit(init func(ctx EntityContext, gameState GameState, state T) *HandlerOutput) *BasicHandlerBuilder[T] {\n")
 	sb.WriteString("\tb.Init = init\n")
 	sb.WriteString("\treturn b\n")
 	sb.WriteString("}\n\n")
 
 	for _, event := range events {
 		methodName := "With" + event.JSFunctionName
-		sb.WriteString(fmt.Sprintf("func (b *BasicHandlerBuilder[T]) %s(%s func(ctx EntityContext, world WorldStateReader, state T, event *%s) *HandlerOutput) *BasicHandlerBuilder[T] {\n",
+		sb.WriteString(fmt.Sprintf("func (b *BasicHandlerBuilder[T]) %s(%s func(ctx EntityContext, gameState GameState, state T, event *%s) *HandlerOutput) *BasicHandlerBuilder[T] {\n",
 			methodName, camelCase(event.JSFunctionName), event.TypeName))
 		sb.WriteString(fmt.Sprintf("\tb.%s = %s\n", event.JSFunctionName, camelCase(event.JSFunctionName)))
 		sb.WriteString("\treturn b\n")
@@ -385,15 +385,15 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("}\n\n")
 
 	// Generate Init method
-	sb.WriteString("func (h *basicHandler[T]) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {\n")
+	sb.WriteString("func (h *basicHandler[T]) Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput {\n")
 	sb.WriteString("\tif h.builder.Init == nil {\n")
 	sb.WriteString("\t\treturn nil\n")
 	sb.WriteString("\t}\n")
-	sb.WriteString("\treturn h.builder.Init(ctx, world, h.convertState(state))\n")
+	sb.WriteString("\treturn h.builder.Init(ctx, gameState, h.convertState(state))\n")
 	sb.WriteString("}\n\n")
 
 	// Generate HandleEvent method
-	sb.WriteString("func (h *basicHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {\n")
+	sb.WriteString("func (h *basicHandler[T]) HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput {\n")
 	sb.WriteString("\tconvertedState := h.convertState(state)\n")
 	sb.WriteString("\tswitch e := event.(type) {\n")
 
@@ -402,7 +402,7 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 		sb.WriteString(fmt.Sprintf("\t\tif h.builder.%s == nil {\n", event.JSFunctionName))
 		sb.WriteString("\t\t\treturn nil\n")
 		sb.WriteString("\t\t}\n")
-		sb.WriteString(fmt.Sprintf("\t\treturn h.builder.%s(ctx, world, convertedState, e)\n", event.JSFunctionName))
+		sb.WriteString(fmt.Sprintf("\t\treturn h.builder.%s(ctx, gameState, convertedState, e)\n", event.JSFunctionName))
 	}
 
 	sb.WriteString("\t}\n")
@@ -418,9 +418,9 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("// Note: Override TypedInit (not Init) and the typed event methods.\n")
 	sb.WriteString("// BaseHandler will automatically call your TypedInit from Init.\n")
 	sb.WriteString("type TypedEventHandler[T any] interface {\n")
-	sb.WriteString("\tTypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput\n")
+	sb.WriteString("\tTypedInit(ctx EntityContext, gameState GameState, state T) *HandlerOutput\n")
 	for _, event := range events {
-		sb.WriteString(fmt.Sprintf("\t%s(ctx EntityContext, world WorldStateReader, state T, event *%s) *HandlerOutput\n",
+		sb.WriteString(fmt.Sprintf("\t%s(ctx EntityContext, gameState GameState, state T, event *%s) *HandlerOutput\n",
 			event.JSFunctionName, event.TypeName))
 	}
 	sb.WriteString("}\n\n")
@@ -450,23 +450,23 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("}\n\n")
 
 	// Generate Init method for BaseHandler (calls TypedInit)
-	sb.WriteString("func (h *BaseHandler[T]) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {\n")
-	sb.WriteString("\treturn h.TypedInit(ctx, world, h.convertState(state))\n")
+	sb.WriteString("func (h *BaseHandler[T]) Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput {\n")
+	sb.WriteString("\treturn h.TypedInit(ctx, gameState, h.convertState(state))\n")
 	sb.WriteString("}\n\n")
 
 	// Generate TypedInit method for BaseHandler
-	sb.WriteString("func (h *BaseHandler[T]) TypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput {\n")
+	sb.WriteString("func (h *BaseHandler[T]) TypedInit(ctx EntityContext, gameState GameState, state T) *HandlerOutput {\n")
 	sb.WriteString("\treturn nil\n")
 	sb.WriteString("}\n\n")
 
 	// Generate HandleEvent method for BaseHandler
-	sb.WriteString("func (h *BaseHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {\n")
+	sb.WriteString("func (h *BaseHandler[T]) HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput {\n")
 	sb.WriteString("\tconvertedState := h.convertState(state)\n")
 	sb.WriteString("\tswitch e := event.(type) {\n")
 
 	for _, event := range events {
 		sb.WriteString(fmt.Sprintf("\tcase *%s:\n", event.TypeName))
-		sb.WriteString(fmt.Sprintf("\t\treturn h.%s(ctx, world, convertedState, e)\n", event.JSFunctionName))
+		sb.WriteString(fmt.Sprintf("\t\treturn h.%s(ctx, gameState, convertedState, e)\n", event.JSFunctionName))
 	}
 
 	sb.WriteString("\t}\n")
@@ -475,7 +475,7 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 
 	// Generate no-op event handler methods for BaseHandler
 	for _, event := range events {
-		sb.WriteString(fmt.Sprintf("func (h *BaseHandler[T]) %s(ctx EntityContext, world WorldStateReader, state T, event *%s) *HandlerOutput {\n",
+		sb.WriteString(fmt.Sprintf("func (h *BaseHandler[T]) %s(ctx EntityContext, gameState GameState, state T, event *%s) *HandlerOutput {\n",
 			event.JSFunctionName, event.TypeName))
 		sb.WriteString("\treturn nil\n")
 		sb.WriteString("}\n\n")

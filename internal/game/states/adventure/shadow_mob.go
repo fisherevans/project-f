@@ -108,7 +108,7 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 					}),
 				)
 			} else {
-				game.DebugNotification("Mob caught you! Toggle F5")
+				game.DebugNotificationf("Mob caught you! Toggle F5")
 			}
 		},
 	}
@@ -300,7 +300,7 @@ func (m *ShadowMob) Update(s *State, timeDelta float64) {
 		return
 	}
 
-	game.DebugBL("mob state: %s", m.state)
+	game.DebugBLf("mob state: %s", m.state)
 
 	// Cooldown for trigger hook
 	if m.triggerTimer > 0 {

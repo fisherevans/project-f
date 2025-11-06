@@ -42,11 +42,16 @@ func init() {
 		case "fast":
 			speed = 4
 		}
-		AttachBlockIngressPresence(entity, true, NewMovementAwareImpedance(entity, ImpedanceBase, ImpedanceHigh))
-		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle)
+		idleFacingDirection := input.DirectionFromString(params.Properties.GetString("idle_facing_direction", ""))
+		// to walk around and entity, it will take 2 extra moves - adding 1 extra here when walking keeps them walking behind each other
+		AttachBlockIngressPresence(entity, true, NewMovementAwareImpedance(entity, ImpedanceHigh, ImpedanceBase*2))
+		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle, idleFacingDirection)
 		entity.SetMovementSpeed(types.MoveStateWalking, speed)
+		if params.Properties.GetString("script_ref", "") != "" {
+			return entity, nil
+		}
 		return entity, NewBasicHandler(None{}).
-			WithOnInteract(func(ctx EntityContext, world WorldStateReader, state None, event *EventOnInteract) *HandlerOutput {
+			WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
 					return nil
 				}
@@ -55,7 +60,7 @@ func init() {
 				}
 				return NewOutput().WithSerialPlan(
 					NewMutateNPCEffect(ctx.EntityId()).
-						WithTalkingAtEntityId(world.GetAsString("player_id")),
+						WithTalkingAtEntityId(event.SourceId),
 					NewChatterEffect(ctx.EntityId(), 4, util.OneOffDialogues.Random()),
 					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
 				)
@@ -70,19 +75,21 @@ type NPCBehavior struct {
 	talkingTowards string
 	idleDuration   float64
 
-	DoesMove        bool
-	HorizOnly       bool
-	IdleChance      float64
-	MaxIdleDuration float64
+	DoesMove            bool
+	HorizOnly           bool
+	IdleChance          float64
+	MaxIdleDuration     float64
+	IdleFacingDirection input.Direction
 }
 
-func AttachNPCBehavior(entity Entity, doesMove, horizOnly bool, idleChance, maxIdleDuration float64) *NPCBehavior {
+func AttachNPCBehavior(entity Entity, horizOnly, doesMove bool, idleChance, maxIdleDuration float64, idleFacingDirection input.Direction) *NPCBehavior {
 	b := &NPCBehavior{
-		entity:          entity,
-		DoesMove:        doesMove,
-		HorizOnly:       horizOnly,
-		IdleChance:      idleChance,
-		MaxIdleDuration: maxIdleDuration,
+		entity:              entity,
+		DoesMove:            doesMove,
+		HorizOnly:           horizOnly,
+		IdleChance:          idleChance,
+		MaxIdleDuration:     maxIdleDuration,
+		IdleFacingDirection: idleFacingDirection,
 	}
 	entity.PushBehavior(b)
 	return b
@@ -113,9 +120,12 @@ func (b *NPCBehavior) doMovement() {
 		talkingTowardsEnt, exists := b.entity.GetSystem().GetEntity(b.talkingTowards)
 		if exists {
 			faceDir := DirectionTowards(b.entity.GetPreciseLocation(), talkingTowardsEnt.GetPreciseLocation())
-			b.entity.GetSystem().state.ExecuteSystemEffects(NewEntityFaceDirectionEffect(b.entity.GetId(), faceDir))
+			b.entity.SetFacingDirection(faceDir)
 		}
 		return
+	}
+	if b.IdleFacingDirection != input.NotPressed {
+		b.entity.SetFacingDirection(b.IdleFacingDirection)
 	}
 	if !b.DoesMove {
 		return

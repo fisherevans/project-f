@@ -28,6 +28,12 @@ func (s *State) processEffects(effects ...DispatchedEffect) {
 			s.processEffectWaitForCondition(dispatched.Source, e)
 		case *EffectSetWorldState:
 			s.processSetWorldState(dispatched.Source, e)
+		case *EffectSetRunState:
+			s.processSetRunState(dispatched.Source, e)
+		case *EffectLoadMap:
+			s.processEffectLoadMap(dispatched.Source, e)
+		case *EffectSendEvent:
+			s.processEffectSendEvent(dispatched.Source, e)
 
 		// adventure state changes
 		case *EffectFade:
@@ -97,7 +103,9 @@ func (s *State) processEffects(effects ...DispatchedEffect) {
 
 		default:
 			log.Warn().Type("effect_type", e).Msg("Unknown effect type, ignoring")
+			return
 		}
+		logEffectInfof(dispatched.Source, dispatched.Effect, "event processed: %T", dispatched.Effect)
 	}
 }
 
@@ -197,8 +205,9 @@ func (s *State) processEffectMutateBlockingPresence(source EntityContext, e *Eff
 }
 
 func (s *State) processEffectYieldElythium(source EntityContext, e *EffectYieldElythium) {
-	s.run.Elythium += e.Amount
-	logEffectInfof(source, e, "elythium granted")
+	newValue := max(s.RunState().Get(rpg.RunStateKeyElythium).AsInt(0)+e.Amount, 0)
+	s.runState.Set(rpg.RunStateKeyElythium, newValue)
+	logEffectInfof(source, e, "elythium updated to: %d", newValue)
 }
 
 func (s *State) processEffectChatter(source EntityContext, e *EffectChatter) {
@@ -207,8 +216,13 @@ func (s *State) processEffectChatter(source EntityContext, e *EffectChatter) {
 }
 
 func (s *State) processSetWorldState(source EntityContext, e *EffectSetWorldState) {
-	s.setWorldState(e.Key, e.Value, source.EntityId())
+	s.worldState.Set(e.Key, e.Value)
 	logEffectInfof(source, e, "world state updated")
+}
+
+func (s *State) processSetRunState(source EntityContext, e *EffectSetRunState) {
+	s.runState.Set(e.Key, e.Value)
+	logEffectInfof(source, e, "run state updated")
 }
 
 func (s *State) processEffectSetEntityLocation(source EntityContext, e *EffectSetEntityLocation) {
@@ -512,9 +526,9 @@ func (s *State) processEffectTriggerCombat(source EntityContext, e *EffectTrigge
 	s.enteringCombat = true
 
 	postCombat := func(r game.CombatIntentResult) {
-		game.DebugNotification("Combat complete!")
+		game.DebugNotificationf("Combat complete!")
 		if !r.PlayerWon {
-			game.SetActiveStateIntent(game.TitleIntent{})
+			game.SetActiveStateIntent(game.StartupDeviceIntent{})
 			return
 		}
 		game.SetActiveStateIntent(game.SwapStateIntent{
@@ -567,7 +581,7 @@ func (s *State) processEffectTriggerCombat(source EntityContext, e *EffectTrigge
 				opponent = options[rand.Intn(len(options))]
 			}
 			game.SetActiveStateIntent(game.CombatIntent{
-				Run:        &rpg.Run{},
+				Run:        s.run,
 				Opponent:   opponent,
 				Background: e.Background,
 				OnComplete: postCombat,
@@ -618,16 +632,20 @@ func (s *State) processEffectStartScriptedMotion(source EntityContext, e *Effect
 }
 
 func (s *State) processEffectOverrideEntityBehavior(source EntityContext, e *EffectPushEntityBehavior) {
-	if e.ScriptedMotion == nil {
-		logEffectWarnf(source, e, "only scripted motion behaviors can be used to override")
-		return
-	}
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity to override behavior")
 		return
 	}
-	AttachScriptedMotionBehavior(entity)
+	if e.ScriptedMotion != nil {
+		AttachScriptedMotionBehavior(entity)
+	} else if e.FacingEntity != nil {
+		facing := ""
+		if e.FacingEntity.EntityId != nil {
+			facing = *e.FacingEntity.EntityId
+		}
+		AttachFaceEntityBehavior(entity, facing)
+	}
 	logEffectInfof(source, e, "entity behavior overridden")
 }
 
@@ -682,4 +700,34 @@ func (s *State) processEffectRegisterEntity(source EntityContext, e *EffectRegis
 		return
 	}
 	logEffectInfof(source, e, "entity registered: %v", params)
+}
+
+func (s *State) processEffectLoadMap(source EntityContext, e *EffectLoadMap) {
+	if e == nil {
+		return
+	}
+	if err := game.CurrentSave().Save(); err != nil {
+		game.DebugNotificationf("failed to save: %v", err)
+	}
+	s.ExecuteSystemEffectsInOrder(
+		NewMutateEntityBehaviorEffect(s.player).WithDisableBy("map_load"),
+		NewFadeEffect(1, 1).
+			WithAutoDeactivate(false).
+			WithFromColor("#0000").
+			WithToColor("#000f"),
+		NewFunctionEffect(func() {
+			game.SetActiveStateIntent(game.AdventureIntent{
+				MapName: e.MapName,
+			})
+		}),
+	)
+	logEffectInfof(source, e, "adventure intent set")
+}
+
+func (s *State) processEffectSendEvent(source EntityContext, e *EffectSendEvent) {
+	if e == nil {
+		return
+	}
+	s.eventDispatcher.Dispatch(e.Event)
+	logEffectInfof(source, e, "event sent")
 }

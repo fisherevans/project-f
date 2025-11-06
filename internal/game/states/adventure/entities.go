@@ -72,13 +72,17 @@ func initializeMetadata(context *BasicEntityContext, entity Entity) {
 	context.WithMetadata(types.MetadataKeyIsTalking, func() any {
 		behavior, ok := entity.GetBehavior()
 		if !ok {
-			return nil
+			return false
 		}
 		npc, ok := behavior.(*NPCBehavior)
-		if !ok {
-			return nil
+		if ok {
+			return npc.talkingTowards != ""
 		}
-		return npc.talkingTowards != ""
+		facing, ok := behavior.(*FaceEntityBehavior)
+		if ok {
+			return facing.facing != ""
+		}
+		return false
 	})
 	context.WithMetadata(types.MetadataKeyMode, func() any {
 		renderer, ok := entity.GetRenderer()

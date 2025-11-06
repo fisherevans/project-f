@@ -7,7 +7,7 @@ import (
 
 var registry map[string]func(properties *util.Properties) EventHandler
 
-func Register(name string, factory func(*util.Properties) EventHandler) {
+func registerHandlerReference(name string, factory func(*util.Properties) EventHandler) {
 	if registry == nil {
 		registry = make(map[string]func(properties *util.Properties) EventHandler)
 	}

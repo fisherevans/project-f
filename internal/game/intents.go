@@ -44,7 +44,6 @@ type CombatIntent struct {
 
 type AdventureIntent struct {
 	MapName string
-	Save    *rpg.GameSave
 }
 
 type SwapStateIntent struct {

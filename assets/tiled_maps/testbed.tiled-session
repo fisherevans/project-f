@@ -13,16 +13,59 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
-        "map1.tmx": {
-            "expandedObjectLayers": [
-                13,
-                6
+        "hq.tmx": {
+            "expandedGroupLayers": [
+                4,
+                3,
+                2
             ],
-            "scale": 3.1417,
-            "selectedLayer": 1,
+            "expandedObjectLayers": [
+                11,
+                4
+            ],
+            "scale": 3.7711,
+            "selectedLayer": 9,
             "viewCenter": {
-                "x": 977.3371104815863,
-                "y": 1195.0536333832001
+                "x": 4043.249980111904,
+                "y": 3774.3629179814907
+            }
+        },
+        "intro.tmx": {
+            "expandedGroupLayers": [
+                4,
+                3,
+                2
+            ],
+            "expandedObjectLayers": [
+                11,
+                4,
+                12,
+                13
+            ],
+            "scale": 3.7276,
+            "selectedLayer": 9,
+            "viewCenter": {
+                "x": 4137.917158493401,
+                "y": 2623.5379332546413
+            }
+        },
+        "map1.tmx": {
+            "expandedGroupLayers": [
+                21,
+                20,
+                19
+            ],
+            "expandedObjectLayers": [
+                21,
+                6,
+                18,
+                13
+            ],
+            "scale": 1.3838,
+            "selectedLayer": 8,
+            "viewCenter": {
+                "x": 850.9177626824687,
+                "y": 889.9407428819194
             }
         },
         "snowhex_base.tsx": {

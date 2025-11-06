@@ -57,8 +57,8 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	fullDeltaY := deviceBackgroundSprite.Bounds().H()
 	dy := (1.0 - s.transition.Progress()) * fullDeltaY
 
-	game.DebugBL("transition: %f", s.transition.Progress())
-	game.DebugBL("dy: %f", dy)
+	game.DebugBLf("transition: %f", s.transition.Progress())
+	game.DebugBLf("dy: %f", dy)
 
 	bgMatrix := pixel.IM.Moved(gfx.BottomLeft.Align(deviceBackgroundSprite)).
 		Moved(pixel.V(0, -dy))

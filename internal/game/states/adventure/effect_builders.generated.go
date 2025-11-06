@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-31T22:26:33-04:00 by go generate
+// Generated at 2025-11-05T15:38:48-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -84,6 +84,13 @@ func (e *EffectMutateBlockingPresence) WithIsBlockingIngress(isBlockingIngress b
 
 func NewSetWorldStateEffect(key string, value any) *EffectSetWorldState {
 	return &EffectSetWorldState{
+		Key: key,
+		Value: value,
+	}
+}
+
+func NewSetRunStateEffect(key string, value any) *EffectSetRunState {
+	return &EffectSetRunState{
 		Key: key,
 		Value: value,
 	}
@@ -339,6 +346,11 @@ func (e *EffectPushEntityBehavior) WithScriptedMotion(scriptedMotion EntityBehav
 	return e
 }
 
+func (e *EffectPushEntityBehavior) WithFacingEntity(facingEntity EntityBehaviorFacingEntity) *EffectPushEntityBehavior {
+	e.FacingEntity = &facingEntity
+	return e
+}
+
 func NewPopEntityBehaviorEffect(entityId string) *EffectPopEntityBehavior {
 	return &EffectPopEntityBehavior{
 		EntityId: entityId,
@@ -395,5 +407,17 @@ func NewWaitForConditionEffect(check ConditionCheck) *EffectWaitForCondition {
 func (e *EffectWaitForCondition) WithConditionId(conditionId string) *EffectWaitForCondition {
 	e.ConditionId = conditionId
 	return e
+}
+
+func NewLoadMapEffect(mapName string) *EffectLoadMap {
+	return &EffectLoadMap{
+		MapName: mapName,
+	}
+}
+
+func NewSendEventEffect(event any) *EffectSendEvent {
+	return &EffectSendEvent{
+		Event: event,
+	}
 }
 

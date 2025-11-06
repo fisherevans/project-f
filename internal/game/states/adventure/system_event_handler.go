@@ -16,24 +16,24 @@ func newSystemEventHandler(s *State) EventHandler {
 	}
 }
 
-func (h *SystemEventHandler) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
+func (h *SystemEventHandler) Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput {
 	return nil
 }
 
-func (h *SystemEventHandler) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {
+func (h *SystemEventHandler) HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput {
 	if event == nil {
 		return nil
 	}
 	switch e := event.(type) {
 	case *EventEntityZoneActivity:
-		return h.onZoneActivity(ctx, world, state, e)
+		return h.onZoneActivity(ctx, gameState, state, e)
 	case *EventOnInteract:
-		return h.onInteract(ctx, world, state, e)
+		return h.onInteract(ctx, gameState, state, e)
 	}
 	return nil
 }
 
-func (h *SystemEventHandler) onInteract(ctx EntityContext, world WorldStateReader, _ any, event *EventOnInteract) *HandlerOutput {
+func (h *SystemEventHandler) onInteract(ctx EntityContext, gameState GameState, _ any, event *EventOnInteract) *HandlerOutput {
 	if event.SourceId != h.State.player {
 		log.Warn().Msgf("system event: got interact event for a non-player entity %s", ctx.EntityId())
 	}
@@ -85,7 +85,7 @@ func findDashDestination(s *State, direction input.Direction, location MapLocati
 	}
 }
 
-func (h *SystemEventHandler) onZoneActivity(ctx EntityContext, world WorldStateReader, _ any, event *EventEntityZoneActivity) *HandlerOutput {
+func (h *SystemEventHandler) onZoneActivity(ctx EntityContext, gameState GameState, _ any, event *EventEntityZoneActivity) *HandlerOutput {
 	if !event.IsEntering || event.EntityId != h.State.player || event.WasTeleported {
 		return nil
 	}

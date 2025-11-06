@@ -37,14 +37,14 @@ func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []Dispatche
 }
 
 type Dispatcher struct {
-	worldState         WorldState
+	gameState          GameState
 	effectDispatcher   EffectDispatcher
 	registeredHandlers map[string]*registeredEventHandler
 }
 
-func NewDispatcher(worldState WorldState, effectDispatcher EffectDispatcher) *Dispatcher {
+func NewDispatcher(gameState GameState, effectDispatcher EffectDispatcher) *Dispatcher {
 	return &Dispatcher{
-		worldState:         worldState,
+		gameState:          gameState,
 		effectDispatcher:   effectDispatcher,
 		registeredHandlers: make(map[string]*registeredEventHandler),
 	}
@@ -91,15 +91,15 @@ func (d *Dispatcher) Dispatch(events ...any) {
 			eventPtr = ptr.Interface()
 		}
 		for _, registeredHandler := range d.registeredHandlers {
-			output := registeredHandler.Handler.HandleEvent(registeredHandler.ctx, d.worldState, registeredHandler.State, eventPtr)
+			output := registeredHandler.Handler.HandleEvent(registeredHandler.ctx, d.gameState, registeredHandler.State, eventPtr)
 			d.handleOutput(registeredHandler, output)
 		}
 	}
 }
 
-func (d *Dispatcher) Init(worldState WorldStateReader) {
+func (d *Dispatcher) Init() {
 	for _, registeredHandler := range d.registeredHandlers {
-		output := registeredHandler.Handler.Init(registeredHandler.ctx, worldState, registeredHandler.State)
+		output := registeredHandler.Handler.Init(registeredHandler.ctx, d.gameState, registeredHandler.State)
 		d.handleOutput(registeredHandler, output)
 	}
 }

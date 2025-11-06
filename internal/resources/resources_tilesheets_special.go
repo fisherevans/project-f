@@ -11,6 +11,7 @@ func newTilesheetSpriteId(tilesheet string, col, row int) TilesheetSpriteId {
 var (
 	TileNPCCollisionBlock       = newTilesheetSpriteId("snowhex_base", 64, 49)
 	TileCollisionBlock          = newTilesheetSpriteId("snowhex_base", 65, 49)
+	TilePlayerCollisionBlock    = newTilesheetSpriteId("snowhex_base", 65, 48)
 	TileCollisionJumpVertical   = newTilesheetSpriteId("snowhex_base", 66, 49)
 	TileCollisionJumpAll        = newTilesheetSpriteId("snowhex_base", 67, 49)
 	TileCollisionJumpHorizontal = newTilesheetSpriteId("snowhex_base", 68, 49)

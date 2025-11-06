@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-10-31T22:26:33-04:00 by go generate
+// Generated at 2025-11-05T15:38:48-05:00 by go generate
 // Source: internal/game/adventure/events_handler.go
 
 package adventure
@@ -8,16 +8,19 @@ package adventure
 type BasicHandlerBuilder[T any] struct {
 	DefaultState func() T
 
-	Init func(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput
+	Init func(ctx EntityContext, gameState GameState, state T) *HandlerOutput
 
-	OnInteract func(ctx EntityContext, world WorldStateReader, state T, event *EventOnInteract) *HandlerOutput
-	DialogueComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventDialogueComplete) *HandlerOutput
-	ChatterComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventChatterComplete) *HandlerOutput
-	TimerComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventTimerComplete) *HandlerOutput
-	EntityZoneActivity func(ctx EntityContext, world WorldStateReader, state T, event *EventEntityZoneActivity) *HandlerOutput
-	WorldStateUpdated func(ctx EntityContext, world WorldStateReader, state T, event *EventWorldStateUpdated) *HandlerOutput
-	CombatComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput
-	ScriptedMotionComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput
+	OnInteract func(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput
+	DialogueComplete func(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput
+	ChatterComplete func(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput
+	TimerComplete func(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput
+	EntityZoneActivity func(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput
+	WorldStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput
+	WorldStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput
+	RunStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput
+	RunStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput
+	CombatComplete func(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput
+	ScriptedMotionComplete func(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput
 }
 
 func NewBasicHandler[T any](defaultState T) *BasicHandlerBuilder[T] {
@@ -28,47 +31,62 @@ func NewBasicHandler[T any](defaultState T) *BasicHandlerBuilder[T] {
 	}
 }
 
-func (b *BasicHandlerBuilder[T]) WithInit(init func(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithInit(init func(ctx EntityContext, gameState GameState, state T) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.Init = init
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithOnInteract(onInteract func(ctx EntityContext, world WorldStateReader, state T, event *EventOnInteract) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithOnInteract(onInteract func(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.OnInteract = onInteract
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithDialogueComplete(dialogueComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventDialogueComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithDialogueComplete(dialogueComplete func(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.DialogueComplete = dialogueComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithChatterComplete(chatterComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventChatterComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithChatterComplete(chatterComplete func(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.ChatterComplete = chatterComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithTimerComplete(timerComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventTimerComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithTimerComplete(timerComplete func(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.TimerComplete = timerComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithEntityZoneActivity(entityZoneActivity func(ctx EntityContext, world WorldStateReader, state T, event *EventEntityZoneActivity) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithEntityZoneActivity(entityZoneActivity func(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.EntityZoneActivity = entityZoneActivity
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithWorldStateUpdated(worldStateUpdated func(ctx EntityContext, world WorldStateReader, state T, event *EventWorldStateUpdated) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithWorldStateUpdated(worldStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.WorldStateUpdated = worldStateUpdated
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithCombatComplete(combatComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithWorldStateDeleted(worldStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput) *BasicHandlerBuilder[T] {
+	b.WorldStateDeleted = worldStateDeleted
+	return b
+}
+
+func (b *BasicHandlerBuilder[T]) WithRunStateUpdated(runStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput) *BasicHandlerBuilder[T] {
+	b.RunStateUpdated = runStateUpdated
+	return b
+}
+
+func (b *BasicHandlerBuilder[T]) WithRunStateDeleted(runStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput) *BasicHandlerBuilder[T] {
+	b.RunStateDeleted = runStateDeleted
+	return b
+}
+
+func (b *BasicHandlerBuilder[T]) WithCombatComplete(combatComplete func(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.CombatComplete = combatComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithScriptedMotionComplete(scriptedMotionComplete func(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithScriptedMotionComplete(scriptedMotionComplete func(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.ScriptedMotionComplete = scriptedMotionComplete
 	return b
 }
@@ -100,56 +118,71 @@ func (h *basicHandler[T]) convertState(original any) T {
 	return v
 }
 
-func (h *basicHandler[T]) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
+func (h *basicHandler[T]) Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput {
 	if h.builder.Init == nil {
 		return nil
 	}
-	return h.builder.Init(ctx, world, h.convertState(state))
+	return h.builder.Init(ctx, gameState, h.convertState(state))
 }
 
-func (h *basicHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {
+func (h *basicHandler[T]) HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput {
 	convertedState := h.convertState(state)
 	switch e := event.(type) {
 	case *EventOnInteract:
 		if h.builder.OnInteract == nil {
 			return nil
 		}
-		return h.builder.OnInteract(ctx, world, convertedState, e)
+		return h.builder.OnInteract(ctx, gameState, convertedState, e)
 	case *EventDialogueComplete:
 		if h.builder.DialogueComplete == nil {
 			return nil
 		}
-		return h.builder.DialogueComplete(ctx, world, convertedState, e)
+		return h.builder.DialogueComplete(ctx, gameState, convertedState, e)
 	case *EventChatterComplete:
 		if h.builder.ChatterComplete == nil {
 			return nil
 		}
-		return h.builder.ChatterComplete(ctx, world, convertedState, e)
+		return h.builder.ChatterComplete(ctx, gameState, convertedState, e)
 	case *EventTimerComplete:
 		if h.builder.TimerComplete == nil {
 			return nil
 		}
-		return h.builder.TimerComplete(ctx, world, convertedState, e)
+		return h.builder.TimerComplete(ctx, gameState, convertedState, e)
 	case *EventEntityZoneActivity:
 		if h.builder.EntityZoneActivity == nil {
 			return nil
 		}
-		return h.builder.EntityZoneActivity(ctx, world, convertedState, e)
+		return h.builder.EntityZoneActivity(ctx, gameState, convertedState, e)
 	case *EventWorldStateUpdated:
 		if h.builder.WorldStateUpdated == nil {
 			return nil
 		}
-		return h.builder.WorldStateUpdated(ctx, world, convertedState, e)
+		return h.builder.WorldStateUpdated(ctx, gameState, convertedState, e)
+	case *EventWorldStateDeleted:
+		if h.builder.WorldStateDeleted == nil {
+			return nil
+		}
+		return h.builder.WorldStateDeleted(ctx, gameState, convertedState, e)
+	case *EventRunStateUpdated:
+		if h.builder.RunStateUpdated == nil {
+			return nil
+		}
+		return h.builder.RunStateUpdated(ctx, gameState, convertedState, e)
+	case *EventRunStateDeleted:
+		if h.builder.RunStateDeleted == nil {
+			return nil
+		}
+		return h.builder.RunStateDeleted(ctx, gameState, convertedState, e)
 	case *EventCombatComplete:
 		if h.builder.CombatComplete == nil {
 			return nil
 		}
-		return h.builder.CombatComplete(ctx, world, convertedState, e)
+		return h.builder.CombatComplete(ctx, gameState, convertedState, e)
 	case *EventScriptedMotionComplete:
 		if h.builder.ScriptedMotionComplete == nil {
 			return nil
 		}
-		return h.builder.ScriptedMotionComplete(ctx, world, convertedState, e)
+		return h.builder.ScriptedMotionComplete(ctx, gameState, convertedState, e)
 	}
 	return nil
 }
@@ -162,15 +195,18 @@ func (h *basicHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader,
 // Note: Override TypedInit (not Init) and the typed event methods.
 // BaseHandler will automatically call your TypedInit from Init.
 type TypedEventHandler[T any] interface {
-	TypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput
-	OnInteract(ctx EntityContext, world WorldStateReader, state T, event *EventOnInteract) *HandlerOutput
-	DialogueComplete(ctx EntityContext, world WorldStateReader, state T, event *EventDialogueComplete) *HandlerOutput
-	ChatterComplete(ctx EntityContext, world WorldStateReader, state T, event *EventChatterComplete) *HandlerOutput
-	TimerComplete(ctx EntityContext, world WorldStateReader, state T, event *EventTimerComplete) *HandlerOutput
-	EntityZoneActivity(ctx EntityContext, world WorldStateReader, state T, event *EventEntityZoneActivity) *HandlerOutput
-	WorldStateUpdated(ctx EntityContext, world WorldStateReader, state T, event *EventWorldStateUpdated) *HandlerOutput
-	CombatComplete(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput
-	ScriptedMotionComplete(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput
+	TypedInit(ctx EntityContext, gameState GameState, state T) *HandlerOutput
+	OnInteract(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput
+	DialogueComplete(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput
+	ChatterComplete(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput
+	TimerComplete(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput
+	EntityZoneActivity(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput
+	WorldStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput
+	WorldStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput
+	RunStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput
+	RunStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput
+	CombatComplete(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput
+	ScriptedMotionComplete(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput
 }
 
 // BaseHandler provides a base implementation with no-op methods for all events
@@ -195,66 +231,84 @@ func (h *BaseHandler[T]) convertState(original any) T {
 	return v
 }
 
-func (h *BaseHandler[T]) Init(ctx EntityContext, world WorldStateReader, state any) *HandlerOutput {
-	return h.TypedInit(ctx, world, h.convertState(state))
+func (h *BaseHandler[T]) Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput {
+	return h.TypedInit(ctx, gameState, h.convertState(state))
 }
 
-func (h *BaseHandler[T]) TypedInit(ctx EntityContext, world WorldStateReader, state T) *HandlerOutput {
+func (h *BaseHandler[T]) TypedInit(ctx EntityContext, gameState GameState, state T) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) HandleEvent(ctx EntityContext, world WorldStateReader, state any, event any) *HandlerOutput {
+func (h *BaseHandler[T]) HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput {
 	convertedState := h.convertState(state)
 	switch e := event.(type) {
 	case *EventOnInteract:
-		return h.OnInteract(ctx, world, convertedState, e)
+		return h.OnInteract(ctx, gameState, convertedState, e)
 	case *EventDialogueComplete:
-		return h.DialogueComplete(ctx, world, convertedState, e)
+		return h.DialogueComplete(ctx, gameState, convertedState, e)
 	case *EventChatterComplete:
-		return h.ChatterComplete(ctx, world, convertedState, e)
+		return h.ChatterComplete(ctx, gameState, convertedState, e)
 	case *EventTimerComplete:
-		return h.TimerComplete(ctx, world, convertedState, e)
+		return h.TimerComplete(ctx, gameState, convertedState, e)
 	case *EventEntityZoneActivity:
-		return h.EntityZoneActivity(ctx, world, convertedState, e)
+		return h.EntityZoneActivity(ctx, gameState, convertedState, e)
 	case *EventWorldStateUpdated:
-		return h.WorldStateUpdated(ctx, world, convertedState, e)
+		return h.WorldStateUpdated(ctx, gameState, convertedState, e)
+	case *EventWorldStateDeleted:
+		return h.WorldStateDeleted(ctx, gameState, convertedState, e)
+	case *EventRunStateUpdated:
+		return h.RunStateUpdated(ctx, gameState, convertedState, e)
+	case *EventRunStateDeleted:
+		return h.RunStateDeleted(ctx, gameState, convertedState, e)
 	case *EventCombatComplete:
-		return h.CombatComplete(ctx, world, convertedState, e)
+		return h.CombatComplete(ctx, gameState, convertedState, e)
 	case *EventScriptedMotionComplete:
-		return h.ScriptedMotionComplete(ctx, world, convertedState, e)
+		return h.ScriptedMotionComplete(ctx, gameState, convertedState, e)
 	}
 	return nil
 }
 
-func (h *BaseHandler[T]) OnInteract(ctx EntityContext, world WorldStateReader, state T, event *EventOnInteract) *HandlerOutput {
+func (h *BaseHandler[T]) OnInteract(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) DialogueComplete(ctx EntityContext, world WorldStateReader, state T, event *EventDialogueComplete) *HandlerOutput {
+func (h *BaseHandler[T]) DialogueComplete(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) ChatterComplete(ctx EntityContext, world WorldStateReader, state T, event *EventChatterComplete) *HandlerOutput {
+func (h *BaseHandler[T]) ChatterComplete(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) TimerComplete(ctx EntityContext, world WorldStateReader, state T, event *EventTimerComplete) *HandlerOutput {
+func (h *BaseHandler[T]) TimerComplete(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) EntityZoneActivity(ctx EntityContext, world WorldStateReader, state T, event *EventEntityZoneActivity) *HandlerOutput {
+func (h *BaseHandler[T]) EntityZoneActivity(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) WorldStateUpdated(ctx EntityContext, world WorldStateReader, state T, event *EventWorldStateUpdated) *HandlerOutput {
+func (h *BaseHandler[T]) WorldStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) CombatComplete(ctx EntityContext, world WorldStateReader, state T, event *EventCombatComplete) *HandlerOutput {
+func (h *BaseHandler[T]) WorldStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) ScriptedMotionComplete(ctx EntityContext, world WorldStateReader, state T, event *EventScriptedMotionComplete) *HandlerOutput {
+func (h *BaseHandler[T]) RunStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) RunStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) CombatComplete(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput {
+	return nil
+}
+
+func (h *BaseHandler[T]) ScriptedMotionComplete(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput {
 	return nil
 }
 

@@ -83,13 +83,13 @@ func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error)
 			return fmt.Errorf("error accessing file %s: %w", path, err)
 		}
 
-		if d.Name() != strings.ToLower(d.Name()) {
-			log.Warn().Str("path", path).Msgf("skipping file with upper case letters %s", path)
+		doLoad, extension := doLoadFile(d, localResource)
+		if !doLoad {
 			return nil
 		}
 
-		doLoad, extension := doLoadFile(d, localResource)
-		if !doLoad {
+		if d.Name() != strings.ToLower(d.Name()) {
+			log.Warn().Str("path", path).Msgf("skipping file with upper case letters %s", path)
 			return nil
 		}
 
@@ -118,7 +118,7 @@ func doLoadFile(d fs.DirEntry, resource LocalResource) (bool, string) {
 	for _, extension := range resource.FileExtensions {
 		lowerExt := strings.ToLower(extension)
 		suffix := "." + lowerExt
-		if strings.HasSuffix(d.Name(), suffix) {
+		if strings.HasSuffix(strings.ToLower(d.Name()), suffix) {
 			return true, lowerExt
 		}
 	}

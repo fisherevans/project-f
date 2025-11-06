@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
@@ -15,8 +16,11 @@ func init() {
 func registerModeBasedEntity(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 	entity := system.RegisterEntity(params.EntityId, params.Location)
 	AttachPresenceFromConfig(entity, params.Properties)
-	AttachModeBasedEntityRenderer(entity).
-		WithPropConfigurations(params.Properties)
+	renderer := AttachModeBasedEntityRenderer(entity)
+	if params.SpriteId != nil {
+		renderer.getBasicEntityRenderer("").WithAnimations(anim.NewStaticAnimation(atlas.GetTilesheetSpriteById(*params.SpriteId)))
+	}
+	renderer.WithPropConfigurations(params.Properties)
 	return entity, nil
 }
 

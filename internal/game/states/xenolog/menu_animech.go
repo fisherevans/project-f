@@ -47,7 +47,7 @@ func newAnimechMenu(s *Screen) *animechMenu {
 						func() {
 							respec()
 							saveOrNotify()
-							game.DebugNotification("Removed all level ups")
+							game.DebugNotificationf("Removed all level ups")
 						})
 					m.screen.PushMenu(modal, false)
 				}),
@@ -78,13 +78,13 @@ func newAnimechMenu(s *Screen) *animechMenu {
 			{
 				label: "store",
 				SimpleItem: navigtion.NewSimpleItem[*animechMenu]().WithButtonAHandler(func(m *animechMenu) {
-					game.DebugNotification("todo - implement storing load outs")
+					game.DebugNotificationf("todo - implement storing load outs")
 				}),
 			},
 			{
 				label: "load",
 				SimpleItem: navigtion.NewSimpleItem[*animechMenu]().WithButtonAHandler(func(m *animechMenu) {
-					game.DebugNotification("todo - implement loading load outs")
+					game.DebugNotificationf("todo - implement loading load outs")
 				}),
 			},
 		},

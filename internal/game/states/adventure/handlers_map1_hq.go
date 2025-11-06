@@ -6,10 +6,10 @@ import (
 )
 
 func init() {
-	Register("captain_chair_front", func(props *util.Properties) EventHandler {
+	registerHandlerReference("captain_chair_front", func(props *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			EntityZoneActivity: func(ctx EntityContext, world WorldStateReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
-				pId := world.GetAsString("player_id")
+			EntityZoneActivity: func(ctx EntityContext, gameState GameState, state None, event *EventEntityZoneActivity) *HandlerOutput {
+				pId := gameState.RunState().Get(runStateKeyPlayerId).AsString("unknown")
 				if event.ZoneId != "captains_area" || pId != event.EntityId || !event.IsEntering {
 					return nil
 				}

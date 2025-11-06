@@ -28,3 +28,5 @@ var Elythium = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 26, 
 var Rocket = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 27, Row: 15}
 
 var ShadowMob = resources.TilesheetSpriteId{Tilesheet: "space_base", Column: 39, Row: 2}
+
+var LoadMap = resources.TilesheetSpriteId{Tilesheet: "snowhex_base", Column: 72, Row: 49}

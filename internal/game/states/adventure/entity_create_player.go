@@ -43,7 +43,7 @@ func init() {
 		// todo this seems gross
 		system.state.player = params.EntityId
 		system.state.camera = NewFollowCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium)
-		system.state.worldState.Set("player_id", system.state.player)
+		system.state.runState.Set(runStateKeyPlayerId, system.state.player)
 		return nil, nil
 	})
 }
@@ -119,12 +119,12 @@ func (b *PlayerBehavior) Update(timeDelta float64) {
 	}
 	// face direction of intent after movement
 	if b.intentDirection != input.NotPressed && b.intentDirection != b.entity.GetFacingDirection() {
-		b.entity.GetSystem().state.ExecuteSystemEffects(NewEntityFaceDirectionEffect(b.entity.GetId(), b.intentDirection))
+		b.entity.SetFacingDirection(b.intentDirection)
 	}
 	// trigger movement if player is pressing a direction
 	if game.Controls[*State]().DPad().IsPressed() {
 		direction := game.Controls[*State]().DPad().GetDirection()
-		b.entity.GetSystem().state.ExecuteSystemEffects(NewEntityFaceDirectionEffect(b.entity.GetId(), b.intentDirection))
+		b.entity.SetFacingDirection(b.intentDirection)
 		if b.intentDirection != direction {
 			b.intentDirection = direction
 			b.intentDuration = 0

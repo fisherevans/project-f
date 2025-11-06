@@ -33,6 +33,31 @@
         {
             "color": "#ffa0a0a4",
             "drawFill": true,
+            "id": 8,
+            "members": [
+                {
+                    "name": "target",
+                    "type": "string",
+                    "value": "other_entity_id"
+                }
+            ],
+            "name": "DirectInteraction",
+            "type": "class",
+            "useAs": [
+                "property",
+                "map",
+                "layer",
+                "object",
+                "tile",
+                "tileset",
+                "wangcolor",
+                "wangset",
+                "project"
+            ]
+        },
+        {
+            "color": "#ffa0a0a4",
+            "drawFill": true,
             "id": 5,
             "members": [
                 {
@@ -48,7 +73,7 @@
                 {
                     "name": "render_config",
                     "type": "string",
-                    "value": "#animations:\n#  \"mode\":\n#    - name: path/to/tilesheet:default"
+                    "value": "#animations:\n#  \"mode\":\n#    - name: path/to/tilesheet:default\n#lights:\n#  \"mode\":\n#    - color: #fff\n#      size: 2\n#      modifier: pulse_medium # optional"
                 },
                 {
                     "name": "script_ref",
@@ -84,6 +109,26 @@
                     "name": "entity_id",
                     "type": "string",
                     "value": ""
+                },
+                {
+                    "name": "idle_facing_direction",
+                    "type": "string",
+                    "value": "\"\"/up"
+                },
+                {
+                    "name": "movement",
+                    "type": "string",
+                    "value": "static/horiz"
+                },
+                {
+                    "name": "script_ref",
+                    "type": "string",
+                    "value": "\"\"/npc.chatters"
+                },
+                {
+                    "name": "speed",
+                    "type": "string",
+                    "value": "\"\"/fast"
                 }
             ],
             "name": "NPC",

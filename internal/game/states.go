@@ -45,14 +45,13 @@ func DefaultSelectorState() SelectIntent {
 	i = i.With("Adventure", func() any {
 		return AdventureIntent{
 			MapName: "map1",
-			Save:    ctx.save,
 		}
 	})
 
 	fight := func(p rpg.PrimortalType) {
 		i = i.With("Fight "+rpg.Primortals[p].Name, func() any {
 			return CombatIntent{
-				Run:        &rpg.Run{},
+				Run:        rpg.NewRun(),
 				Opponent:   p,
 				Background: "combat/background_sylvoria",
 				OnComplete: func(r CombatIntentResult) {

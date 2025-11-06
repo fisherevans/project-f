@@ -120,10 +120,14 @@ func (p *Properties) LoadStructFromKey(key string, target any) bool {
 		}
 	}
 
-	decoder := yaml.NewDecoder(strings.NewReader(string(data)))
+	value := string(data)
+	if strings.Trim(value, " ") == "" {
+		return false
+	}
+	decoder := yaml.NewDecoder(strings.NewReader(value))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(target); err != nil {
-		log.Fatal().Str("key", key).Type("target", target).Err(err).
+		log.Fatal().Any("props", p).Str("key", key).Type("target", target).Err(err).
 			Msgf("failed to load struct from key")
 		return false
 	}
