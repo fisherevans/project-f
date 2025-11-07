@@ -5,7 +5,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
@@ -17,10 +16,10 @@ func init() {
 		entity := system.RegisterEntity(params.EntityId, params.Location)
 		renderer := AttachMovementBasedEntityRenderer(entity)
 		color := colors.HSLToRGBA(rand.Float64(), 1, 0.65)
-		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
-			types.MoveStateIdle:    anim.AshaIdle(atlas),
-			types.MoveStateWalking: anim.AshaWalk(atlas),
-			types.MoveStateRunning: anim.AshaRun(atlas),
+		for moveState, animations := range map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+			MoveStateIdle:    anim.AshaIdle(atlas),
+			MoveStateWalking: anim.AshaWalk(atlas),
+			MoveStateRunning: anim.AshaRun(atlas),
 		} {
 			for direction, animation := range animations {
 				cma := NewColorMaskAnimation(animation).WithColorMask(color)
@@ -46,7 +45,7 @@ func init() {
 		// to walk around and entity, it will take 2 extra moves - adding 1 extra here when walking keeps them walking behind each other
 		AttachBlockIngressPresence(entity, true, NewMovementAwareImpedance(entity, ImpedanceHigh, ImpedanceBase*2))
 		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle, idleFacingDirection)
-		entity.SetMovementSpeed(types.MoveStateWalking, speed)
+		entity.SetMovementSpeed(MoveStateWalking, speed)
 		if params.Properties.GetString("script_ref", "") != "" {
 			return entity, nil
 		}
@@ -55,7 +54,7 @@ func init() {
 				if ctx.EntityId() != event.TargetId {
 					return nil
 				}
-				if ctx.GetBoolMetadata(types.MetadataKeyIsTalking) {
+				if ctx.GetBoolMetadata(MetadataKeyIsTalking) {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(

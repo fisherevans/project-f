@@ -59,3 +59,11 @@ func DirectionTowards(from, to pixel.Vec) input.Direction {
 		return input.Down
 	}
 }
+
+type TeleportReference string
+
+type Teleport struct {
+	Destination   TeleportReference
+	Location      MapLocation
+	ExitDirection input.Direction
+}

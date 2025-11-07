@@ -2,7 +2,15 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
+)
+
+type MoveState int
+
+const (
+	MoveStateIdle MoveState = iota
+	MoveStateWalking
+	MoveStateRunning
+	MoveStateDashing
 )
 
 type EntityMovement struct {
@@ -11,11 +19,11 @@ type EntityMovement struct {
 
 	FacingDirection input.Direction
 
-	MovementState       types.MoveState
+	MovementState       MoveState
 	TargetLocation      MapLocation
 	Progression         float64
 	ProgressionScale    float64 // used for moving more than 1 tile at a time (i.e. 4 at a time, scale == 1/4)
-	MovementSpeeds      map[types.MoveState]float64
+	MovementSpeeds      map[MoveState]float64
 	AccumulatedMovement float64
 }
 
@@ -29,7 +37,7 @@ func NewEntityMovement(id string, es *EntitySystem, location MapLocation) *Entit
 	}
 }
 
-func (m *EntityMovement) getSpeed(moveState types.MoveState) float64 {
+func (m *EntityMovement) getSpeed(moveState MoveState) float64 {
 	speed, exists := m.MovementSpeeds[moveState]
 	if !exists {
 		speed = 1
@@ -41,7 +49,7 @@ func (ep *EntityMovement) ProgressMovement(timeDelta float64) float64 {
 	if timeDelta <= 0 {
 		return 0
 	}
-	if ep.MovementState == types.MoveStateIdle {
+	if ep.MovementState == MoveStateIdle {
 		ep.AccumulatedMovement = 0
 		return 0
 	}
@@ -53,7 +61,7 @@ func (ep *EntityMovement) ProgressMovement(timeDelta float64) float64 {
 		ep.System.occupations.Vacate(ep.Id, ep.System.occupations.GetPosition(ep.Id))
 		newPrimary := ep.TargetLocation
 		ep.TargetLocation = MapLocation{}
-		ep.MovementState = types.MoveStateIdle
+		ep.MovementState = MoveStateIdle
 		remaining := ep.Progression - 1.0
 		ep.Progression = 0
 		ep.ProgressionScale = 1

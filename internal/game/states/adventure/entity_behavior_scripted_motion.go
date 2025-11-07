@@ -5,7 +5,6 @@ import (
 	"math"
 
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -62,7 +61,7 @@ func (s *ScriptedMotionBehavior) triggerMovement() {
 		s.onComplete(true)
 		return
 	}
-	movementStarted := s.entity.AttemptMovement(next, types.MoveStateWalking)
+	movementStarted := s.entity.AttemptMovement(next, MoveStateWalking)
 	s.target.NextLocationWasValid(movementStarted)
 }
 

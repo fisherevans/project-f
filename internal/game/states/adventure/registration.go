@@ -1,28 +1,12 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
 
 type None struct{}
-
-func init() {
-	newRegistrarBuilder().byClass("ModeBasedEntity").registrar(registerModeBasedEntity)
-}
-
-func registerModeBasedEntity(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
-	entity := system.RegisterEntity(params.EntityId, params.Location)
-	AttachPresenceFromConfig(entity, params.Properties)
-	renderer := AttachModeBasedEntityRenderer(entity)
-	if params.SpriteId != nil {
-		renderer.getBasicEntityRenderer("").WithAnimations(anim.NewStaticAnimation(atlas.GetTilesheetSpriteById(*params.SpriteId)))
-	}
-	renderer.WithPropConfigurations(params.Properties)
-	return entity, nil
-}
 
 type entityRegistrar func(NewEntityParams, *EntitySystem) (Entity, EventHandler)
 
@@ -63,6 +47,14 @@ func (r entityRegistrarTargets) registrar(registrar entityRegistrar) {
 	}
 }
 
+type NewEntityParams struct {
+	EntityId   string
+	Class      string
+	SpriteId   *resources.TilesheetSpriteId
+	Location   MapLocation
+	Properties *util.Properties
+}
+
 func (s *State) registerParameterizedEntity(params NewEntityParams) bool {
 	var registerer entityRegistrar
 	var exists bool
@@ -90,7 +82,7 @@ func (s *State) registerParameterizedEntity(params NewEntityParams) bool {
 		if eventHandler != nil {
 			log.Fatal().Str("entityId", string(params.EntityId)).Msgf("entity has more than one handler configured!")
 		}
-		eventHandler = Get(scriptRef, params.Properties)
+		eventHandler = getEventHandler(scriptRef, params.Properties)
 	}
 
 	if eventHandler != nil {
@@ -101,10 +93,25 @@ func (s *State) registerParameterizedEntity(params NewEntityParams) bool {
 	return true
 }
 
-type NewEntityParams struct {
-	EntityId   string
-	Class      string
-	SpriteId   *resources.TilesheetSpriteId
-	Location   MapLocation
-	Properties *util.Properties
+var eventHandlerRegistry map[string]func(properties *util.Properties) EventHandler
+
+func registerEventHandler(name string, factory func(*util.Properties) EventHandler) {
+	if eventHandlerRegistry == nil {
+		eventHandlerRegistry = make(map[string]func(properties *util.Properties) EventHandler)
+	}
+	if _, exists := eventHandlerRegistry[name]; exists {
+		log.Fatal().Msgf("Handler %s already exists", name)
+	}
+	eventHandlerRegistry[name] = factory
+}
+
+func getEventHandler(name string, props *util.Properties) EventHandler {
+	if eventHandlerRegistry == nil {
+		return nil
+	}
+	factory, ok := eventHandlerRegistry[name]
+	if !ok {
+		return nil
+	}
+	return factory(props)
 }

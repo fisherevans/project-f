@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	registerHandlerReference("captain_chair_front", func(props *util.Properties) EventHandler {
+	registerEventHandler("captain_chair_front", func(props *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			EntityZoneActivity: func(ctx EntityContext, gameState GameState, state None, event *EventEntityZoneActivity) *HandlerOutput {
 				pId := gameState.RunState().Get(runStateKeyPlayerId).AsString("unknown")

@@ -2,7 +2,6 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
@@ -10,7 +9,7 @@ import (
 func init() {
 	handler := NewBasicHandler(None{})
 	handler.WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-		if event.TargetId != ctx.EntityId() || ctx.GetMetadata(types.MetadataKeyMode) == "mined" {
+		if event.TargetId != ctx.EntityId() || ctx.GetMetadata(MetadataKeyMode) == "mined" {
 			return nil
 		}
 		mode := "mined"

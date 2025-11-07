@@ -29,10 +29,3 @@ func (r renderLayer) Render(target pixel.Target, cameraDelta pixel.Vec, bounds M
 		}
 	}
 }
-
-func normalizeRenderMoveDelta(vec pixel.Vec, tileSize resources.Pixels) pixel.Vec {
-	return pixel.Vec{
-		X: math.Round(vec.X * float64(tileSize)),
-		Y: math.Round(vec.Y * float64(tileSize)),
-	}
-}

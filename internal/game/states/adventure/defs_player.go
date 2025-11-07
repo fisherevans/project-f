@@ -4,7 +4,6 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
 	"github.com/gopxl/pixel/v2"
@@ -17,17 +16,17 @@ func init() {
 
 		dashPlayerLight := NewLight(colors.HexString("#88f"), 1.5)
 		normalPlayerLight := NewLight(colors.HexString("#888"), 1.5)
-		for moveState, animations := range map[types.MoveState]map[input.Direction]*anim.AnimatedSprite{
-			types.MoveStateIdle:    anim.AshaIdle(atlas),
-			types.MoveStateWalking: anim.AshaWalk(atlas),
-			types.MoveStateRunning: anim.AshaRun(atlas),
-			types.MoveStateDashing: anim.Dash(atlas),
+		for moveState, animations := range map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+			MoveStateIdle:    anim.AshaIdle(atlas),
+			MoveStateWalking: anim.AshaWalk(atlas),
+			MoveStateRunning: anim.AshaRun(atlas),
+			MoveStateDashing: anim.Dash(atlas),
 		} {
 			for direction, animation := range animations {
 				moveStateRenderer := NewBasicEntityRenderer(entity).WithAnimations(animation).
 					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
 					WithAnimationOriginOffset(pixel.V(0, 0.25))
-				if moveState == types.MoveStateDashing {
+				if moveState == MoveStateDashing {
 					moveStateRenderer.WithLights(dashPlayerLight)
 				} else {
 					moveStateRenderer.WithLights(normalPlayerLight)
@@ -37,9 +36,9 @@ func init() {
 		}
 		AttachBlockIngressPresence(entity, false, NewStaticImpedance(ImpedanceHigh))
 		AttachPlayerBehavior(entity)
-		entity.SetMovementSpeed(types.MoveStateWalking, characterSpeed)
-		entity.SetMovementSpeed(types.MoveStateRunning, characterSpeed*1.75)
-		entity.SetMovementSpeed(types.MoveStateDashing, characterSpeed*3)
+		entity.SetMovementSpeed(MoveStateWalking, characterSpeed)
+		entity.SetMovementSpeed(MoveStateRunning, characterSpeed*1.75)
+		entity.SetMovementSpeed(MoveStateDashing, characterSpeed*3)
 		// todo this seems gross
 		system.state.player = params.EntityId
 		system.state.camera = NewFollowCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium)
@@ -80,9 +79,9 @@ func (b *PlayerBehavior) triggerMovement() {
 		return
 	}
 	direction := game.Controls[*State]().DPad().GetDirection()
-	moveState := types.MoveStateWalking
+	moveState := MoveStateWalking
 	if game.Controls[*State]().ButtonB().IsPressed() {
-		moveState = types.MoveStateRunning
+		moveState = MoveStateRunning
 	}
 	b.entity.GetSystem().state.ExecuteSystemEffects(
 		NewTriggerMovementEffect(b.entity.GetId()).
@@ -104,12 +103,12 @@ func (b *PlayerBehavior) Update(timeDelta float64) {
 			b.intentDuration += timeDelta
 		}
 		if game.Controls[*State]().ButtonB().IsPressed() {
-			if b.entity.GetMovementState() == types.MoveStateWalking {
-				b.entity.AlterMovementState(types.MoveStateRunning)
+			if b.entity.GetMovementState() == MoveStateWalking {
+				b.entity.AlterMovementState(MoveStateRunning)
 			}
 		} else {
-			if b.entity.GetMovementState() == types.MoveStateRunning {
-				b.entity.AlterMovementState(types.MoveStateWalking)
+			if b.entity.GetMovementState() == MoveStateRunning {
+				b.entity.AlterMovementState(MoveStateWalking)
 			}
 		}
 		if game.Controls[*State]().ButtonA().JustPressedOrRepeated() {

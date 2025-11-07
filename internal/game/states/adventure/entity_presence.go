@@ -2,9 +2,14 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 )
+
+type PresenceConfig struct {
+	IsInteractable *bool    `yaml:"is_interactable"`
+	BlockIngress   *bool    `yaml:"block_ingress"`
+	Impedance      *float64 `yaml:"impedance"`
+}
 
 type EntityPresence interface {
 	PathfindingImpedance
@@ -14,7 +19,7 @@ type EntityPresence interface {
 }
 
 func AttachPresenceFromConfig(entity Entity, properties *util.Properties) EntityPresence {
-	cfg := &types.PresenceConfig{}
+	cfg := &PresenceConfig{}
 	impedanceWeight := ImpedanceExtreme
 	if !properties.LoadStructFromKey("presence_config", cfg) {
 		return AttachBlockIngressPresence(entity, true, NewStaticImpedance(impedanceWeight))

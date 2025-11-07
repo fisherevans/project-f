@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-06T11:44:32-05:00 by go generate
+// Generated at 2025-11-06T21:30:09-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -7,7 +7,6 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 )
@@ -31,9 +30,9 @@ func (e *EffectDialogue) WithDialogueId(dialogueId string) *EffectDialogue {
 
 func NewChatterEffect(entityId string, durationSeconds float64, message string) *EffectChatter {
 	return &EffectChatter{
-		EntityId: entityId,
+		EntityId:        entityId,
 		DurationSeconds: durationSeconds,
-		Message: message,
+		Message:         message,
 	}
 }
 
@@ -84,14 +83,14 @@ func (e *EffectMutateBlockingPresence) WithIsBlockingIngress(isBlockingIngress b
 
 func NewSetWorldStateEffect(key string, value any) *EffectSetWorldState {
 	return &EffectSetWorldState{
-		Key: key,
+		Key:   key,
 		Value: value,
 	}
 }
 
 func NewSetRunStateEffect(key string, value any) *EffectSetRunState {
 	return &EffectSetRunState{
-		Key: key,
+		Key:   key,
 		Value: value,
 	}
 }
@@ -118,8 +117,7 @@ func (e *EffectSetEntityLocation) WithToEntityId(toEntityId string) *EffectSetEn
 }
 
 func NewTeleportPlayerEffect() *EffectTeleportPlayer {
-	return &EffectTeleportPlayer{
-	}
+	return &EffectTeleportPlayer{}
 }
 
 func (e *EffectTeleportPlayer) WithToReference(toReference string) *EffectTeleportPlayer {
@@ -187,7 +185,7 @@ func (e *EffectMutateEntityBehavior) WithReset(reset bool) *EffectMutateEntityBe
 func NewFadeEffect(durationSeconds float64, transitions int) *EffectFade {
 	return &EffectFade{
 		DurationSeconds: durationSeconds,
-		Transitions: transitions,
+		Transitions:     transitions,
 	}
 }
 
@@ -233,7 +231,7 @@ func (e *EffectTriggerMovement) WithLocation(location MapLocation) *EffectTrigge
 	return e
 }
 
-func (e *EffectTriggerMovement) WithMoveState(moveState types.MoveState) *EffectTriggerMovement {
+func (e *EffectTriggerMovement) WithMoveState(moveState MoveState) *EffectTriggerMovement {
 	e.MoveState = &moveState
 	return e
 }
@@ -245,8 +243,7 @@ func NewResetMovementEffect(entityId string) *EffectResetMovement {
 }
 
 func NewOverrideCameraEffect() *EffectOverrideCamera {
-	return &EffectOverrideCamera{
-	}
+	return &EffectOverrideCamera{}
 }
 
 func (e *EffectOverrideCamera) WithFollow(follow FollowCamera) *EffectOverrideCamera {
@@ -261,8 +258,7 @@ func NewPopCameraOverrideEffect(maintainCurrentLocation bool) *EffectPopCameraOv
 }
 
 func NewMutateFollowCameraEffect() *EffectMutateFollowCamera {
-	return &EffectMutateFollowCamera{
-	}
+	return &EffectMutateFollowCamera{}
 }
 
 func (e *EffectMutateFollowCamera) WithFollowEntityId(followEntityId string) *EffectMutateFollowCamera {
@@ -373,8 +369,7 @@ func NewDeleteEntityEffect(entityId string) *EffectDeleteEntity {
 }
 
 func NewRegisterEntityEffect() *EffectRegisterEntity {
-	return &EffectRegisterEntity{
-	}
+	return &EffectRegisterEntity{}
 }
 
 func (e *EffectRegisterEntity) WithEntityId(entityId string) *EffectRegisterEntity {
@@ -429,4 +424,3 @@ func NewSendEventEffect(event any) *EffectSendEvent {
 		Event: event,
 	}
 }
-

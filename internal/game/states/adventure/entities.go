@@ -4,10 +4,14 @@ import (
 	"sort"
 
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
+)
+
+const (
+	MetadataKeyMode      = "mode"
+	MetadataKeyIsTalking = "isTalking"
 )
 
 type EntitySystem struct {
@@ -69,7 +73,7 @@ func (es *EntitySystem) DeleteEntity(id string) {
 }
 
 func initializeMetadata(context *BasicEntityContext, entity Entity) {
-	context.WithMetadata(types.MetadataKeyIsTalking, func() any {
+	context.WithMetadata(MetadataKeyIsTalking, func() any {
 		behavior, ok := entity.GetBehavior()
 		if !ok {
 			return false
@@ -84,7 +88,7 @@ func initializeMetadata(context *BasicEntityContext, entity Entity) {
 		}
 		return false
 	})
-	context.WithMetadata(types.MetadataKeyMode, func() any {
+	context.WithMetadata(MetadataKeyMode, func() any {
 		renderer, ok := entity.GetRenderer()
 		if !ok {
 			return nil
@@ -121,7 +125,7 @@ func (es *EntitySystem) interactableEntityIds(loc MapLocation) map[string]struct
 	return out
 }
 
-var validAttemptMovementStates = []types.MoveState{types.MoveStateWalking, types.MoveStateRunning, types.MoveStateDashing}
+var validAttemptMovementStates = []MoveState{MoveStateWalking, MoveStateRunning, MoveStateDashing}
 
 func (es *EntitySystem) isMovementValid(entity Entity, targetLocation MapLocation) (bool, input.Direction) {
 	debugLog := log.Debug().Str("id", entity.GetId())

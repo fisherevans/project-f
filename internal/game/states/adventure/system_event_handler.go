@@ -2,7 +2,6 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -56,7 +55,7 @@ func (h *SystemEventHandler) onInteract(ctx EntityContext, gameState GameState, 
 func (h *SystemEventHandler) onInteractDashGap(dashGapEntity Entity, state DashGapState, event *EventOnInteract) *HandlerOutput {
 	location := findDashDestination(h.State, event.SourceFacingDirection, dashGapEntity.GetLocation())
 	return NewOutput().WithEffects(
-		NewTriggerMovementEffect(event.SourceId).WithLocation(location).WithMoveState(types.MoveStateDashing),
+		NewTriggerMovementEffect(event.SourceId).WithLocation(location).WithMoveState(MoveStateDashing),
 	)
 }
 

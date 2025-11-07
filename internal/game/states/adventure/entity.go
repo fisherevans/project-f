@@ -4,7 +4,6 @@ import (
 	"slices"
 
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util/interp"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
@@ -20,14 +19,14 @@ type Entity interface {
 	GetPreciseLocation() pixel.Vec
 	IsMoving() bool
 	CancelMovement()
-	GetMovementState() types.MoveState
-	AlterMovementState(state types.MoveState)
+	GetMovementState() MoveState
+	AlterMovementState(state MoveState)
 	GetFacingDirection() input.Direction
 	SetFacingDirection(input.Direction)
-	GetMovementSpeed(state types.MoveState) float64
-	SetMovementSpeed(state types.MoveState, speed float64)
+	GetMovementSpeed(state MoveState) float64
+	SetMovementSpeed(state MoveState, speed float64)
 	Teleport(toLocation MapLocation)
-	AttemptMovement(targetLocation MapLocation, movementState types.MoveState) bool
+	AttemptMovement(targetLocation MapLocation, movementState MoveState) bool
 	GetEntityContext() EntityContext
 	SetEntityContextMetadata(key string, accessor func() any)
 
@@ -88,17 +87,17 @@ func (e *entityReference) PopBehavior() (EntityBehavior, bool) {
 	return popped, true
 }
 
-func (e *entityReference) AlterMovementState(state types.MoveState) {
-	if state == types.MoveStateIdle {
+func (e *entityReference) AlterMovementState(state MoveState) {
+	if state == MoveStateIdle {
 		e.CancelMovement()
 		return
 	}
 	e.system.movements[e.id].MovementState = state
 }
 
-func (e *entityReference) SetMovementSpeed(state types.MoveState, speed float64) {
+func (e *entityReference) SetMovementSpeed(state MoveState, speed float64) {
 	if e.system.movements[e.id].MovementSpeeds == nil {
-		e.system.movements[e.id].MovementSpeeds = map[types.MoveState]float64{}
+		e.system.movements[e.id].MovementSpeeds = map[MoveState]float64{}
 	}
 	e.system.movements[e.id].MovementSpeeds[state] = speed
 }
@@ -121,7 +120,7 @@ func (e *entityReference) GetEntityContext() EntityContext {
 	return e.system.contexts[e.id]
 }
 
-func (e *entityReference) AttemptMovement(targetLocation MapLocation, movementState types.MoveState) bool {
+func (e *entityReference) AttemptMovement(targetLocation MapLocation, movementState MoveState) bool {
 	debugLog := log.Debug().Str("id", e.id).Any("state", movementState).Any("target", targetLocation)
 	if !slices.Contains(validAttemptMovementStates, movementState) {
 		debugLog.Msgf("movement state not valid")
@@ -179,7 +178,7 @@ func (e *entityReference) GetPreciseLocation() pixel.Vec {
 	}
 	m := e.movement()
 	p := m.Progression
-	if m.MovementState == types.MoveStateDashing {
+	if m.MovementState == MoveStateDashing {
 		p = interp.Smootherstep(p)
 	} else if m.AccumulatedMovement < 1 {
 		p = interp.EaseInToLinear(p, 2)
@@ -188,16 +187,16 @@ func (e *entityReference) GetPreciseLocation() pixel.Vec {
 	return location.Add(movementDelta)
 }
 
-func (e *entityReference) GetMovementState() types.MoveState {
+func (e *entityReference) GetMovementState() MoveState {
 	return e.system.movements[e.id].MovementState
 }
 
-func (e *entityReference) GetMovementSpeed(moveState types.MoveState) float64 {
+func (e *entityReference) GetMovementSpeed(moveState MoveState) float64 {
 	return e.system.movements[e.id].getSpeed(moveState)
 }
 
 func (e *entityReference) IsMoving() bool {
-	return e.GetMovementState() != types.MoveStateIdle
+	return e.GetMovementState() != MoveStateIdle
 }
 
 func (e *entityReference) CancelMovement() {
@@ -207,7 +206,7 @@ func (e *entityReference) CancelMovement() {
 	m := e.movement()
 	e.system.occupations.Vacate(e.id, m.TargetLocation)
 	m.TargetLocation = e.GetLocation()
-	m.MovementState = types.MoveStateIdle
+	m.MovementState = MoveStateIdle
 	m.Progression = 0
 	m.AccumulatedMovement = 0
 	m.ProgressionScale = 1

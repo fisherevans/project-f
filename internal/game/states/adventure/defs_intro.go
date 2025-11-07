@@ -4,14 +4,13 @@ import (
 	"math/rand"
 
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
 
 func init() {
 	attemptsKey := "intro.not_your_paper.attempts"
-	registerHandlerReference("intro.not_your_paper", func(_ *util.Properties) EventHandler {
+	registerEventHandler("intro.not_your_paper", func(_ *util.Properties) EventHandler {
 		messages := []string{
 			"This isn't my paper... I probably shouldn't touch it.",
 			"Still not my paper.",
@@ -36,7 +35,7 @@ func init() {
 		}.CreateHandler()
 	})
 	hasPapersKey := "intro.has_papers"
-	registerHandlerReference("intro.is_your_paper", func(_ *util.Properties) EventHandler {
+	registerEventHandler("intro.is_your_paper", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
@@ -62,7 +61,7 @@ func init() {
 	type InstructorState struct {
 		Blabbed bool
 	}
-	registerHandlerReference("intro.paper_instructor", func(_ *util.Properties) EventHandler {
+	registerEventHandler("intro.paper_instructor", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[InstructorState]{
 			OnInteract: func(ctx EntityContext, gameState GameState, state InstructorState, event *EventOnInteract) *HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
@@ -88,11 +87,11 @@ func init() {
 				return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
 					WithMiddleEffects(
 						NewDialogueEffect(message),
-						NewOverrideCameraEffect().WithFollow(FollowCamera{EntityId: util.Ptr("intro.papers_door")}),
+						NewMutateFollowCameraEffect().WithFollowEntityId("intro.papers_door"),
 						NewTimerEffect(1.5),
 						NewSetRunStateEffect(papersTurnedInKey, true),
 						NewTimerEffect(1.5),
-						NewPopCameraOverrideEffect(true),
+						NewMutateFollowCameraEffect().WithFollowEntityId(gameState.RunState().Get(runStateKeyPlayerId).AsString("")),
 					).
 					Build()
 			},
@@ -110,7 +109,7 @@ func init() {
 			},
 		}.CreateHandler()
 	})
-	registerHandlerReference("intro.door.run_state_based", func(props *util.Properties) EventHandler {
+	registerEventHandler("intro.door.run_state_based", func(props *util.Properties) EventHandler {
 		stateKey := props.GetString("run_state_key", "")
 		stateValue := func(gs GameState) string {
 			v := gs.RunState().Get(stateKey)
@@ -133,7 +132,7 @@ func init() {
 						WithIsBlockingIngress(stateValue(gameState) == doorClosed),
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithMode(stateValue(gameState)).
-						WithAnimations(map[string][]types.AnimationReference{
+						WithAnimations(map[string][]AnimationReference{
 							doorClosed: {
 								{Name: "adventure/doors/shield_front_1:closed"},
 								{Name: "adventure/doors/shield_front_1:waves"},
@@ -142,7 +141,7 @@ func init() {
 								{Name: "adventure/doors/shield_front_1:open"},
 							},
 						}).
-						WithLights(map[string][]types.LightConfig{
+						WithLights(map[string][]LightConfig{
 							doorClosed: {
 								{Color: "#127fd7", Size: 1.5, Modifier: util.Ptr("pulse_slow")},
 							},
@@ -162,7 +161,7 @@ func init() {
 		}.CreateHandler()
 	})
 	guardedEntryDenialsKey := "intro.do_not_enter.attempts"
-	registerHandlerReference("intro.guarded_entry", func(props *util.Properties) EventHandler {
+	registerEventHandler("intro.guarded_entry", func(props *util.Properties) EventHandler {
 		noEntryChatters := []string{
 			"Sorry, restricted zone. You’ll need clearance to pass.",
 			"Hold up - your ID’s not on the list.",
@@ -221,7 +220,7 @@ func init() {
 		}.CreateHandler()
 	})
 
-	registerHandlerReference("intro.hall_way_npc", func(_ *util.Properties) EventHandler {
+	registerEventHandler("intro.hall_way_npc", func(_ *util.Properties) EventHandler {
 		targets := []string{
 			"intro.hall_way_end.west",
 			"intro.hall_way_end.north",
@@ -268,7 +267,7 @@ func init() {
 				)
 			},
 			OnInteract: func(ctx EntityContext, gameState GameState, state TalkingState, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != ctx.EntityId() || ctx.GetBoolMetadata(types.MetadataKeyIsTalking) {
+				if event.TargetId != ctx.EntityId() || ctx.GetBoolMetadata(MetadataKeyIsTalking) {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
@@ -294,7 +293,7 @@ func init() {
 
 	equipmentDoorStateKey := "intro.equipment_door_state"
 	hasEquipmentKeyKey := "intro.has_equipment_key"
-	registerHandlerReference("intro.equipment_specialist", func(_ *util.Properties) EventHandler {
+	registerEventHandler("intro.equipment_specialist", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != ctx.EntityId() {
@@ -314,7 +313,7 @@ func init() {
 			},
 		}.CreateHandler()
 	})
-	registerHandlerReference("intro.equipment_door.key_slot", func(props *util.Properties) EventHandler {
+	registerEventHandler("intro.equipment_door.key_slot", func(props *util.Properties) EventHandler {
 		runStateKey := props.GetString("run_state_key", "not_it")
 		return BasicHandlerBuilder[None]{
 			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {

@@ -20,6 +20,7 @@ type Camera interface {
 	CurrentLocation() pixel.Vec
 	Update(s *State, timeDelta float64)
 	ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Vec)
+	ResetPosition(s *State)
 }
 
 type cameraLocation struct {
@@ -59,6 +60,10 @@ func NewStaticCamera(location pixel.Vec) *StaticCamera {
 func (c *StaticCamera) Update(s *State, timeDelta float64) {
 }
 
+func (c *StaticCamera) ResetPosition(s *State) {
+
+}
+
 const EntityCameraSpeedNoLag float64 = 0
 const EntityCameraSpeedSlow float64 = 3
 const EntityCameraSpeedMedium float64 = 5
@@ -67,34 +72,6 @@ const EntityCameraSpeedFast float64 = 7
 const EntityCameraSpeedPlayerDefault = EntityCameraSpeedMedium
 
 type EntityCamera struct {
-	cameraLocation
-	target string
-	speed  float64
-}
-
-func NewFollowCameraOld(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
-	return &EntityCamera{
-		cameraLocation: cameraLocation{location: pixel.V(initialLocation.X, initialLocation.Y)},
-		target:         target,
-		speed:          speed,
-	}
-}
-
-func (c *EntityCamera) Update(s *State, timeDelta float64) {
-	target, found := s.entities.GetEntity(c.target)
-	if !found {
-		return
-	}
-	targetLocation := target.GetPreciseLocation()
-	if c.speed == EntityCameraSpeedNoLag {
-		c.location = targetLocation
-		return
-	}
-	delta := targetLocation.Sub(c.location)
-	c.location = c.location.Add(delta.Scaled(math.Min(timeDelta*c.speed, 1.0)))
-}
-
-type EntityCamera2 struct {
 	cameraLocation
 	ghostLocation pixel.Vec
 	target        string
@@ -106,8 +83,8 @@ type EntityCamera2 struct {
 	activeMean     pixel.Vec
 }
 
-func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera2 {
-	return &EntityCamera2{
+func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
+	return &EntityCamera{
 		cameraLocation: cameraLocation{location: initialLocation},
 		ghostLocation:  initialLocation,
 		target:         target,
@@ -116,7 +93,11 @@ func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *E
 	}
 }
 
-func (c *EntityCamera2) Update(s *State, timeDelta float64) {
+const (
+	entityCameraEpsilon = 1.0 / float64(resources.MapTileSize) / 2.0 // stddev is less than 1 half a pixel
+)
+
+func (c *EntityCamera) Update(s *State, timeDelta float64) {
 	target, found := s.entities.GetEntity(c.target)
 	if !found {
 		return
@@ -127,7 +108,15 @@ func (c *EntityCamera2) Update(s *State, timeDelta float64) {
 		return
 	}
 
-	c.ghostLocation = c.ghostLocation.Add(targetLocation.Sub(c.ghostLocation).Scaled(math.Min(timeDelta*c.speed, 1.0)))
+	c.ghostLocation = c.ghostLocation.Add(targetLocation.Sub(c.ghostLocation).Scaled(timeDelta * c.speed))
+
+	// if camera is directly on top, reset smoothing logic
+	if c.ghostLocation.Sub(targetLocation).Len() < entityCameraEpsilon && c.location.Sub(targetLocation).Len() < entityCameraEpsilon {
+		c.location = targetLocation
+		c.nextDeltaIndex = 0
+		c.fullDeltas = false
+		return
+	}
 
 	currentDelta := targetLocation.Sub(c.ghostLocation)
 	c.lastDeltas[c.nextDeltaIndex] = currentDelta
@@ -140,9 +129,8 @@ func (c *EntityCamera2) Update(s *State, timeDelta float64) {
 	newLocation := c.ghostLocation
 	if c.fullDeltas {
 		mean, stdDev := StdDev(c.lastDeltas)
-		threshold := 1.0 / resources.MapTileSize.Float() / 2.0 // stddev is less than 1 half a pixel
-		normalizeX := stdDev.X < threshold
-		normalizeY := stdDev.Y < threshold
+		normalizeX := stdDev.X < entityCameraEpsilon
+		normalizeY := stdDev.Y < entityCameraEpsilon
 		if normalizeX {
 			newLocation.X = targetLocation.X - mean.X
 		}
@@ -151,9 +139,18 @@ func (c *EntityCamera2) Update(s *State, timeDelta float64) {
 		}
 		game.DebugBRf("camera stddev: %.3f / %.3f", stdDev.X, stdDev.Y)
 		game.DebugBRf("camera mean: %.3f / %.3f", mean.X, mean.Y)
-		game.DebugBRf("camera normalize: %v / %v", normalizeX, normalizeY)
+		game.DebugBRf("camera normalize: %-5v / %-5v", normalizeX, normalizeY)
 	}
 	c.location = newLocation
+}
+
+func (c *EntityCamera) ResetPosition(s *State) {
+	target, found := s.entities.GetEntity(c.target)
+	if !found {
+		return
+	}
+	c.ghostLocation = target.GetPreciseLocation()
+	c.location = c.ghostLocation
 }
 
 func StdDev(vs []pixel.Vec) (pixel.Vec, pixel.Vec) {
@@ -199,6 +196,11 @@ func (c *CameraOverride) Update(s *State, timeDelta float64) {
 
 func (c *CameraOverride) ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Vec) {
 	return c.newCamera.ComputeRenderDetails(s, targetBounds)
+}
+
+func (c *CameraOverride) ResetPosition(s *State) {
+	c.newCamera.ResetPosition(s)
+	c.replacedCamera.ResetPosition(s)
 }
 
 func (s *State) OverrideCamera(newCamera Camera) {

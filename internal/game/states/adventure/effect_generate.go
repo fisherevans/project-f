@@ -48,8 +48,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Note: Effect struct is no longer generated - Effect is now an interface defined in effect.go
-
 	// Generate effect validation
 	validationOutput := generateEffectValidation(effects)
 	validationPath := "effect_validation.generated.go"

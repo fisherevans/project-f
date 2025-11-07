@@ -3,12 +3,25 @@ package adventure
 import (
 	"strings"
 
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
+	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/util"
 )
 
 func init() {
-	registerHandlerReference("random_chatters", func(props *util.Properties) EventHandler {
+	newRegistrarBuilder().byClass("ModeBasedEntity").registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
+		entity := system.RegisterEntity(params.EntityId, params.Location)
+		AttachPresenceFromConfig(entity, params.Properties)
+		renderer := AttachModeBasedEntityRenderer(entity)
+		if params.SpriteId != nil {
+			renderer.getBasicEntityRenderer("").WithAnimations(anim.NewStaticAnimation(atlas.GetTilesheetSpriteById(*params.SpriteId)))
+		}
+		renderer.WithPropConfigurations(params.Properties)
+		return entity, nil
+	})
+}
+
+func init() {
+	registerEventHandler("random_chatters", func(props *util.Properties) EventHandler {
 		var chatters util.StringList
 		if chattersRaw := props.GetString("chatters", ""); chattersRaw != "" {
 			chatters = strings.Split(chattersRaw, "\n")
@@ -19,7 +32,7 @@ func init() {
 				if ctx.EntityId() != event.TargetId {
 					return nil
 				}
-				if ctx.GetBoolMetadata(types.MetadataKeyIsTalking) || len(chatters) == 0 {
+				if ctx.GetBoolMetadata(MetadataKeyIsTalking) || len(chatters) == 0 {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
@@ -31,7 +44,7 @@ func init() {
 			CreateHandler()
 	})
 
-	registerHandlerReference("door.run_state_based", func(props *util.Properties) EventHandler {
+	registerEventHandler("door.run_state_based", func(props *util.Properties) EventHandler {
 		stateKey := props.GetString("run_state_key", "")
 		stateValue := func(gs GameState) string {
 			v := gs.RunState().Get(stateKey)

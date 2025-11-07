@@ -2,11 +2,27 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 )
+
+type ModeBaseRenderConfig struct {
+	Mode       *string                         `yaml:"mode"`
+	Animations map[string][]AnimationReference `yaml:"animations"`
+	Lights     map[string][]LightConfig        `yaml:"lights"`
+}
+
+type LightConfig struct {
+	Color    string  `yaml:"color"`
+	Size     float64 `yaml:"size"`
+	Modifier *string `yaml:"modifier"`
+}
+
+type AnimationReference struct {
+	Name      string  `yaml:"name"`
+	ColorMask *string `yaml:"colorMask"`
+}
 
 type ModeBasedEntityRenderer struct {
 	entity Entity
@@ -42,7 +58,7 @@ func (r *ModeBasedEntityRenderer) WithModeRenderer(mode string, renderer *BasicE
 	return r
 }
 
-func (r *ModeBasedEntityRenderer) SetModeAnimations(modeAnimations map[string][]types.AnimationReference) {
+func (r *ModeBasedEntityRenderer) SetModeAnimations(modeAnimations map[string][]AnimationReference) {
 	for mode, animationRefs := range modeAnimations {
 		var animations []ColorMaskAnimation
 		for _, animationRef := range animationRefs {
@@ -58,7 +74,7 @@ func (r *ModeBasedEntityRenderer) SetModeAnimations(modeAnimations map[string][]
 	}
 }
 
-func (r *ModeBasedEntityRenderer) SetModeLights(modeLights map[string][]types.LightConfig) {
+func (r *ModeBasedEntityRenderer) SetModeLights(modeLights map[string][]LightConfig) {
 	for mode, lightConfigs := range modeLights {
 		var lights []*Light
 		for _, lightConfig := range lightConfigs {
@@ -97,14 +113,14 @@ func (r *ModeBasedEntityRenderer) RenderToLightMap(target pixel.Target, matrix p
 }
 
 func (r *ModeBasedEntityRenderer) WithPropConfigurations(props *util.Properties) *ModeBasedEntityRenderer {
-	config := &types.ModeBaseRenderConfig{}
+	config := &ModeBaseRenderConfig{}
 	if !props.LoadStructFromKey("render_config", config) {
 		return r
 	}
 	return r.WithConfig(config)
 }
 
-func (r *ModeBasedEntityRenderer) WithConfig(config *types.ModeBaseRenderConfig) *ModeBasedEntityRenderer {
+func (r *ModeBasedEntityRenderer) WithConfig(config *ModeBaseRenderConfig) *ModeBasedEntityRenderer {
 	if config == nil {
 		return r
 	}

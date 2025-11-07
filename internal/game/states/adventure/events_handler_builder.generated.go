@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-06T11:44:32-05:00 by go generate
+// Generated at 2025-11-06T21:30:09-05:00 by go generate
 // Source: internal/game/adventure/events_handler.go
 
 package adventure

@@ -3,7 +3,6 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 )
@@ -17,7 +16,7 @@ type MovementBasedEntityRenderer struct {
 
 type movementRenderState struct {
 	direction input.Direction
-	moveState types.MoveState
+	moveState MoveState
 }
 
 func AttachMovementBasedEntityRenderer(entity Entity) *MovementBasedEntityRenderer {
@@ -44,7 +43,7 @@ func (r *MovementBasedEntityRenderer) getRenderer(state movementRenderState) *Ba
 	return r.renderers[state]
 }
 
-func (r *MovementBasedEntityRenderer) WithMovementStateRenderer(moveState types.MoveState, direction input.Direction, renderer *BasicEntityRenderer) *MovementBasedEntityRenderer {
+func (r *MovementBasedEntityRenderer) WithMovementStateRenderer(moveState MoveState, direction input.Direction, renderer *BasicEntityRenderer) *MovementBasedEntityRenderer {
 	r.renderers[movementRenderState{
 		moveState: moveState,
 		direction: direction,

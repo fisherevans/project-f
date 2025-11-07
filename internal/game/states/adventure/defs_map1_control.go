@@ -4,12 +4,11 @@ import (
 	"math/rand/v2"
 
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 )
 
 func init() {
-	registerHandlerReference("control_camera", func(props *util.Properties) EventHandler {
+	registerEventHandler("control_camera", func(props *util.Properties) EventHandler {
 		controlled := props.GetString("control_id", "")
 		return BasicHandlerBuilder[None]{
 			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
@@ -66,14 +65,14 @@ func init() {
 			},
 		}.CreateHandler()
 	})
-	registerHandlerReference("control_button", func(props *util.Properties) EventHandler {
+	registerEventHandler("control_button", func(props *util.Properties) EventHandler {
 		colorMask := props.GetString("color_mask", "#fff")
 		action := props.GetString("action", "")
 		return BasicHandlerBuilder[None]{
 			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithAnimations(map[string][]types.AnimationReference{
+						WithAnimations(map[string][]AnimationReference{
 							"": {{
 								Name:      "adventure/doors/button",
 								ColorMask: util.Ptr(colorMask),

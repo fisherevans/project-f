@@ -12,30 +12,6 @@ type registeredEventHandler struct {
 	State   any
 }
 
-func (r *registeredEventHandler) handleOutput(output *HandlerOutput) []DispatchedEffect {
-	if output == nil {
-		return nil
-	}
-	if output.State != nil {
-		r.State = output.State
-	}
-	var effects []DispatchedEffect
-	for _, effect := range output.Effects {
-		if err := effect.FillDefaultsAndValidate(); err != nil {
-			log.Err(err).
-				Interface("effect", effect).
-				Str("source", r.ctx.EntityId()).
-				Msg("Effect validation failed, ignoring")
-			continue
-		}
-		effects = append(effects, DispatchedEffect{
-			Source: r.ctx,
-			Effect: effect,
-		})
-	}
-	return effects
-}
-
 type Dispatcher struct {
 	gameState          GameState
 	effectDispatcher   EffectDispatcher

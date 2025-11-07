@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"fisherevans.com/project/f/internal/game/states/adventure/types"
 	"fisherevans.com/project/f/internal/util"
 )
 
 func init() {
-	registerHandlerReference("map1", func(_ *util.Properties) EventHandler {
+	registerEventHandler("map1", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
 				if ctx.EntityId() != event.TargetId {
@@ -25,7 +24,7 @@ func init() {
 	type ExitChatterState struct {
 		Ready bool
 	}
-	registerHandlerReference("exit_chatter", func(_ *util.Properties) EventHandler {
+	registerEventHandler("exit_chatter", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[ExitChatterState]{
 			Init: func(ctx EntityContext, gameState GameState, state ExitChatterState) *HandlerOutput {
 				return NewOutput().WithState(ExitChatterState{
@@ -70,13 +69,13 @@ func doorState(gameState GameState) string {
 }
 
 func init() {
-	registerHandlerReference("door_lever", func(_ *util.Properties) EventHandler {
+	registerEventHandler("door_lever", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithMode(doorState(gameState)).
-						WithAnimations(map[string][]types.AnimationReference{
+						WithAnimations(map[string][]AnimationReference{
 							doorClosed: {
 								{Name: "adventure/doors/lever_horizontal:on"},
 							},
@@ -104,7 +103,7 @@ func init() {
 }
 
 func init() {
-	registerHandlerReference("door", func(_ *util.Properties) EventHandler {
+	registerEventHandler("door", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
@@ -112,7 +111,7 @@ func init() {
 						WithIsBlockingIngress(doorState(gameState) == doorClosed),
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
 						WithMode(doorState(gameState)).
-						WithAnimations(map[string][]types.AnimationReference{
+						WithAnimations(map[string][]AnimationReference{
 							doorClosed: {
 								{Name: "adventure/doors/shield_front_1:closed"},
 								{Name: "adventure/doors/shield_front_1:waves"},
@@ -121,7 +120,7 @@ func init() {
 								{Name: "adventure/doors/shield_front_1:open"},
 							},
 						}).
-						WithLights(map[string][]types.LightConfig{
+						WithLights(map[string][]LightConfig{
 							doorClosed: {
 								{Color: "#127fd7", Size: 1.5, Modifier: util.Ptr("pulse_slow")},
 							},
@@ -145,12 +144,12 @@ func init() {
 var nextSpawnedEntityId = atomic.Int64{}
 
 func init() {
-	registerHandlerReference("spawn_entity", func(_ *util.Properties) EventHandler {
+	registerEventHandler("spawn_entity", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithAnimations(map[string][]types.AnimationReference{
+						WithAnimations(map[string][]AnimationReference{
 							"": {{
 								Name: "adventure/doors/button",
 							}},

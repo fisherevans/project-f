@@ -295,6 +295,13 @@ func (s *State) ExecuteSystemEffects(effects ...Effect) {
 	}
 }
 
+func (s *State) processEffects(effects ...DispatchedEffect) {
+	for _, dispatched := range effects {
+		wasSuccessful := dispatched.Effect.Process(dispatched.Source, s)
+		logEffectInfof(dispatched.Source, dispatched.Effect, "event processed %t: %T", wasSuccessful, dispatched.Effect)
+	}
+}
+
 func (s *State) ExecuteSystemEffectsInOrder(effects ...Effect) {
 	s.ExecuteSystemEffects(NewSerialPlan(effects...))
 }

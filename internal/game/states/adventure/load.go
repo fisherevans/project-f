@@ -98,7 +98,7 @@ func initializeMap(a *State, m *resources.Map) {
 			resources.TileCollisionJumpVertical,
 			resources.TileCollisionJumpAll:
 			entity := a.entities.RegisterEntity(id, location)
-			AttachBlockIngressPresence(entity, false, NewImpassableImpedance())
+			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 			entity.SetState(DashGapState{})
 		}
 	}
