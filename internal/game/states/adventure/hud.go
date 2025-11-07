@@ -29,8 +29,8 @@ func NewHud(state *State) *Hud {
 	}
 }
 
-func (h *Hud) OnTick(s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
-	h.onTickElythiumCount(s, target, matrix, bounds, timeDelta)
+func (h *Hud) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bounds MapBounds, timeDelta float64) {
+	h.onTickElythiumCount(s, target, pixel.IM.Moved(cameraDelta), bounds, timeDelta)
 
 	type topRightCount struct {
 		icon   *anim.AnimatedSprite

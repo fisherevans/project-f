@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-05T15:38:48-05:00 by go generate
+// Generated at 2025-11-06T11:44:32-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -302,11 +302,20 @@ func (e *EffectTriggerCombat) WithOpponent(opponent rpg.PrimortalType) *EffectTr
 	return e
 }
 
-func NewEntityFaceDirectionEffect(entityId string, direction input.Direction) *EffectEntityFaceDirection {
+func NewEntityFaceDirectionEffect(entityId string) *EffectEntityFaceDirection {
 	return &EffectEntityFaceDirection{
 		EntityId: entityId,
-		Direction: direction,
 	}
+}
+
+func (e *EffectEntityFaceDirection) WithDirection(direction input.Direction) *EffectEntityFaceDirection {
+	e.Direction = &direction
+	return e
+}
+
+func (e *EffectEntityFaceDirection) WithTargetEntity(targetEntity string) *EffectEntityFaceDirection {
+	e.TargetEntity = &targetEntity
+	return e
 }
 
 func NewStartScriptedMotionEffect(entityId string) *EffectStartScriptedMotion {

@@ -50,7 +50,7 @@ var chatterBox = textbox.NewInstance(
 		tbcfg.HAligned(tbcfg.HAlignCenter),
 		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 
-func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
+func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bounds MapBounds, timeDelta float64) {
 	c.sortChatters()
 	incompleteChatters := c.chatters[:0] // Reuse the same slice memory
 	for _, chatter := range c.chatters {
@@ -67,8 +67,8 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, matrix pixel.Matri
 		}
 		incompleteChatters = append(incompleteChatters, chatter)
 
-		moveDelta := normalizeRenderMoveDelta(chatter.RenderAbove(), resources.MapTileSize)
-		renderMatrix := matrix.Moved(moveDelta.Add(gfx.IVec(0, resources.MapTileSize.Int())))
+		moveDelta := chatter.RenderAbove().Scaled(resources.MapTileSize.Float())
+		renderMatrix := pixel.IM.Moved(cameraDelta).Moved(moveDelta.Add(gfx.IVec(0, resources.MapTileSize.Int())))
 
 		frameWidth := chatter.Content().Width() + chatterFrame.HorizontalPadding()
 		frameHeight := chatter.Content().Height() + chatterFrame.VerticalPadding()

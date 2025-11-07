@@ -152,7 +152,7 @@ func (b *NPCBehavior) doMovement() {
 		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
 	}
 	b.entity.GetSystem().state.ExecuteSystemEffects(
-		NewEntityFaceDirectionEffect(b.entity.GetId(), dir),
+		NewEntityFaceDirectionEffect(b.entity.GetId()).WithDirection(dir),
 		NewTriggerMovementEffect(b.entity.GetId()).WithDirection(dir),
 	)
 }

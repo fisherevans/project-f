@@ -3,6 +3,7 @@ package adventure
 import (
 	"math"
 
+	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
@@ -18,7 +19,7 @@ type Camera interface {
 	SetLocation(location pixel.Vec)
 	CurrentLocation() pixel.Vec
 	Update(s *State, timeDelta float64)
-	ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix)
+	ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Vec)
 }
 
 type cameraLocation struct {
@@ -33,7 +34,7 @@ func (c *cameraLocation) SetLocation(location pixel.Vec) {
 	c.location = location
 }
 
-func (c *cameraLocation) ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix) {
+func (c *cameraLocation) ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Vec) {
 	cameraMapX := int(math.Round(c.location.X))
 	cameraMapY := int(math.Round(c.location.Y))
 	bounds := MapBounds{
@@ -43,11 +44,8 @@ func (c *cameraLocation) ComputeRenderDetails(s *State, targetBounds pixel.Rect)
 		MaxY: util.MinInt(s.mapHeight-1, cameraMapY+cameraRenderDistanceY),
 	}
 	// avoid screen tearing by moving the camera only by full pixels
-	moveDelta := normalizeRenderMoveDelta(c.location, -resources.MapTileSize)
-	renderMatrix := pixel.IM.
-		Moved(moveDelta).
-		Moved(targetBounds.Center())
-	return bounds, renderMatrix
+	moveDelta := c.location.Scaled(-resources.MapTileSize.Float())
+	return bounds, moveDelta.Add(targetBounds.Center())
 }
 
 type StaticCamera struct {
@@ -74,7 +72,7 @@ type EntityCamera struct {
 	speed  float64
 }
 
-func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
+func NewFollowCameraOld(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
 	return &EntityCamera{
 		cameraLocation: cameraLocation{location: pixel.V(initialLocation.X, initialLocation.Y)},
 		target:         target,
@@ -94,6 +92,85 @@ func (c *EntityCamera) Update(s *State, timeDelta float64) {
 	}
 	delta := targetLocation.Sub(c.location)
 	c.location = c.location.Add(delta.Scaled(math.Min(timeDelta*c.speed, 1.0)))
+}
+
+type EntityCamera2 struct {
+	cameraLocation
+	ghostLocation pixel.Vec
+	target        string
+	speed         float64
+
+	lastDeltas     []pixel.Vec
+	nextDeltaIndex int
+	fullDeltas     bool
+	activeMean     pixel.Vec
+}
+
+func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera2 {
+	return &EntityCamera2{
+		cameraLocation: cameraLocation{location: initialLocation},
+		ghostLocation:  initialLocation,
+		target:         target,
+		speed:          speed,
+		lastDeltas:     make([]pixel.Vec, 10),
+	}
+}
+
+func (c *EntityCamera2) Update(s *State, timeDelta float64) {
+	target, found := s.entities.GetEntity(c.target)
+	if !found {
+		return
+	}
+	targetLocation := target.GetPreciseLocation()
+	if c.speed == EntityCameraSpeedNoLag {
+		c.location = targetLocation
+		return
+	}
+
+	c.ghostLocation = c.ghostLocation.Add(targetLocation.Sub(c.ghostLocation).Scaled(math.Min(timeDelta*c.speed, 1.0)))
+
+	currentDelta := targetLocation.Sub(c.ghostLocation)
+	c.lastDeltas[c.nextDeltaIndex] = currentDelta
+	c.nextDeltaIndex++
+	if c.nextDeltaIndex >= len(c.lastDeltas) {
+		c.nextDeltaIndex = 0
+		c.fullDeltas = true
+	}
+
+	newLocation := c.ghostLocation
+	if c.fullDeltas {
+		mean, stdDev := StdDev(c.lastDeltas)
+		threshold := 1.0 / resources.MapTileSize.Float() / 2.0 // stddev is less than 1 half a pixel
+		normalizeX := stdDev.X < threshold
+		normalizeY := stdDev.Y < threshold
+		if normalizeX {
+			newLocation.X = targetLocation.X - mean.X
+		}
+		if normalizeY {
+			newLocation.Y = targetLocation.Y - mean.Y
+		}
+		game.DebugBRf("camera stddev: %.3f / %.3f", stdDev.X, stdDev.Y)
+		game.DebugBRf("camera mean: %.3f / %.3f", mean.X, mean.Y)
+		game.DebugBRf("camera normalize: %v / %v", normalizeX, normalizeY)
+	}
+	c.location = newLocation
+}
+
+func StdDev(vs []pixel.Vec) (pixel.Vec, pixel.Vec) {
+	if len(vs) == 0 {
+		return pixel.ZV, pixel.ZV
+	}
+	var mean, sum pixel.Vec
+	for _, n := range vs {
+		mean = mean.Add(n)
+	}
+	mean = mean.Scaled(1.0 / float64(len(vs)))
+	for _, v := range vs {
+		diff := v.Sub(mean)
+		sum = sum.Add(pixel.V(diff.X*diff.X, diff.Y*diff.Y))
+	}
+	variance := sum.Scaled(1.0 / float64(len(vs)))
+	return mean, pixel.V(math.Sqrt(variance.X), math.Sqrt(variance.Y))
 }
 
 type CameraOverride struct {
@@ -120,7 +197,7 @@ func (c *CameraOverride) Update(s *State, timeDelta float64) {
 	c.newCamera.Update(s, timeDelta)
 }
 
-func (c *CameraOverride) ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Matrix) {
+func (c *CameraOverride) ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Vec) {
 	return c.newCamera.ComputeRenderDetails(s, targetBounds)
 }
 
@@ -149,11 +226,4 @@ func getCameraToMutate(c Camera) Camera {
 		return override.newCamera
 	}
 	return c
-}
-
-func normalizeRenderMoveDelta(vec pixel.Vec, tileSize resources.Pixels) pixel.Vec {
-	return pixel.Vec{
-		X: math.Round(vec.X * float64(tileSize)),
-		Y: math.Round(vec.Y * float64(tileSize)),
-	}
 }

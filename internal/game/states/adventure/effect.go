@@ -189,8 +189,9 @@ type EffectTriggerCombat struct {
 }
 
 type EffectEntityFaceDirection struct {
-	EntityId  string
-	Direction input.Direction
+	EntityId     string
+	Direction    *input.Direction `one_of:"dir"`
+	TargetEntity *string          `one_of:"dir"`
 }
 
 type EffectStartScriptedMotion struct {

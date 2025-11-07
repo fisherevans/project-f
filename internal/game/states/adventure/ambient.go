@@ -10,12 +10,12 @@ import (
 )
 
 // DrawAmbient renders all ambient zones as solid rects with outer glows.
-func (s *State) DrawAmbient(target *opengl.Canvas, cameraMatrix pixel.Matrix, renderBounds MapBounds, imd *imdraw.IMDraw) {
+func (s *State) DrawAmbient(target *opengl.Canvas, cameraDelta pixel.Vec, renderBounds MapBounds, imd *imdraw.IMDraw) {
 	target.SetComposeMethod(pixel.ComposeOver)
 	target.Clear(s.lightClear)
 	imd.Clear()
 
-	imd.SetMatrix(cameraMatrix)
+	imd.SetMatrix(pixel.IM.Moved(cameraDelta))
 
 	for _, zone := range s.ambientLightAreas {
 		// Calculate glow size in tiles for bounds checking

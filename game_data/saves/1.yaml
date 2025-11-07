@@ -44,13 +44,13 @@ unlocked_skills:
     shoulder_roll: {}
 state:
     control_id: controlled_npc
-    door_state: closed
+    door_state: open
     player_id: tiled-7
 system_settings:
     lighting:
         lighting_composition: full
         lighting_mode: Blended
-        bloom_mode: "Off"
+        bloom_mode: Blended
     combat:
         combat_speed: 1
     retro_frame:

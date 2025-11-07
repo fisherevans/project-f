@@ -17,7 +17,7 @@ func init() {
 					NewPushEntityBehaviorEffect(pId).WithScriptedMotion(EntityBehaviorScriptedMotion{}),
 					NewStartScriptedMotionEffect(pId).WithToEntityId("captain_chair_front"),
 					NewPopEntityBehaviorEffect(pId),
-					NewEntityFaceDirectionEffect(pId, input.Right),
+					NewEntityFaceDirectionEffect(pId).WithDirection(input.Right),
 				)
 			},
 		}.CreateHandler()

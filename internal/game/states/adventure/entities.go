@@ -202,12 +202,12 @@ func (es *EntitySystem) Update(timeDelta float64) {
 	}
 }
 
-func (es *EntitySystem) Render(sceneTarget, lightMapTarget pixel.Target, cameraMatrix pixel.Matrix) {
+func (es *EntitySystem) Render(sceneTarget, lightMapTarget pixel.Target, cameraDelta pixel.Vec) {
 	entities := es.locationSortedRenderers()
 	for _, entity := range entities {
 		renderer, _ := entity.GetRenderer()
-		moveDelta := normalizeRenderMoveDelta(entity.GetPreciseLocation(), resources.MapTileSize)
-		renderMatrix := cameraMatrix.Moved(moveDelta)
+		moveDelta := entity.GetPreciseLocation().Scaled(resources.MapTileSize.Float())
+		renderMatrix := pixel.IM.Moved(cameraDelta).Moved(moveDelta)
 		renderer.RenderToScene(sceneTarget, renderMatrix)
 		renderer.RenderToLightMap(lightMapTarget, renderMatrix)
 	}

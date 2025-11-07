@@ -60,7 +60,7 @@ func init() {
 						),
 						NewMutateEntityBehaviorEffect(playerId).WithEnableBy("control"),
 						NewPopCameraOverrideEffect(true),
-						NewEntityFaceDirectionEffect("controlled_npc", input.Down))
+						NewEntityFaceDirectionEffect("controlled_npc").WithDirection(input.Down))
 				}
 				return nil
 			},

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-05T15:38:48-05:00 by go generate
+// Generated at 2025-11-06T11:44:32-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -301,6 +301,18 @@ func (e *EffectTriggerCombat) FillDefaultsAndValidate() error {
 
 func (e *EffectEntityFaceDirection) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
+
+	// Validate one_of group: dir
+	dirCount := 0
+	if e.Direction != nil {
+		dirCount++
+	}
+	if e.TargetEntity != nil {
+		dirCount++
+	}
+	if dirCount != 1 {
+		reporter.addf("dir", "exactly one of [direction, targetEntity] must be set")
+	}
 
 	reporter.requireString("entityId", e.EntityId)
 

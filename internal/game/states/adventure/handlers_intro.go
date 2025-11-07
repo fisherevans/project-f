@@ -97,13 +97,15 @@ func init() {
 					Build()
 			},
 			EntityZoneActivity: func(ctx EntityContext, gameState GameState, state InstructorState, event *EventEntityZoneActivity) *HandlerOutput {
-				if !event.IsEntering || event.ZoneId != "papers.instructions" || state.Blabbed {
+				papersTurnedIn := gameState.RunState().Get(papersTurnedInKey).AsBool(false)
+				if !event.IsEntering || event.ZoneId != "papers.instructions" || state.Blabbed || papersTurnedIn {
 					return nil
 				}
 				state.Blabbed = true
 				return NewFocusedSequenceBuilder(ctx.EntityId(), event.EntityId).
 					WithMoveCamera(true).
-					WithMiddleEffects(NewChatterEffect(ctx.EntityId(), 3, "You've already filled out your paperwork?")).
+					WithFacePlayer(true).
+					WithMiddleEffects(NewChatterEffect(ctx.EntityId(), 3, "You've gotta fill out your paperwork before you can leave...")).
 					Build().WithState(state)
 			},
 		}.CreateHandler()
@@ -201,6 +203,7 @@ func init() {
 				message := noEntryChatters[min(attempts, len(noEntryChatters)-1)]
 				return NewFocusedSequenceBuilder(ctx.EntityId(), event.EntityId).
 					WithMoveCamera(true).
+					WithFacePlayer(true).
 					WithMiddleEffects(NewDialogueEffect(message)).
 					WithPostEffects(NewTriggerMovementEffect(event.EntityId).WithDirection(walkBack), NewSetRunStateEffect(guardedEntryDenialsKey, attempts+1)).
 					Build()
@@ -302,10 +305,12 @@ func init() {
 					return NewOutput().WithEffects(NewDialogueEffect("Do you need help finding testing room 1...?"))
 				}
 
-				return NewOutput().WithSerialPlan(
-					NewDialogueEffect("Ah! Hello. Yes, this is the equipment testing facility. No.. No, I'm not a specialist; they're inside the testing rooms.\nHere, take this key card. They're waiting for you in testing room 1."),
-					NewSetRunStateEffect(hasEquipmentKeyKey, true),
-				)
+				return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
+					WithMiddleEffects(
+						NewDialogueEffect("Ah! Hello. Yes, this is the equipment testing facility. No.. No, I'm not a specialist; they're inside the testing rooms.\nHere, take this key card. They're waiting for you in testing room 1."),
+						NewSetRunStateEffect(hasEquipmentKeyKey, true),
+					).
+					Build()
 			},
 		}.CreateHandler()
 	})
@@ -346,6 +351,7 @@ type FocusedSequenceBuilder struct {
 	focusedEntity                          string
 	playerId                               string
 	moveCamera                             bool
+	facePlayer                             bool
 	preEffects, middleEffects, postEffects []Effect
 }
 
@@ -355,6 +361,11 @@ func NewFocusedSequenceBuilder(focusedEntity, playerId string) *FocusedSequenceB
 		playerId:      playerId,
 		postEffects:   []Effect{},
 	}
+}
+
+func (b *FocusedSequenceBuilder) WithFacePlayer(facePlayer bool) *FocusedSequenceBuilder {
+	b.facePlayer = facePlayer
+	return b
 }
 
 func (b *FocusedSequenceBuilder) WithMoveCamera(moveCamera bool) *FocusedSequenceBuilder {
@@ -384,12 +395,18 @@ func (b *FocusedSequenceBuilder) Build() *HandlerOutput {
 		NewMutateEntityBehaviorEffect(b.playerId).WithDisableBy(b.focusedEntity),
 		NewMutateNPCEffect(b.focusedEntity).WithTalkingAtEntityId(b.playerId),
 	)
+	if b.facePlayer {
+		effects = append(effects, NewEntityFaceDirectionEffect(b.playerId).WithTargetEntity(b.focusedEntity))
+	}
 	if b.moveCamera {
 		effects = append(effects, NewOverrideCameraEffect().WithFollow(FollowCamera{EntityId: util.Ptr(b.focusedEntity)}))
 	}
 	effects = append(effects, b.middleEffects...)
 	if b.moveCamera {
 		effects = append(effects, NewPopCameraOverrideEffect(true))
+	}
+	if b.facePlayer {
+		effects = append(effects, NewResetMovementEffect(b.playerId))
 	}
 	effects = append(effects,
 		NewMutateNPCEffect(b.focusedEntity).WithTalkingAtEntityId(""),

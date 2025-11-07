@@ -420,11 +420,13 @@ func (s *State) processEffectTeleportPlayer(source EntityContext, e *EffectTelep
 		}
 
 		effects = append(effects,
-			NewFadeEffect(fadeDuration, 1).
-				WithAutoDeactivate(true).
-				WithFromColor("#000000FF").
-				WithToColor("#00000000"),
-			NewDeactivateFadeEffect(fadeOutId),
+			NewParallelPlan(
+				NewFadeEffect(fadeDuration, 1).
+					WithAutoDeactivate(true).
+					WithFromColor("#000000FF").
+					WithToColor("#00000000"),
+				NewDeactivateFadeEffect(fadeOutId),
+			),
 			NewMutateEntityBehaviorEffect(s.player).
 				WithEnableBy(fadeOutId))
 		batch = NewSerialPlan(effects...)
@@ -595,7 +597,19 @@ func (s *State) processEffectEntityFaceDirection(source EntityContext, e *Effect
 	if !ok {
 		logEffectWarnf(source, e, "failed to find movement for entity")
 	}
-	entity.SetFacingDirection(e.Direction)
+	if e.Direction != nil {
+		entity.SetFacingDirection(*e.Direction)
+	}
+	if e.TargetEntity != nil {
+		targetEntity, ok := s.entities.GetEntity(*e.TargetEntity)
+		if !ok {
+			logEffectWarnf(source, e, "failed to find target entity")
+			return
+		}
+		dir := entity.GetLocation().DirectionTowards(targetEntity.GetLocation())
+		entity.SetFacingDirection(dir)
+	}
+	logEffectInfof(source, e, "entity facing direction set")
 }
 
 func (s *State) processEffectStartScriptedMotion(source EntityContext, e *EffectStartScriptedMotion) {

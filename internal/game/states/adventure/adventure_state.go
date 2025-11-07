@@ -177,7 +177,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.planExecutor.Update()
 
 	s.camera.Update(s, timeDelta)
-	renderBounds, cameraMatrix := s.camera.ComputeRenderDetails(s, targetBounds)
+	renderBounds, cameraDelta := s.camera.ComputeRenderDetails(s, targetBounds)
 
 	// SCENE
 
@@ -187,19 +187,19 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.lightMapBatch.Clear()
 
 	for _, thisRenderLayer := range s.underRenderLayers {
-		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.sceneBatch, cameraDelta, renderBounds)
 	}
 
 	for _, mob := range s.mobs {
 		renderLocation := mob.Location.Scaled(resources.MapTileSize.Float())
-		mob.Render(s.sceneBatch, cameraMatrix.Moved(renderLocation))
+		mob.Render(s.sceneBatch, cameraDelta.Add(renderLocation))
 	}
 
 	// todo limit rendering out of bounds entities
-	s.entities.Render(s.sceneBatch, s.lightMapBatch, cameraMatrix)
+	s.entities.Render(s.sceneBatch, s.lightMapBatch, cameraDelta)
 
 	for _, thisRenderLayer := range s.overRenderLayers {
-		thisRenderLayer.Render(s.sceneBatch, cameraMatrix, renderBounds)
+		thisRenderLayer.Render(s.sceneBatch, cameraDelta, renderBounds)
 	}
 
 	s.sceneBatch.Draw(s.sceneCanvas)
@@ -220,7 +220,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		// a little gross
 		s.lightMapBatch.Clear()
 	}
-	s.DrawAmbient(s.lightMapCanvas, cameraMatrix, renderBounds, imdraw.New(nil))
+	s.DrawAmbient(s.lightMapCanvas, cameraDelta, renderBounds, imdraw.New(nil))
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 
@@ -260,8 +260,8 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	// HUD + CHAT
 
 	s.hudBatch.Clear()
-	s.chatters.OnTick(s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
-	s.hud.OnTick(s, s.hudBatch, cameraMatrix, renderBounds, timeDelta)
+	s.chatters.OnTick(s, s.hudBatch, cameraDelta, renderBounds, timeDelta)
+	s.hud.OnTick(s, s.hudBatch, cameraDelta, renderBounds, timeDelta)
 	s.overlays.OnTick(s, target, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.hudBatch.Draw(target)

@@ -374,13 +374,13 @@ func (m *ShadowMob) pickNewTarget() {
 	m.targetVel = dir.Scaled(speed)
 }
 
-func (m *ShadowMob) Render(batch *pixel.Batch, moved pixel.Matrix) {
+func (m *ShadowMob) Render(batch *pixel.Batch, renderDelta pixel.Vec) {
 	alpha := 0.7
 	if m.state == ShadowMobStateChasing {
 		alpha = 0.9
 	}
 	if a, exists := m.animations[m.state]; exists {
-		a.Sprite().DrawColorMask(batch, moved, pixel.RGBA{alpha, alpha, alpha, alpha})
+		a.Sprite().DrawColorMask(batch, pixel.IM.Moved(renderDelta), pixel.RGBA{alpha, alpha, alpha, alpha})
 	}
 }
 
