@@ -11,12 +11,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const SilenceGainDbThreshold = -40.0
 const fadeOutDuration = 100 * time.Millisecond
+
+// PlaybackOptions contains optional modulation parameters for sound playback.
+type PlaybackOptions struct {
+	// Speed multiplies the playback rate (affects both pitch and speed together).
+	// 1.0 = normal, 2.0 = double speed/pitch, 0.5 = half speed/pitch.
+	// Values must be > 0. Typical range: 0.5 to 2.0
+	Speed float64
+}
 
 // Stopper allows stopping a sound with a fade-out to avoid pops
 type Stopper struct {
-	sys      *System
-	vol      *effects.Volume
+	sys       *System
+	vol       *effects.Volume
 	stoppable *stoppableStreamer
 }
 
@@ -37,40 +46,86 @@ func (s *Stopper) Stop() {
 // PlaySFX plays a cached SFX on the SFX bus (polyphonic). `gainDB` adjusts per call, e.g., -6 for softer.
 // Returns a Stopper that can fade out and stop the sound early.
 func (a *System) PlaySFX(name string, gainDB float64) *Stopper {
-	return a.PlaySoundOnBus(name, a.Buses.SFX, gainDB)
+	return a.PlaySoundOnBus(name, a.Buses.SFX, gainDB, nil)
 }
 
 // PlayUI plays a one-shot UI sound on UI bus. Returns a Stopper.
-func (a *System) PlayUI(name string) *Stopper { return a.PlaySoundOnBus(name, a.Buses.UI, 0) }
+func (a *System) PlayUI(name string) *Stopper { return a.PlaySoundOnBus(name, a.Buses.UI, 0, nil) }
 
-// PlaySoundOnBus plays a cached SFX on a specific bus. Returns a Stopper.
-func (a *System) PlaySoundOnBus(name string, bus *Bus, gainDB float64) *Stopper {
+// PlaySilenceOnBus plays silence for a duration on a bus, then calls onComplete.
+func (a *System) PlaySilenceOnBus(bus *Bus, duration time.Duration, onComplete func()) *Stopper {
+	sr := beep.SampleRate(targetSR)
+	silence := beep.Silence(sr.N(duration))
+
+	// Add completion callback
+	s := beep.Seq(silence, beep.Callback(onComplete))
+
+	// Wrap in stoppable
+	stoppable := &stoppableStreamer{s: s}
+
+	speaker.Lock()
+	bus.mix.Add(stoppable)
+	speaker.Unlock()
+
+	return &Stopper{
+		sys:       a,
+		vol:       nil, // no volume control for silence
+		stoppable: stoppable,
+	}
+}
+
+// PlaySoundOnBus plays a cached SFX on a specific bus with optional pitch/speed modulation.
+// opts can be nil for default playback. Returns a Stopper.
+func (a *System) PlaySoundOnBus(name string, bus *Bus, gainDB float64, opts *PlaybackOptions) *Stopper {
+	return a.PlaySoundOnBusWithCallback(name, bus, gainDB, opts, nil)
+}
+
+// PlaySoundOnBusWithCallback plays a sound and calls onComplete when it finishes naturally (not when stopped).
+func (a *System) PlaySoundOnBusWithCallback(name string, bus *Bus, gainDB float64, opts *PlaybackOptions, onComplete func()) *Stopper {
+	if gainDB < SilenceGainDbThreshold {
+		return nil
+	}
 	a.mu.Lock()
 	buf := a.cache[name]
 	a.mu.Unlock()
 	if buf == nil {
 		log.Warn().Str("name", name).Msgf("unable to find cached audio buffer")
+		if onComplete != nil {
+			onComplete()
+		}
 		return nil
 	}
 	var s beep.Streamer = buf.Streamer(0, buf.Len())
-	
+
+	// Apply pitch/speed modulation if requested (coupled via resampling)
+	if opts != nil && opts.Speed > 0 && opts.Speed != 1.0 {
+		originalRate := beep.SampleRate(targetSR)
+		modulatedRate := beep.SampleRate(float64(targetSR) * opts.Speed)
+		s = beep.Resample(4, originalRate, modulatedRate, s)
+	}
+
+	// Add completion callback if provided
+	if onComplete != nil {
+		s = beep.Seq(s, beep.Callback(onComplete))
+	}
+
 	// Wrap in stoppable so we can stop it mid-playback
 	stoppable := &stoppableStreamer{s: s}
-	
+
 	// Wrap in volume control for both initial gain and fade-out
 	vol := &effects.Volume{
 		Streamer: stoppable,
 		Base:     2,
 		Volume:   gainDB,
 	}
-	
+
 	speaker.Lock()
 	bus.mix.Add(vol)
 	speaker.Unlock()
-	
+
 	return &Stopper{
-		sys:      a,
-		vol:      vol,
+		sys:       a,
+		vol:       vol,
 		stoppable: stoppable,
 	}
 }

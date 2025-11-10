@@ -44,6 +44,12 @@ type character struct {
 }
 
 func newCharacter(char byte, typingWeight int, text *text.Text, style cStyle) *character {
+	switch char {
+	case ',', ';':
+		typingWeight += 3
+	case '.', '?', '!':
+		typingWeight += 6
+	}
 	return &character{
 		c:            char,
 		typingWeight: typingWeight,
@@ -74,8 +80,12 @@ type line struct {
 
 	// set on commit
 	width       int
-	typingTotal int
-	typingDone  int
+	typingTotal int // total weight to type
+
+	// tracked during typing
+	typingDone         int // weight typed so far
+	nextCharToType     int // index of next character to type
+	nextCharTypesSoFar int
 }
 
 func newLine() *line {
@@ -88,21 +98,38 @@ func (l *line) commit(text *text.Text) {
 	for _, c := range l.characters {
 		l.typingTotal += c.typingWeight
 	}
-	l.typingDone = 0
 }
 
-func (l *line) doTyping(toType int) int {
-	if l.typingDone+toType > l.typingTotal {
-		remaining := l.typingDone + toType - l.typingTotal
-		l.typingDone = l.typingTotal
-		return remaining
+func (l *line) doTyping(toType int) (int, string) {
+	// Calculate target weight
+	targetTypingDone := l.typingDone + toType
+	remainingToType := 0
+	if targetTypingDone > l.typingTotal {
+		remainingToType = targetTypingDone - l.typingTotal
+		targetTypingDone = l.typingTotal
 	}
-	l.typingDone += toType
-	return 0
+
+	var typedChars []byte
+	l.nextCharTypesSoFar += targetTypingDone - l.typingDone
+	for l.nextCharTypesSoFar > 0 && l.nextCharToType < len(l.characters) {
+		c := l.characters[l.nextCharToType]
+		if l.nextCharTypesSoFar < c.typingWeight {
+			break
+		}
+		typedChars = append(typedChars, c.c)
+		l.nextCharToType++
+		l.nextCharTypesSoFar -= c.typingWeight
+	}
+
+	// Update typingDonw
+	l.typingDone = targetTypingDone
+	return remainingToType, string(typedChars)
 }
 
 func (l *line) typeAll() {
 	l.typingDone = l.typingTotal
+	l.nextCharToType = len(l.characters)
+	l.nextCharTypesSoFar = 0
 }
 
 func (l *line) append(cs ...*character) {

@@ -1,0 +1,25 @@
+tilesheet:
+  tileWidth: 9
+  tileHeight: 6
+animations:
+  default:
+    tiles:
+      - column: 1
+        weight: 4
+        row: 1
+      - column: 2
+        weight: 1
+        row: 1
+      - column: 3
+        weight: 1
+        row: 1
+      - column: 4
+        weight: 2
+        row: 1
+      - column: 5
+        weight: 1
+        row: 1
+      - column: 6
+        weight: 1
+        row: 1
+    framesPerSecond: 8

@@ -30,6 +30,8 @@ type Entity interface {
 	GetEntityContext() EntityContext
 	SetEntityContextMetadata(key string, accessor func() any)
 
+	GetMetadata() *EntityMetadata
+
 	// optional traits
 
 	PushBehavior(behavior EntityBehavior)
@@ -38,6 +40,11 @@ type Entity interface {
 	DisableBehavior(source string)
 	EnableBehavior(source string)
 	IsBehaviorEnabled() bool
+
+	AddSoundProvider(soundProvider EntitySoundProvider)
+	DisableSound(source string)
+	EnableSound(source string)
+	IsSoundEnabled() bool
 
 	SetPresence(presence EntityPresence)
 	GetPresence() (EntityPresence, bool)
@@ -228,12 +235,40 @@ func (e *entityReference) SetFacingDirection(dir input.Direction) {
 	}
 	player.intentDirection = dir
 }
+func (e *entityReference) GetMetadata() *EntityMetadata {
+	if _, ok := e.system.metadata[e.id]; !ok {
+		e.system.metadata[e.id] = &EntityMetadata{}
+	}
+	return e.system.metadata[e.id]
+}
 
 func (e *entityReference) GetBehavior() (EntityBehavior, bool) {
 	if len(e.system.behaviors[e.id]) == 0 {
 		return nil, false
 	}
 	return e.system.behaviors[e.id][len(e.system.behaviors[e.id])-1], true
+}
+
+func (e *entityReference) AddSoundProvider(soundProvider EntitySoundProvider) {
+	e.system.soundProviders[e.id] = append(e.system.soundProviders[e.id], soundProvider)
+}
+
+func (e *entityReference) DisableSound(source string) {
+	if _, ok := e.system.disabledBehaviors[e.id]; !ok {
+		e.system.disabledSounds[e.id] = map[string]struct{}{}
+	}
+	e.system.disabledSounds[e.id][source] = struct{}{}
+}
+
+func (e *entityReference) EnableSound(source string) {
+	if _, ok := e.system.disabledSounds[e.id]; !ok {
+		return
+	}
+	delete(e.system.disabledSounds[e.id], source)
+}
+
+func (e *entityReference) IsSoundEnabled() bool {
+	return len(e.system.disabledSounds[e.id]) == 0
 }
 
 func (e *entityReference) SetPresence(presence EntityPresence) {

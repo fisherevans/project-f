@@ -5,6 +5,7 @@ import (
 
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/util"
+	"github.com/rs/zerolog/log"
 )
 
 func init() {
@@ -26,6 +27,10 @@ func init() {
 		if chattersRaw := props.GetString("chatters", ""); chattersRaw != "" {
 			chatters = strings.Split(chattersRaw, "\n")
 		}
+		if len(chatters) == 0 {
+			log.Warn().Msgf("random_chatters has no chatters: %s", props.GetString("dialogues", ""))
+			return nil
+		}
 		duration := props.GetFloat("duration", 4)
 		return NewBasicHandler(None{}).
 			WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
@@ -38,6 +43,29 @@ func init() {
 				return NewOutput().WithSerialPlan(
 					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(event.SourceId),
 					NewChatterEffect(ctx.EntityId(), duration, chatters.Random()),
+					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
+				)
+			}).
+			CreateHandler()
+	})
+
+	registerEventHandler("random_dialogues", func(props *util.Properties) EventHandler {
+		var dialogues util.StringList
+		if chattersRaw := props.GetString("dialogues", ""); chattersRaw != "" {
+			dialogues = strings.Split(chattersRaw, "\n")
+		}
+		if len(dialogues) == 0 {
+			log.Warn().Msgf("random_dialogues has no dialogues: %s", props.GetString("dialogues", ""))
+			return nil
+		}
+		return NewBasicHandler(None{}).
+			WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
+				if ctx.EntityId() != event.TargetId {
+					return nil
+				}
+				return NewOutput().WithSerialPlan(
+					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(event.SourceId),
+					NewDialogueEffect(dialogues.Random()),
 					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
 				)
 			}).

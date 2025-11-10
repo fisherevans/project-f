@@ -22,7 +22,8 @@ const (
 )
 
 type Chatter interface {
-	Id() string
+	ChatterId() string
+	CompletionId() string
 	Content() *textbox.Content
 	State() ChatterState
 	RenderAbove() pixel.Vec
@@ -32,6 +33,7 @@ type Chatter interface {
 
 type ChatterSystem struct {
 	chatters []Chatter
+	toAdd    []Chatter
 }
 
 func NewChatterSystem() *ChatterSystem {
@@ -39,7 +41,7 @@ func NewChatterSystem() *ChatterSystem {
 }
 
 func (c *ChatterSystem) Add(chatter Chatter) {
-	c.chatters = append(c.chatters, chatter)
+	c.toAdd = append(c.toAdd, chatter)
 }
 
 var chatterArrow = atlas.GetSprite("chatter/chatter_box_arrow")
@@ -51,18 +53,27 @@ var chatterBox = textbox.NewInstance(
 		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
 
 func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bounds MapBounds, timeDelta float64) {
+	if len(c.toAdd) > 0 {
+		for _, add := range c.toAdd {
+			c.chatters = append(c.chatters, add)
+			distance := s.camera.CurrentLocation().Sub(add.RenderAbove()).Len()
+			gain := ChatterFalloff.AttenuationDB(distance) - 1.5
+			game.GetAudioSystem().PlaySFX("speech/chatter", gain)
+		}
+		c.toAdd = nil
+	}
 	c.sortChatters()
 	incompleteChatters := c.chatters[:0] // Reuse the same slice memory
 	for _, chatter := range c.chatters {
 		chatter.Update(s, timeDelta)
 		if chatter.State() == ChatterComplete {
 			e := EventChatterComplete{
-				ChatterId: chatter.Id(),
+				ChatterId: chatter.CompletionId(),
 				EntityId:  chatter.EntityId(),
 			}
 			s.eventDispatcher.Dispatch(e)
 			// Mark chatter complete for plan tracking
-			s.planExecutor.MarkChatterComplete(chatter.Id())
+			s.planExecutor.MarkComplete(chatter.CompletionId())
 			continue
 		}
 		incompleteChatters = append(incompleteChatters, chatter)
@@ -77,7 +88,7 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.
 
 		chatterArrow.Draw(target, renderMatrix)
 
-		chatter.Content().Update(timeDelta)
+		chatter.Content().Update(timeDelta, nil)
 		chatterBox.Render(target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content())
 	}
 	c.chatters = incompleteChatters
@@ -99,7 +110,8 @@ func (c *ChatterSystem) sortChatters() {
 }
 
 type basicEntityChatter struct {
-	id             string
+	chatterId      string
+	completionId   string
 	content        *textbox.Content
 	target         string
 	renderLocation pixel.Vec
@@ -107,8 +119,12 @@ type basicEntityChatter struct {
 	elapsedTime    float64
 }
 
-func (b *basicEntityChatter) Id() string {
-	return b.id
+func (b *basicEntityChatter) ChatterId() string {
+	return b.chatterId
+}
+
+func (b *basicEntityChatter) CompletionId() string {
+	return b.completionId
 }
 
 func (b *basicEntityChatter) EntityId() string {
@@ -139,13 +155,14 @@ func (b *basicEntityChatter) Update(s *State, timeDelta float64) {
 	b.renderLocation = entity.GetPreciseLocation()
 }
 
-func newBasicEntityChatter(target string, displayTime float64, message string, id string) Chatter {
+func newBasicEntityChatter(target string, displayTime float64, message string, id string, completionId string) Chatter {
 	content := chatterBox.NewSimpleContent(message)
 	//content.SetTypingSpeed(0.01)
 	return &basicEntityChatter{
-		id:          id,
-		displayTime: displayTime,
-		content:     content,
-		target:      target,
+		chatterId:    id,
+		completionId: completionId,
+		displayTime:  displayTime,
+		content:      content,
+		target:       target,
 	}
 }

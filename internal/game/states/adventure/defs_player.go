@@ -39,6 +39,7 @@ func init() {
 		entity.SetMovementSpeed(MoveStateWalking, characterSpeed)
 		entity.SetMovementSpeed(MoveStateRunning, characterSpeed*1.75)
 		entity.SetMovementSpeed(MoveStateDashing, characterSpeed*3)
+		entity.AddSoundProvider(NewStepSoundProvider(entity, createStepSoundsHard(), FootstepFalloff))
 		// todo this seems gross
 		system.state.player = params.EntityId
 		system.state.camera = NewFollowCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium)
@@ -140,5 +141,4 @@ func (b *PlayerBehavior) Update(timeDelta float64) {
 	} else {
 		b.triggerMovement()
 	}
-
 }

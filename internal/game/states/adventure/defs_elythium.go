@@ -14,6 +14,7 @@ func init() {
 		}
 		mode := "mined"
 		return NewOutput().WithEffects(
+			NewPlaySoundEffect("adventure/elythium_breaking"),
 			NewTimerEffect(3).WithTimerId("reset"),
 			NewYieldElythiumEffect(3),
 			NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode(mode),

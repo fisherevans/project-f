@@ -25,12 +25,17 @@ type EntitySystem struct {
 
 	// optional traits
 
-	presences         map[string]EntityPresence
-	renderers         map[string]EntityRenderer
+	presences map[string]EntityPresence
+	renderers map[string]EntityRenderer
+
 	behaviors         map[string][]EntityBehavior
 	disabledBehaviors map[string]map[string]struct{}
 
-	states map[string]EntityState
+	soundProviders map[string][]EntitySoundProvider
+	disabledSounds map[string]map[string]struct{}
+	states         map[string]EntityState
+
+	metadata map[string]*EntityMetadata
 }
 
 func NewEntitySystem(state *State) *EntitySystem {
@@ -41,11 +46,19 @@ func NewEntitySystem(state *State) *EntitySystem {
 		occupations: NewPositions(state),
 		contexts:    map[string]*BasicEntityContext{},
 
-		presences:         map[string]EntityPresence{},
-		renderers:         map[string]EntityRenderer{},
+		presences: map[string]EntityPresence{},
+
+		renderers: map[string]EntityRenderer{},
+
 		behaviors:         map[string][]EntityBehavior{},
 		disabledBehaviors: map[string]map[string]struct{}{},
-		states:            map[string]EntityState{},
+
+		soundProviders: map[string][]EntitySoundProvider{},
+		disabledSounds: map[string]map[string]struct{}{},
+
+		states: map[string]EntityState{},
+
+		metadata: map[string]*EntityMetadata{},
 	}
 }
 
@@ -70,6 +83,8 @@ func (es *EntitySystem) DeleteEntity(id string) {
 	delete(es.renderers, id)
 	delete(es.behaviors, id)
 	delete(es.disabledBehaviors, id)
+	delete(es.soundProviders, id)
+	delete(es.disabledSounds, id)
 }
 
 func initializeMetadata(context *BasicEntityContext, entity Entity) {
@@ -203,6 +218,12 @@ func (es *EntitySystem) Update(timeDelta float64) {
 		if hasRenderer {
 			renderer.Update(timeDelta)
 		}
+		if entity.IsSoundEnabled() {
+			cameraDistance := es.state.camera.CurrentLocation().Sub(entity.GetPreciseLocation()).Len()
+			for _, soundProvider := range es.soundProviders[id] {
+				soundProvider.Update(timeDelta, cameraDistance)
+			}
+		}
 	}
 }
 
@@ -245,4 +266,14 @@ func (es *EntitySystem) locationSortedRenderers() []Entity {
 		return i.GetId() < j.GetId()
 	})
 	return sorted
+}
+
+func (es *EntitySystem) loadGenericMetadata(id string, metadata any) {
+	entity, exists := es.GetEntity(id)
+	if !exists {
+		log.Error().Str("entityId", id).Msg("entity not found when loading metadata")
+		return
+	}
+
+	TalkerConfigMetadataKey.loadMetadata(entity, metadata)
 }

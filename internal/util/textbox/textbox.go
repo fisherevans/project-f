@@ -37,7 +37,7 @@ type characterRenderParams struct {
 	foreground pixel.RGBA
 }
 
-func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Content, opts ...tbcfg.ConfigOpt) {
+func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Content, opts ...tbcfg.ConfigOpt) pixel.Vec {
 	tb.text.Clear()
 
 	// per render cfg overrides
@@ -220,6 +220,7 @@ func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Co
 
 	tb.imd.Draw(target)
 	tb.text.Draw(target, matrix)
+	return tb.text.Dot
 }
 
 func (tb *Instance) effectiveLineSpacing() int {

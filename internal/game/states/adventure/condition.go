@@ -3,8 +3,9 @@ package adventure
 type ConditionCheck func(*State, float64) bool
 
 type Condition struct {
-	ConditionId string
-	Check       ConditionCheck
+	ConditionId  string
+	CompletionId string
+	Check        ConditionCheck
 }
 
 type Conditions struct {
@@ -18,10 +19,11 @@ func NewConditions(s *State) *Conditions {
 	}
 }
 
-func (c *Conditions) AddCondition(conditionId string, check ConditionCheck) {
+func (c *Conditions) AddCondition(conditionId string, completionId string, check ConditionCheck) {
 	c.conditions = append(c.conditions, Condition{
-		ConditionId: conditionId,
-		Check:       check,
+		ConditionId:  conditionId,
+		CompletionId: completionId,
+		Check:        check,
 	})
 }
 
@@ -31,7 +33,7 @@ func (c *Conditions) Update(timeDelta float64) {
 		if condition.Check == nil || condition.Check(c.s, timeDelta) {
 			c.conditions[id] = c.conditions[len(c.conditions)-1]
 			c.conditions = c.conditions[:len(c.conditions)-1]
-			c.s.planExecutor.MarkConditionComplete(condition.ConditionId)
+			c.s.planExecutor.MarkComplete(condition.CompletionId)
 			id--
 		}
 	}

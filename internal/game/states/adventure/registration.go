@@ -78,6 +78,11 @@ func (s *State) registerParameterizedEntity(params NewEntityParams) bool {
 	}
 	log.Debug().Msgf("Registered entity %s", params.EntityId)
 
+	metadata, ok := params.Properties.Get("metadata")
+	if ok {
+		s.entities.loadGenericMetadata(entity.GetId(), metadata)
+	}
+
 	if scriptRef := params.Properties.GetString("script_ref", ""); scriptRef != "" {
 		if eventHandler != nil {
 			log.Fatal().Str("entityId", string(params.EntityId)).Msgf("entity has more than one handler configured!")

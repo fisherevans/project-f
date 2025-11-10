@@ -177,6 +177,9 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 			Weight: tile.Weight,
 		})
 	}
+	if len(tiles) == 0 {
+		panic(msgf("no tiles specified"))
+	}
 	if metadata.FramesPerSecond < 0 {
 		panic(msgf("invalid frames per second %f", metadata.FramesPerSecond))
 	}

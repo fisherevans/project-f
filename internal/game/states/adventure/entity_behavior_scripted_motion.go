@@ -70,20 +70,21 @@ func (s *ScriptedMotionBehavior) onComplete(wasCanceled bool) {
 		return
 	}
 	motionId := s.target.MotionId()
+	completionId := s.target.CompletionId()
 	s.target = nil
-	if motionId == "" {
-		return
+	s.entity.GetSystem().state.planExecutor.MarkComplete(completionId)
+	if motionId != "" {
+		s.entity.GetSystem().state.eventDispatcher.Dispatch(EventScriptedMotionComplete{
+			EntityId:    s.entity.GetId(),
+			MotionId:    motionId,
+			WasCanceled: wasCanceled,
+		})
 	}
-	s.entity.GetSystem().state.eventDispatcher.Dispatch(EventScriptedMotionComplete{
-		EntityId:    s.entity.GetId(),
-		MotionId:    motionId,
-		WasCanceled: wasCanceled,
-	})
-	s.entity.GetSystem().state.planExecutor.MarkMotionComplete(motionId)
 }
 
 type MotionTarget interface {
 	MotionId() string
+	CompletionId() string
 	Update(timeDelta float64)
 	NextLocation(currentLocation MapLocation) (MapLocation, bool)
 	NextLocationWasValid(bool)
@@ -91,21 +92,27 @@ type MotionTarget interface {
 }
 
 type RelativeMotion struct {
-	motionId  string
-	direction input.Direction
-	tiles     int
+	motionId     string
+	completionId string
+	direction    input.Direction
+	tiles        int
 }
 
-func NewRelativeMotion(motionId string, direction input.Direction, tiles int) *RelativeMotion {
+func NewRelativeMotion(motionId, completionId string, direction input.Direction, tiles int) *RelativeMotion {
 	return &RelativeMotion{
-		motionId:  motionId,
-		direction: direction,
-		tiles:     tiles,
+		motionId:     motionId,
+		completionId: completionId,
+		direction:    direction,
+		tiles:        tiles,
 	}
 }
 
 func (r *RelativeMotion) MotionId() string {
 	return r.motionId
+}
+
+func (r *RelativeMotion) CompletionId() string {
+	return r.completionId
 }
 
 func (r *RelativeMotion) Update(timeDelta float64) {}
@@ -130,11 +137,12 @@ func (r *RelativeMotion) IsTarget(currentLocation MapLocation) bool {
 }
 
 type PathfindingMotion struct {
-	motionId    string
-	entity      Entity
-	target      MapLocation
-	giveUpAfter float64
-	jitterScale float64
+	motionId     string
+	completionId string
+	entity       Entity
+	target       MapLocation
+	giveUpAfter  float64
+	jitterScale  float64
 
 	path *Path
 
@@ -147,20 +155,25 @@ const stableRecalcInterval = 5.
 const invalidRecalcInitialInterval = 0.1
 const recalcMaxInterval = 5.
 
-func NewPathfindingMotion(motionId string, entity Entity, to MapLocation) *PathfindingMotion {
+func NewPathfindingMotion(motionId, completionId string, entity Entity, to MapLocation) *PathfindingMotion {
 	m := &PathfindingMotion{
-		motionId:    motionId,
-		entity:      entity,
-		target:      to,
-		isStable:    true,
-		giveUpAfter: -1, // all this to be configured
-		jitterScale: getRecalcJitterScale(entity.GetId()),
+		motionId:     motionId,
+		completionId: completionId,
+		entity:       entity,
+		target:       to,
+		isStable:     true,
+		giveUpAfter:  -1, // all this to be configured
+		jitterScale:  getRecalcJitterScale(entity.GetId()),
 	}
 	return m
 }
 
 func (p *PathfindingMotion) MotionId() string {
 	return p.motionId
+}
+
+func (p *PathfindingMotion) CompletionId() string {
+	return p.completionId
 }
 
 func (p *PathfindingMotion) Update(timeDelta float64) {

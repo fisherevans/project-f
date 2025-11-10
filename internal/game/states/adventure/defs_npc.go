@@ -46,6 +46,7 @@ func init() {
 		AttachBlockIngressPresence(entity, true, NewMovementAwareImpedance(entity, ImpedanceHigh, ImpedanceBase*2))
 		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle, idleFacingDirection)
 		entity.SetMovementSpeed(MoveStateWalking, speed)
+		entity.AddSoundProvider(NewStepSoundProvider(entity, createStepSoundsSoft(), FootstepFalloff))
 		if params.Properties.GetString("script_ref", "") != "" {
 			return entity, nil
 		}

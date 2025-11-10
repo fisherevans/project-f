@@ -13,7 +13,8 @@ import (
 )
 
 type Overlay interface {
-	Id() string
+	OverlayId() string
+	CompletionId() string
 	OnTick(s *State, target *pixel.Batch, timeDelta float64)
 	SetIsActive(bool)
 	GetIsActive() bool
@@ -38,7 +39,7 @@ func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.B
 		if overlay.GetIsActive() {
 			remaining = append(remaining, overlay)
 		} else {
-			log.Info().Str("overlay", overlay.Id()).Msg("overlay deactivated")
+			log.Info().Str("overlay", overlay.OverlayId()).Msg("overlay deactivated")
 		}
 	}
 	o.overlays = remaining
@@ -46,14 +47,15 @@ func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.B
 
 func (o *OverlaySystem) Deactivate(id string) {
 	for _, overlay := range o.overlays {
-		if overlay.Id() == id {
+		if overlay.OverlayId() == id {
 			overlay.SetIsActive(false)
 		}
 	}
 }
 
 type BaseOverlay struct {
-	OverlayId       string
+	overlayId       string
+	completionId    string
 	DurationSeconds float64
 	AutoDeactivate  bool
 
@@ -63,17 +65,22 @@ type BaseOverlay struct {
 	elapsedSeconds float64
 }
 
-func NewBaseOverlay(id string, durationSeconds float64, autoDeactivate bool) *BaseOverlay {
+func NewBaseOverlay(overlayId, completionId string, durationSeconds float64, autoDeactivate bool) *BaseOverlay {
 	return &BaseOverlay{
-		OverlayId:       id,
+		overlayId:       overlayId,
+		completionId:    completionId,
 		DurationSeconds: durationSeconds,
 		AutoDeactivate:  autoDeactivate,
 		IsActive:        true,
 	}
 }
 
-func (o *BaseOverlay) Id() string {
-	return o.OverlayId
+func (o *BaseOverlay) OverlayId() string {
+	return o.overlayId
+}
+
+func (o *BaseOverlay) CompletionId() string {
+	return o.completionId
 }
 
 func (o *BaseOverlay) GetIsActive() bool {
@@ -88,7 +95,7 @@ func (o *BaseOverlay) OnTick(s *State, target *pixel.Batch, timeDelta float64) {
 	o.elapsedSeconds += timeDelta
 	if !o.IsComplete && o.elapsedSeconds >= o.DurationSeconds {
 		o.IsComplete = true
-		s.planExecutor.MarkFadeComplete(o.Id())
+		s.planExecutor.MarkComplete(o.CompletionId())
 		if o.AutoDeactivate {
 			o.IsActive = false
 		}

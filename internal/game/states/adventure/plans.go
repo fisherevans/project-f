@@ -2,6 +2,7 @@ package adventure
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
 
 	"github.com/rs/zerolog/log"
@@ -15,6 +16,7 @@ type EffectDispatcher func(effects ...DispatchedEffect)
 
 // PlanExecutor manages the execution of effect batches
 type PlanExecutor struct {
+	mu               sync.Mutex // protects activeBatches and waitingFor maps
 	activeBatches    []*activeBatch
 	effectDispatcher EffectDispatcher
 }
@@ -82,17 +84,17 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityContext, batch *Eff
 		for ab.nextEffectIndex < len(batch.Effects) {
 			effect := batch.Effects[ab.nextEffectIndex]
 
-			completionIds := GetCompletionIds(effect)
+			completionId := effect.CompletionID()
 
 			log.Info().
 				Str("batchId", batch.BatchId).
 				Int("effectIndex", ab.nextEffectIndex).
 				Int("totalEffects", len(batch.Effects)).
-				Int("completionIds", len(completionIds)).
+				Int("completionId", len(completionId)).
 				Type("effectType", effect).
 				Msg("Executing serial effect")
 
-			for _, completionId := range completionIds {
+			if completionId != "" {
 				ab.waitingFor[completionId] = true
 				log.Info().Str("batchId", batch.BatchId).Str("completionId", completionId).Msg("waiting for completion")
 			}
@@ -105,7 +107,7 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityContext, batch *Eff
 			ab.nextEffectIndex++
 
 			// If this effect has completion IDs, stop and wait
-			if len(completionIds) > 0 {
+			if completionId != "" {
 				log.Info().Str("batchId", batch.BatchId).Msg("Stopping serial execution - waiting for completion")
 				pe.activeBatches = append(pe.activeBatches, ab)
 				return effects
@@ -117,8 +119,8 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityContext, batch *Eff
 		for i := range batch.Effects {
 			effect := &batch.Effects[i]
 
-			completionIds := GetCompletionIds(*effect)
-			for _, completionId := range completionIds {
+			completionId := (*effect).CompletionID()
+			if completionId != "" {
 				ab.waitingFor[completionId] = true
 				log.Info().Str("batchId", batch.BatchId).Str("completionId", completionId).Msg("waiting for completion")
 			}
@@ -143,11 +145,13 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityContext, batch *Eff
 	return effects
 }
 
-// Update processes all active batches and dispatches their next effects.
+// Update continues executing queued batches, dispatching effects that are ready.
 // This is called by the main game loop each frame to continue executing queued batches.
 func (pe *PlanExecutor) Update() {
-	defer pe.cleanupCompletedBatches()
+	// Collect effects to dispatch while holding the lock
+	var effectsToDispatch []DispatchedEffect
 
+	pe.mu.Lock()
 	for _, ab := range pe.activeBatches {
 		// If we're waiting for effects to complete, don't dispatch more
 		if len(ab.waitingFor) > 0 {
@@ -165,22 +169,22 @@ func (pe *PlanExecutor) Update() {
 			for ab.nextEffectIndex < len(ab.batch.Effects) {
 				effect := ab.batch.Effects[ab.nextEffectIndex]
 
-				completionIds := GetCompletionIds(effect)
+				completionId := effect.CompletionID()
 
 				log.Info().
 					Str("batchId", ab.batch.BatchId).
 					Int("effectIndex", ab.nextEffectIndex).
 					Int("totalEffects", len(ab.batch.Effects)).
-					Int("completionIds", len(completionIds)).
+					Int("completionId", len(completionId)).
 					Type("effectType", effect).
 					Msg("Executing serial effect")
 
-				for _, completionId := range completionIds {
+				if completionId != "" {
 					ab.waitingFor[completionId] = true
 					log.Info().Str("batchId", ab.batch.BatchId).Str("completionId", completionId).Msg("waiting for completion")
 				}
 
-				pe.effectDispatcher(DispatchedEffect{
+				effectsToDispatch = append(effectsToDispatch, DispatchedEffect{
 					Source: ab.source,
 					Effect: effect,
 				})
@@ -188,7 +192,7 @@ func (pe *PlanExecutor) Update() {
 				ab.nextEffectIndex++
 
 				// If this effect has completion IDs, stop and wait
-				if len(completionIds) > 0 {
+				if completionId != "" {
 					log.Info().Str("batchId", ab.batch.BatchId).Msg("Stopping serial execution - waiting for completion")
 					break
 				}
@@ -200,13 +204,13 @@ func (pe *PlanExecutor) Update() {
 				for i := range ab.batch.Effects {
 					effect := &ab.batch.Effects[i]
 
-					completionIds := GetCompletionIds(*effect)
-					for _, completionId := range completionIds {
+					completionId := (*effect).CompletionID()
+					if completionId != "" {
 						ab.waitingFor[completionId] = true
 						log.Info().Str("batchId", ab.batch.BatchId).Str("completionId", completionId).Msg("waiting for completion")
 					}
 
-					pe.effectDispatcher(DispatchedEffect{
+					effectsToDispatch = append(effectsToDispatch, DispatchedEffect{
 						Source: ab.source,
 						Effect: *effect,
 					})
@@ -216,27 +220,47 @@ func (pe *PlanExecutor) Update() {
 			}
 		}
 	}
+	pe.cleanupCompletedBatches()
+	pe.mu.Unlock()
+
+	// Dispatch effects after releasing the lock to avoid deadlock
+	for _, effect := range effectsToDispatch {
+		pe.effectDispatcher(effect)
+	}
 }
 
 // MarkComplete marks an effect as complete (called when timers/overlays/etc finish)
-func (pe *PlanExecutor) MarkComplete(completionId string) {
-	log.Info().Str("completionId", completionId).Msg("Effect marked complete")
+// Thread-safe: can be called from audio callbacks or other async operations
+func (pe *PlanExecutor) MarkComplete(completionIds ...string) {
+	pe.mu.Lock()
+	defer pe.mu.Unlock()
+	pe.markCompleteInternal(completionIds...)
+}
 
-	for _, ab := range pe.activeBatches {
-		if ab.waitingFor[completionId] {
-			delete(ab.waitingFor, completionId)
-			log.Info().
-				Str("batchId", ab.batch.BatchId).
-				Str("completionId", completionId).
-				Int("remaining", len(ab.waitingFor)).
-				Msg("Effect completed in batch")
-			// nextEffectIndex is already incremented, just need to clear waitingFor
-			// Next call to Update will dispatch the next effect
+// markCompleteInternal is the internal implementation that assumes the lock is already held
+func (pe *PlanExecutor) markCompleteInternal(completionIds ...string) {
+	for _, completionId := range completionIds {
+		if completionId == "" {
+			continue
+		}
+		log.Info().Str("completionId", completionId).Msg("Effect marked complete")
+		for _, ab := range pe.activeBatches {
+			if ab.waitingFor[completionId] {
+				delete(ab.waitingFor, completionId)
+				log.Info().
+					Str("batchId", ab.batch.BatchId).
+					Str("completionId", completionId).
+					Int("remaining", len(ab.waitingFor)).
+					Msg("Effect completed in batch")
+				// nextEffectIndex is already incremented, just need to clear waitingFor
+				// Next call to Update will dispatch the next effect
+			}
 		}
 	}
 }
 
 // cleanupCompletedBatches removes batches that have finished and marks them as complete
+// Must be called with pe.mu held
 func (pe *PlanExecutor) cleanupCompletedBatches() {
 	var activeBatches []*activeBatch
 
@@ -246,135 +270,10 @@ func (pe *PlanExecutor) cleanupCompletedBatches() {
 		} else {
 			log.Info().Str("batchId", ab.batch.BatchId).Msg("Batch completed")
 			// Mark the batch as complete so parent batches can continue
-			if ab.batch.BatchId != "" {
-				pe.MarkComplete(MakePlanCompletionId(ab.batch.BatchId))
-			}
+			// Use internal version since we already hold the lock
+			pe.markCompleteInternal(ab.batch.CompletionID())
 		}
 	}
 
 	pe.activeBatches = activeBatches
-}
-
-// GetCompletionIds extracts all completion IDs from an effect
-// This is exported so external packages can compute the same IDs
-func GetCompletionIds(effect Effect) []string {
-	var ids []string
-
-	switch e := effect.(type) {
-	case *EffectBatch:
-		// Nested batches should be waited for
-		if e.BatchId != "" {
-			ids = append(ids, MakePlanCompletionId(e.BatchId))
-		}
-	case *EffectFade:
-		if e.FadeId != "" {
-			ids = append(ids, MakeFadeCompletionId(e.FadeId))
-		}
-	case *EffectTimer:
-		if e.TimerId != "" {
-			ids = append(ids, MakeTimerCompletionId(e.TimerId))
-		}
-	case *EffectDialogue:
-		if e.DialogueId != "" {
-			ids = append(ids, MakeDialogueCompletionId(e.DialogueId))
-		}
-	case *EffectChatter:
-		if e.ChatterId != "" {
-			ids = append(ids, MakeChatterCompletionId(e.ChatterId))
-		}
-	case *EffectTriggerCombat:
-		if e.CombatId != "" {
-			ids = append(ids, MakeCombatCompletionId(e.CombatId))
-		}
-	case *EffectStartScriptedMotion:
-		if e.MotionId != "" {
-			ids = append(ids, MakeMotionCompletionId(e.MotionId))
-		}
-	case *EffectWaitForCondition:
-		if e.ConditionId != "" {
-			ids = append(ids, MakeConditionCompleteId(e.ConditionId))
-		}
-	}
-
-	return ids
-}
-
-// Completion ID constructors - ensures consistency across packages
-func MakePlanCompletionId(planId string) string {
-	return fmt.Sprintf("plan:%s", planId)
-}
-
-func MakeFadeCompletionId(fadeId string) string {
-	return fmt.Sprintf("fade:%s", fadeId)
-}
-
-func MakeTimerCompletionId(timerId string) string {
-	return fmt.Sprintf("timer:%s", timerId)
-}
-
-func MakeDialogueCompletionId(dialogueId string) string {
-	return fmt.Sprintf("dialogue:%s", dialogueId)
-}
-
-func MakeChatterCompletionId(chatterId string) string {
-	return fmt.Sprintf("chatter:%s", chatterId)
-}
-
-func MakeCombatCompletionId(combatId string) string {
-	return fmt.Sprintf("combat:%s", combatId)
-}
-
-func MakeMotionCompletionId(motionId string) string {
-	return fmt.Sprintf("motion:%s", motionId)
-}
-
-func MakeConditionCompleteId(motionId string) string {
-	return fmt.Sprintf("condition:%s", motionId)
-}
-
-// MarkDialogueComplete marks a dialogue as complete
-func (pe *PlanExecutor) MarkDialogueComplete(dialogueId string) {
-	if dialogueId != "" {
-		pe.MarkComplete(MakeDialogueCompletionId(dialogueId))
-	}
-}
-
-// MarkChatterComplete marks a chatter as complete
-func (pe *PlanExecutor) MarkChatterComplete(chatterId string) {
-	if chatterId != "" {
-		pe.MarkComplete(MakeChatterCompletionId(chatterId))
-	}
-}
-
-// MarkFadeComplete marks a fade as complete
-func (pe *PlanExecutor) MarkFadeComplete(fadeId string) {
-	if fadeId != "" {
-		pe.MarkComplete(MakeFadeCompletionId(fadeId))
-		log.Debug().Str("fadeId", fadeId).Msg("Fade completed")
-	}
-}
-
-// MarkTimerComplete marks a timer as complete
-func (pe *PlanExecutor) MarkTimerComplete(timerId string) {
-	if timerId != "" {
-		pe.MarkComplete(MakeTimerCompletionId(timerId))
-	}
-}
-
-func (pe *PlanExecutor) MarkCombatComplete(combatId string) {
-	if combatId != "" {
-		pe.MarkComplete(MakeCombatCompletionId(combatId))
-	}
-}
-
-func (pe *PlanExecutor) MarkMotionComplete(motionId string) {
-	if motionId != "" {
-		pe.MarkComplete(MakeMotionCompletionId(motionId))
-	}
-}
-
-func (pe *PlanExecutor) MarkConditionComplete(conditionId string) {
-	if conditionId != "" {
-		pe.MarkComplete(MakeConditionCompleteId(conditionId))
-	}
 }

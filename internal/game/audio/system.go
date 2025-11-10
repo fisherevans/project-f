@@ -4,12 +4,13 @@ import (
 	"sync"
 	"time"
 
+	"fisherevans.com/project/f/internal/game/audio/speech"
 	"github.com/gopxl/beep/v2"
 	"github.com/gopxl/beep/v2/effects"
 	"github.com/gopxl/beep/v2/speaker"
 )
 
-const targetSR = 48000 // Target sample rate for all audio
+const targetSR = 44100
 
 // Bus represents an audio mixing bus with volume control
 type Bus struct {
@@ -33,9 +34,10 @@ type System struct {
 
 // newSystem creates and initializes a newSystem audio system
 func newSystem() (*System, error) {
-	// Init speaker with larger buffer for stability
+	// Init speaker with buffer sized for low latency while maintaining stability
+	// 30ms = ~1440 samples at 48kHz (balance between responsiveness and reliability)
 	sr := beep.SampleRate(targetSR)
-	if err := speaker.Init(sr, sr.N(time.Second/10)); err != nil {
+	if err := speaker.Init(sr, sr.N(time.Millisecond*50)); err != nil {
 		return nil, err
 	}
 
@@ -56,10 +58,10 @@ func newSystem() (*System, error) {
 	masterMix.Add(sys.Buses.SFX.vol, sys.Buses.UI.vol, sys.Buses.Music.vol, sys.Buses.Amb.vol)
 
 	sys.Master = &effects.Volume{Streamer: masterMix, Base: 2, Volume: 0} // master gain
-	
+
 	// Wrap master in a tee for audio capture
 	sys.MasterTee = NewTeeStreamer(sys.Master)
-	
+
 	// Start the persistent graph once.
 	speaker.Play(sys.MasterTee)
 	return sys, nil
@@ -76,5 +78,50 @@ func (a *System) SetBusGain(bus *Bus, dB float64) {
 func (a *System) SetMaster(dB float64) {
 	speaker.Lock()
 	a.Master.Volume = dB
+	speaker.Unlock()
+}
+
+// SpeechGenerator wraps a hollow tick generator for dialogue
+type SpeechGenerator struct {
+	gen         *speech.TickGenerator
+	bus         *Bus
+	currentTick beep.Streamer
+	mu          sync.Mutex
+}
+
+// CreateSpeechGenerator creates a new speech generator that plays on the UI bus.
+// The generator auto-cleans up after each Play() completes.
+func (a *System) CreateSpeechGenerator() *SpeechGenerator {
+	sr := beep.SampleRate(targetSR)
+	return &SpeechGenerator{
+		gen: speech.NewTickGenerator(sr),
+		bus: a.Buses.SFX,
+	}
+}
+
+// Play emits a single character tick on the UI bus.
+// Only one tick plays at a time to prevent volume stacking during fast typing.
+func (sg *SpeechGenerator) Play(text string) {
+	sg.mu.Lock()
+	defer sg.mu.Unlock()
+
+	// If a tick is already playing, skip this one to prevent overlap/loudness
+	if sg.currentTick != nil {
+		return
+	}
+
+	sound := sg.gen.Speak(text)
+
+	// Wrap with callback to clear current tick when done
+	wrapped := beep.Seq(sound, beep.Callback(func() {
+		sg.mu.Lock()
+		sg.currentTick = nil
+		sg.mu.Unlock()
+	}))
+
+	sg.currentTick = wrapped
+
+	speaker.Lock()
+	sg.bus.mix.Add(wrapped)
 	speaker.Unlock()
 }

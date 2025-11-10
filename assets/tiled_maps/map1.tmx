@@ -1677,7 +1677,7 @@
     </properties>
    </object>
   </objectgroup>
-  <objectgroup id="13" name="ambient_light">
+  <objectgroup id="13" name="ambient_light" visible="0">
    <object id="162" x="368" y="448" width="752" height="624">
     <properties>
      <property name="color" value="#4a372c"/>

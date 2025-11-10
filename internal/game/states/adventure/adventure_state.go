@@ -5,18 +5,17 @@ import (
 	"math"
 	"sort"
 
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/game/shaders/bloom"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/image/colornames"
-
-	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/shaders"
-	"fisherevans.com/project/f/internal/game/shaders/bloom"
-	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/colors"
 )
 
 const (
@@ -212,6 +211,17 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	sort.Strings(locations)
 	game.DebugBLf("player locations: %v", locations)
 	game.DebugBLf("player behavior enabled: %t (%v)", playerEntity.IsBehaviorEnabled(), s.entities.disabledBehaviors[s.player])
+
+	if game.Window().JustPressed(pixel.KeyB) {
+		s.planExecutor.mu.Lock()
+		for _, batch := range s.planExecutor.activeBatches {
+			log.Info().Int("next effect", batch.nextEffectIndex).
+				Any("waiting", batch.waitingFor).
+				Any("batch", batch.batch).
+				Msg("batch in progress")
+		}
+		s.planExecutor.mu.Unlock()
+	}
 
 	// LIGHTING
 

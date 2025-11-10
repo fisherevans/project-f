@@ -11,11 +11,14 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
+type OnTypeListener func(s string, speed float64)
+
 type Content struct {
 	tb               *Instance
 	lines            []*line
 	effects          []RenderEffect
 	typingController TypingController
+	onTypeListener   OnTypeListener
 
 	scrollPosition float64
 	startLine      int
@@ -40,6 +43,12 @@ func WithTyping(timePerCharacter float64) ContentOpt {
 	}
 }
 
+func WithOnTypeListener(listener OnTypeListener) ContentOpt {
+	return func(c *Content) {
+		c.onTypeListener = listener
+	}
+}
+
 func WithAlignment(a tbcfg.HAlignment) ContentOpt {
 	return func(c *Content) {
 		c.alignmentOverride = &a
@@ -58,7 +67,7 @@ func (c *Content) Bounds() pixel.Rect {
 	return pixel.R(0, 0, float64(c.width), float64(c.height))
 }
 
-func (c *Content) Update(timeDelta float64) {
+func (c *Content) Update(timeDelta float64, listener OnTypeListener) {
 	// update character effects
 	for _, e := range c.effects {
 		e.Update(timeDelta)
@@ -85,9 +94,17 @@ func (c *Content) Update(timeDelta float64) {
 			line.typeAll()
 		}
 	} else {
+		var typed string
+		speed := 1.0
+		if c.progressFaster {
+			speed = 2.0
+		}
 		toType := c.typingController.TypeSome(timeDelta, c.progressFaster)
 		for _, line := range c.pageLines() {
-			toType = line.doTyping(toType)
+			toType, typed = line.doTyping(toType)
+			if typed != "" {
+				listener(typed, speed)
+			}
 			if toType == 0 {
 				break
 			}

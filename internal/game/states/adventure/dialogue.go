@@ -1,6 +1,9 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/audio"
+	"fisherevans.com/project/f/internal/util/interp"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
@@ -14,11 +17,24 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
+type dialogueState int
+
+const (
+	dialogStateEntering dialogueState = iota
+	dialogStateVisible
+	dialogStateExiting
+)
+
+var dialogueDoneAnimation = anim.Load(atlas, "dialogue/done")
+
 type DialogueSystem struct {
 	queuedDialogues []Dialogue
 
 	toAppend  []Dialogue
 	toPrepend []Dialogue
+
+	renderStateElapsed float64
+	renderState        dialogueState
 }
 
 func NewDialogueSystem() *DialogueSystem {
@@ -46,6 +62,8 @@ var dialogueBox = textbox.NewInstance(
 		tbcfg.Foreground(colors.HexString("#00164e")),
 		tbcfg.ExtraLineSpacing(4)))
 
+var dialogueTransitionTime = 0.3
+
 func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
 	game.DebugBRf("dialogue queue: %d", len(ds.queuedDialogues))
@@ -62,37 +80,57 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 
 	dialogue := ds.queuedDialogues[0]
 
-	dialogue.Content().Update(timeDelta)
-
 	frameBounds := pixel.R(
 		float64(dialogueFrameMargin),
 		float64(dialogueFrameMargin),
 		float64(game.GameWidth-dialogueFrameMargin),
 		float64(dialogueFrameMargin+dialogue.Content().Height()+dialogueFrame.VerticalPadding()))
-	dialogueFrame.Draw(target, frameBounds, pixel.IM)
 
-	bottomLeft := gfx.IVec(dialogueFrameMargin+dialogueFrame.LeftPadding(), dialogueFrameMargin+dialogueFrame.BottomPadding())
+	textBoxBottomLeft := gfx.IVec(dialogueFrameMargin+dialogueFrame.LeftPadding(), dialogueFrameMargin+dialogueFrame.BottomPadding())
 
-	dialogueBox.Render(target, pixel.IM.Moved(bottomLeft), dialogue.Content())
+	ds.renderStateElapsed += timeDelta
+	renderStateProgress := interp.Smootherstep(min(ds.renderStateElapsed/dialogueTransitionTime, 1.0))
+	transitionHeight := frameBounds.H() + textBoxBottomLeft.Y
+	frameBottomLeft := pixel.ZV
+	switch ds.renderState {
+	case dialogStateEntering:
+		if ds.renderStateElapsed >= dialogueTransitionTime {
+			ds.setRenderState(dialogStateVisible)
+		} else {
+			frameBottomLeft.Y = -(1.0 - renderStateProgress) * transitionHeight
+		}
+	case dialogStateExiting:
+		if ds.renderStateElapsed >= dialogueTransitionTime {
+			ds.popQueue(s)
+			return
+		}
+		frameBottomLeft.Y = -(renderStateProgress) * transitionHeight
+	}
 
-	a := game.Controls[*State]().
-		ButtonA().JustPressed()
-	bPressed := game.Controls[*State]().
-		ButtonB().IsPressed()
-	bJustPressed := game.Controls[*State]().
-		ButtonB().JustPressed()
-	down := game.Controls[*State]().
-		DPad().DirectionJustPressed(input.Down)
-	up := game.Controls[*State]().
-		DPad().DirectionJustPressed(input.Up)
+	dialogueFrame.Draw(target, frameBounds, pixel.IM.Moved(frameBottomLeft))
+	dotPosition := dialogueBox.Render(target, pixel.IM.Moved(textBoxBottomLeft).Moved(frameBottomLeft), dialogue.Content())
+	if ds.renderState != dialogStateVisible {
+		return
+	}
+
+	var typeListener textbox.OnTypeListener
+	if dialogue.Speech() != nil {
+		typeListener = func(s string, speed float64) {
+			dialogue.Talker().Speak(s, speed)
+			//dialogue.Speech().Play(s)
+		}
+	}
+	dialogue.Content().Update(timeDelta, typeListener)
+
+	a := game.Controls[*State]().ButtonA().JustPressed()
+	bPressed := game.Controls[*State]().ButtonB().IsPressed()
+	bJustPressed := game.Controls[*State]().ButtonB().JustPressed()
+	down := game.Controls[*State]().DPad().DirectionJustPressed(input.Down)
+	up := game.Controls[*State]().DPad().DirectionJustPressed(input.Up)
 	if a || bPressed || bJustPressed || down {
 		if dialogue.Content().IsContentFullyDisplayed() {
 			if a || bJustPressed {
-				ds.queuedDialogues = ds.queuedDialogues[1:]
-				s.eventDispatcher.Dispatch(EventDialogueComplete{
-					DialogueId: dialogue.EntityId(),
-				})
-				s.planExecutor.MarkDialogueComplete(dialogue.EntityId())
+				ds.setRenderState(dialogStateExiting)
 			}
 		} else if dialogue.Content().IsPageFullyDisplayed() {
 			dialogue.Content().NextPage()
@@ -102,6 +140,33 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 	} else if up {
 		dialogue.Content().PreviousPage()
 	}
+
+	if dialogue.Content().IsContentFullyDisplayed() {
+		dialogueDoneAnimation.Update(timeDelta)
+		doneSprite := dialogueDoneAnimation.Sprite()
+		doneMatrix := pixel.IM.Moved(textBoxBottomLeft).Moved(dotPosition).Moved(gfx.BottomLeft.Align(doneSprite))
+		//doneMatrix := pixel.IM.Moved(frameBottomLeft).Moved(pixel.V(frameBounds.W()+2.0, 6.0)).Moved(gfx.BottomRight.Align(doneSprite))
+		doneSprite.Draw(target, doneMatrix)
+	}
+}
+
+func (ds *DialogueSystem) setRenderState(renderState dialogueState) {
+	ds.renderState = renderState
+	ds.renderStateElapsed = 0
+	dialogueDoneAnimation.Reset()
+}
+
+func (ds *DialogueSystem) popQueue(s *State) {
+	if len(ds.queuedDialogues) == 0 {
+		return
+	}
+	dialogue := ds.queuedDialogues[0]
+	ds.queuedDialogues = ds.queuedDialogues[1:]
+	s.eventDispatcher.Dispatch(EventDialogueComplete{
+		DialogueId: dialogue.DialogueId(),
+	})
+	s.planExecutor.MarkComplete(dialogue.CompletionId())
+	ds.setRenderState(dialogStateEntering)
 }
 
 func (ds *DialogueSystem) flushPending() {
@@ -116,28 +181,41 @@ func (ds *DialogueSystem) flushPending() {
 }
 
 type Dialogue interface {
-	EntityId() string
+	DialogueId() string
+	CompletionId() string
 	Message() string
 	Content() *textbox.Content
+	Speech() *audio.SpeechGenerator
+	Talker() *audio.Talker
 }
 
 type basicDialogue struct {
-	id      string
-	message string
-	content *textbox.Content
+	dialogueId   string
+	completionId string
+	message      string
+	content      *textbox.Content
+	speech       *audio.SpeechGenerator
+	talker       *audio.Talker
 }
 
-func NewBasicDialogue(message string, id string) Dialogue {
+func NewBasicDialogue(message string, dialogueId, completionId string, cfg TalkerConfig) Dialogue {
 	content := dialogueBox.NewComplexContent(message, textbox.WithTyping(0.0333))
 	return &basicDialogue{
-		id:      id,
-		message: message,
-		content: content,
+		dialogueId:   dialogueId,
+		completionId: completionId,
+		message:      message,
+		content:      content,
+		speech:       game.GetAudioSystem().CreateSpeechGenerator(),
+		talker:       game.GetAudioSystem().NewTalker(cfg.ToParams()),
 	}
 }
 
-func (b basicDialogue) EntityId() string {
-	return b.id
+func (b basicDialogue) DialogueId() string {
+	return b.dialogueId
+}
+
+func (b basicDialogue) CompletionId() string {
+	return b.completionId
 }
 
 func (b basicDialogue) Message() string {
@@ -146,4 +224,12 @@ func (b basicDialogue) Message() string {
 
 func (b basicDialogue) Content() *textbox.Content {
 	return b.content
+}
+
+func (b basicDialogue) Speech() *audio.SpeechGenerator {
+	return b.speech
+}
+
+func (b basicDialogue) Talker() *audio.Talker {
+	return b.talker
 }

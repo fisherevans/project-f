@@ -306,7 +306,8 @@ func init() {
 
 				return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
 					WithMiddleEffects(
-						NewDialogueEffect("Ah! Hello. Yes, this is the equipment testing facility. No.. No, I'm not a specialist; they're inside the testing rooms.\nHere, take this key card. They're waiting for you in testing room 1."),
+						NewDialogueEffect("Ah! Hello. Yes, this is the equipment testing facility. No.. No, I'm not a specialist; they're inside the testing rooms."),
+						NewDialogueEffect("Here, take this key card. They're waiting for you in testing room 1."),
 						NewSetRunStateEffect(hasEquipmentKeyKey, true),
 					).
 					Build()
@@ -323,11 +324,15 @@ func init() {
 				defaultMessage := "This looks like a slot for a key card..."
 				hasEquipmentKey := gameState.RunState().Get(hasEquipmentKeyKey).AsBool(false)
 				if runStateKey == "not_it" {
-					message := defaultMessage
 					if hasEquipmentKey {
-						message = "{+c:red,+u}ERRRRRR!{-*} Yeah, that key card doesn't work in this slot..."
+						return NewOutput().WithSerialPlan(
+							NewPlaySoundEffect("adventure/beeps/error"),
+							NewDialogueEffect("Yeah, that key card doesn't work in this slot..."),
+						)
 					}
-					return NewOutput().WithEffects(NewDialogueEffect(message))
+					return NewOutput().WithSerialPlan(
+						NewDialogueEffect(defaultMessage),
+					)
 				}
 				equipmentDoorState := gameState.RunState().Get(equipmentDoorStateKey).AsString(doorClosed)
 				if equipmentDoorState == doorOpen {
@@ -336,10 +341,12 @@ func init() {
 				if !hasEquipmentKey {
 					return NewOutput().WithEffects(NewDialogueEffect(defaultMessage))
 				}
-				message := "{+c:green,+u}BEEP BEEP!{-*} That worked!"
+				message := "That worked!"
 				return NewOutput().WithSerialPlan(
+					NewPlaySoundEffect("adventure/beeps/success"),
 					NewDialogueEffect(message),
 					NewSetRunStateEffect(runStateKey, doorOpen),
+					NewPlaySoundEffect("adventure/sealed_door_opens"),
 				)
 			},
 		}.CreateHandler()
