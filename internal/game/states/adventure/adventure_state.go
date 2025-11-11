@@ -161,6 +161,14 @@ func (s *State) ClearColor() color.Color {
 	return s.sceneClear
 }
 
+func (s *State) OnEnter() {
+	s.entities.resumeAllSounds()
+}
+
+func (s *State) OnExit() {
+	s.entities.pauseAllSounds()
+}
+
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	game.DebugTLf("delta: %.3f", timeDelta)
 

@@ -332,3 +332,43 @@ func (e *EffectMutateNPC) Process(source EntityContext, s *State) bool {
 	logEffectInfof(source, e, "npc mutated")
 	return true
 }
+
+type EffectAddSoundProvider struct {
+	instantEffect
+	EntityId string
+	ModeBase *ModeBaseSoundProviderConfig `one_of:"type"`
+}
+
+func (e *EffectAddSoundProvider) Process(source EntityContext, s *State) bool {
+	entity, ok := s.entities.GetEntity(e.EntityId)
+	if !ok {
+		logEffectWarnf(source, e, "failed to find entity for mutation")
+		return false
+	}
+	if e.ModeBase != nil {
+		provider := NewModeBaseSoundProvider(entity)
+		for mode, effects := range e.ModeBase.playOnEnter {
+			for _, effect := range effects {
+				provider.WithSoundOnEnter(mode, effect)
+			}
+		}
+		entity.AddSoundProvider(provider)
+	}
+	logEffectInfof(source, e, "sound provider added")
+	return true
+}
+
+type ModeBaseSoundProviderConfig struct {
+	playOnEnter map[string][]SoundEffect
+}
+
+func NewModeBaseSoundProviderConfig() ModeBaseSoundProviderConfig {
+	return ModeBaseSoundProviderConfig{
+		playOnEnter: make(map[string][]SoundEffect),
+	}
+}
+
+func (p ModeBaseSoundProviderConfig) WithSoundOnEnter(mode string, sound SoundEffect) ModeBaseSoundProviderConfig {
+	p.playOnEnter[mode] = append(p.playOnEnter[mode], sound)
+	return p
+}

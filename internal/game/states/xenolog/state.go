@@ -21,6 +21,7 @@ var (
 )
 
 type State struct {
+	game.BaseState
 	background game.State
 	transition *interp.TimedProgress
 	exiting    bool

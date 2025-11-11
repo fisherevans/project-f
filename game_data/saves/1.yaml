@@ -44,7 +44,7 @@ unlocked_skills:
     shoulder_roll: {}
 state:
     control_id: controlled_npc
-    door_state: open
+    door_state: closed
     player_id: tiled-7
 system_settings:
     lighting:

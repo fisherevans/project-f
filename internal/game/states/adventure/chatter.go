@@ -1,10 +1,12 @@
 package adventure
 
 import (
+	"math"
 	"sort"
 
 	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
@@ -56,8 +58,13 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.
 	if len(c.toAdd) > 0 {
 		for _, add := range c.toAdd {
 			c.chatters = append(c.chatters, add)
-			distance := s.camera.CurrentLocation().Sub(add.RenderAbove()).Len()
+			entity, exist := s.entities.GetEntity(add.EntityId())
+			distance := math.MaxFloat64
+			if exist {
+				distance = s.camera.CurrentLocation().Sub(entity.GetPreciseLocation()).Len()
+			}
 			gain := ChatterFalloff.AttenuationDB(distance) - 1.5
+			log.Info().Str("entity_id", add.EntityId()).Float64("gain", gain).Float64("distance", distance).Msg("playing chatter")
 			game.GetAudioSystem().PlaySFX("speech/chatter", gain)
 		}
 		c.toAdd = nil

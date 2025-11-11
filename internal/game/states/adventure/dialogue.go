@@ -154,6 +154,9 @@ func (ds *DialogueSystem) setRenderState(renderState dialogueState) {
 	ds.renderState = renderState
 	ds.renderStateElapsed = 0
 	dialogueDoneAnimation.Reset()
+	if renderState == dialogStateExiting {
+		game.GetAudioSystem().PlaySFX("dialogue_complete", -4)
+	}
 }
 
 func (ds *DialogueSystem) popQueue(s *State) {

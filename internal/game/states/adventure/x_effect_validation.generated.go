@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-09T17:03:45-05:00 by go generate
+// Generated at 2025-11-09T22:39:31-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -242,6 +242,23 @@ func (e *EffectTeleportPlayer) FillDefaultsAndValidate() error {
 
 func (e *EffectMutateNPC) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
+
+	reporter.requireString("entityId", e.EntityId)
+
+	return reporter.report()
+}
+
+func (e *EffectAddSoundProvider) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	// Validate one_of group: type
+	typeCount := 0
+	if e.ModeBase != nil {
+		typeCount++
+	}
+	if typeCount != 1 {
+		reporter.addf("type", "exactly one of [modeBase] must be set")
+	}
 
 	reporter.requireString("entityId", e.EntityId)
 

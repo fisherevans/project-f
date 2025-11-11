@@ -11,6 +11,7 @@ var (
 	FootstepFalloff  = NewFalloffFromNearFar(3, 12)
 	ExplosionFalloff = NewFalloffFromNearFar(8, 48)
 	ChatterFalloff   = NewFalloffFromNearFar(2, 4)
+	StandardFalloff  = NewFalloffFromNearFar(3, 12)
 )
 
 type Falloff struct {

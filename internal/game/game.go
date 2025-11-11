@@ -27,13 +27,19 @@ const (
 type State interface {
 	ClearColor() color.Color
 	OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64)
+	OnEnter()
+	OnExit()
 }
 
 type BaseState struct{}
 
-func (s *BaseState) ClearColor() color.Color {
+func (s BaseState) ClearColor() color.Color {
 	return color.Black
 }
+
+func (s BaseState) OnEnter() {}
+
+func (s BaseState) OnExit() {}
 
 type SwirlShader struct {
 	durationSeconds float64

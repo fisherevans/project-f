@@ -30,7 +30,7 @@ type DeveloperState struct {
 	effects        []*effect
 	random         *rand.Rand
 	effectTriggers []int
-	stopper        *audio.Stopper
+	control        *audio.SoundControl
 }
 
 func NewDeveloper(_ game.StartupDeveloperIntent) game.State {
@@ -60,16 +60,16 @@ func (s *DeveloperState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect,
 	s.elapsed += timeDelta
 	if !s.initialized && s.elapsed > initializeDeveloperAfter {
 		s.initialized = true
-		s.stopper = audio.GetSystem().PlaySFX("startup/developer", 0)
+		s.control = audio.GetSystem().PlaySFX("startup/developer", 0)
 	}
 
 	if game.Controls[*DeveloperState]().ButtonB().JustPressed() {
 		game.SetActiveStateIntent(game.StartupDeviceIntent{})
-		s.stopper.Stop()
+		s.control.Stop()
 	}
 	if s.elapsed > developerEnd || game.Controls[*DeveloperState]().ButtonA().JustPressed() {
 		game.SetActiveStateIntent(game.TitleIntent{})
-		s.stopper.Stop()
+		s.control.Stop()
 	}
 
 	target.Clear(colors.FromString("#563da6"))

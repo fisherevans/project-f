@@ -41,7 +41,7 @@ type State struct {
 	rayCanvas *opengl.Canvas
 
 	blendCanvas *shaders.Canvas
-	stopper     *audio.Stopper
+	control     *audio.SoundControl
 }
 
 const baseOffset = 0.15
@@ -135,16 +135,16 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.elapsed += timeDelta
 	if !s.initialized && s.elapsed > initializeDeviceAfter {
 		s.initialized = true
-		s.stopper = audio.GetSystem().PlaySFX("startup/device", 0)
+		s.control = audio.GetSystem().PlaySFX("startup/device", 0)
 	}
 
 	if game.Controls[*State]().ButtonB().JustPressed() {
 		game.SetActiveStateIntent(game.StartupDeviceIntent{})
-		s.stopper.Stop()
+		s.control.Stop()
 	}
 	if s.elapsed > baseOffset*35 || game.Controls[*State]().ButtonA().JustPressed() {
 		game.SetActiveStateIntent(game.StartupCopyrightsIntent{})
-		s.stopper.Stop()
+		s.control.Stop()
 	}
 
 	// generate rays

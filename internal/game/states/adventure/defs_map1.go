@@ -3,6 +3,7 @@ package adventure
 import (
 	"fmt"
 	"sync/atomic"
+	"time"
 
 	"fisherevans.com/project/f/internal/util"
 )
@@ -125,6 +126,24 @@ func init() {
 								{Color: "#127fd7", Size: 1.5, Modifier: util.Ptr("pulse_slow")},
 							},
 						}),
+					NewAddSoundProviderEffect(ctx.EntityId()).WithModeBase(NewModeBaseSoundProviderConfig().
+						WithSoundOnEnter("closed", SoundEffect{
+							name:    "adventure/props/energy_door_hum",
+							loop:    true,
+							falloff: StandardFalloff,
+							gain:    -1,
+							fadeIn:  time.Millisecond * 1000,
+						}).
+						WithSoundOnEnter("closed", SoundEffect{
+							name:    "adventure/props/energy_door_on",
+							gain:    -1,
+							falloff: StandardFalloff,
+						}).
+						WithSoundOnEnter("open", SoundEffect{
+							name:    "adventure/props/energy_door_off",
+							gain:    -1,
+							falloff: StandardFalloff,
+						})),
 				)
 			},
 			WorldStateUpdated: func(ctx EntityContext, gameState GameState, state None, event *EventWorldStateUpdated) *HandlerOutput {

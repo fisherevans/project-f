@@ -156,6 +156,7 @@ func renderDebugInfo(window *opengl.Window, m *runtime.MemStats, frameStats, gam
 	game.DebugTLf("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
 	game.DebugTLf("%s", frameStats.SummaryFPS())
 	game.DebugTLf("Game Logic %s", gameLogicStats.SummaryMS())
+	game.DebugTLf("Routine count: %v", runtime.NumGoroutine())
 	game.RenderDebugLines(window, game.PopDebugLines())
 	game.RenderNotifications(window, game.PopNotifications(deltaTime))
 }

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-09T17:03:45-05:00 by go generate
+// Generated at 2025-11-09T22:39:31-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -245,6 +245,17 @@ func NewMutateNPCEffect(entityId string) *EffectMutateNPC {
 
 func (e *EffectMutateNPC) WithTalkingAtEntityId(talkingAtEntityId string) *EffectMutateNPC {
 	e.TalkingAtEntityId = &talkingAtEntityId
+	return e
+}
+
+func NewAddSoundProviderEffect(entityId string) *EffectAddSoundProvider {
+	return &EffectAddSoundProvider{
+		EntityId: entityId,
+	}
+}
+
+func (e *EffectAddSoundProvider) WithModeBase(modeBase ModeBaseSoundProviderConfig) *EffectAddSoundProvider {
+	e.ModeBase = &modeBase
 	return e
 }
 

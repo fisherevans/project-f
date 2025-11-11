@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"math"
 	"sort"
 
 	"fisherevans.com/project/f/internal/game/input"
@@ -276,4 +277,31 @@ func (es *EntitySystem) loadGenericMetadata(id string, metadata any) {
 	}
 
 	TalkerConfigMetadataKey.loadMetadata(entity, metadata)
+}
+
+func (es *EntitySystem) pauseAllSounds() {
+	es.forEachSoundProvider(func(provider EntitySoundProvider, cameraDistance float64) {
+		provider.Pause(cameraDistance)
+	})
+}
+
+func (es *EntitySystem) resumeAllSounds() {
+	es.forEachSoundProvider(func(provider EntitySoundProvider, cameraDistance float64) {
+		provider.Resume(cameraDistance)
+	})
+}
+
+func (es *EntitySystem) forEachSoundProvider(apply func(provicer EntitySoundProvider, cameraDistance float64)) {
+	for entityId, providers := range es.soundProviders {
+		entity, exists := es.GetEntity(entityId)
+		var cameraDistance float64
+		if exists {
+			cameraDistance = entity.GetPreciseLocation().Sub(es.state.camera.CurrentLocation()).Len()
+		} else {
+			cameraDistance = math.MaxFloat64
+		}
+		for _, provider := range providers {
+			apply(provider, cameraDistance)
+		}
+	}
 }

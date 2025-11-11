@@ -149,7 +149,13 @@ func (c *EntityCamera) ResetPosition(s *State) {
 	if !found {
 		return
 	}
-	c.ghostLocation = target.GetPreciseLocation()
+	c.SetLocation(target.GetPreciseLocation())
+}
+
+func (c *EntityCamera) SetLocation(location pixel.Vec) {
+	c.fullDeltas = false
+	c.nextDeltaIndex = 0
+	c.ghostLocation = location
 	c.location = c.ghostLocation
 }
 
@@ -217,7 +223,7 @@ func (s *State) PopOverrideCamera(maintainCurrentLocation bool) {
 	newFollow, newOk := getCameraToMutate(override.newCamera).(*EntityCamera)
 	replacedFollow, replacedOk := getCameraToMutate(override.replacedCamera).(*EntityCamera)
 	if newOk && replacedOk && maintainCurrentLocation {
-		replacedFollow.location = newFollow.location
+		replacedFollow.SetLocation(newFollow.CurrentLocation())
 	}
 	s.camera = override.replacedCamera
 }

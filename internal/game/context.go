@@ -93,10 +93,14 @@ func ApplyIntent() {
 	}
 	s, err := createState(ctx.stateIntent)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to ctxreate new state from intent")
+		log.Fatal().Err(err).Msg("failed to create new state from intent")
+	}
+	if ctx.activeState != nil {
+		ctx.activeState.OnExit()
 	}
 	ctx.activeState = s
 	ctx.stateIntent = nil
+	ctx.activeState.OnEnter()
 }
 
 func SetCustomShader(shader AppliedShader) {

@@ -24,6 +24,7 @@ var (
 )
 
 type State struct {
+	game.BaseState
 	background game.State
 	transition float64
 	exiting    bool

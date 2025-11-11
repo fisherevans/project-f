@@ -3,3 +3,10 @@
 **/*.backup_*
 temp/**
 
+# for recovery if the app crashes
+**/Backup/*.flp
+
+# open file session cache files
+*.tiled-session
+*.aup3-wal
+*.aup3-shm

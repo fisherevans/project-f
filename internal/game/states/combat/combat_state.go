@@ -61,6 +61,7 @@ const PhaseBattle Phase = "battle"
 const PhaseComplete Phase = "complete"
 
 type State struct {
+	game.BaseState
 	Player     *Player
 	Opponent   Opponent
 	OnComplete game.CombatIntentComplete
