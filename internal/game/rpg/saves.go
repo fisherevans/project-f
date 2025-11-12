@@ -26,7 +26,7 @@ type GameSave struct {
 
 	ControlledUnlockedSkills map[SkillId]struct{} `yaml:"unlocked_skills"`
 
-	State *State `yaml:"state"`
+	Globals *defaultGlobals `yaml:"globals"`
 
 	SystemSettings *SystemSettings `yaml:"system_settings"`
 }
@@ -35,8 +35,10 @@ func (g *GameSave) FillDefaults() {
 	if g.SystemSettings == nil {
 		g.SystemSettings = &SystemSettings{}
 	}
-	if g.State == nil {
-		g.State = NewState()
+	if g.Globals == nil {
+		g.Globals = &defaultGlobals{
+			values: make(map[string]any),
+		}
 	}
 	g.SystemSettings.FillDefaults()
 }

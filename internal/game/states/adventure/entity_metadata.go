@@ -10,20 +10,41 @@ type MetadataKey[T any] struct {
 	defaultFactory func() T
 }
 
-// Get retrieves the typed value from the entity, or returns the default if not set
-func (k MetadataKey[T]) Get(e Entity) (T, bool) {
+// Exists returns if a value is set for this key with the correct type
+func (k MetadataKey[T]) Exists(e EntityReader) bool {
 	if e == nil {
-		return k.defaultFactory(), false
+		return false
 	}
 	val, ok := e.GetMetadata().get(k.name)
 	if !ok {
-		return k.defaultFactory(), false
+		return false
 	}
 	typed, ok := val.(T)
 	if !ok {
-		return k.defaultFactory(), false
+		log.Error().Type("actual", val).Str("name", k.name).Type("wanted", typed).Msg("metadata value is not of type")
+		return false
 	}
-	return typed, true
+	return true
+}
+
+// Get retrieves the typed value from the entity, or returns the default if not set
+func (k MetadataKey[T]) Get(e EntityReader) T {
+	if e == nil {
+		log.Error().Msg("entity is nil")
+		return k.defaultFactory()
+	}
+	val, ok := e.GetMetadata().get(k.name)
+	if !ok {
+		newVal := k.defaultFactory()
+		e.GetMetadata().set(k.name, newVal)
+		return newVal
+	}
+	typed, ok := val.(T)
+	if !ok {
+		log.Error().Type("actual", val).Str("name", k.name).Type("wanted", typed).Msg("metadata value is not of type")
+		return k.defaultFactory()
+	}
+	return typed
 }
 
 func (k MetadataKey[T]) loadMetadata(e Entity, metadata any) {
@@ -99,6 +120,9 @@ func (m *EntityMetadata) set(key string, value any) {
 }
 
 func (m *EntityMetadata) get(key string) (any, bool) {
+	if m.values == nil {
+		m.values = make(map[string]any)
+	}
 	val, ok := m.values[key]
 	return val, ok
 }

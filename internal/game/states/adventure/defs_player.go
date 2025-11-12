@@ -43,7 +43,7 @@ func init() {
 		// todo this seems gross
 		system.state.player = params.EntityId
 		system.state.camera = NewFollowCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium)
-		system.state.runState.Set(runStateKeyPlayerId, system.state.player)
+		system.state.globals.Set(globalVariableNamePlayerId, system.state.player)
 		return nil, nil
 	})
 }

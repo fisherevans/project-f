@@ -85,7 +85,7 @@ type State struct {
 
 func New(i game.CombatIntent) game.State {
 	return &State{
-		Player:     NewPlayer(game.CurrentSave().Animech, i.Run),
+		Player:     NewPlayer(game.CurrentSave().Animech),
 		Opponent:   NewPrimortalOpponent(i.Opponent),
 		OnComplete: i.OnComplete,
 		Battle:     &Battle{},

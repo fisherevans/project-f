@@ -41,7 +41,7 @@ type State struct {
 	rayCanvas *opengl.Canvas
 
 	blendCanvas *shaders.Canvas
-	control     *audio.SoundControl
+	control     *audio.PlaybackControl
 }
 
 const baseOffset = 0.15

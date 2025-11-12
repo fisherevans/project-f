@@ -63,9 +63,9 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.
 			if exist {
 				distance = s.camera.CurrentLocation().Sub(entity.GetPreciseLocation()).Len()
 			}
-			gain := ChatterFalloff.AttenuationDB(distance) - 1.5
-			log.Info().Str("entity_id", add.EntityId()).Float64("gain", gain).Float64("distance", distance).Msg("playing chatter")
-			game.GetAudioSystem().PlaySFX("speech/chatter", gain)
+			volume := ChatterFalloff.AttenuationVolume(distance) * 0.75
+			log.Info().Str("entity_id", add.EntityId()).Float64("volume", volume).Float64("distance", distance).Msg("playing chatter")
+			game.GetAudioSystem().PlaySFX("speech/chatter", volume)
 		}
 		c.toAdd = nil
 	}

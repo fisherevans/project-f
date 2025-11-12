@@ -3,56 +3,57 @@ package adventure
 import (
 	"reflect"
 
+	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/rs/zerolog/log"
 )
 
 type registeredEventHandler struct {
-	ctx     EntityContext
+	entity  EntityReader
 	Handler EventHandler
 	State   any
 }
 
 type Dispatcher struct {
-	gameState          GameState
+	globals            rpg.GlobalsReader
 	effectDispatcher   EffectDispatcher
 	registeredHandlers map[string]*registeredEventHandler
 }
 
-func NewDispatcher(gameState GameState, effectDispatcher EffectDispatcher) *Dispatcher {
+func NewDispatcher(globals rpg.GlobalsReader, effectDispatcher EffectDispatcher) *Dispatcher {
 	return &Dispatcher{
-		gameState:          gameState,
+		globals:            globals,
 		effectDispatcher:   effectDispatcher,
 		registeredHandlers: make(map[string]*registeredEventHandler),
 	}
 }
 
-func (d *Dispatcher) Register(ctx EntityContext, handler EventHandler) {
-	if ctx == nil {
+func (d *Dispatcher) Register(entity EntityReader, handler EventHandler) {
+	if entity == nil {
 		log.Fatal().Msg("Event handler context is nil")
 	}
 	if handler == nil {
-		log.Fatal().Msgf("Event handler for %s is nil", ctx.EntityId())
+		log.Fatal().Msgf("Event handler for %s is nil", entity.GetId())
 	}
-	if _, exists := d.registeredHandlers[ctx.EntityId()]; exists {
-		log.Fatal().Msgf("Event handler for %s is already registered", ctx.EntityId())
+	if _, exists := d.registeredHandlers[entity.GetId()]; exists {
+		log.Fatal().Msgf("Event handler for %s is already registered", entity.GetId())
 	}
-	d.registeredHandlers[ctx.EntityId()] = &registeredEventHandler{
-		ctx:     ctx,
+	d.registeredHandlers[entity.GetId()] = &registeredEventHandler{
+		entity:  entity,
 		Handler: handler,
 		State:   nil,
 	}
 }
 
-func (d *Dispatcher) GetHandler(ctx EntityContext) (EventHandler, bool) {
-	rh, ok := d.registeredHandlers[ctx.EntityId()]
+func (d *Dispatcher) GetHandler(entity EntityReader) (EventHandler, bool) {
+	rh, ok := d.registeredHandlers[entity.GetId()]
 	if ok {
 		return rh.Handler, true
 	}
 	return nil, false
 }
 
-func (d *Dispatcher) Unregister(ctx EntityContext) {
-	delete(d.registeredHandlers, ctx.EntityId())
+func (d *Dispatcher) Unregister(entity EntityReader) {
+	delete(d.registeredHandlers, entity.GetId())
 }
 
 func (d *Dispatcher) Dispatch(events ...any) {
@@ -67,7 +68,7 @@ func (d *Dispatcher) Dispatch(events ...any) {
 			eventPtr = ptr.Interface()
 		}
 		for _, registeredHandler := range d.registeredHandlers {
-			output := registeredHandler.Handler.HandleEvent(registeredHandler.ctx, d.gameState, registeredHandler.State, eventPtr)
+			output := registeredHandler.Handler.HandleEvent(registeredHandler.entity, d.globals, registeredHandler.State, eventPtr)
 			d.handleOutput(registeredHandler, output)
 		}
 	}
@@ -75,7 +76,7 @@ func (d *Dispatcher) Dispatch(events ...any) {
 
 func (d *Dispatcher) Init() {
 	for _, registeredHandler := range d.registeredHandlers {
-		output := registeredHandler.Handler.Init(registeredHandler.ctx, d.gameState, registeredHandler.State)
+		output := registeredHandler.Handler.Init(registeredHandler.entity, d.globals, registeredHandler.State)
 		d.handleOutput(registeredHandler, output)
 	}
 }
@@ -93,13 +94,13 @@ func (d *Dispatcher) handleOutput(handler *registeredEventHandler, output *Handl
 			continue
 		}
 		d.effectDispatcher(DispatchedEffect{
-			Source: handler.ctx,
+			Source: handler.entity,
 			Effect: effect,
 		})
 	}
 }
 
 type DispatchedEffect struct {
-	Source EntityContext
+	Source EntityReader
 	Effect Effect // Effect is now an interface
 }

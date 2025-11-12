@@ -5,6 +5,7 @@ import (
 
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
@@ -51,18 +52,17 @@ func init() {
 			return entity, nil
 		}
 		return entity, NewBasicHandler(None{}).
-			WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
-				if ctx.GetBoolMetadata(MetadataKeyIsTalking) {
+				if !IsBehaviorType[*NPCBehavior](thisEntity) {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
-					NewMutateNPCEffect(ctx.EntityId()).
-						WithTalkingAtEntityId(event.SourceId),
-					NewChatterEffect(ctx.EntityId(), 4, util.OneOffDialogues.Random()),
-					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
+					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithFacingEntityId(event.SourceId),
+					NewChatterEffect(thisEntity.GetId(), 4, util.OneOffDialogues.Random()),
+					NewPopEntityBehaviorEffect(thisEntity.GetId()),
 				)
 			}).
 			CreateHandler()
@@ -72,8 +72,7 @@ func init() {
 type NPCBehavior struct {
 	entity Entity
 
-	talkingTowards string
-	idleDuration   float64
+	idleDuration float64
 
 	DoesMove            bool
 	HorizOnly           bool
@@ -96,7 +95,6 @@ func AttachNPCBehavior(entity Entity, horizOnly, doesMove bool, idleChance, maxI
 }
 
 func (b *NPCBehavior) Reset() {
-	b.talkingTowards = ""
 	b.idleDuration = 0
 }
 
@@ -114,14 +112,6 @@ func (b *NPCBehavior) Update(timeDelta float64) {
 
 func (b *NPCBehavior) doMovement() {
 	if b.entity.IsMoving() {
-		return
-	}
-	if b.talkingTowards != "" {
-		talkingTowardsEnt, exists := b.entity.GetSystem().GetEntity(b.talkingTowards)
-		if exists {
-			faceDir := DirectionTowards(b.entity.GetPreciseLocation(), talkingTowardsEnt.GetPreciseLocation())
-			b.entity.SetFacingDirection(faceDir)
-		}
 		return
 	}
 	if b.IdleFacingDirection != input.NotPressed {

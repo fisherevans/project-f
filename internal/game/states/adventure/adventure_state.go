@@ -14,13 +14,14 @@ import (
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/image/colornames"
 )
 
 const (
-	characterSpeed      = 3.0
-	runStateKeyPlayerId = "player_id"
+	characterSpeed             = 3.0
+	globalVariableNamePlayerId = "player_id"
 )
 
 var (
@@ -86,10 +87,8 @@ type State struct {
 
 	eventDispatcher *Dispatcher
 	planExecutor    *PlanExecutor
-	run             *rpg.Run
 
-	worldState *observedMutableState
-	runState   *observedMutableState
+	globals *observedGlobals
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -102,7 +101,7 @@ func New(i game.AdventureIntent) game.State {
 		overlays:  NewOverlaySystem(),
 		timers:    newTimers(),
 		zones:     newZones(),
-		run:       rpg.NewRun(),
+		globals:   observeGlobals(game.CurrentSave().Globals),
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -110,7 +109,17 @@ func New(i game.AdventureIntent) game.State {
 		bloom: bloom.NewHelper(
 			game.GameWidth,
 			game.GameHeight,
-			bloom.DefaultBrightnessConfig(),
+			bloom.DefaultBrightnessConfig().
+				WithThreshold(1.0).
+				WithHighlightColors(shaders.RGBAtoVec3s(
+					colors.HexString("#f9324c"), // red coin
+					colors.HexString("#feae34"), // torch yellow
+					colors.HexString("#f77622"), // torch orange
+					colors.HexString("#0069aa"), // water
+
+					colors.HexString("#ed3579"), // red led
+					colors.HexString("#4CC9F0"), // blue led
+				)),
 			bloom.DefaultBlurConfig(),
 			bloom.DefaultBlendConfig()),
 
@@ -124,37 +133,17 @@ func New(i game.AdventureIntent) game.State {
 	a.planExecutor = NewPlanExecutor(a.processEffects)
 	a.entities = NewEntitySystem(a)
 	a.hud = NewHud(a)
-	a.eventDispatcher = NewDispatcher(a, a.processEffects)
-
-	a.bloom.Threshold = 1.0
-	a.bloom.HighlightColors = shaders.RGBAtoVec3s(
-		colors.HexString("#f9324c"), // red coin
-		colors.HexString("#feae34"), // torch yellow
-		colors.HexString("#f77622"), // torch orange
-		colors.HexString("#0069aa"), // water
-
-		colors.HexString("#ed3579"), // red led
-		colors.HexString("#4CC9F0"), // blue led
-	)
-	a.eventDispatcher.Register(NewBasicEntityContext("system"), newSystemEventHandler(a))
-
-	a.worldState = newObservedMutableState(a.eventDispatcher, game.CurrentSave().State, NewEventWorldStateUpdated, NewEventWorldStateDeleted)
-	a.runState = newObservedMutableState(a.eventDispatcher, a.run.State, NewEventRunStateUpdated, NewEventRunStateDeleted)
+	a.eventDispatcher = NewDispatcher(a.globals, a.processEffects)
+	a.globals.withDispatcher(a.eventDispatcher)
+	a.eventDispatcher.Register(a.entities.RegisterEntity("system", MapLocation{}), newSystemEventHandler(a))
 
 	initializeMap(a, m)
 
-	a.ExecuteSystemEffects(NewFadeEffect(1, 1).
-		WithFromColor("#000f").
-		WithToColor("#0000"))
 	return a
 }
 
-func (s *State) WorldState() rpg.ReadableState {
-	return s.worldState
-}
-
-func (s *State) RunState() rpg.ReadableState {
-	return s.runState
+func (s *State) Globals() rpg.GlobalsReader {
+	return s.globals
 }
 
 func (s *State) ClearColor() color.Color {
@@ -306,8 +295,9 @@ func (s *State) ExecuteSystemEffects(effects ...Effect) {
 			log.Error().Err(err).Msg("failed to validate effect")
 			continue
 		}
+		systemEntity, _ := s.entities.GetEntity("system")
 		s.processEffects(DispatchedEffect{
-			Source: NewBasicEntityContext("system"),
+			Source: systemEntity,
 			Effect: e,
 		})
 	}
@@ -316,7 +306,12 @@ func (s *State) ExecuteSystemEffects(effects ...Effect) {
 func (s *State) processEffects(effects ...DispatchedEffect) {
 	for _, dispatched := range effects {
 		wasSuccessful := dispatched.Effect.Process(dispatched.Source, s)
-		logEffectInfof(dispatched.Source, dispatched.Effect, "event processed %t: %T", wasSuccessful, dispatched.Effect)
+		level := zerolog.InfoLevel
+		switch dispatched.Effect.(type) {
+		case *EffectTriggerMovement, *EffectEntityFaceDirection:
+			level = zerolog.DebugLevel
+		}
+		logEffect(level, dispatched.Source, dispatched.Effect, "event processed %t: %T", wasSuccessful, dispatched.Effect)
 	}
 }
 

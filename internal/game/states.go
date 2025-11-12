@@ -51,7 +51,6 @@ func DefaultSelectorState() SelectIntent {
 	fight := func(p rpg.PrimortalType) {
 		i = i.With("Fight "+rpg.Primortals[p].Name, func() any {
 			return CombatIntent{
-				Run:        rpg.NewRun(),
 				Opponent:   p,
 				Background: "combat/background_sylvoria",
 				OnComplete: func(r CombatIntentResult) {

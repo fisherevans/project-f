@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-09T22:39:31-05:00 by go generate
+// Generated at 2025-11-11T20:58:02-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -86,8 +86,8 @@ func (e *EffectPlaySound) WithPlaybackId(playbackId string) *EffectPlaySound {
 	return e
 }
 
-func (e *EffectPlaySound) WithGain(gain float64) *EffectPlaySound {
-	e.Gain = &gain
+func (e *EffectPlaySound) WithVolume(volume float64) *EffectPlaySound {
+	e.Volume = &volume
 	return e
 }
 
@@ -234,17 +234,6 @@ func (e *EffectTeleportPlayer) WithExitDirection(exitDirection input.Direction) 
 
 func (e *EffectTeleportPlayer) WithTransitionStyle(transitionStyle string) *EffectTeleportPlayer {
 	e.TransitionStyle = &transitionStyle
-	return e
-}
-
-func NewMutateNPCEffect(entityId string) *EffectMutateNPC {
-	return &EffectMutateNPC{
-		EntityId: entityId,
-	}
-}
-
-func (e *EffectMutateNPC) WithTalkingAtEntityId(talkingAtEntityId string) *EffectMutateNPC {
-	e.TalkingAtEntityId = &talkingAtEntityId
 	return e
 }
 

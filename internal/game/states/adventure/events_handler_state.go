@@ -4,42 +4,38 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 )
 
-type GameState interface {
-	WorldState() rpg.ReadableState
-	RunState() rpg.ReadableState
+type observedGlobals struct {
+	baseGlobals rpg.Globals
+	dispatcher  *Dispatcher
 }
 
-type observedMutableState struct {
-	dispatcher     *Dispatcher
-	state          rpg.MutableState
-	createSetEvent func(key string, newValue, oldValue *rpg.StateValue) any
-	createDelete   func(key string, oldValue *rpg.StateValue) any
-}
-
-func newObservedMutableState(dispatcher *Dispatcher, state rpg.MutableState, createSetEvent func(key string, newValue, oldValue *rpg.StateValue) any, createDelete func(key string, oldValue *rpg.StateValue) any) *observedMutableState {
-	return &observedMutableState{
-		dispatcher:     dispatcher,
-		state:          state,
-		createSetEvent: createSetEvent,
-		createDelete:   createDelete,
+func observeGlobals(baseGlobals rpg.Globals) *observedGlobals {
+	return &observedGlobals{
+		baseGlobals: baseGlobals,
 	}
 }
 
-func (s *observedMutableState) Set(key string, value any) *rpg.StateValue {
-	oldValue := s.state.Set(key, value)
-	newValue := s.state.Get(key)
-	event := s.createSetEvent(key, newValue, oldValue)
-	s.dispatcher.Dispatch(event)
+func (s *observedGlobals) withDispatcher(dispatcher *Dispatcher) {
+	s.dispatcher = dispatcher
+}
+
+func (s *observedGlobals) Set(key string, value any) *rpg.GlobalValue {
+	oldValue := s.baseGlobals.Set(key, value)
+	newValue := s.baseGlobals.Get(key)
+	if s.dispatcher != nil {
+		s.dispatcher.Dispatch(NewEventGlobalVariableUpdated(key, newValue, oldValue))
+	}
 	return oldValue
 }
 
-func (s *observedMutableState) Delete(key string) *rpg.StateValue {
-	oldValue := s.state.Delete(key)
-	event := s.createDelete(key, oldValue)
-	s.dispatcher.Dispatch(event)
+func (s *observedGlobals) Delete(key string) *rpg.GlobalValue {
+	oldValue := s.baseGlobals.Delete(key)
+	if s.dispatcher != nil {
+		s.dispatcher.Dispatch(NewEventGlobalVariableDeleted(key, oldValue))
+	}
 	return oldValue
 }
 
-func (s *observedMutableState) Get(key string) *rpg.StateValue {
-	return s.state.Get(key)
+func (s *observedGlobals) Get(key string) *rpg.GlobalValue {
+	return s.baseGlobals.Get(key)
 }

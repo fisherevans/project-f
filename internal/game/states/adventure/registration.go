@@ -91,7 +91,7 @@ func (s *State) registerParameterizedEntity(params NewEntityParams) bool {
 	}
 
 	if eventHandler != nil {
-		s.eventDispatcher.Register(entity.GetEntityContext(), eventHandler)
+		s.eventDispatcher.Register(entity, eventHandler)
 		log.Debug().Msgf("Registered event handler for %s", params.EntityId)
 	}
 

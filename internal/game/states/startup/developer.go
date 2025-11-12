@@ -30,7 +30,7 @@ type DeveloperState struct {
 	effects        []*effect
 	random         *rand.Rand
 	effectTriggers []int
-	control        *audio.SoundControl
+	control        *audio.PlaybackControl
 }
 
 func NewDeveloper(_ game.StartupDeveloperIntent) game.State {

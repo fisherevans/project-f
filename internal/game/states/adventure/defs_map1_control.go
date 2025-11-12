@@ -4,6 +4,7 @@ import (
 	"math/rand/v2"
 
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 )
 
@@ -11,17 +12,17 @@ func init() {
 	registerEventHandler("control_camera", func(props *util.Properties) EventHandler {
 		controlled := props.GetString("control_id", "")
 		return BasicHandlerBuilder[None]{
-			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
-					NewMutateBlockingPresenceEffect(ctx.EntityId()).WithIsBlockingIngress(false),
+					NewMutateBlockingPresenceEffect(thisEntity.GetId()).WithIsBlockingIngress(false),
 					NewPushEntityBehaviorEffect(controlled).
 						WithScriptedMotion(EntityBehaviorScriptedMotion{}),
-					NewSetWorldStateEffect("control_id", controlled),
+					NewSetRunStateEffect("control_id", controlled),
 					NewMutateBlockingPresenceEffect("control_reset").WithIsBlockingIngress(false),
 				)
 			},
-			EntityZoneActivity: func(ctx EntityContext, gameState GameState, state None, event *EventEntityZoneActivity) *HandlerOutput {
-				if event.ZoneId == "control" && gameState.RunState().Get(runStateKeyPlayerId).AsString("unknown") == event.EntityId {
+			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
+				if event.ZoneId == "control" && globals.Get(globalVariableNamePlayerId).AsString("unknown") == event.EntityId {
 					if event.IsEntering {
 						return NewOutput().WithEffects(
 							NewOverrideCameraEffect().WithFollow(FollowCamera{
@@ -34,7 +35,7 @@ func init() {
 						)
 					}
 				}
-				playerId := gameState.RunState().Get(runStateKeyPlayerId).AsString("unknown")
+				playerId := globals.Get(globalVariableNamePlayerId).AsString("unknown")
 				if ("reset_left" == event.ZoneId || "reset_right" == event.ZoneId) && event.IsEntering {
 					quips := []string{
 						"Why am I moving?!",
@@ -53,7 +54,7 @@ func init() {
 						NewParallelPlan(
 							NewSerialPlan(
 								NewTimerEffect(1),
-								NewStartScriptedMotionEffect(gameState.RunState().Get("control_id").AsString("")).WithToEntityId("control_reset"),
+								NewStartScriptedMotionEffect(globals.Get("control_id").AsString("")).WithToEntityId("control_reset"),
 							),
 							NewChatterEffect("controlled_npc", 4, quip),
 						),
@@ -69,9 +70,9 @@ func init() {
 		colorMask := props.GetString("color_mask", "#fff")
 		action := props.GetString("action", "")
 		return BasicHandlerBuilder[None]{
-			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
-					NewMutateModeBasedEntityEffect(ctx.EntityId()).
+					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
 						WithAnimations(map[string][]AnimationReference{
 							"": {{
 								Name:      "adventure/doors/button",
@@ -79,19 +80,19 @@ func init() {
 							}},
 						}))
 			},
-			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != ctx.EntityId() {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}
 				output := func(dir input.Direction) Effect {
-					return NewStartScriptedMotionEffect(gameState.RunState().Get("control_id").AsString("")).
+					return NewStartScriptedMotionEffect(globals.Get("control_id").AsString("")).
 						WithRelative(RelativeLocation{
 							Direction: dir,
 							Steps:     3,
 						})
 				}
 				effects := []Effect{
-					NewResetModeBasedEntityAnimationEffect(ctx.EntityId()),
+					NewResetModeBasedEntityAnimationEffect(thisEntity.GetId()),
 				}
 				switch action {
 				case "down":

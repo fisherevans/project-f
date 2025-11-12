@@ -36,7 +36,6 @@ type CombatIntentResult struct {
 type CombatIntentComplete func(r CombatIntentResult)
 
 type CombatIntent struct {
-	Run        *rpg.Run
 	Opponent   rpg.PrimortalType
 	OnComplete CombatIntentComplete
 	Background string

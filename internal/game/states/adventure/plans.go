@@ -22,7 +22,7 @@ type PlanExecutor struct {
 }
 
 type activeBatch struct {
-	source          EntityContext
+	source          EntityReader
 	batch           *EffectBatch
 	waitingFor      map[string]bool // tracks completion IDs we're waiting for
 	nextEffectIndex int             // index of next effect to dispatch
@@ -46,7 +46,7 @@ func (pe *PlanExecutor) GenerateEffectId(prefix string) string {
 // StartPlan begins executing a new batch, dispatching effects immediately via the effect dispatcher.
 // This method executes all non-blocking effects synchronously and only queues the batch
 // if it encounters blocking effects (those with completion IDs).
-func (pe *PlanExecutor) StartPlan(source EntityContext, batch *EffectBatch) {
+func (pe *PlanExecutor) StartPlan(source EntityReader, batch *EffectBatch) {
 	effects := pe.ExecuteBatchImmediately(source, batch)
 	if len(effects) > 0 {
 		pe.effectDispatcher(effects...)
@@ -57,7 +57,7 @@ func (pe *PlanExecutor) StartPlan(source EntityContext, batch *EffectBatch) {
 // If the batch has blocking effects (those with completion IDs), it adds the batch to the executor queue
 // and returns those effects as well. This allows system effects to execute non-blocking effects immediately
 // while still properly queuing blocking effects.
-func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityContext, batch *EffectBatch) []DispatchedEffect {
+func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityReader, batch *EffectBatch) []DispatchedEffect {
 	// Auto-generate batch ID if empty
 	if batch.BatchId == "" {
 		batch.BatchId = fmt.Sprintf("plan_%d", atomic.AddUint64(&planIdCounter, 1))

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-09T22:39:31-05:00 by go generate
+// Generated at 2025-11-11T20:58:02-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -236,14 +236,6 @@ func (e *EffectTeleportPlayer) FillDefaultsAndValidate() error {
 		reporter.addf("destination", "exactly one of [toReference, toLocation, toEntityId] must be set")
 	}
 
-
-	return reporter.report()
-}
-
-func (e *EffectMutateNPC) FillDefaultsAndValidate() error {
-	reporter := newIssueReporter()
-
-	reporter.requireString("entityId", e.EntityId)
 
 	return reporter.report()
 }

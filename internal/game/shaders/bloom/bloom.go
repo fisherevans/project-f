@@ -53,6 +53,41 @@ func DefaultBrightnessConfig() BrightnessConfig {
 	}
 }
 
+func (c BrightnessConfig) WithThreshold(t float32) BrightnessConfig {
+	c.Threshold = t
+	return c
+}
+
+func (c BrightnessConfig) WithThresholdIntensity(t float32) BrightnessConfig {
+	c.ThresholdIntensity = t
+	return c
+}
+
+func (c BrightnessConfig) WithKnee(t float32) BrightnessConfig {
+	c.Knee = t
+	return c
+}
+
+func (c BrightnessConfig) WithDesaturate(t float32) BrightnessConfig {
+	c.Desaturate = t
+	return c
+}
+
+func (c BrightnessConfig) WithHighlightEpsilon(t float32) BrightnessConfig {
+	c.HighlightEpsilon = t
+	return c
+}
+
+func (c BrightnessConfig) WithHighlightIntensity(t float32) BrightnessConfig {
+	c.HighlightIntensity = t
+	return c
+}
+
+func (c BrightnessConfig) WithHighlightColors(t []mgl32.Vec3) BrightnessConfig {
+	c.HighlightColors = t
+	return c
+}
+
 type BlurConfig struct {
 	Passes      int
 	Radius      int32

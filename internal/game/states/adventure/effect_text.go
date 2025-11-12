@@ -12,11 +12,10 @@ func (e *EffectDialogue) CompletionID() string {
 	return "dialogue:" + e.DialogueId
 }
 
-func (e *EffectDialogue) Process(source EntityContext, s *State) bool {
-	entity, _ := s.entities.GetEntity(source.EntityId())
-	cfg, _ := TalkerConfigMetadataKey.Get(entity)
+func (e *EffectDialogue) Process(source EntityReader, s *State) bool {
+	entity, _ := s.entities.GetEntity(source.GetId())
+	cfg := TalkerConfigMetadataKey.Get(entity)
 	s.dialogues.Append(NewBasicDialogue(e.Text, e.DialogueId, e.CompletionID(), cfg))
-	logEffectInfof(source, e, "dialogue added")
 	return true
 }
 
@@ -34,8 +33,7 @@ func (e *EffectChatter) CompletionID() string {
 	return "chatter:" + e.ChatterId
 }
 
-func (e *EffectChatter) Process(source EntityContext, s *State) bool {
+func (e *EffectChatter) Process(source EntityReader, s *State) bool {
 	s.chatters.Add(newBasicEntityChatter(e.EntityId, e.DurationSeconds, e.Message, e.ChatterId, e.CompletionID()))
-	logEffectInfof(source, e, "chatter added")
 	return true
 }

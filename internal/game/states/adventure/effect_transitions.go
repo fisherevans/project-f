@@ -27,7 +27,7 @@ func (e *EffectFade) WithColors(from, to string) *EffectFade {
 	return e
 }
 
-func (e *EffectFade) Process(source EntityContext, s *State) bool {
+func (e *EffectFade) Process(source EntityReader, s *State) bool {
 
 	// Determine colors
 	fromColor := pixel.RGBA{R: 0, G: 0, B: 0, A: 0} // transparent
@@ -56,7 +56,6 @@ func (e *EffectFade) Process(source EntityContext, s *State) bool {
 	fade := NewFadeOverlay(fromColor, toColor, transitions, base)
 
 	s.overlays.Add(fade)
-	logEffectInfof(source, e, "fade overlay added")
 	return true
 }
 
@@ -65,8 +64,7 @@ type EffectDeactivateFade struct {
 	FadeId string
 }
 
-func (e *EffectDeactivateFade) Process(source EntityContext, s *State) bool {
+func (e *EffectDeactivateFade) Process(source EntityReader, s *State) bool {
 	s.overlays.Deactivate(e.FadeId)
-	logEffectInfof(source, e, "fade deactivated")
 	return true
 }

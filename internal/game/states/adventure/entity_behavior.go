@@ -6,6 +6,15 @@ type EntityBehavior interface {
 	Reset()
 }
 
+func IsBehaviorType[T EntityBehavior](e EntityReader) bool {
+	b, ok := e.GetBehavior()
+	if !ok {
+		return false
+	}
+	_, ok = b.(T)
+	return ok
+}
+
 type FaceEntityBehavior struct {
 	entity Entity
 	facing string

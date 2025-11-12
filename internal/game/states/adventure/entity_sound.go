@@ -6,6 +6,8 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/audio"
+	"fisherevans.com/project/f/internal/util/interp"
+	"github.com/rs/zerolog/log"
 )
 
 type EntitySoundProvider interface {
@@ -27,9 +29,9 @@ func (p *StepSoundProvider) reset() {
 }
 
 const stepSoundFrequency = 0.333
-const stepSoundFrequencyJitter = 0.025
-const stepSoundGain = -0.0
-const stepSoundGainJitter = -.25
+const stepSoundFrequencyJitter = 0.125
+const stepSoundMaxVolume = 1.0
+const stepSoundMinVolume = 0.9
 
 func NewStepSoundProvider(entity Entity, supplier SoundSupplier, falloff Falloff) *StepSoundProvider {
 	return &StepSoundProvider{
@@ -45,9 +47,9 @@ var stepSoundFrequencyScales = map[MoveState]float64{
 	MoveStateRunning: 0.8,
 }
 
-var stepSoundGainAdjustments = map[MoveState]float64{
-	MoveStateWalking: -0.5,
-	MoveStateRunning: 0,
+var stepSoundVolumeMultipliers = map[MoveState]float64{
+	MoveStateWalking: 0.9,
+	MoveStateRunning: 1,
 }
 
 func (p *StepSoundProvider) Update(timeDelta float64, cameraProximityDistance float64) {
@@ -56,15 +58,20 @@ func (p *StepSoundProvider) Update(timeDelta float64, cameraProximityDistance fl
 	if !exists {
 		return
 	}
-	moveStateGainAdjustment := stepSoundGainAdjustments[moveState]
+	stepSoundVolumeMultiplier := stepSoundVolumeMultipliers[moveState]
 	p.timeUntilNextStep -= timeDelta
 	if p.timeUntilNextStep > 0 {
 		return
 	}
 	p.timeUntilNextStep = (stepSoundFrequency + rand.Float64()*stepSoundFrequencyJitter) * frequencyScale
 	soundName := p.soundSupplier.Next()
-	gain := stepSoundGain + rand.Float64()*stepSoundGainJitter + moveStateGainAdjustment + p.falloff.AttenuationDB(cameraProximityDistance)
-	game.GetAudioSystem().PlaySFX(soundName, gain)
+	volume := stepSoundVolumeMultiplier
+	volume *= interp.Lerp(stepSoundMinVolume, stepSoundMaxVolume, rand.Float64())
+	volume *= p.falloff.AttenuationVolume(cameraProximityDistance)
+	if volume <= 0 {
+		return
+	}
+	game.GetAudioSystem().PlaySFX(soundName, volume)
 }
 
 func (p *StepSoundProvider) Pause(cameraProximityDistance float64) {
@@ -74,11 +81,16 @@ func (p *StepSoundProvider) Resume(cameraProximityDistance float64) {
 }
 
 type SoundEffect struct {
-	name    string
-	loop    bool
-	falloff Falloff
-	gain    float64
-	fadeIn  time.Duration
+	Name    string
+	Loop    bool
+	Falloff Falloff
+	Volume  float64
+	FadeIn  time.Duration
+}
+
+func (e SoundEffect) computeVolume(distance float64) float64 {
+	falloffVolume := e.Falloff.AttenuationVolume(distance)
+	return falloffVolume * e.Volume
 }
 
 type ModeBaseSoundProvider struct {
@@ -90,12 +102,17 @@ type ModeBaseSoundProvider struct {
 
 type activeSound struct {
 	config  SoundEffect
-	control *audio.SoundControl
+	control *audio.PlaybackControl
+}
+
+func (as activeSound) updateVolume(distance float64) {
+	as.control.SetVolume(as.config.computeVolume(distance))
 }
 
 func NewModeBaseSoundProvider(entity Entity) *ModeBaseSoundProvider {
 	return &ModeBaseSoundProvider{
 		entity:      entity,
+		lastMode:    "~~~first_run",
 		playOnEnter: make(map[string][]SoundEffect),
 	}
 }
@@ -126,11 +143,12 @@ func (p *ModeBaseSoundProvider) Update(timeDelta float64, cameraProximityDistanc
 		p.activeSounds = nil
 		p.lastMode = mode
 		for _, sound := range p.playOnEnter[mode] {
+			volume := sound.computeVolume(cameraProximityDistance)
+			log.Info().Str("mode", mode).Str("entity", p.entity.GetId()).Any("sound", sound).Float64("volume", volume).Msg("playing sound on enter")
 			bus := game.GetAudioSystem().Buses.SFX
-			gain := sound.falloff.AttenuationDB(cameraProximityDistance) + sound.gain
-			control := game.GetAudioSystem().PlaySoundOnBus(sound.name, bus, gain, &audio.PlaybackOptions{
-				Loop:   sound.loop,
-				FadeIn: sound.fadeIn,
+			control := game.GetAudioSystem().PlaySoundOnBus(sound.Name, bus, volume, &audio.PlaybackOptions{
+				Loop:   sound.Loop,
+				FadeIn: sound.FadeIn,
 			})
 			p.activeSounds = append(p.activeSounds, activeSound{
 				config:  sound,
@@ -142,21 +160,20 @@ func (p *ModeBaseSoundProvider) Update(timeDelta float64, cameraProximityDistanc
 			if !sound.control.IsPlaying() {
 				continue
 			}
-			gain := sound.config.falloff.AttenuationDB(cameraProximityDistance) + sound.config.gain
-			sound.control.SetVolume(gain)
+			sound.updateVolume(cameraProximityDistance)
 		}
 	}
 }
 
 func (p *ModeBaseSoundProvider) Pause(cameraProximityDistance float64) {
 	for _, sound := range p.activeSounds {
-		sound.control.PauseWithFade(time.Millisecond * 500)
+		sound.control.Pause()
 	}
 }
 
 func (p *ModeBaseSoundProvider) Resume(cameraProximityDistance float64) {
 	for _, sound := range p.activeSounds {
-		gain := sound.config.falloff.AttenuationDB(cameraProximityDistance) + sound.config.gain
-		sound.control.ResumeWithFade(gain, time.Millisecond*500)
+		sound.updateVolume(cameraProximityDistance)
+		sound.control.Resume()
 	}
 }

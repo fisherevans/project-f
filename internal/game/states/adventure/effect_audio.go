@@ -1,11 +1,14 @@
 package adventure
 
-import "fisherevans.com/project/f/internal/game"
+import (
+	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/audio"
+)
 
 type EffectPlaySound struct {
 	PlaybackId string `auto_generate:"true"`
 	Sound      string
-	Gain       *float64
+	Volume     *float64
 }
 
 func (e *EffectPlaySound) CompletionID() string {
@@ -15,13 +18,13 @@ func (e *EffectPlaySound) CompletionID() string {
 	return "sound:" + e.PlaybackId
 }
 
-func (e *EffectPlaySound) Process(source EntityContext, s *State) bool {
+func (e *EffectPlaySound) Process(source EntityReader, s *State) bool {
 	if e == nil {
 		return false
 	}
-	gain := 0.0
-	if e.Gain != nil {
-		gain = *e.Gain
+	volume := 1.0
+	if e.Volume != nil {
+		volume = *e.Volume
 	}
 	var onComplete func()
 	if e.PlaybackId != "" {
@@ -30,7 +33,8 @@ func (e *EffectPlaySound) Process(source EntityContext, s *State) bool {
 		}
 	}
 	a := game.GetAudioSystem()
-	a.PlaySoundOnBusWithCallback(e.Sound, a.Buses.SFX, gain, nil, onComplete)
-	logEffectInfof(source, e, "sound played")
+	a.PlaySoundOnBus(e.Sound, a.Buses.SFX, volume, &audio.PlaybackOptions{
+		OnComplete: onComplete,
+	})
 	return true
 }

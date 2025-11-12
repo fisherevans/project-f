@@ -43,7 +43,7 @@ func (h *Hud) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bound
 	counts := []topRightCount{
 		{
 			icon:   h.elythiumCountIcon,
-			count:  h.state.run.State.Get(rpg.RunStateKeyElythium).AsInt(0),
+			count:  h.state.globals.Get(rpg.GlobalKeyElythium).AsInt(0),
 			stroke: "#3d1632",
 			fg:     "#edb2dc",
 		},
@@ -90,7 +90,7 @@ func (h *Hud) onTickElythiumCount(s *State, target pixel.Target, matrix pixel.Ma
 	topRight := pixel.IM.Moved(pixel.V(game.GameWidth-padding, game.GameHeight-padding))
 	h.elythiumCountIcon.Sprite().Draw(target, topRight.Moved(gfx.TopRight.Align(sprite)))
 
-	content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:#3d1632,+c:#edb2dc}%d", h.state.run.State.Get(rpg.RunStateKeyElythium).AsInt(0)))
+	content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:#3d1632,+c:#edb2dc}%d", h.state.globals.Get(rpg.GlobalKeyElythium).AsInt(0)))
 	txtVNudge := -1.0 // push it down or up to align with sprite
 	txtVNudge -= (sprite.Bounds().H() - content.Bounds().H()) / 2
 	txtHNudge := -1.0 // padding between number and sprite

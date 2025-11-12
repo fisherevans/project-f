@@ -10,11 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const (
-	MetadataKeyMode      = "mode"
-	MetadataKeyIsTalking = "isTalking"
-)
-
 type EntitySystem struct {
 	state *State
 
@@ -22,7 +17,6 @@ type EntitySystem struct {
 
 	movements   map[string]*EntityMovement
 	occupations *Positions
-	contexts    map[string]*BasicEntityContext
 
 	// optional traits
 
@@ -34,7 +28,6 @@ type EntitySystem struct {
 
 	soundProviders map[string][]EntitySoundProvider
 	disabledSounds map[string]map[string]struct{}
-	states         map[string]EntityState
 
 	metadata map[string]*EntityMetadata
 }
@@ -45,7 +38,6 @@ func NewEntitySystem(state *State) *EntitySystem {
 
 		movements:   map[string]*EntityMovement{},
 		occupations: NewPositions(state),
-		contexts:    map[string]*BasicEntityContext{},
 
 		presences: map[string]EntityPresence{},
 
@@ -57,8 +49,6 @@ func NewEntitySystem(state *State) *EntitySystem {
 		soundProviders: map[string][]EntitySoundProvider{},
 		disabledSounds: map[string]map[string]struct{}{},
 
-		states: map[string]EntityState{},
-
 		metadata: map[string]*EntityMetadata{},
 	}
 }
@@ -67,54 +57,21 @@ func (es *EntitySystem) RegisterEntity(id string, location MapLocation) Entity {
 	if _, exists := es.movements[id]; exists {
 		log.Fatal().Str("id", id).Msg("entity already exists")
 	}
-	es.contexts[id] = NewBasicEntityContext(id)
 	es.movements[id] = NewEntityMovement(id, es, location)
 	es.occupations.Occupy(id, location)
 	entity, _ := es.GetEntity(id)
-	initializeMetadata(es.contexts[id], entity)
 	return entity
 }
 
 func (es *EntitySystem) DeleteEntity(id string) {
 	es.occupations.RemoveEntity(id)
-	delete(es.states, id)
 	delete(es.movements, id)
-	delete(es.contexts, id)
 	delete(es.presences, id)
 	delete(es.renderers, id)
 	delete(es.behaviors, id)
 	delete(es.disabledBehaviors, id)
 	delete(es.soundProviders, id)
 	delete(es.disabledSounds, id)
-}
-
-func initializeMetadata(context *BasicEntityContext, entity Entity) {
-	context.WithMetadata(MetadataKeyIsTalking, func() any {
-		behavior, ok := entity.GetBehavior()
-		if !ok {
-			return false
-		}
-		npc, ok := behavior.(*NPCBehavior)
-		if ok {
-			return npc.talkingTowards != ""
-		}
-		facing, ok := behavior.(*FaceEntityBehavior)
-		if ok {
-			return facing.facing != ""
-		}
-		return false
-	})
-	context.WithMetadata(MetadataKeyMode, func() any {
-		renderer, ok := entity.GetRenderer()
-		if !ok {
-			return nil
-		}
-		modeBasedRenderer, ok := renderer.(*ModeBasedEntityRenderer)
-		if !ok {
-			return nil
-		}
-		return modeBasedRenderer.currentMode
-	})
 }
 
 func (es *EntitySystem) GetEntity(id string) (Entity, bool) {

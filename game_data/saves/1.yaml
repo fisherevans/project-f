@@ -6,10 +6,10 @@ animech:
         "2": strike
         "3": jab
         "4": mend_spores
-    experience_points: 214
+    experience_points: 1089
     upgrades:
         shield_level: 0
-        sync_level: 7
+        sync_level: 0
 loadouts:
     - name: Default
       skill_set:
@@ -42,10 +42,13 @@ unlocked_skills:
     mend_spores: {}
     photo_surge: {}
     shoulder_roll: {}
-state:
+globals:
     control_id: controlled_npc
     door_state: closed
-    player_id: tiled-7
+    intro.has_papers: true
+    intro.not_your_paper.attempts: 1
+    intro.papers_turned_in: true
+    player_id: tiled-16
 system_settings:
     lighting:
         lighting_composition: full

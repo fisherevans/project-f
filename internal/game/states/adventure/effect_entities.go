@@ -11,15 +11,14 @@ type EffectDeleteEntity struct {
 	EntityId string
 }
 
-func (e *EffectDeleteEntity) Process(source EntityContext, s *State) bool {
+func (e *EffectDeleteEntity) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity to delete")
 		return false
 	}
-	s.eventDispatcher.Unregister(entity.GetEntityContext())
+	s.eventDispatcher.Unregister(entity)
 	s.entities.DeleteEntity(e.EntityId)
-	logEffectInfof(source, e, "entity deleted")
 	return true
 }
 
@@ -35,7 +34,7 @@ type EffectRegisterEntity struct {
 	EntityLocation *string      `one_of:"location"`
 }
 
-func (e *EffectRegisterEntity) Process(source EntityContext, s *State) bool {
+func (e *EffectRegisterEntity) Process(source EntityReader, s *State) bool {
 	params := NewEntityParams{
 		EntityId: e.EntityId,
 	}
@@ -64,7 +63,6 @@ func (e *EffectRegisterEntity) Process(source EntityContext, s *State) bool {
 		logEffectWarnf(source, e, "failed to register entity")
 		return false
 	}
-	logEffectInfof(source, e, "entity registered: %v", params)
 	return true
 }
 
@@ -74,7 +72,7 @@ type EffectMutateModeBasedEntity struct {
 	ModeBaseRenderConfig
 }
 
-func (e *EffectMutateModeBasedEntity) Process(source EntityContext, s *State) bool {
+func (e *EffectMutateModeBasedEntity) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity for mutation")
@@ -91,7 +89,6 @@ func (e *EffectMutateModeBasedEntity) Process(source EntityContext, s *State) bo
 		return false
 	}
 	modeBased.WithConfig(&e.ModeBaseRenderConfig)
-	logEffectInfof(source, e, "mode based entity mutated")
 	return true
 }
 
@@ -115,7 +112,7 @@ type EffectResetModeBasedEntityAnimation struct {
 	EntityId string
 }
 
-func (e *EffectResetModeBasedEntityAnimation) Process(source EntityContext, s *State) bool {
+func (e *EffectResetModeBasedEntityAnimation) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity for mutation")
@@ -134,7 +131,6 @@ func (e *EffectResetModeBasedEntityAnimation) Process(source EntityContext, s *S
 	for _, animation := range modeBased.getBasicEntityRenderer(modeBased.currentMode).animations {
 		animation.Animation.Reset()
 	}
-	logEffectInfof(source, e, "mode based entity animations reset")
 	return true
 }
 
@@ -144,7 +140,7 @@ type EffectMutateBlockingPresence struct {
 	IsBlockingIngress *bool
 }
 
-func (e *EffectMutateBlockingPresence) Process(source EntityContext, s *State) bool {
+func (e *EffectMutateBlockingPresence) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity for mutation")
@@ -163,7 +159,6 @@ func (e *EffectMutateBlockingPresence) Process(source EntityContext, s *State) b
 	if e.IsBlockingIngress != nil {
 		blockingPresence.isBlockingIngress = *e.IsBlockingIngress
 	}
-	logEffectInfof(source, e, "block presence mutated")
 	return true
 }
 
@@ -175,7 +170,7 @@ type EffectSetEntityLocation struct {
 	ToEntityId  *string      `one_of:"destination"`
 }
 
-func (e *EffectSetEntityLocation) Process(source EntityContext, s *State) bool {
+func (e *EffectSetEntityLocation) Process(source EntityReader, s *State) bool {
 	var toLocation MapLocation
 	if e.ToReference != nil {
 		tele, ok := s.teleports[TeleportReference(*e.ToReference)]
@@ -215,7 +210,7 @@ type EffectTeleportPlayer struct {
 	TransitionStyle *string
 }
 
-func (e *EffectTeleportPlayer) Process(source EntityContext, s *State) bool {
+func (e *EffectTeleportPlayer) Process(source EntityReader, s *State) bool {
 
 	// Determine transition style (default to fade)
 	transitionStyle := "fade"
@@ -300,36 +295,6 @@ func (e *EffectTeleportPlayer) Process(source EntityContext, s *State) bool {
 	}
 
 	s.ExecuteSystemEffects(batch)
-	logEffectInfof(source, e, "player teleport batch started with style: %s", transitionStyle)
-	return true
-}
-
-type EffectMutateNPC struct {
-	instantEffect
-	EntityId          string
-	TalkingAtEntityId *string
-}
-
-func (e *EffectMutateNPC) Process(source EntityContext, s *State) bool {
-	entity, ok := s.entities.GetEntity(e.EntityId)
-	if !ok {
-		logEffectWarnf(source, e, "failed to find entity for mutation")
-		return false
-	}
-	behavior, ok := entity.GetBehavior()
-	if !ok {
-		logEffectWarnf(source, e, "failed to find behavior for mutation")
-		return false
-	}
-	npc, ok := behavior.(*NPCBehavior)
-	if !ok {
-		logEffectWarnf(source, e, "failed to find npc entity for mutation")
-		return false
-	}
-	if e.TalkingAtEntityId != nil {
-		npc.talkingTowards = *e.TalkingAtEntityId
-	}
-	logEffectInfof(source, e, "npc mutated")
 	return true
 }
 
@@ -339,7 +304,7 @@ type EffectAddSoundProvider struct {
 	ModeBase *ModeBaseSoundProviderConfig `one_of:"type"`
 }
 
-func (e *EffectAddSoundProvider) Process(source EntityContext, s *State) bool {
+func (e *EffectAddSoundProvider) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity for mutation")
@@ -354,7 +319,6 @@ func (e *EffectAddSoundProvider) Process(source EntityContext, s *State) bool {
 		}
 		entity.AddSoundProvider(provider)
 	}
-	logEffectInfof(source, e, "sound provider added")
 	return true
 }
 

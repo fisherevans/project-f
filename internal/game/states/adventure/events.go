@@ -36,53 +36,27 @@ type EventEntityZoneActivity struct {
 	WasTeleported bool
 }
 
-type EventWorldStateUpdated struct {
+type EventGlobalVariableUpdated struct {
 	Key      string
-	NewValue *rpg.StateValue
-	OldValue *rpg.StateValue
+	NewValue *rpg.GlobalValue
+	OldValue *rpg.GlobalValue
 }
 
-func NewEventWorldStateUpdated(key string, newValue, oldValue *rpg.StateValue) any {
-	return EventWorldStateUpdated{
+func NewEventGlobalVariableUpdated(key string, newValue, oldValue *rpg.GlobalValue) any {
+	return EventGlobalVariableUpdated{
 		Key:      key,
 		NewValue: newValue,
 		OldValue: oldValue,
 	}
 }
 
-type EventWorldStateDeleted struct {
+type GlobalVariableDeleted struct {
 	Key      string
-	OldValue *rpg.StateValue
+	OldValue *rpg.GlobalValue
 }
 
-func NewEventWorldStateDeleted(key string, oldValue *rpg.StateValue) any {
-	return EventWorldStateDeleted{
-		Key:      key,
-		OldValue: oldValue,
-	}
-}
-
-type EventRunStateUpdated struct {
-	Key      string
-	NewValue *rpg.StateValue
-	OldValue *rpg.StateValue
-}
-
-func NewEventRunStateUpdated(key string, newValue, oldValue *rpg.StateValue) any {
-	return EventRunStateUpdated{
-		Key:      key,
-		NewValue: newValue,
-		OldValue: oldValue,
-	}
-}
-
-type EventRunStateDeleted struct {
-	Key      string
-	OldValue *rpg.StateValue
-}
-
-func NewEventRunStateDeleted(key string, oldValue *rpg.StateValue) any {
-	return EventRunStateDeleted{
+func NewEventGlobalVariableDeleted(key string, oldValue *rpg.GlobalValue) any {
+	return GlobalVariableDeleted{
 		Key:      key,
 		OldValue: oldValue,
 	}

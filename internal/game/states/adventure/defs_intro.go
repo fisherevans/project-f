@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -24,11 +25,11 @@ func init() {
 			"Fine, it's not mine, I'll stop... probably",
 		}
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
-				attempts := gameState.RunState().Get(attemptsKey).AsInt(0)
+				attempts := globals.Get(attemptsKey).AsInt(0)
 				message := messages[attempts%len(messages)]
 				return NewOutput().WithEffects(NewDialogueEffect(message), NewSetRunStateEffect(attemptsKey, attempts+1))
 			},
@@ -37,11 +38,11 @@ func init() {
 	hasPapersKey := "intro.has_papers"
 	registerEventHandler("intro.is_your_paper", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
-				attempts := gameState.RunState().Get(attemptsKey).AsInt(0)
+				attempts := globals.Get(attemptsKey).AsInt(0)
 				var message string
 				if attempts == 0 {
 					message = "Okay, I've got my papers. I need to give them to the instructor."
@@ -52,7 +53,7 @@ func init() {
 				}
 				return NewOutput().WithEffects(
 					NewDialogueEffect(message),
-					NewDeleteEntityEffect(ctx.EntityId()),
+					NewDeleteEntityEffect(thisEntity.GetId()),
 					NewSetRunStateEffect(hasPapersKey, true))
 			},
 		}.CreateHandler()
@@ -63,56 +64,56 @@ func init() {
 	}
 	registerEventHandler("intro.paper_instructor", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[InstructorState]{
-			OnInteract: func(ctx EntityContext, gameState GameState, state InstructorState, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state InstructorState, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
-				papersTurnedIn := gameState.RunState().Get(papersTurnedInKey).AsBool(false)
+				papersTurnedIn := globals.Get(papersTurnedInKey).AsBool(false)
 				if papersTurnedIn {
-					return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
+					return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
 						WithMiddleEffects(NewDialogueEffect("What do you want? Go find the equipment specialist.")).
 						Build()
 				}
-				hasPapers := gameState.RunState().Get(hasPapersKey).AsBool(false)
+				hasPapers := globals.Get(hasPapersKey).AsBool(false)
 				if !hasPapers {
-					return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
+					return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
 						WithMiddleEffects(NewDialogueEffect("Are you confused? Fill out your paper work, and give it to me.")).
 						Build()
 				}
-				attempts := gameState.RunState().Get(attemptsKey).AsInt(0)
+				attempts := globals.Get(attemptsKey).AsInt(0)
 				message := "Ah, thank you. Now go find the equipment specialist for your Animech training."
 				if attempts >= 2 {
 					message = "What were you doing snooping around everyone else's paperwork? I almost wrote you up. Anyways, go find the equipment specialist for your Animech training."
 				}
-				return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
+				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
 					WithMiddleEffects(
 						NewDialogueEffect(message),
 						NewMutateFollowCameraEffect().WithFollowEntityId("intro.papers_door"),
 						NewTimerEffect(1.5),
 						NewSetRunStateEffect(papersTurnedInKey, true),
 						NewTimerEffect(1.5),
-						NewMutateFollowCameraEffect().WithFollowEntityId(gameState.RunState().Get(runStateKeyPlayerId).AsString("")),
+						NewMutateFollowCameraEffect().WithFollowEntityId(globals.Get(globalVariableNamePlayerId).AsString("")),
 					).
 					Build()
 			},
-			EntityZoneActivity: func(ctx EntityContext, gameState GameState, state InstructorState, event *EventEntityZoneActivity) *HandlerOutput {
-				papersTurnedIn := gameState.RunState().Get(papersTurnedInKey).AsBool(false)
+			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state InstructorState, event *EventEntityZoneActivity) *HandlerOutput {
+				papersTurnedIn := globals.Get(papersTurnedInKey).AsBool(false)
 				if !event.IsEntering || event.ZoneId != "papers.instructions" || state.Blabbed || papersTurnedIn {
 					return nil
 				}
 				state.Blabbed = true
-				return NewFocusedSequenceBuilder(ctx.EntityId(), event.EntityId).
+				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.EntityId).
 					WithMoveCamera(true).
 					WithFacePlayer(true).
-					WithMiddleEffects(NewChatterEffect(ctx.EntityId(), 3, "You've gotta fill out your paperwork before you can leave...")).
+					WithMiddleEffects(NewChatterEffect(thisEntity.GetId(), 3, "You've gotta fill out your paperwork before you can leave...")).
 					Build().WithState(state)
 			},
 		}.CreateHandler()
 	})
 	registerEventHandler("intro.door.run_state_based", func(props *util.Properties) EventHandler {
-		stateKey := props.GetString("run_state_key", "")
-		stateValue := func(gs GameState) string {
-			v := gs.RunState().Get(stateKey)
+		variable := props.GetString("run_state_key", "")
+		stateValue := func(gs rpg.GlobalsReader) string {
+			v := gs.Get(variable)
 			if !v.Exists() {
 				return doorClosed
 			}
@@ -123,15 +124,15 @@ func init() {
 					return doorClosed
 				}
 			}
-			return gs.RunState().Get(stateKey).AsString(doorClosed)
+			return gs.Get(variable).AsString(doorClosed)
 		}
 		return BasicHandlerBuilder[None]{
-			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
-					NewMutateBlockingPresenceEffect(ctx.EntityId()).
-						WithIsBlockingIngress(stateValue(gameState) == doorClosed),
-					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithMode(stateValue(gameState)).
+					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
+						WithIsBlockingIngress(stateValue(globals) == doorClosed),
+					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
+						WithMode(stateValue(globals)).
 						WithAnimations(map[string][]AnimationReference{
 							doorClosed: {
 								{Name: "adventure/doors/shield_front_1:closed"},
@@ -148,15 +149,15 @@ func init() {
 						}),
 				)
 			},
-			RunStateUpdated: func(ctx EntityContext, gameState GameState, state None, event *EventRunStateUpdated) *HandlerOutput {
-				if event.Key != stateKey {
+			GlobalVariableUpdated: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventGlobalVariableUpdated) *HandlerOutput {
+				if event.Key != variable {
 					return nil
 				}
 				return NewOutput().WithEffects(
-					NewMutateBlockingPresenceEffect(ctx.EntityId()).
-						WithIsBlockingIngress(stateValue(gameState) == doorClosed),
-					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithMode(stateValue(gameState)))
+					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
+						WithIsBlockingIngress(stateValue(globals) == doorClosed),
+					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
+						WithMode(stateValue(globals)))
 			},
 		}.CreateHandler()
 	})
@@ -194,26 +195,26 @@ func init() {
 		zoneId := props.GetString("zone_id", "")
 		walkBack := input.DirectionFromString(props.GetString("walk_back_direction", ""))
 		return BasicHandlerBuilder[None]{
-			EntityZoneActivity: func(ctx EntityContext, gameState GameState, state None, event *EventEntityZoneActivity) *HandlerOutput {
-				if !event.IsEntering || event.ZoneId != zoneId || event.EntityId != gameState.RunState().Get(runStateKeyPlayerId).AsString("") {
+			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
+				if !event.IsEntering || event.ZoneId != zoneId || event.EntityId != globals.Get(globalVariableNamePlayerId).AsString("") {
 					return nil
 				}
-				attempts := gameState.RunState().Get(guardedEntryDenialsKey).AsInt(0)
+				attempts := globals.Get(guardedEntryDenialsKey).AsInt(0)
 				message := noEntryChatters[min(attempts, len(noEntryChatters)-1)]
-				return NewFocusedSequenceBuilder(ctx.EntityId(), event.EntityId).
+				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.EntityId).
 					WithMoveCamera(true).
 					WithFacePlayer(true).
 					WithMiddleEffects(NewDialogueEffect(message)).
 					WithPostEffects(NewTriggerMovementEffect(event.EntityId).WithDirection(walkBack), NewSetRunStateEffect(guardedEntryDenialsKey, attempts+1)).
 					Build()
 			},
-			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
-				attempts := gameState.RunState().Get(guardedEntryDenialsKey).AsInt(0)
+				attempts := globals.Get(guardedEntryDenialsKey).AsInt(0)
 				message := dialogues[min(attempts/len(dialogues), len(dialogues)-1)]
-				return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
+				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
 					WithMiddleEffects(NewDialogueEffect(message)).
 					Build()
 			},
@@ -260,70 +261,70 @@ func init() {
 			IsTalking bool
 		}
 		return BasicHandlerBuilder[TalkingState]{
-			Init: func(ctx EntityContext, gameState GameState, state TalkingState) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state TalkingState) *HandlerOutput {
 				return NewOutput().WithEffects(
-					NewPushEntityBehaviorEffect(ctx.EntityId()).WithScriptedMotion(EntityBehaviorScriptedMotion{}),
-					NewStartScriptedMotionEffect(ctx.EntityId()).WithToEntityId(randomDestination()),
+					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithScriptedMotion(EntityBehaviorScriptedMotion{}),
+					NewStartScriptedMotionEffect(thisEntity.GetId()).WithToEntityId(randomDestination()),
 				)
 			},
-			OnInteract: func(ctx EntityContext, gameState GameState, state TalkingState, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != ctx.EntityId() || ctx.GetBoolMetadata(MetadataKeyIsTalking) {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state TalkingState, event *EventOnInteract) *HandlerOutput {
+				if event.TargetId != thisEntity.GetId() || IsBehaviorType[*FaceEntityBehavior](thisEntity) {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
-					NewPushEntityBehaviorEffect(ctx.EntityId()).WithFacingEntity(EntityBehaviorFacingEntity{EntityId: util.Ptr(event.SourceId)}),
-					NewChatterEffect(ctx.EntityId(), 3, messages.Random()),
-					NewPopEntityBehaviorEffect(ctx.EntityId()),
+					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithFacingEntity(EntityBehaviorFacingEntity{EntityId: util.Ptr(event.SourceId)}),
+					NewChatterEffect(thisEntity.GetId(), 3, messages.Random()),
+					NewPopEntityBehaviorEffect(thisEntity.GetId()),
 				)
 			},
-			ScriptedMotionComplete: func(ctx EntityContext, gameState GameState, state TalkingState, event *EventScriptedMotionComplete) *HandlerOutput {
-				if event.EntityId != ctx.EntityId() {
+			ScriptedMotionComplete: func(thisEntity EntityReader, globals rpg.GlobalsReader, state TalkingState, event *EventScriptedMotionComplete) *HandlerOutput {
+				if event.EntityId != thisEntity.GetId() {
 					return nil
 				}
 				var plan []Effect
 				if event.WasCanceled {
-					log.Info().Str("entity", ctx.EntityId()).Msg("motion canceled, waiting before scheduling next")
+					log.Info().Str("entity", thisEntity.GetId()).Msg("motion canceled, waiting before scheduling next")
 					plan = append(plan, NewTimerEffect(rand.Float64()*3))
 				}
-				plan = append(plan, NewStartScriptedMotionEffect(ctx.EntityId()).WithToEntityId(randomDestination()))
+				plan = append(plan, NewStartScriptedMotionEffect(thisEntity.GetId()).WithToEntityId(randomDestination()))
 				return NewOutput().WithSerialPlan(plan...)
 			},
 		}.CreateHandler()
 	})
 
-	equipmentDoorStateKey := "intro.equipment_door_state"
-	hasEquipmentKeyKey := "intro.has_equipment_key"
+	equipmentDoorVariable := "intro.equipment_door_state"
+	hasEquipmentVariable := "intro.has_equipment_key"
 	registerEventHandler("intro.equipment_specialist", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != ctx.EntityId() {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}
-				hasEquipmentKey := gameState.RunState().Get(hasEquipmentKeyKey).AsBool(false)
+				hasEquipmentKey := globals.Get(hasEquipmentVariable).AsBool(false)
 				if hasEquipmentKey {
 					return NewOutput().WithEffects(NewDialogueEffect("Do you need help finding testing room 1...?"))
 				}
 
-				return NewFocusedSequenceBuilder(ctx.EntityId(), event.SourceId).
+				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
 					WithMiddleEffects(
 						NewDialogueEffect("Ah! Hello. Yes, this is the equipment testing facility. No.. No, I'm not a specialist; they're inside the testing rooms."),
 						NewDialogueEffect("Here, take this key card. They're waiting for you in testing room 1."),
-						NewSetRunStateEffect(hasEquipmentKeyKey, true),
+						NewSetRunStateEffect(hasEquipmentVariable, true),
 					).
 					Build()
 			},
 		}.CreateHandler()
 	})
 	registerEventHandler("intro.equipment_door.key_slot", func(props *util.Properties) EventHandler {
-		runStateKey := props.GetString("run_state_key", "not_it")
+		variable := props.GetString("run_state_key", "not_it")
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != ctx.EntityId() {
+			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}
 				defaultMessage := "This looks like a slot for a key card..."
-				hasEquipmentKey := gameState.RunState().Get(hasEquipmentKeyKey).AsBool(false)
-				if runStateKey == "not_it" {
+				hasEquipmentKey := globals.Get(hasEquipmentVariable).AsBool(false)
+				if variable == "not_it" {
 					if hasEquipmentKey {
 						return NewOutput().WithSerialPlan(
 							NewPlaySoundEffect("adventure/beeps/error"),
@@ -334,7 +335,7 @@ func init() {
 						NewDialogueEffect(defaultMessage),
 					)
 				}
-				equipmentDoorState := gameState.RunState().Get(equipmentDoorStateKey).AsString(doorClosed)
+				equipmentDoorState := globals.Get(equipmentDoorVariable).AsString(doorClosed)
 				if equipmentDoorState == doorOpen {
 					return NewOutput().WithEffects(NewDialogueEffect("The door is already open."))
 				}
@@ -345,78 +346,10 @@ func init() {
 				return NewOutput().WithSerialPlan(
 					NewPlaySoundEffect("adventure/beeps/success"),
 					NewDialogueEffect(message),
-					NewSetRunStateEffect(runStateKey, doorOpen),
+					NewSetRunStateEffect(variable, doorOpen),
 					NewPlaySoundEffect("adventure/sealed_door_opens"),
 				)
 			},
 		}.CreateHandler()
 	})
-}
-
-type FocusedSequenceBuilder struct {
-	focusedEntity                          string
-	playerId                               string
-	moveCamera                             bool
-	facePlayer                             bool
-	preEffects, middleEffects, postEffects []Effect
-}
-
-func NewFocusedSequenceBuilder(focusedEntity, playerId string) *FocusedSequenceBuilder {
-	return &FocusedSequenceBuilder{
-		focusedEntity: focusedEntity,
-		playerId:      playerId,
-		postEffects:   []Effect{},
-	}
-}
-
-func (b *FocusedSequenceBuilder) WithFacePlayer(facePlayer bool) *FocusedSequenceBuilder {
-	b.facePlayer = facePlayer
-	return b
-}
-
-func (b *FocusedSequenceBuilder) WithMoveCamera(moveCamera bool) *FocusedSequenceBuilder {
-	b.moveCamera = moveCamera
-	return b
-}
-
-func (b *FocusedSequenceBuilder) WithPreEffects(effects ...Effect) *FocusedSequenceBuilder {
-	b.preEffects = append(b.preEffects, effects...)
-	return b
-}
-
-func (b *FocusedSequenceBuilder) WithMiddleEffects(effects ...Effect) *FocusedSequenceBuilder {
-	b.middleEffects = append(b.middleEffects, effects...)
-	return b
-}
-
-func (b *FocusedSequenceBuilder) WithPostEffects(effects ...Effect) *FocusedSequenceBuilder {
-	b.postEffects = append(b.postEffects, effects...)
-	return b
-}
-
-func (b *FocusedSequenceBuilder) Build() *HandlerOutput {
-	var effects []Effect
-	effects = append(effects, b.preEffects...)
-	effects = append(effects,
-		NewMutateEntityBehaviorEffect(b.playerId).WithDisableBy(b.focusedEntity),
-		NewMutateNPCEffect(b.focusedEntity).WithTalkingAtEntityId(b.playerId),
-	)
-	if b.facePlayer {
-		effects = append(effects, NewEntityFaceDirectionEffect(b.playerId).WithTargetEntity(b.focusedEntity))
-	}
-	if b.moveCamera {
-		effects = append(effects, NewOverrideCameraEffect().WithFollow(FollowCamera{EntityId: util.Ptr(b.focusedEntity)}))
-	}
-	effects = append(effects, b.middleEffects...)
-	if b.moveCamera {
-		effects = append(effects, NewPopCameraOverrideEffect(true))
-	}
-	if b.facePlayer {
-		effects = append(effects, NewResetMovementEffect(b.playerId))
-	}
-	effects = append(effects,
-		NewMutateNPCEffect(b.focusedEntity).WithTalkingAtEntityId(""),
-		NewMutateEntityBehaviorEffect(b.playerId).WithEnableBy(b.focusedEntity))
-	effects = append(effects, b.postEffects...)
-	return NewOutput().WithSerialPlan(effects...)
 }

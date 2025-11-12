@@ -9,51 +9,54 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Entity interface {
+type EntityReader interface {
 	GetId() string
-	GetSystem() *EntitySystem
-
-	// from guaranteed position
 
 	GetLocation() MapLocation
 	GetPreciseLocation() pixel.Vec
+
 	IsMoving() bool
-	CancelMovement()
 	GetMovementState() MoveState
-	AlterMovementState(state MoveState)
-	GetFacingDirection() input.Direction
-	SetFacingDirection(input.Direction)
 	GetMovementSpeed(state MoveState) float64
-	SetMovementSpeed(state MoveState, speed float64)
-	Teleport(toLocation MapLocation)
-	AttemptMovement(targetLocation MapLocation, movementState MoveState) bool
-	GetEntityContext() EntityContext
-	SetEntityContextMetadata(key string, accessor func() any)
+	GetFacingDirection() input.Direction
 
 	GetMetadata() *EntityMetadata
 
-	// optional traits
+	GetBehavior() (EntityBehavior, bool)
+	IsBehaviorEnabled() bool
+
+	IsSoundEnabled() bool
+
+	GetPresence() (EntityPresence, bool)
+
+	GetRenderer() (EntityRenderer, bool)
+}
+
+type Entity interface {
+	EntityReader
+	GetSystem() *EntitySystem
+
+	Teleport(toLocation MapLocation)
+
+	CancelMovement()
+	AttemptMovement(targetLocation MapLocation, movementState MoveState) bool
+	AlterMovementState(state MoveState)
+	SetMovementSpeed(state MoveState, speed float64)
+	SetFacingDirection(input.Direction)
 
 	PushBehavior(behavior EntityBehavior)
 	PopBehavior() (EntityBehavior, bool)
-	GetBehavior() (EntityBehavior, bool)
 	DisableBehavior(source string)
 	EnableBehavior(source string)
-	IsBehaviorEnabled() bool
 
 	AddSoundProvider(soundProvider EntitySoundProvider)
 	DisableSound(source string)
 	EnableSound(source string)
-	IsSoundEnabled() bool
 
 	SetPresence(presence EntityPresence)
-	GetPresence() (EntityPresence, bool)
 
 	SetRenderer(renderer EntityRenderer)
-	GetRenderer() (EntityRenderer, bool)
 
-	SetState(state EntityState)
-	GetState() (EntityState, bool)
 	InteractsWith(location MapLocation)
 }
 
@@ -109,9 +112,6 @@ func (e *entityReference) SetMovementSpeed(state MoveState, speed float64) {
 	e.system.movements[e.id].MovementSpeeds[state] = speed
 }
 
-func (e *entityReference) SetEntityContextMetadata(key string, accessor func() any) {
-	e.system.contexts[e.id].WithMetadata(key, accessor)
-}
 func (e *entityReference) InteractsWith(location MapLocation) {
 	direction := e.GetLocation().DirectionTowards(location)
 	for targetEntityId := range e.system.interactableEntityIds(location) {
@@ -121,10 +121,6 @@ func (e *entityReference) InteractsWith(location MapLocation) {
 			TargetId:              targetEntityId,
 		})
 	}
-}
-
-func (e *entityReference) GetEntityContext() EntityContext {
-	return e.system.contexts[e.id]
 }
 
 func (e *entityReference) AttemptMovement(targetLocation MapLocation, movementState MoveState) bool {
@@ -286,14 +282,5 @@ func (e *entityReference) SetRenderer(renderer EntityRenderer) {
 
 func (e *entityReference) GetRenderer() (EntityRenderer, bool) {
 	v, ok := e.system.renderers[e.id]
-	return v, ok
-}
-
-func (e *entityReference) SetState(state EntityState) {
-	e.system.states[e.id] = state
-}
-
-func (e *entityReference) GetState() (EntityState, bool) {
-	v, ok := e.system.states[e.id]
 	return v, ok
 }

@@ -5,7 +5,7 @@ type EffectOverrideCamera struct {
 	Follow *FollowCamera `one_of:"type"`
 }
 
-func (e *EffectOverrideCamera) Process(source EntityContext, s *State) bool {
+func (e *EffectOverrideCamera) Process(source EntityReader, s *State) bool {
 	if e.Follow == nil {
 		logEffectWarnf(source, e, "follow camera override requires a follow camera")
 		return false
@@ -24,7 +24,6 @@ func (e *EffectOverrideCamera) Process(source EntityContext, s *State) bool {
 	}
 	camera := NewFollowCamera(target.GetId(), location, EntityCameraSpeedMedium)
 	s.OverrideCamera(camera)
-	logEffectInfof(source, e, "camera overriden")
 	return true
 }
 
@@ -33,9 +32,8 @@ type EffectPopCameraOverride struct {
 	MaintainCurrentLocation bool
 }
 
-func (e *EffectPopCameraOverride) Process(source EntityContext, s *State) bool {
+func (e *EffectPopCameraOverride) Process(source EntityReader, s *State) bool {
 	s.PopOverrideCamera(e.MaintainCurrentLocation)
-	logEffectInfof(source, e, "camera popped")
 	return true
 }
 
@@ -45,7 +43,7 @@ type EffectMutateFollowCamera struct {
 	ResetPosition  *bool
 }
 
-func (e *EffectMutateFollowCamera) Process(source EntityContext, s *State) bool {
+func (e *EffectMutateFollowCamera) Process(source EntityReader, s *State) bool {
 	camera := s.camera
 	if override, ok := camera.(*CameraOverride); ok {
 		camera = override.newCamera
@@ -61,7 +59,6 @@ func (e *EffectMutateFollowCamera) Process(source EntityContext, s *State) bool 
 	if e.ResetPosition != nil && *e.ResetPosition {
 		followCamera.ResetPosition(s)
 	}
-	logEffectInfof(source, e, "follow camera mutated")
 	return true
 }
 

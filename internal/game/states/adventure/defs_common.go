@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -33,17 +34,17 @@ func init() {
 		}
 		duration := props.GetFloat("duration", 4)
 		return NewBasicHandler(None{}).
-			WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
-				if ctx.GetBoolMetadata(MetadataKeyIsTalking) || len(chatters) == 0 {
+				if !IsBehaviorType[*NPCBehavior](thisEntity) || len(chatters) == 0 {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
-					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(event.SourceId),
-					NewChatterEffect(ctx.EntityId(), duration, chatters.Random()),
-					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
+					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithFacingEntityId(event.SourceId),
+					NewChatterEffect(thisEntity.GetId(), duration, chatters.Random()),
+					NewPopEntityBehaviorEffect(thisEntity.GetId()),
 				)
 			}).
 			CreateHandler()
@@ -59,23 +60,23 @@ func init() {
 			return nil
 		}
 		return NewBasicHandler(None{}).
-			WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
-					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(event.SourceId),
+					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithFacingEntityId(event.SourceId),
 					NewDialogueEffect(dialogues.Random()),
-					NewMutateNPCEffect(ctx.EntityId()).WithTalkingAtEntityId(""),
+					NewPopEntityBehaviorEffect(thisEntity.GetId()),
 				)
 			}).
 			CreateHandler()
 	})
 
 	registerEventHandler("door.run_state_based", func(props *util.Properties) EventHandler {
-		stateKey := props.GetString("run_state_key", "")
-		stateValue := func(gs GameState) string {
-			v := gs.RunState().Get(stateKey)
+		variable := props.GetString("run_state_key", "")
+		stateValue := func(gs rpg.GlobalsReader) string {
+			v := gs.Get(variable)
 			if !v.Exists() {
 				return doorClosed
 			}
@@ -86,25 +87,25 @@ func init() {
 					return doorClosed
 				}
 			}
-			return gs.RunState().Get(stateKey).AsString(doorClosed)
+			return gs.Get(variable).AsString(doorClosed)
 		}
 		return BasicHandlerBuilder[None]{
-			Init: func(ctx EntityContext, gameState GameState, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
-					NewMutateBlockingPresenceEffect(ctx.EntityId()).
-						WithIsBlockingIngress(stateValue(gameState) == doorClosed),
-					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithMode(stateValue(gameState)))
+					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
+						WithIsBlockingIngress(stateValue(globals) == doorClosed),
+					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
+						WithMode(stateValue(globals)))
 			},
-			RunStateUpdated: func(ctx EntityContext, gameState GameState, state None, event *EventRunStateUpdated) *HandlerOutput {
-				if event.Key != stateKey {
+			GlobalVariableUpdated: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventGlobalVariableUpdated) *HandlerOutput {
+				if event.Key != variable {
 					return nil
 				}
 				return NewOutput().WithEffects(
-					NewMutateBlockingPresenceEffect(ctx.EntityId()).
-						WithIsBlockingIngress(stateValue(gameState) == doorClosed),
-					NewMutateModeBasedEntityEffect(ctx.EntityId()).
-						WithMode(stateValue(gameState)))
+					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
+						WithIsBlockingIngress(stateValue(globals) == doorClosed),
+					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
+						WithMode(stateValue(globals)))
 			},
 		}.CreateHandler()
 	})
@@ -116,8 +117,8 @@ func init() {
 		AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 		target := params.Properties.GetString("target", "")
 		return entity, NewBasicHandler(None{}).
-			WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-				if ctx.EntityId() != event.TargetId {
+			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
 				return NewOutput().WithEffects(NewSendEventEffect(EventOnInteract{

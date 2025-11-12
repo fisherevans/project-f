@@ -1,26 +1,25 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-09T22:39:31-05:00 by go generate
+// Generated at 2025-11-11T20:58:02-05:00 by go generate
 // Source: internal/game/adventure/events_handler.go
 
 package adventure
+
+import "fisherevans.com/project/f/internal/game/rpg"
 
 // BasicHandlerBuilder provides a simple way to build event handlers with type-safe state
 type BasicHandlerBuilder[T any] struct {
 	DefaultState func() T
 
-	Init func(ctx EntityContext, gameState GameState, state T) *HandlerOutput
+	Init func(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput
 
-	OnInteract func(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput
-	DialogueComplete func(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput
-	ChatterComplete func(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput
-	TimerComplete func(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput
-	EntityZoneActivity func(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput
-	WorldStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput
-	WorldStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput
-	RunStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput
-	RunStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput
-	CombatComplete func(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput
-	ScriptedMotionComplete func(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput
+	OnInteract func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventOnInteract) *HandlerOutput
+	DialogueComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventDialogueComplete) *HandlerOutput
+	ChatterComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventChatterComplete) *HandlerOutput
+	TimerComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventTimerComplete) *HandlerOutput
+	EntityZoneActivity func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventEntityZoneActivity) *HandlerOutput
+	GlobalVariableUpdated func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventGlobalVariableUpdated) *HandlerOutput
+	CombatComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventCombatComplete) *HandlerOutput
+	ScriptedMotionComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventScriptedMotionComplete) *HandlerOutput
 }
 
 func NewBasicHandler[T any](defaultState T) *BasicHandlerBuilder[T] {
@@ -31,62 +30,47 @@ func NewBasicHandler[T any](defaultState T) *BasicHandlerBuilder[T] {
 	}
 }
 
-func (b *BasicHandlerBuilder[T]) WithInit(init func(ctx EntityContext, gameState GameState, state T) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithInit(init func(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.Init = init
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithOnInteract(onInteract func(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithOnInteract(onInteract func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventOnInteract) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.OnInteract = onInteract
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithDialogueComplete(dialogueComplete func(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithDialogueComplete(dialogueComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventDialogueComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.DialogueComplete = dialogueComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithChatterComplete(chatterComplete func(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithChatterComplete(chatterComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventChatterComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.ChatterComplete = chatterComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithTimerComplete(timerComplete func(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithTimerComplete(timerComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventTimerComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.TimerComplete = timerComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithEntityZoneActivity(entityZoneActivity func(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithEntityZoneActivity(entityZoneActivity func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventEntityZoneActivity) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.EntityZoneActivity = entityZoneActivity
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithWorldStateUpdated(worldStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput) *BasicHandlerBuilder[T] {
-	b.WorldStateUpdated = worldStateUpdated
+func (b *BasicHandlerBuilder[T]) WithGlobalVariableUpdated(globalVariableUpdated func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventGlobalVariableUpdated) *HandlerOutput) *BasicHandlerBuilder[T] {
+	b.GlobalVariableUpdated = globalVariableUpdated
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithWorldStateDeleted(worldStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput) *BasicHandlerBuilder[T] {
-	b.WorldStateDeleted = worldStateDeleted
-	return b
-}
-
-func (b *BasicHandlerBuilder[T]) WithRunStateUpdated(runStateUpdated func(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput) *BasicHandlerBuilder[T] {
-	b.RunStateUpdated = runStateUpdated
-	return b
-}
-
-func (b *BasicHandlerBuilder[T]) WithRunStateDeleted(runStateDeleted func(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput) *BasicHandlerBuilder[T] {
-	b.RunStateDeleted = runStateDeleted
-	return b
-}
-
-func (b *BasicHandlerBuilder[T]) WithCombatComplete(combatComplete func(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithCombatComplete(combatComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventCombatComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.CombatComplete = combatComplete
 	return b
 }
 
-func (b *BasicHandlerBuilder[T]) WithScriptedMotionComplete(scriptedMotionComplete func(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
+func (b *BasicHandlerBuilder[T]) WithScriptedMotionComplete(scriptedMotionComplete func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventScriptedMotionComplete) *HandlerOutput) *BasicHandlerBuilder[T] {
 	b.ScriptedMotionComplete = scriptedMotionComplete
 	return b
 }
@@ -118,71 +102,56 @@ func (h *basicHandler[T]) convertState(original any) T {
 	return v
 }
 
-func (h *basicHandler[T]) Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput {
+func (h *basicHandler[T]) Init(thisEntity EntityReader, globals rpg.GlobalsReader, state any) *HandlerOutput {
 	if h.builder.Init == nil {
 		return nil
 	}
-	return h.builder.Init(ctx, gameState, h.convertState(state))
+	return h.builder.Init(thisEntity, globals, h.convertState(state))
 }
 
-func (h *basicHandler[T]) HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput {
+func (h *basicHandler[T]) HandleEvent(thisEntity EntityReader, globals rpg.GlobalsReader, state any, event any) *HandlerOutput {
 	convertedState := h.convertState(state)
 	switch e := event.(type) {
 	case *EventOnInteract:
 		if h.builder.OnInteract == nil {
 			return nil
 		}
-		return h.builder.OnInteract(ctx, gameState, convertedState, e)
+		return h.builder.OnInteract(thisEntity, globals, convertedState, e)
 	case *EventDialogueComplete:
 		if h.builder.DialogueComplete == nil {
 			return nil
 		}
-		return h.builder.DialogueComplete(ctx, gameState, convertedState, e)
+		return h.builder.DialogueComplete(thisEntity, globals, convertedState, e)
 	case *EventChatterComplete:
 		if h.builder.ChatterComplete == nil {
 			return nil
 		}
-		return h.builder.ChatterComplete(ctx, gameState, convertedState, e)
+		return h.builder.ChatterComplete(thisEntity, globals, convertedState, e)
 	case *EventTimerComplete:
 		if h.builder.TimerComplete == nil {
 			return nil
 		}
-		return h.builder.TimerComplete(ctx, gameState, convertedState, e)
+		return h.builder.TimerComplete(thisEntity, globals, convertedState, e)
 	case *EventEntityZoneActivity:
 		if h.builder.EntityZoneActivity == nil {
 			return nil
 		}
-		return h.builder.EntityZoneActivity(ctx, gameState, convertedState, e)
-	case *EventWorldStateUpdated:
-		if h.builder.WorldStateUpdated == nil {
+		return h.builder.EntityZoneActivity(thisEntity, globals, convertedState, e)
+	case *EventGlobalVariableUpdated:
+		if h.builder.GlobalVariableUpdated == nil {
 			return nil
 		}
-		return h.builder.WorldStateUpdated(ctx, gameState, convertedState, e)
-	case *EventWorldStateDeleted:
-		if h.builder.WorldStateDeleted == nil {
-			return nil
-		}
-		return h.builder.WorldStateDeleted(ctx, gameState, convertedState, e)
-	case *EventRunStateUpdated:
-		if h.builder.RunStateUpdated == nil {
-			return nil
-		}
-		return h.builder.RunStateUpdated(ctx, gameState, convertedState, e)
-	case *EventRunStateDeleted:
-		if h.builder.RunStateDeleted == nil {
-			return nil
-		}
-		return h.builder.RunStateDeleted(ctx, gameState, convertedState, e)
+		return h.builder.GlobalVariableUpdated(thisEntity, globals, convertedState, e)
 	case *EventCombatComplete:
 		if h.builder.CombatComplete == nil {
 			return nil
 		}
-		return h.builder.CombatComplete(ctx, gameState, convertedState, e)
+		return h.builder.CombatComplete(thisEntity, globals, convertedState, e)
 	case *EventScriptedMotionComplete:
 		if h.builder.ScriptedMotionComplete == nil {
 			return nil
 		}
-		return h.builder.ScriptedMotionComplete(ctx, gameState, convertedState, e)
+		return h.builder.ScriptedMotionComplete(thisEntity, globals, convertedState, e)
 	}
 	return nil
 }
@@ -195,18 +164,15 @@ func (h *basicHandler[T]) HandleEvent(ctx EntityContext, gameState GameState, st
 // Note: Override TypedInit (not Init) and the typed event methods.
 // BaseHandler will automatically call your TypedInit from Init.
 type TypedEventHandler[T any] interface {
-	TypedInit(ctx EntityContext, gameState GameState, state T) *HandlerOutput
-	OnInteract(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput
-	DialogueComplete(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput
-	ChatterComplete(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput
-	TimerComplete(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput
-	EntityZoneActivity(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput
-	WorldStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput
-	WorldStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput
-	RunStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput
-	RunStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput
-	CombatComplete(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput
-	ScriptedMotionComplete(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput
+	TypedInit(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput
+	OnInteract(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventOnInteract) *HandlerOutput
+	DialogueComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventDialogueComplete) *HandlerOutput
+	ChatterComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventChatterComplete) *HandlerOutput
+	TimerComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventTimerComplete) *HandlerOutput
+	EntityZoneActivity(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventEntityZoneActivity) *HandlerOutput
+	GlobalVariableUpdated(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventGlobalVariableUpdated) *HandlerOutput
+	CombatComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventCombatComplete) *HandlerOutput
+	ScriptedMotionComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventScriptedMotionComplete) *HandlerOutput
 }
 
 // BaseHandler provides a base implementation with no-op methods for all events
@@ -231,84 +197,66 @@ func (h *BaseHandler[T]) convertState(original any) T {
 	return v
 }
 
-func (h *BaseHandler[T]) Init(ctx EntityContext, gameState GameState, state any) *HandlerOutput {
-	return h.TypedInit(ctx, gameState, h.convertState(state))
+func (h *BaseHandler[T]) Init(thisEntity EntityReader, globals rpg.GlobalsReader, state any) *HandlerOutput {
+	return h.TypedInit(thisEntity, globals, h.convertState(state))
 }
 
-func (h *BaseHandler[T]) TypedInit(ctx EntityContext, gameState GameState, state T) *HandlerOutput {
+func (h *BaseHandler[T]) TypedInit(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) HandleEvent(ctx EntityContext, gameState GameState, state any, event any) *HandlerOutput {
+func (h *BaseHandler[T]) HandleEvent(thisEntity EntityReader, globals rpg.GlobalsReader, state any, event any) *HandlerOutput {
 	convertedState := h.convertState(state)
 	switch e := event.(type) {
 	case *EventOnInteract:
-		return h.OnInteract(ctx, gameState, convertedState, e)
+		return h.OnInteract(thisEntity, globals, convertedState, e)
 	case *EventDialogueComplete:
-		return h.DialogueComplete(ctx, gameState, convertedState, e)
+		return h.DialogueComplete(thisEntity, globals, convertedState, e)
 	case *EventChatterComplete:
-		return h.ChatterComplete(ctx, gameState, convertedState, e)
+		return h.ChatterComplete(thisEntity, globals, convertedState, e)
 	case *EventTimerComplete:
-		return h.TimerComplete(ctx, gameState, convertedState, e)
+		return h.TimerComplete(thisEntity, globals, convertedState, e)
 	case *EventEntityZoneActivity:
-		return h.EntityZoneActivity(ctx, gameState, convertedState, e)
-	case *EventWorldStateUpdated:
-		return h.WorldStateUpdated(ctx, gameState, convertedState, e)
-	case *EventWorldStateDeleted:
-		return h.WorldStateDeleted(ctx, gameState, convertedState, e)
-	case *EventRunStateUpdated:
-		return h.RunStateUpdated(ctx, gameState, convertedState, e)
-	case *EventRunStateDeleted:
-		return h.RunStateDeleted(ctx, gameState, convertedState, e)
+		return h.EntityZoneActivity(thisEntity, globals, convertedState, e)
+	case *EventGlobalVariableUpdated:
+		return h.GlobalVariableUpdated(thisEntity, globals, convertedState, e)
 	case *EventCombatComplete:
-		return h.CombatComplete(ctx, gameState, convertedState, e)
+		return h.CombatComplete(thisEntity, globals, convertedState, e)
 	case *EventScriptedMotionComplete:
-		return h.ScriptedMotionComplete(ctx, gameState, convertedState, e)
+		return h.ScriptedMotionComplete(thisEntity, globals, convertedState, e)
 	}
 	return nil
 }
 
-func (h *BaseHandler[T]) OnInteract(ctx EntityContext, gameState GameState, state T, event *EventOnInteract) *HandlerOutput {
+func (h *BaseHandler[T]) OnInteract(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventOnInteract) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) DialogueComplete(ctx EntityContext, gameState GameState, state T, event *EventDialogueComplete) *HandlerOutput {
+func (h *BaseHandler[T]) DialogueComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventDialogueComplete) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) ChatterComplete(ctx EntityContext, gameState GameState, state T, event *EventChatterComplete) *HandlerOutput {
+func (h *BaseHandler[T]) ChatterComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventChatterComplete) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) TimerComplete(ctx EntityContext, gameState GameState, state T, event *EventTimerComplete) *HandlerOutput {
+func (h *BaseHandler[T]) TimerComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventTimerComplete) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) EntityZoneActivity(ctx EntityContext, gameState GameState, state T, event *EventEntityZoneActivity) *HandlerOutput {
+func (h *BaseHandler[T]) EntityZoneActivity(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventEntityZoneActivity) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) WorldStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventWorldStateUpdated) *HandlerOutput {
+func (h *BaseHandler[T]) GlobalVariableUpdated(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventGlobalVariableUpdated) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) WorldStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventWorldStateDeleted) *HandlerOutput {
+func (h *BaseHandler[T]) CombatComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventCombatComplete) *HandlerOutput {
 	return nil
 }
 
-func (h *BaseHandler[T]) RunStateUpdated(ctx EntityContext, gameState GameState, state T, event *EventRunStateUpdated) *HandlerOutput {
-	return nil
-}
-
-func (h *BaseHandler[T]) RunStateDeleted(ctx EntityContext, gameState GameState, state T, event *EventRunStateDeleted) *HandlerOutput {
-	return nil
-}
-
-func (h *BaseHandler[T]) CombatComplete(ctx EntityContext, gameState GameState, state T, event *EventCombatComplete) *HandlerOutput {
-	return nil
-}
-
-func (h *BaseHandler[T]) ScriptedMotionComplete(ctx EntityContext, gameState GameState, state T, event *EventScriptedMotionComplete) *HandlerOutput {
+func (h *BaseHandler[T]) ScriptedMotionComplete(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *EventScriptedMotionComplete) *HandlerOutput {
 	return nil
 }
 

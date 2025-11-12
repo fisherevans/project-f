@@ -8,7 +8,7 @@ import (
 // Effect is the interface that all effect types must implement
 type Effect interface {
 	FillDefaultsAndValidate() error
-	Process(source EntityContext, s *State) bool
+	Process(source EntityReader, s *State) bool
 	CompletionID() string
 }
 
@@ -18,16 +18,16 @@ func (_ instantEffect) CompletionID() string {
 	return ""
 }
 
-func logEffectInfof(source EntityContext, e any, messageFormat string, args ...any) {
+func logEffectInfof(source EntityReader, e any, messageFormat string, args ...any) {
 	logEffect(zerolog.InfoLevel, source, e, messageFormat, args...)
 }
 
-func logEffectWarnf(source EntityContext, e any, messageFormat string, args ...any) {
+func logEffectWarnf(source EntityReader, e any, messageFormat string, args ...any) {
 	logEffect(zerolog.WarnLevel, source, e, messageFormat, args...)
 }
 
-func logEffect(level zerolog.Level, source EntityContext, e any, messageFormat string, args ...any) {
-	log.WithLevel(level).Str("caller", source.EntityId()).Interface("e", e).Msgf(messageFormat, args...)
+func logEffect(level zerolog.Level, source EntityReader, e any, messageFormat string, args ...any) {
+	log.WithLevel(level).Str("caller", source.GetId()).Interface("e", e).Msgf(messageFormat, args...)
 }
 
 type RunnableFunction func()
@@ -41,9 +41,8 @@ type EffectFunction struct {
 	Fn RunnableFunction
 }
 
-func (e *EffectFunction) Process(source EntityContext, s *State) bool {
+func (e *EffectFunction) Process(source EntityReader, s *State) bool {
 	e.Fn()
-	logEffectInfof(source, e, "function executed")
 	return true
 }
 
@@ -59,9 +58,8 @@ func (e *EffectTimer) CompletionID() string {
 	return "timer:" + e.TimerId
 }
 
-func (e *EffectTimer) Process(source EntityContext, s *State) bool {
-	s.timers.AddTimer(source.EntityId(), e.TimerId, e.CompletionID(), e.DurationSeconds)
-	logEffectInfof(source, e, "timer added")
+func (e *EffectTimer) Process(source EntityReader, s *State) bool {
+	s.timers.AddTimer(source.GetId(), e.TimerId, e.CompletionID(), e.DurationSeconds)
 	return true
 }
 
@@ -71,9 +69,8 @@ type EffectSetWorldState struct {
 	Value any
 }
 
-func (e *EffectSetWorldState) Process(source EntityContext, s *State) bool {
-	s.worldState.Set(e.Key, e.Value)
-	logEffectInfof(source, e, "world state updated")
+func (e *EffectSetWorldState) Process(source EntityReader, s *State) bool {
+	s.globals.Set(e.Key, e.Value)
 	return true
 }
 
@@ -83,9 +80,8 @@ type EffectSetRunState struct {
 	Value any
 }
 
-func (e *EffectSetRunState) Process(source EntityContext, s *State) bool {
-	s.runState.Set(e.Key, e.Value)
-	logEffectInfof(source, e, "run state updated")
+func (e *EffectSetRunState) Process(source EntityReader, s *State) bool {
+	s.globals.Set(e.Key, e.Value)
 	return true
 }
 
@@ -102,8 +98,7 @@ func (e *EffectBatch) CompletionID() string {
 	return "batch:" + e.BatchId
 }
 
-func (e *EffectBatch) Process(source EntityContext, s *State) bool {
-	logEffectInfof(source, e, "batch starting")
+func (e *EffectBatch) Process(source EntityReader, s *State) bool {
 	s.planExecutor.StartPlan(source, e)
 	return true
 }
@@ -143,7 +138,7 @@ func (e *EffectWaitForCondition) CompletionID() string {
 	return "condition:" + e.ConditionId
 }
 
-func (e *EffectWaitForCondition) Process(source EntityContext, s *State) bool {
+func (e *EffectWaitForCondition) Process(source EntityReader, s *State) bool {
 	s.conditions.AddCondition(e.ConditionId, e.CompletionID(), e.Check)
 	return true
 }
@@ -153,11 +148,10 @@ type EffectSendEvent struct {
 	Event any
 }
 
-func (e *EffectSendEvent) Process(source EntityContext, s *State) bool {
+func (e *EffectSendEvent) Process(source EntityReader, s *State) bool {
 	if e == nil {
 		return false
 	}
 	s.eventDispatcher.Dispatch(e.Event)
-	logEffectInfof(source, e, "event sent")
 	return true
 }

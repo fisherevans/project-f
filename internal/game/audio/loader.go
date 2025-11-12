@@ -56,15 +56,18 @@ func (a *System) Preload(name, extension string, reader io.ReadCloser) error {
 		return err
 	}
 	defer src.Close()
+	a.mu.Lock()
+	a.cache[name] = newSourceBuffer(src, fmt)
+	a.mu.Unlock()
+	return nil
+}
 
+func newSourceBuffer(src beep.StreamSeekCloser, fmt beep.Format) *beep.Buffer {
 	str := beep.Streamer(src)
 	if int(fmt.SampleRate) != targetSR {
 		str = beep.Resample(4, fmt.SampleRate, beep.SampleRate(targetSR), str) // quality 4 is fine for SFX
 	}
 	buf := beep.NewBuffer(beep.Format{SampleRate: targetSR, NumChannels: fmt.NumChannels, Precision: 2})
 	buf.Append(str)
-	a.mu.Lock()
-	a.cache[name] = buf
-	a.mu.Unlock()
-	return nil
+	return buf
 }

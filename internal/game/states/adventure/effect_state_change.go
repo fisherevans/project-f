@@ -21,7 +21,7 @@ func (e *EffectTriggerCombat) CompletionID() string {
 	return "combat:" + e.CombatId
 }
 
-func (e *EffectTriggerCombat) Process(source EntityContext, s *State) bool {
+func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 	if s.enteringCombat {
 		return false
 	}
@@ -83,7 +83,6 @@ func (e *EffectTriggerCombat) Process(source EntityContext, s *State) bool {
 				opponent = options[rand.Intn(len(options))]
 			}
 			game.SetActiveStateIntent(game.CombatIntent{
-				Run:        s.run,
 				Opponent:   opponent,
 				Background: e.Background,
 				OnComplete: postCombat,
@@ -98,7 +97,7 @@ type EffectLoadMap struct {
 	MapName string
 }
 
-func (e *EffectLoadMap) Process(source EntityContext, s *State) bool {
+func (e *EffectLoadMap) Process(source EntityReader, s *State) bool {
 	if e == nil {
 		return false
 	}
@@ -117,6 +116,5 @@ func (e *EffectLoadMap) Process(source EntityContext, s *State) bool {
 			})
 		}),
 	)
-	logEffectInfof(source, e, "adventure intent set")
 	return true
 }

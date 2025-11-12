@@ -21,7 +21,6 @@ type PlayerCombatant interface {
 }
 
 type Player struct {
-	*rpg.Run
 	*rpg.Animech
 	*CurrentCombatantSkills
 	Statuses           *AppliedStatuses
@@ -37,10 +36,9 @@ type Player struct {
 	baseAnimation *anim.AnimatedSprite
 }
 
-func NewPlayer(animech *rpg.Animech, run *rpg.Run) *Player {
+func NewPlayer(animech *rpg.Animech) *Player {
 	return &Player{
 		Animech:                animech,
-		Run:                    run,
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
 		Tempo:                  &Tempo{},

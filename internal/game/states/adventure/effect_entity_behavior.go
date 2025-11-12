@@ -9,7 +9,7 @@ type EffectEntityFaceDirection struct {
 	TargetEntity *string          `one_of:"dir"`
 }
 
-func (e *EffectEntityFaceDirection) Process(source EntityContext, s *State) bool {
+func (e *EffectEntityFaceDirection) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find movement for entity")
@@ -26,7 +26,6 @@ func (e *EffectEntityFaceDirection) Process(source EntityContext, s *State) bool
 		dir := entity.GetLocation().DirectionTowards(targetEntity.GetLocation())
 		entity.SetFacingDirection(dir)
 	}
-	logEffectInfof(source, e, "entity facing direction set")
 	return true
 }
 
@@ -45,7 +44,7 @@ func (e *EffectStartScriptedMotion) CompletionID() string {
 	return "motion:" + e.MotionId
 }
 
-func (e *EffectStartScriptedMotion) Process(source EntityContext, s *State) bool {
+func (e *EffectStartScriptedMotion) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity")
@@ -75,7 +74,6 @@ func (e *EffectStartScriptedMotion) Process(source EntityContext, s *State) bool
 		target = NewPathfindingMotion(e.MotionId, e.CompletionID(), entity, toEntity.GetLocation())
 	}
 	scripted.SetTarget(target)
-	logEffectInfof(source, e, "scripted motion started")
 	return true
 }
 
@@ -91,7 +89,14 @@ type EffectPushEntityBehavior struct {
 	FacingEntity   *EntityBehaviorFacingEntity   `one_of:"type"`
 }
 
-func (e *EffectPushEntityBehavior) Process(source EntityContext, s *State) bool {
+func (e *EffectPushEntityBehavior) WithFacingEntityId(id string) *EffectPushEntityBehavior {
+	e.FacingEntity = &EntityBehaviorFacingEntity{
+		EntityId: &id,
+	}
+	return e
+}
+
+func (e *EffectPushEntityBehavior) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity to override behavior")
@@ -106,7 +111,6 @@ func (e *EffectPushEntityBehavior) Process(source EntityContext, s *State) bool 
 		}
 		AttachFaceEntityBehavior(entity, facing)
 	}
-	logEffectInfof(source, e, "entity behavior overridden")
 	return true
 }
 
@@ -128,14 +132,13 @@ type EffectPopEntityBehavior struct {
 	EntityId string
 }
 
-func (e *EffectPopEntityBehavior) Process(source EntityContext, s *State) bool {
+func (e *EffectPopEntityBehavior) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity to pop behavior")
 		return false
 	}
 	entity.PopBehavior()
-	logEffectInfof(source, e, "entity behavior override popped")
 	return true
 }
 
@@ -147,7 +150,7 @@ type EffectMutateEntityBehavior struct {
 	Reset     *bool
 }
 
-func (e *EffectMutateEntityBehavior) Process(source EntityContext, s *State) bool {
+func (e *EffectMutateEntityBehavior) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity to mutate")
@@ -167,7 +170,6 @@ func (e *EffectMutateEntityBehavior) Process(source EntityContext, s *State) boo
 		}
 		b.Reset()
 	}
-	logEffectInfof(source, e, "behavior mutated")
 	return true
 }
 
@@ -179,7 +181,7 @@ type EffectTriggerMovement struct {
 	MoveState *MoveState
 }
 
-func (e *EffectTriggerMovement) Process(source EntityContext, s *State) bool {
+func (e *EffectTriggerMovement) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity to move")
@@ -207,7 +209,7 @@ type EffectResetMovement struct {
 	EntityId string
 }
 
-func (e *EffectResetMovement) Process(source EntityContext, s *State) bool {
+func (e *EffectResetMovement) Process(source EntityReader, s *State) bool {
 	entity, ok := s.entities.GetEntity(e.EntityId)
 	if !ok {
 		logEffectWarnf(source, e, "failed to find entity")

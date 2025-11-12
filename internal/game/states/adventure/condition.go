@@ -2,6 +2,12 @@ package adventure
 
 type ConditionCheck func(*State, float64) bool
 
+func CameraWithinDistanceToTarget(distanceWithin float64) ConditionCheck {
+	return func(s *State, _ float64) bool {
+		return s.camera.CurrentLocation().Sub(s.camera.TargetLocation(s)).Len() <= distanceWithin
+	}
+}
+
 type Condition struct {
 	ConditionId  string
 	CompletionId string

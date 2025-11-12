@@ -9,41 +9,45 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type StateValue struct {
+const (
+	GlobalKeyElythium = "elythium"
+)
+
+type GlobalValue struct {
 	key    string
 	value  any
 	exists bool
 }
 
-func newStateValue(key string, value any, exists bool) *StateValue {
-	return &StateValue{
+func newGlobalValue(key string, value any, exists bool) *GlobalValue {
+	return &GlobalValue{
 		key:    key,
 		value:  value,
 		exists: exists,
 	}
 }
 
-func newExistingStateValue(key string, value any) *StateValue {
-	return newStateValue(key, value, true)
+func newExistingGlobalValue(key string, value any) *GlobalValue {
+	return newGlobalValue(key, value, true)
 }
 
-func newMissingStateValue(key string) *StateValue {
-	return newStateValue(key, nil, false)
+func newMissingGlobalValue(key string) *GlobalValue {
+	return newGlobalValue(key, nil, false)
 }
 
-func (v *StateValue) errorLog() *zerolog.Event {
+func (v *GlobalValue) errorLog() *zerolog.Event {
 	return log.Error().Str("key", v.key)
 }
 
-func (v *StateValue) Exists() bool {
+func (v *GlobalValue) Exists() bool {
 	return v.exists
 }
 
-func (v *StateValue) Value() any {
+func (v *GlobalValue) Value() any {
 	return v.value
 }
 
-func (v *StateValue) AsString(defaultValue string) string {
+func (v *GlobalValue) AsString(defaultValue string) string {
 	if !v.exists {
 		return defaultValue
 	}
@@ -55,7 +59,7 @@ func (v *StateValue) AsString(defaultValue string) string {
 	return str
 }
 
-func (v *StateValue) AsInt(defaultValue int) int {
+func (v *GlobalValue) AsInt(defaultValue int) int {
 	if !v.exists {
 		return defaultValue
 	}
@@ -67,7 +71,7 @@ func (v *StateValue) AsInt(defaultValue int) int {
 	return i
 }
 
-func (v *StateValue) AsFloat(defaultValue float64) float64 {
+func (v *GlobalValue) AsFloat(defaultValue float64) float64 {
 	if !v.exists {
 		return defaultValue
 	}
@@ -79,7 +83,7 @@ func (v *StateValue) AsFloat(defaultValue float64) float64 {
 	return f
 }
 
-func (v *StateValue) AsBool(defaultValue bool) bool {
+func (v *GlobalValue) AsBool(defaultValue bool) bool {
 	if !v.exists {
 		return defaultValue
 	}
@@ -91,7 +95,7 @@ func (v *StateValue) AsBool(defaultValue bool) bool {
 	return b
 }
 
-func (v *StateValue) AsStringSlice(defaultValue []string) []string {
+func (v *GlobalValue) AsStringSlice(defaultValue []string) []string {
 	if !v.exists {
 		return defaultValue
 	}
@@ -103,7 +107,7 @@ func (v *StateValue) AsStringSlice(defaultValue []string) []string {
 	return slice
 }
 
-func (v *StateValue) AsIntSlice(defaultValue []int) []int {
+func (v *GlobalValue) AsIntSlice(defaultValue []int) []int {
 	if !v.exists {
 		return defaultValue
 	}
@@ -115,7 +119,7 @@ func (v *StateValue) AsIntSlice(defaultValue []int) []int {
 	return slice
 }
 
-func (v *StateValue) AsFloatSlice(defaultValue []float64) []float64 {
+func (v *GlobalValue) AsFloatSlice(defaultValue []float64) []float64 {
 	if !v.exists {
 		return defaultValue
 	}
@@ -127,7 +131,7 @@ func (v *StateValue) AsFloatSlice(defaultValue []float64) []float64 {
 	return slice
 }
 
-func (v *StateValue) AsBoolSlice(defaultValue []bool) []bool {
+func (v *GlobalValue) AsBoolSlice(defaultValue []bool) []bool {
 	if !v.exists {
 		return defaultValue
 	}
@@ -139,7 +143,7 @@ func (v *StateValue) AsBoolSlice(defaultValue []bool) []bool {
 	return slice
 }
 
-func (v *StateValue) As(target any) bool {
+func (v *GlobalValue) As(target any) bool {
 	if !v.exists {
 		return false
 	}
@@ -203,26 +207,20 @@ func remarshalToType(value any, target any) error {
 	return nil
 }
 
-type State struct {
+type defaultGlobals struct {
 	values map[string]any
 }
 
-func NewState() *State {
-	return &State{
-		values: make(map[string]any),
-	}
-}
-
-func (s *State) Delete(key string) *StateValue {
+func (s *defaultGlobals) Delete(key string) *GlobalValue {
 	oldValue, exists := s.values[key]
 	if !exists {
-		return newMissingStateValue(key)
+		return newMissingGlobalValue(key)
 	}
 	delete(s.values, key)
-	return newExistingStateValue(key, oldValue)
+	return newExistingGlobalValue(key, oldValue)
 }
 
-func (s *State) Set(key string, value any) *StateValue {
+func (s *defaultGlobals) Set(key string, value any) *GlobalValue {
 	if s.values == nil {
 		s.values = make(map[string]any)
 	}
@@ -237,12 +235,12 @@ func (s *State) Set(key string, value any) *StateValue {
 	} else {
 		log.Error().Str("key", key).Msgf("invalid value type: %T", value)
 	}
-	return newStateValue(key, oldValue, oldExists)
+	return newGlobalValue(key, oldValue, oldExists)
 }
 
 // normalizeValue ensures the value is one of the allowed types or a struct
 // Returns nil if the value type is not allowed
-func (s *State) normalizeValue(value any) any {
+func (s *defaultGlobals) normalizeValue(value any) any {
 	if value == nil {
 		return nil
 	}
@@ -286,21 +284,21 @@ func (s *State) normalizeValue(value any) any {
 	}
 }
 
-func (s *State) Get(key string) *StateValue {
+func (s *defaultGlobals) Get(key string) *GlobalValue {
 	if s.values == nil {
-		return newMissingStateValue(key)
+		return newMissingGlobalValue(key)
 	}
 	v, exists := s.values[key]
-	return newStateValue(key, v, exists)
+	return newGlobalValue(key, v, exists)
 }
 
-// MarshalYAML makes State serialize as its inner map.
-func (s *State) MarshalYAML() (any, error) {
+// MarshalYAML makes defaultGlobals serialize as its inner map.
+func (s *defaultGlobals) MarshalYAML() (any, error) {
 	return s.values, nil
 }
 
-// UnmarshalYAML fills State from a YAML map.
-func (s *State) UnmarshalYAML(n *yaml.Node) error {
+// UnmarshalYAML fills defaultGlobals from a YAML map.
+func (s *defaultGlobals) UnmarshalYAML(n *yaml.Node) error {
 	var m map[string]any
 	if err := n.Decode(&m); err != nil {
 		return err
@@ -309,12 +307,12 @@ func (s *State) UnmarshalYAML(n *yaml.Node) error {
 	return nil
 }
 
-type MutableState interface {
-	ReadableState
-	Set(key string, value any) *StateValue
-	Delete(key string) *StateValue
+type Globals interface {
+	GlobalsReader
+	Set(key string, value any) *GlobalValue
+	Delete(key string) *GlobalValue
 }
 
-type ReadableState interface {
-	Get(key string) *StateValue
+type GlobalsReader interface {
+	Get(key string) *GlobalValue
 }

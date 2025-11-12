@@ -18,6 +18,7 @@ import (
 type Camera interface {
 	SetLocation(location pixel.Vec)
 	CurrentLocation() pixel.Vec
+	TargetLocation(s *State) pixel.Vec
 	Update(s *State, timeDelta float64)
 	ComputeRenderDetails(s *State, targetBounds pixel.Rect) (MapBounds, pixel.Vec)
 	ResetPosition(s *State)
@@ -62,6 +63,10 @@ func (c *StaticCamera) Update(s *State, timeDelta float64) {
 
 func (c *StaticCamera) ResetPosition(s *State) {
 
+}
+
+func (c *StaticCamera) TargetLocation(s *State) pixel.Vec {
+	return c.location
 }
 
 const EntityCameraSpeedNoLag float64 = 0
@@ -159,6 +164,14 @@ func (c *EntityCamera) SetLocation(location pixel.Vec) {
 	c.location = c.ghostLocation
 }
 
+func (c *EntityCamera) TargetLocation(s *State) pixel.Vec {
+	target, found := s.entities.GetEntity(c.target)
+	if !found {
+		return c.location
+	}
+	return target.GetPreciseLocation()
+}
+
 func StdDev(vs []pixel.Vec) (pixel.Vec, pixel.Vec) {
 	if len(vs) == 0 {
 		return pixel.ZV, pixel.ZV
@@ -207,6 +220,10 @@ func (c *CameraOverride) ComputeRenderDetails(s *State, targetBounds pixel.Rect)
 func (c *CameraOverride) ResetPosition(s *State) {
 	c.newCamera.ResetPosition(s)
 	c.replacedCamera.ResetPosition(s)
+}
+
+func (c *CameraOverride) TargetLocation(s *State) pixel.Vec {
+	return c.newCamera.TargetLocation(s)
 }
 
 func (s *State) OverrideCamera(newCamera Camera) {

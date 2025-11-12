@@ -38,7 +38,7 @@ func (ss *stoppableStreamer) Stream(samples [][2]float64) (n int, ok bool) {
 		ss.mu.Unlock()
 		return 0, false // Signal mixer to remove us
 	}
-	
+
 	// When paused, output silence but keep streaming
 	if paused {
 		for i := range samples {
@@ -47,9 +47,9 @@ func (ss *stoppableStreamer) Stream(samples [][2]float64) (n int, ok bool) {
 		}
 		return len(samples), true
 	}
-	
+
 	n, ok = ss.s.Stream(samples)
-	
+
 	ss.mu.Lock()
 	if ok {
 		ss.position += n
@@ -57,7 +57,7 @@ func (ss *stoppableStreamer) Stream(samples [][2]float64) (n int, ok bool) {
 		ss.finished = true
 	}
 	ss.mu.Unlock()
-	
+
 	return n, ok
 }
 
@@ -126,12 +126,12 @@ func NewTeeStreamer(s beep.Streamer) *TeeStreamer {
 
 func (t *TeeStreamer) Stream(samples [][2]float64) (n int, ok bool) {
 	n, ok = t.s.Stream(samples)
-	
+
 	if n > 0 {
 		t.mu.RLock()
 		cb := t.callback
 		t.mu.RUnlock()
-		
+
 		if cb != nil {
 			// Make a copy of the samples to avoid race conditions
 			samplesCopy := make([][2]float64, n)
@@ -139,7 +139,7 @@ func (t *TeeStreamer) Stream(samples [][2]float64) (n int, ok bool) {
 			cb(samplesCopy)
 		}
 	}
-	
+
 	return n, ok
 }
 

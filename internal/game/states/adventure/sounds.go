@@ -1,25 +1,21 @@
 package adventure
 
 import (
-	"math"
 	"math/rand/v2"
 
-	"fisherevans.com/project/f/internal/game/audio"
+	"github.com/rs/zerolog/log"
 )
 
 var (
-	FootstepFalloff  = NewFalloffFromNearFar(3, 12)
+	FootstepFalloff  = NewFalloffFromNearFar(3, 8)
 	ExplosionFalloff = NewFalloffFromNearFar(8, 48)
 	ChatterFalloff   = NewFalloffFromNearFar(2, 4)
-	StandardFalloff  = NewFalloffFromNearFar(3, 12)
+	StandardFalloff  = NewFalloffFromNearFar(2, 4)
 )
 
 type Falloff struct {
 	NearDistance float64
 	FarDistance  float64
-
-	rolloffDBPerOctave float64
-	floorDb            float64
 }
 
 // NewFalloffFromNearFar lets you define the curve as:
@@ -27,33 +23,24 @@ type Falloff struct {
 // - floorDB attenuation at and beyond far
 // The rolloff in dB/octave is computed so the curve hits floorDB at far.
 func NewFalloffFromNearFar(near, far float64) Falloff {
-	// Guard against invalid ranges
 	if far <= near {
-		far = near * 1.0001
+		log.Fatal().Stack().Float64("far", far).Float64("near", near).Msg("falloff config is invalid")
 	}
-	floorDb := audio.SilenceGainDbThreshold
-	// Solve: atten(far) = -R * log2(far/near) = floorDB  =>  R = -floorDB / log2(far/near)
-	rolloff := -floorDb / math.Log2(far/near)
 	return Falloff{
-		NearDistance:       near,
-		FarDistance:        far,
-		floorDb:            floorDb,
-		rolloffDBPerOctave: rolloff,
+		NearDistance: near,
+		FarDistance:  far,
 	}
 }
 
-// AttenuationDB returns a negative dB value to add to gain based on distance.
-func (f Falloff) AttenuationDB(dist float64) float64 {
+func (f Falloff) AttenuationVolume(dist float64) float64 {
 	if dist <= f.NearDistance {
+		return 1
+	}
+	if dist >= f.FarDistance {
 		return 0
 	}
-	if f.FarDistance > 0 && dist >= f.FarDistance {
-		return f.floorDb
-	}
-	curve := 0.3 // >1 = steeper near, flatter far. <1 = flatter near, steeper far.
-	octaves := math.Log2(math.Pow(dist/f.NearDistance, curve))
-	atten := -f.rolloffDBPerOctave * octaves
-	return atten
+
+	return 1.0 - ((dist - f.NearDistance) / (f.FarDistance - f.NearDistance))
 }
 
 func createStepSoundsHard() SoundSupplier {

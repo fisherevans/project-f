@@ -2,29 +2,30 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
 
 func init() {
 	handler := NewBasicHandler(None{})
-	handler.WithOnInteract(func(ctx EntityContext, gameState GameState, state None, event *EventOnInteract) *HandlerOutput {
-		if event.TargetId != ctx.EntityId() || ctx.GetMetadata(MetadataKeyMode) == "mined" {
+	handler.WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+		if event.TargetId != thisEntity.GetId() || ModeMetadataKey.Get(thisEntity) == "mined" {
 			return nil
 		}
-		mode := "mined"
+		newMode := "mined"
 		return NewOutput().WithEffects(
 			NewPlaySoundEffect("adventure/elythium_breaking"),
 			NewTimerEffect(3).WithTimerId("reset"),
 			NewYieldElythiumEffect(3),
-			NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode(mode),
+			NewMutateModeBasedEntityEffect(thisEntity.GetId()).WithMode(newMode),
 		)
 	})
-	handler.WithTimerComplete(func(ctx EntityContext, gameState GameState, state None, event *EventTimerComplete) *HandlerOutput {
-		if event.CreatedBy != ctx.EntityId() || event.TimerId != "reset" {
+	handler.WithTimerComplete(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventTimerComplete) *HandlerOutput {
+		if event.CreatedBy != thisEntity.GetId() || event.TimerId != "reset" {
 			return nil
 		}
-		return NewOutput().WithEffects(NewMutateModeBasedEntityEffect(ctx.EntityId()).WithMode("ready"))
+		return NewOutput().WithEffects(NewMutateModeBasedEntityEffect(thisEntity.GetId()).WithMode("ready"))
 	})
 	newRegistrarBuilder().
 		byTile(tiles.Elythium).

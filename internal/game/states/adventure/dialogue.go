@@ -155,7 +155,7 @@ func (ds *DialogueSystem) setRenderState(renderState dialogueState) {
 	ds.renderStateElapsed = 0
 	dialogueDoneAnimation.Reset()
 	if renderState == dialogStateExiting {
-		game.GetAudioSystem().PlaySFX("dialogue_complete", -4)
+		game.GetAudioSystem().PlaySFX("dialogue_complete", 0.6)
 	}
 }
 
