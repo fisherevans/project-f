@@ -1,0 +1,10 @@
+tilesheet:
+    tileWidth: 3
+    tileHeight: 3
+sprites:
+  gradient:
+    row: 1
+    column: 1
+  tick:
+    row: 1
+    column: 2

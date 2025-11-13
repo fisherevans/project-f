@@ -1,0 +1,23 @@
+tilesheet:
+  tileWidth: 62
+  tileHeight: 12
+animations:
+  level_3_border:
+    v_sequence:
+      column: 1
+      fromRow: 5
+      toRow: 18
+    framesPerSecond: 8
+sprites:
+  border:
+    row: 1
+    column: 1
+  name:
+    row: 2
+    column: 1
+  level_1_border:
+    row: 3
+    column: 1
+  level_2_border:
+    row: 4
+    column: 1

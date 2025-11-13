@@ -3,8 +3,8 @@ tilesheet:
   tileHeight: 16
 animations:
   level_up:
-    sequence:
+    h_sequence:
       row: 28
-      columnFrom: 1
-      columnTo: 4
+      fromColumn: 1
+      toColumn: 4
     framesPerSecond: 2

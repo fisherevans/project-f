@@ -1,15 +1,17 @@
 package resources
 
 import (
-	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"image"
 	_ "image/png"
+
+	"fisherevans.com/project/f/internal/util/pixelutil"
+	"github.com/rs/zerolog/log"
 )
 
 var (
-	tilesheets = map[string]*SpriteTilesheet{}
+	tilesheets       = map[string]*SpriteTilesheet{}
+	tilesheetSprites = map[string]map[string]*TilesheetCoordinates{}
 )
 
 func GetTilesheet(name string) *SpriteTilesheet {
@@ -18,6 +20,34 @@ func GetTilesheet(name string) *SpriteTilesheet {
 		log.Error().Msgf("missing tilesheet: %s", name)
 	}
 	return ts
+}
+
+func GetTilesheetNamedSprites(tilesheetName string) []string {
+	nameSprites, ok := tilesheetSprites[tilesheetName]
+	if !ok {
+		log.Fatal().Msgf("tilesheet %s not found", tilesheetName)
+	}
+	var names []string
+	for name := range nameSprites {
+		names = append(names, name)
+	}
+	return names
+}
+
+func GetNamedTilesheetSpriteId(tilesheetName, spriteName string) TilesheetSpriteId {
+	nameSprites, ok := tilesheetSprites[tilesheetName]
+	if !ok {
+		log.Fatal().Msgf("tilesheet %s not found", tilesheetName)
+	}
+	sprite, ok := nameSprites[spriteName]
+	if !ok {
+		log.Fatal().Msgf("named sprite %s not found in tilesheet %s", spriteName, tilesheetName)
+	}
+	return TilesheetSpriteId{
+		Tilesheet: tilesheetName,
+		Column:    sprite.Column,
+		Row:       sprite.Row,
+	}
 }
 
 type SpriteTilesheet struct {
@@ -46,4 +76,9 @@ func (s TilesheetSpriteId) String() string {
 
 func (s TilesheetSpriteId) From(a *Atlas) pixelutil.BoundedDrawable {
 	return a.GetTilesheetSpriteById(s)
+}
+
+type TilesheetCoordinates struct {
+	Row    int `yaml:"row"`
+	Column int `yaml:"column"`
 }

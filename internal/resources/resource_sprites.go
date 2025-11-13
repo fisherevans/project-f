@@ -30,6 +30,7 @@ type SpriteMetadata struct {
 	Frame          *SpriteFrame                         `yaml:"frame,omitempty"`
 	Tilesheet      *SpriteTilesheet                     `yaml:"tilesheet,omitempty"`
 	Animations     map[string]*SpriteTilesheetAnimation `yaml:"animations,omitempty"`
+	Sprites        map[string]*TilesheetCoordinates     `yaml:"sprites"`
 	NonAtlasSprite bool                                 `yaml:"nonAtlasSprite,omitempty"`
 }
 
@@ -108,6 +109,8 @@ func loadSpriteResource(path string, name string, data []byte) error {
 			}] = anim
 		}
 	}
-
+	if metadata.Sprites != nil {
+		tilesheetSprites[name] = metadata.Sprites
+	}
 	return nil
 }

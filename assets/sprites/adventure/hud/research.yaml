@@ -3,8 +3,8 @@ tilesheet:
   tileHeight: 16
 animations:
   default:
-    sequence:
+    h_sequence:
       row: 1
-      columnFrom: 1
-      columnTo: 2
+      fromColumn: 1
+      toColumn: 2
     framesPerSecond: 2

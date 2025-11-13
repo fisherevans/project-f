@@ -3,16 +3,16 @@ tilesheet:
   tileHeight: 48
 animations:
   open:
-    sequence:
+    h_sequence:
       row: 1
-      columnFrom: 1
-      columnTo: 7
+      fromColumn: 1
+      toColumn: 7
     framesPerSecond: 8
     repeat: false
   closed:
-    sequence:
+    h_sequence:
       row: 1
-      columnFrom: 7
-      columnTo: 1
+      fromColumn: 7
+      toColumn: 1
     framesPerSecond: 8
     repeat: false

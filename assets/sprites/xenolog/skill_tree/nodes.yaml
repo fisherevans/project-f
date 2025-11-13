@@ -3,20 +3,20 @@ tilesheet:
   tileWidth: 11
 animations:
   spinning_slow:
-    sequence:
+    h_sequence:
       row: 2
-      columnFrom: 1
-      columnTo: 16
+      fromColumn: 1
+      toColumn: 16
     framesPerSecond: 4
   spinning_medium:
-    sequence:
+    h_sequence:
       row: 2
-      columnFrom: 1
-      columnTo: 16
+      fromColumn: 1
+      toColumn: 16
     framesPerSecond: 8
   spinning_fast:
-    sequence:
+    h_sequence:
       row: 2
-      columnFrom: 1
-      columnTo: 16
+      fromColumn: 1
+      toColumn: 16
     framesPerSecond: 12

@@ -225,6 +225,17 @@ func CreateAtlas(filter AtlasFilter) *Atlas {
 		listener(atlas, placements[id])
 	}
 
+	for tilesheetName, namedSprites := range tilesheetSprites {
+		for spriteName, _ := range namedSprites {
+			id := GetNamedTilesheetSpriteId(tilesheetName, spriteName)
+			drawable, exists := atlas.tilesheetSprites[id]
+			if !exists {
+				continue // likely filtered out
+			}
+			atlas.sprites[tilesheetName+":"+spriteName] = drawable
+		}
+	}
+
 	return atlas
 }
 
@@ -238,7 +249,7 @@ func (a *Atlas) Dump(dir, name string) {
 		log.Error().Msgf("Failed to create directory %s: %v", dir, err)
 		return
 	}
-	
+
 	f, err := os.Create(path.Join(dir, fmt.Sprintf("%s.png", name)))
 	if err != nil {
 		log.Error().Msgf("Failed to create atlas file %s: %v", name, err)
@@ -280,6 +291,14 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 	availableRects := []rect{
 		{0, 0, atlasWidth.Int(), atlasHeight.Int()}, // The entire space is free initially
 	}
+	pctUsed := func() float64 {
+		freeSpace := 0.0
+		for _, r := range availableRects {
+			freeSpace += float64(r.w * r.h)
+		}
+		totalSpace := float64(atlasWidth.Int() * atlasHeight.Int())
+		return (totalSpace - freeSpace) * 100.0 / totalSpace
+	}
 
 	// This will store the final placement for each image, indexed by original order
 	placements := make([]pixel.Rect, len(sourceImages))
@@ -302,7 +321,7 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		// Find a free rectangle that can fit this image
 		fi := findRect(w, h)
 		if fi == -1 {
-			panic(fmt.Sprintf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing", atlasWidth, atlasHeight, len(sourceImages), id))
+			panic(fmt.Sprintf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing at %f.1%% usage while finding froom for a %dx%d image", atlasWidth, atlasHeight, len(sourceImages), id, pctUsed(), w, h))
 			return nil, nil
 		}
 
@@ -344,12 +363,7 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		}
 	}
 
-	freeSpace := 0
-	for _, r := range availableRects {
-		freeSpace += r.w * r.h
-	}
-	totalSpace := atlasWidth.Int() * atlasHeight.Int()
-	log.Info().Msgf("Atlas packed %d images, using %d%% of available pixels.", len(sourceImages), (totalSpace-freeSpace)*100/totalSpace)
+	log.Info().Msgf("Atlas packed %d images, using %.1f%% of available pixels.", len(sourceImages), pctUsed())
 
 	return atlasImage, placements
 }

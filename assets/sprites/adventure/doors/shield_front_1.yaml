@@ -3,23 +3,23 @@ tilesheet:
   tileHeight: 36
 animations:
   closed:
-    sequence:
+    h_sequence:
       row: 1
-      columnFrom: 1
-      columnTo: 6
+      fromColumn: 1
+      toColumn: 6
     framesPerSecond: 12
     repeat: false
   open:
-    sequence:
+    h_sequence:
       row: 1
-      columnFrom: 6
-      columnTo: 1
+      fromColumn: 6
+      toColumn: 1
     framesPerSecond: 12
     repeat: false
   waves:
-    sequence:
+    h_sequence:
       row: 2
-      columnFrom: 1
-      columnTo: 3
+      fromColumn: 1
+      toColumn: 3
     framesPerSecond: 4
     randomize: true

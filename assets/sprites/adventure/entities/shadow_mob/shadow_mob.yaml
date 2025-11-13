@@ -3,16 +3,16 @@ tilesheet:
   tileHeight: 16
 animations:
   wandering:
-    sequence:
+    h_sequence:
       row: 1
-      columnFrom: 1
-      columnTo: 5
+      fromColumn: 1
+      toColumn: 5
     framesPerSecond: 2
     pingPong: true
   chasing:
-    sequence:
+    h_sequence:
       row: 1
-      columnFrom: 1
-      columnTo: 5
+      fromColumn: 1
+      toColumn: 5
     framesPerSecond: 3
     pingPong: true

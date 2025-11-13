@@ -111,16 +111,29 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 	if tilesheet == nil {
 		panic(msgf("invalid tilesheet"))
 	}
-	if metadata.Sequence != nil && len(metadata.Tiles) > 0 {
-		panic(msgf("cannot specify both sequence and tiles"))
+	sequenceCount := 0
+	if metadata.HSequence != nil {
+		sequenceCount++
 	}
+	if metadata.VSequence != nil {
+		sequenceCount++
+	}
+	if len(metadata.Tiles) > 0 {
+		sequenceCount++
+	}
+	if sequenceCount > 1 {
+		panic(msgf("cannot specify more than one of: h_sequence, v_sequence, or tiles"))
+	}
+	
 	var tiles []*resources.SpriteTilesheetAnimationTile
-	if metadata.Sequence != nil {
-		if metadata.Sequence.Row <= 0 || metadata.Sequence.Row > tilesheet.Rows {
-			panic(msgf("invalid row %d", metadata.Sequence.Row))
+	
+	// Handle horizontal sequence
+	if metadata.HSequence != nil {
+		if metadata.HSequence.Row <= 0 || metadata.HSequence.Row > tilesheet.Rows {
+			panic(msgf("invalid row %d", metadata.HSequence.Row))
 		}
-		from := metadata.Sequence.ColumnFrom
-		to := metadata.Sequence.ColumnTo
+		from := metadata.HSequence.FromColumn
+		to := metadata.HSequence.ToColumn
 		if from == 0 && to == 0 {
 			to = tilesheet.Columns
 		}
@@ -140,21 +153,66 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 		}
 
 		// Fill default frame weights if not specified
-		if len(metadata.Sequence.FrameWeights) == 0 {
+		if len(metadata.HSequence.FrameWeights) == 0 {
 			for range columns {
-				metadata.Sequence.FrameWeights = append(metadata.Sequence.FrameWeights, 1)
+				metadata.HSequence.FrameWeights = append(metadata.HSequence.FrameWeights, 1)
 			}
 		}
-		if len(metadata.Sequence.FrameWeights) != len(columns) {
-			panic(msgf("invalid frame weights length %d, expected %d", len(metadata.Sequence.FrameWeights), len(columns)))
+		if len(metadata.HSequence.FrameWeights) != len(columns) {
+			panic(msgf("invalid frame weights length %d, expected %d", len(metadata.HSequence.FrameWeights), len(columns)))
 		}
 
 		// Create tiles using frame index for weights
 		for frameIndex, column := range columns {
 			tiles = append(tiles, &resources.SpriteTilesheetAnimationTile{
 				Column: column,
-				Row:    metadata.Sequence.Row,
-				Weight: metadata.Sequence.FrameWeights[frameIndex],
+				Row:    metadata.HSequence.Row,
+				Weight: metadata.HSequence.FrameWeights[frameIndex],
+			})
+		}
+	}
+	
+	// Handle vertical sequence
+	if metadata.VSequence != nil {
+		if metadata.VSequence.Column <= 0 || metadata.VSequence.Column > tilesheet.Columns {
+			panic(msgf("invalid column %d", metadata.VSequence.Column))
+		}
+		from := metadata.VSequence.FromRow
+		to := metadata.VSequence.ToRow
+		if from == 0 && to == 0 {
+			to = tilesheet.Rows
+		}
+		if from > tilesheet.Rows || to > tilesheet.Rows {
+			panic(msgf("invalid row range %d-%d", from, to))
+		}
+		// Build row sequence (supports forward and backward)
+		var rows []int
+		if from <= to {
+			for i := from; i <= to; i++ {
+				rows = append(rows, i)
+			}
+		} else {
+			for i := from; i >= to; i-- {
+				rows = append(rows, i)
+			}
+		}
+
+		// Fill default frame weights if not specified
+		if len(metadata.VSequence.FrameWeights) == 0 {
+			for range rows {
+				metadata.VSequence.FrameWeights = append(metadata.VSequence.FrameWeights, 1)
+			}
+		}
+		if len(metadata.VSequence.FrameWeights) != len(rows) {
+			panic(msgf("invalid frame weights length %d, expected %d", len(metadata.VSequence.FrameWeights), len(rows)))
+		}
+
+		// Create tiles using frame index for weights
+		for frameIndex, row := range rows {
+			tiles = append(tiles, &resources.SpriteTilesheetAnimationTile{
+				Column: metadata.VSequence.Column,
+				Row:    row,
+				Weight: metadata.VSequence.FrameWeights[frameIndex],
 			})
 		}
 	}

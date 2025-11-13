@@ -10,18 +10,26 @@ type tilesheetAnimationKey struct {
 }
 
 type SpriteTilesheetAnimation struct {
-	Sequence        *SpriteTilesheetAnimationSequence `yaml:"sequence"`
-	Tiles           []SpriteTilesheetAnimationTile    `yaml:"tiles"`
-	FramesPerSecond float64                           `yaml:"framesPerSecond"`
-	Randomize       *bool                             `yaml:"randomize"`
-	PingPong        *bool                             `yaml:"pingPong"`
-	Repeat          *bool                             `yaml:"repeat"`
+	HSequence       *SpriteTilesheetAnimationHSequence `yaml:"h_sequence"`
+	VSequence       *SpriteTilesheetAnimationVSequence `yaml:"v_sequence"`
+	Tiles           []SpriteTilesheetAnimationTile     `yaml:"tiles"`
+	FramesPerSecond float64                            `yaml:"framesPerSecond"`
+	Randomize       *bool                              `yaml:"randomize"`
+	PingPong        *bool                              `yaml:"pingPong"`
+	Repeat          *bool                              `yaml:"repeat"`
 }
 
-type SpriteTilesheetAnimationSequence struct {
+type SpriteTilesheetAnimationHSequence struct {
 	Row          int       `yaml:"row"`
-	ColumnFrom   int       `yaml:"columnFrom"`
-	ColumnTo     int       `yaml:"columnTo"`
+	FromColumn   int       `yaml:"fromColumn"`
+	ToColumn     int       `yaml:"toColumn"`
+	FrameWeights []float64 `yaml:"frameWeights"`
+}
+
+type SpriteTilesheetAnimationVSequence struct {
+	Column       int       `yaml:"column"`
+	FromRow      int       `yaml:"fromRow"`
+	ToRow        int       `yaml:"toRow"`
 	FrameWeights []float64 `yaml:"frameWeights"`
 }
 
