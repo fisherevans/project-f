@@ -45,12 +45,14 @@ type Recorder struct {
 	audioSampleRate int
 
 	// Timing
-	framesWritten   int       // Track total frames written
-	framesCaptured  int       // Track total frames captured
-	startTime       time.Time // Recording start time
-	elapsedTime     float64   // Total elapsed time
-	timeAccumulator float64   // Tracks fractional frames for duplication
-	audioSamples    int       // Track total audio samples written
+	framesWritten      int       // Track total frames written
+	framesCaptured     int       // Track total frames captured
+	startTime          time.Time // Recording start time
+	audioStartTime     time.Time // When audio capture actually started
+	elapsedTime        float64   // Total elapsed time
+	timeAccumulator    float64   // Tracks fractional frames for duplication
+	audioSamples       int       // Track total audio samples written
+	firstFrameCaptured bool      // Track if we've captured the first video frame
 }
 
 // NewRecorder creates a new recorder for the given canvas
@@ -158,15 +160,13 @@ func (r *Recorder) Start() error {
 	r.startTime = time.Now()
 	r.elapsedTime = 0
 	r.timeAccumulator = 0
+	r.firstFrameCaptured = false
 
 	// Start encoding goroutines
 	go r.encodeLoop()
 	go r.audioEncodeLoop()
 
-	// Set up audio capture callback
-	if err := r.startAudioCapture(); err != nil {
-		return fmt.Errorf("failed to start audio capture: %w", err)
-	}
+	// Note: Audio capture will be started on first frame capture to ensure sync
 
 	log.Info().Msgf("Started recording to: %s (target %d FPS)", r.finalFilePath, r.targetFrameRate)
 	return nil
@@ -254,6 +254,18 @@ func (r *Recorder) CaptureFrame(deltaTime float64) error {
 	r.framesCaptured++
 	r.elapsedTime += deltaTime
 	r.timeAccumulator += deltaTime
+
+	// Start audio capture on first frame to ensure sync
+	if !r.firstFrameCaptured {
+		r.firstFrameCaptured = true
+		r.audioStartTime = time.Now() // Mark when audio actually starts
+		delay := time.Since(r.startTime).Seconds()
+		log.Info().Msgf("Audio capture starting %.3fs after recording began (startTime=%v, audioStartTime=%v)", 
+			delay, r.startTime, r.audioStartTime)
+		if err := r.startAudioCapture(); err != nil {
+			log.Warn().Err(err).Msg("Failed to start audio capture")
+		}
+	}
 
 	// Only capture frame when enough time has passed for target frame rate
 	targetFrameTime := 1.0 / float64(r.targetFrameRate) // e.g., 1/60 = 0.01666s
@@ -454,19 +466,39 @@ func (r *Recorder) updateWAVHeader() error {
 func (r *Recorder) mergeAudioVideo() error {
 	log.Info().Msg("Merging audio and video...")
 
+	videoDuration := float64(r.framesWritten) / float64(r.targetFrameRate)
+	audioDuration := float64(r.audioSamples) / float64(r.audioSampleRate)
+	durationDiff := videoDuration - audioDuration
+	
+	// The duration difference represents the true gap, but we need to account for
+	// the fact that some of it may be due to audio ending early vs starting late.
+	// Use 70% of the duration difference as a heuristic to balance the offset.
+	audioDelay := durationDiff * 0.7
+	
+	log.Info().Msgf("Video duration: %.3fs, Audio duration: %.3fs, Duration diff: %.3fs, Applying offset: %.3fs (70%%)", 
+		videoDuration, audioDuration, durationDiff, audioDelay)
+
+	// Use itsoffset BEFORE the audio input to delay it
 	cmd := exec.Command("ffmpeg",
 		"-i", r.videoFilePath,
+		"-itsoffset", fmt.Sprintf("%.3f", audioDelay),
 		"-i", r.audioFilePath,
 		"-c:v", "copy",
 		"-c:a", "aac",
+		"-map", "0:v:0",  // Map video from first input
+		"-map", "1:a:0",  // Map audio from second input (with offset)
 		"-shortest",
 		"-y",
 		r.finalFilePath,
 	)
 
-	if err := cmd.Run(); err != nil {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Error().Str("output", string(output)).Msg("ffmpeg merge failed")
 		return fmt.Errorf("failed to merge audio and video: %w", err)
 	}
+	
+	log.Info().Msgf("ffmpeg merge output: %s", string(output))
 
 	// Clean up temporary files
 	os.Remove(r.videoFilePath)

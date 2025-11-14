@@ -60,6 +60,7 @@ func DefaultSelectorState() SelectIntent {
 			}
 		})
 	}
+	fight(rpg.Primortal_Dummy.Type)
 	fight(rpg.Primortal_Pumbl.Type)
 	fight(rpg.Primortal_Myceli.Type)
 	fight(rpg.Primortal_Scintail.Type)

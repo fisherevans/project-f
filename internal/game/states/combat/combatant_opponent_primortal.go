@@ -13,7 +13,6 @@ type PrimortalOpponent struct {
 	*CurrentCombatantSkills
 	Statuses    *AppliedStatuses
 	Health      *HealthState
-	Tempo       *Tempo
 	NextSkill   *rpg.SkillId
 	HealthFlash *HealthFlash
 
@@ -36,7 +35,6 @@ func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
 		Health:                 NewHealthState(p.BaseSync + archetype.AdditionalSync),
-		Tempo:                  &Tempo{},
 		HealthFlash:            NewDamageFlashMask(),
 		name:                   p.Name,
 		skillChooser:           NewSkillChooser(archetype.SkillPool),
@@ -46,7 +44,7 @@ func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 
 func (o *PrimortalOpponent) GetStats() rpg.CombatantStats {
 	return rpg.CombatantStats{
-		Tempo:        o.GetTempo().GetCurrent(),
+		TempoLevel:   rpg.TempoLevel0,
 		Stance:       o.GetCurrentSkill().GetCurrentStance(),
 		StatusLevels: o.Statuses.GetLevels(),
 	}
@@ -89,10 +87,6 @@ func (o *PrimortalOpponent) GetTotalMaxHealth() int {
 
 func (o *PrimortalOpponent) IsDead() bool {
 	return o.Health.Current < 1
-}
-
-func (o *PrimortalOpponent) GetTempo() *Tempo {
-	return o.Tempo
 }
 
 func (o *PrimortalOpponent) PeekNextSkill() *rpg.SkillId {

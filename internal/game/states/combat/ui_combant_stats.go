@@ -30,7 +30,7 @@ var (
 	statBoxWidth               = 80
 )
 
-func (s *State) drawPlayerStats() {
+func (s *State) drawPlayerStats(timeDelta float64) {
 	syncBar := &StatBar{
 		lines:       []StatBarLine{StatBarVisual, StatBarLabel},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 6, 1),
@@ -58,10 +58,10 @@ func (s *State) drawPlayerStats() {
 		originLocation: StatBoxOriginTopLeft,
 	}
 
-	s.drawCombatantStatBox(s.Player.Name(), statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft)
+	s.drawCombatantStatBox(s.Player.Name(), statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft, timeDelta)
 }
 
-func (s *State) drawOpponentStats() {
+func (s *State) drawOpponentStats(timeDelta float64) {
 	healthBar := &StatBar{
 		lines:       []StatBarLine{StatBarLabel, StatBarVisual},
 		labelSprite: atlas.GetTilesheetSprite("combat/combatant_stats/background", 7, 1),
@@ -79,10 +79,10 @@ func (s *State) drawOpponentStats() {
 		originLocation: StatBoxOriginTopRight,
 	}
 
-	s.drawCombatantStatBox(s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight)
+	s.drawCombatantStatBox(s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight, timeDelta)
 }
 
-func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *AppliedStatuses, origin pixel.Vec, originLocation gfx.OriginLocation) {
+func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *AppliedStatuses, origin pixel.Vec, originLocation gfx.OriginLocation, timeDelta float64) {
 	renderScale := pixel.V(1, 1)
 	var nameContentOpts []textbox.ContentOpt
 	if originLocation == gfx.TopRight {
@@ -118,13 +118,12 @@ func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *Ap
 
 	statBox.Draw(s.batch, matrix.Moved(gfx.IVec(statBorderPadding, -paddedNameHeight).ScaledXY(renderScale)), statBoxWidth)
 
-	// todo time detla
-	statusSidePadding := 5
-	statusTopPadding := 1
-	statusM := matrix.
-		Moved(pixel.V(0, -float64(statBox.FrameHeight()+paddedNameHeight+statusTopPadding))).
-		Moved(originLocation.AlignFrom(gfx.Centered, float64(statusSidePadding*2), 0))
-	statuses.Render(statusM, s.batch, 0, originLocation)
+	sidePadding := 5
+	topCorner := matrix.
+		Moved(pixel.V(0, -float64(statBox.FrameHeight()+paddedNameHeight))).
+		Moved(originLocation.AlignFrom(gfx.Centered, float64(sidePadding*2), 0))
+	topCorner = topCorner.Moved(gfx.IVec(0, -1))
+	statuses.Render(topCorner, s.batch, timeDelta, originLocation)
 }
 
 type StatBoxOriginLocation int

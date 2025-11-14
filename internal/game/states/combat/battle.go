@@ -38,20 +38,16 @@ func (b *Battle) Update(s *State, timeDelta float64) {
 
 	if b.TickPlayerNext && s.Player.GetCurrentSkill() == nil {
 		if s.Player.PeekNextSkill() == nil || !s.Player.IsNextSkillCommitted() {
-			s.Player.Tempo.Reset()
 			return
 		}
 		s.Player.SetCurrentSkill(newInstance(*s.Player.PopNextSkill()))
-		s.Player.Tempo.Increment()
 	}
 
 	if !b.TickPlayerNext && s.Opponent.GetCurrentSkill() == nil {
 		if s.Opponent.PeekNextSkill() == nil || !s.Opponent.IsNextSkillCommitted() {
-			//s.Opponent.Tempo.Reset()
 			return
 		}
 		s.Opponent.SetCurrentSkill(newInstance(*s.Opponent.PopNextSkill()))
-		//s.Opponent.Tempo.Increment()
 	}
 
 	tps := ticksPerSecond

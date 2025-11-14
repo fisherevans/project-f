@@ -16,6 +16,10 @@ type SkillInstance struct {
 	InterruptedAt int
 }
 
+func (i *SkillInstance) IsInterrupted() bool {
+	return i.InterruptedAt >= 0
+}
+
 func (i *SkillInstance) String() string {
 	if i == nil {
 		return "<none>"
@@ -89,7 +93,6 @@ func (si *SkillInstance) OnTick(s *State, tickId int, source Combatant, target C
 			if result.InterruptSkill {
 				if target.GetCurrentSkill() != nil {
 					target.GetCurrentSkill().Interrupt()
-					target.GetTempo().Reset()
 					s.fx = append(s.fx, NewWordFX("Interrupt!", colors.HexString("#daff4b"), target))
 				}
 			}

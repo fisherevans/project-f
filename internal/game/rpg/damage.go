@@ -8,6 +8,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type TempoLevel int
+
+const (
+	TempoLevel0 TempoLevel = 0
+	TempoLevel1 TempoLevel = 1
+	TempoLevel2 TempoLevel = 2
+	TempoLevel3 TempoLevel = 3
+)
+
 const (
 	// todo make defending absolute, reflective relative
 	stanceDefendingMultiplier          = 0.25
@@ -41,10 +50,16 @@ var (
 			stackReduction: 7,
 		},
 	}
+	tempoMultipliers = map[TempoLevel]float64{
+		TempoLevel0: 1,
+		TempoLevel1: 1.5,
+		TempoLevel2: 2,
+		TempoLevel3: 2.5,
+	}
 )
 
 type CombatantStats struct {
-	Tempo        int
+	TempoLevel   TempoLevel
 	Stance       CombatStance
 	StatusLevels map[StatusType]StatusLevel
 }
@@ -83,7 +98,11 @@ func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantS
 
 	log.Info().Msgf("base damage: %f", targetDamage)
 
-	tempoMultiplier := 1.0 + float64(source.Tempo)/20 // x2 @ 20
+	tempoMultiplier, exists := tempoMultipliers[source.TempoLevel]
+	if !exists {
+		log.Error().Msgf("tempo multiplier not found for tempo level: %d", source.TempoLevel)
+		tempoMultiplier = tempoMultipliers[TempoLevel0]
+	}
 	targetDamage *= tempoMultiplier
 
 	log.Info().Msgf("after tempo: %f", targetDamage)

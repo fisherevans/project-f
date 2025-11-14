@@ -91,7 +91,7 @@ var _ PlayerCombatant = &Player{}
 
 func (p *Player) GetStats() rpg.CombatantStats {
 	return rpg.CombatantStats{
-		Tempo:        p.GetTempo().GetCurrent(),
+		TempoLevel:   p.GetTempo().GetLevel(),
 		Stance:       p.GetCurrentSkill().GetCurrentStance(),
 		StatusLevels: p.Statuses.GetLevels(),
 	}

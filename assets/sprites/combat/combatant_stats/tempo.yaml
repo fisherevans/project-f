@@ -9,7 +9,7 @@ animations:
       toRow: 18
     framesPerSecond: 8
 sprites:
-  border:
+  base:
     row: 1
     column: 1
   name:

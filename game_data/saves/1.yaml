@@ -2,9 +2,9 @@ save_id: "1"
 character_name: Isaac
 animech:
     skill_set:
-        "1": photo_surge
-        "2": strike
-        "3": jab
+        "1": acid_string
+        "2": cinder
+        "3": zap_wrap
         "4": mend_spores
     experience_points: 1089
     upgrades:
@@ -28,27 +28,41 @@ primortals:
         last_seen: 2025-10-14T20:48:49Z
     pumbl:
         visibility: defeated
-        research_points: 15
+        research_points: 3
+        last_seen: 2025-10-14T20:47:49Z
+    scintail:
+        visibility: defeated
+        research_points: 12
         last_seen: 2025-10-14T20:47:49Z
     toxmidge:
         visibility: defeated
         research_points: 3
         last_seen: 2025-10-13T20:47:49Z
+    volteel:
+        visibility: defeated
+        research_points: 9
+        last_seen: 2025-10-14T20:47:49Z
 unlocked_skills:
     acid_string: {}
+    arc_dart: {}
+    cinder: {}
     curl_up: {}
     guard: {}
     jab: {}
     mend_spores: {}
     photo_surge: {}
+    searline: {}
     shoulder_roll: {}
+    strike: {}
+    zap_wrap: {}
 globals:
     control_id: controlled_npc
-    door_state: closed
+    door_state: open
+    elythium: 6
     intro.has_papers: true
     intro.not_your_paper.attempts: 1
     intro.papers_turned_in: true
-    player_id: tiled-16
+    player_id: tiled-7
 system_settings:
     lighting:
         lighting_composition: full

@@ -118,6 +118,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		s.Player.GetCurrentSync().Update(timeDelta)
 
 		s.Battle.Update(s, timeDelta)
+		s.Player.GetTempo().Update(s.Battle.TickPlayerNext, s.Player, timeDelta)
 
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 || s.Opponent.GetHealth().GetCurrentInt() <= 0 {
 			s.phase = PhaseComplete
@@ -146,11 +147,10 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.renderSkills(s.batch, targetBounds, timeDelta)
 
-	s.drawPlayerStats()
-	s.drawOpponentStats()
+	s.Player.Tempo.Render(s.batch, gfx.Moved(game.GameWidth/2, 45), timeDelta)
 
-	s.Player.GetTempo().Render(s.batch, pixel.IM.Moved(pixel.V(8, game.GameHeight*0.6)))
-	s.Opponent.GetTempo().Render(s.batch, pixel.IM.Moved(pixel.V(8+game.GameWidth/2, game.GameHeight*0.6)))
+	s.drawPlayerStats(timeDelta)
+	s.drawOpponentStats(timeDelta)
 
 	game.DebugBLf("player status: %s", s.Player.GetStatuses().String())
 	game.DebugBLf("opponent status: %s", s.Opponent.GetStatuses().String())

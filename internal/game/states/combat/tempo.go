@@ -1,35 +1,43 @@
 package combat
 
 import (
-	"fmt"
-
+	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/util/interp"
 	"github.com/gopxl/pixel/v2"
 
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
+const MaxTempo = 10.0
+const tempoLevels = 3.0
+
 type Tempo struct {
-	current int
+	current float64
 }
 
-func (t *Tempo) GetCurrent() int {
+func (t *Tempo) GetCurrent() float64 {
 	return t.current
 }
 
-func (t *Tempo) Increment() {
-	t.IncrementBy(1)
+func (t *Tempo) GetLevel() rpg.TempoLevel {
+	return rpg.TempoLevel(t.current / (MaxTempo / tempoLevels))
 }
 
-func (t *Tempo) IncrementBy(n int) {
-	t.current += n
+func (t *Tempo) Increment(n float64) {
+	t.current = min(MaxTempo, t.current+n)
 }
 
 func (t *Tempo) Reset() {
 	t.current = 0
+}
+
+func (t *Tempo) Decrease(n float64) {
+	t.current = max(0, t.current-n)
 }
 
 func newComboText(fontName string) *textbox.Instance {
@@ -41,41 +49,65 @@ func newComboText(fontName string) *textbox.Instance {
 		))
 }
 
-var (
-	tempoTextName        = newComboText(resources.FontNameFF)
-	tempoTextComboSmall  = newComboText(resources.FontNameFF)
-	tempoTextComboMedium = newComboText(resources.FontNameM3x6)
-	tempoTextComboBig    = newComboText(resources.FontNameM5x7)
-	tempoTextComboHuge   = newComboText(resources.FontNameAddStandard)
-)
-
-func (t *Tempo) Render(target pixel.Target, matrix pixel.Matrix) {
-	if t.current == 0 {
+// todo make rates tunable
+// todo - account for battle speed + time delta
+func (t *Tempo) Update(upNext bool, combatant Combatant, timeDelta float64) {
+	noSkillSelected := upNext && combatant.GetCurrentSkill() == nil && !combatant.IsNextSkillCommitted()
+	isInterrupted := combatant.GetCurrentSkill() != nil && combatant.GetCurrentSkill().IsInterrupted()
+	if noSkillSelected || isInterrupted {
+		t.Decrease(timeDelta * 1.5)
 		return
 	}
-
-	var comboText *textbox.Instance
-	var color colors.NamedColor
-	if t.current >= 20 {
-		//comboText = tempoTextComboHuge
-		color = colors.Warm9
-	} else if t.current >= 10 {
-		//comboText = tempoTextComboBig
-		color = colors.Warm8
-	} else if t.current >= 5 {
-		//comboText = tempoTextComboMedium
-		color = colors.Warm7
-	} else {
-		//comboText = tempoTextComboSmall
-		color = colors.Warm5
+	dur := 1.0
+	if combatant.GetCurrentSkill() != nil { // can not have a skill selected, but not need it yet
+		dur = float64(combatant.GetCurrentSkill().Duration())
 	}
-	comboText = tempoTextComboSmall
+	tempoIncreaseRate := 1.0 / ((dur * 0.2) + 1.0)
+	t.Increment(tempoIncreaseRate * timeDelta)
+}
 
-	nameContent := tempoTextName.NewComplexContent("{+o:black}tempo")
-	tempoTextName.Render(target, matrix, nameContent, tbcfg.Foreground(colors.Warm2.RGBA))
-	matrix = matrix.Moved(gfx.IVec(nameContent.Width()+2, 0))
+var (
+	tempoLevel3Border = anim.Load(atlas, "combat/combatant_stats/tempo:level_3_border")
+	tempoLevel2Border = atlas.GetSprite("combat/combatant_stats/tempo:level_2_border")
+	tempoLevel1Border = atlas.GetSprite("combat/combatant_stats/tempo:level_1_border")
+	tempoBase         = atlas.GetSprite("combat/combatant_stats/tempo:base")
+	tempoName         = atlas.GetSprite("combat/combatant_stats/tempo:name")
 
-	comboContentText := fmt.Sprintf("{+o:warm_1}x%d", t.current)
-	comboContent := comboText.NewComplexContent(comboContentText)
-	comboText.Render(target, matrix, comboContent, tbcfg.Foreground(color.RGBA))
+	tempoBarGradient = atlas.GetSprite("combat/combatant_stats/tempo_bar:gradient")
+	tempoBarTick     = atlas.GetSprite("combat/combatant_stats/tempo_bar:tick")
+)
+
+func (t *Tempo) Render(target pixel.Target, center pixel.Matrix, timeDelta float64) {
+	game.DebugBLf("tempo: %.2f (%d)", t.current, t.GetLevel())
+
+	topLeft := center //.Moved(tempoTopLeftDelta)
+
+	tempoBase.Draw(target, topLeft)
+	tempoName.DrawColorMask(target, topLeft, colors.FromString("#ff00aa"))
+	level := t.GetLevel()
+	switch level {
+	case rpg.TempoLevel1:
+		mask := colors.Alpha(interp.Lerp(0.1, 0.25, game.Utils().TimeCycleSin(0.33)))
+		tempoLevel1Border.DrawColorMask(target, topLeft, mask)
+	case rpg.TempoLevel2:
+		mask := colors.Alpha(interp.Lerp(0.25, 0.5, game.Utils().TimeCycleSin(0.66)))
+		tempoLevel2Border.DrawColorMask(target, topLeft, mask)
+	case rpg.TempoLevel3:
+		mask := colors.Alpha(0.5)
+		tempoLevel2Border.DrawColorMask(target, topLeft, mask)
+		tempoLevel3Border.Update(timeDelta)
+		tempoLevel3Border.Sprite().Draw(target, topLeft)
+	}
+
+	barMaxWidth := 33.0
+	barWidth := float64(t.current) / float64(MaxTempo) * barMaxWidth
+	barScale := (1.0 / tempoBarGradient.Bounds().W()) * barWidth
+	barMatrix := pixel.IM.Moved(gfx.TopLeft.Align(tempoBarGradient)).ScaledXY(pixel.ZV, pixel.V(barScale, 1.0))
+	barTopLeft := topLeft.Moved(gfx.IVec(-6, 2))
+	tempoBarGradient.DrawColorMask(target, barMatrix.Chained(barTopLeft), colors.FromString("#ff6ace"))
+	for tickNumber := 1; tickNumber < int(tempoLevels); tickNumber++ {
+		tickTopLeft := barTopLeft.Moved(gfx.IVec(int(barMaxWidth/float64(tempoLevels)*float64(tickNumber))-1, 0))
+		tickMatrix := pixel.IM.Moved(gfx.TopLeft.Align(tempoBarTick)).ScaledXY(pixel.ZV, pixel.V(1.0/tempoBarTick.Bounds().W(), 1.0))
+		tempoBarTick.DrawColorMask(target, tickMatrix.Chained(tickTopLeft), colors.Alpha(0.5))
+	}
 }

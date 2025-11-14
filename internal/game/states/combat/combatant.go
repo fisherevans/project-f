@@ -14,7 +14,6 @@ type Combatant interface {
 	Name() string
 	AdjustHealth(amount int)
 	GetStats() rpg.CombatantStats
-	GetTempo() *Tempo
 	Update(timeDelta float64)
 	GetColorMask() pixel.RGBA
 	GetStatuses() *AppliedStatuses
