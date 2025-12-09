@@ -238,3 +238,11 @@ func Lerp(from, to, progress float64) float64 {
 	delta := to - from
 	return from + delta*progress
 }
+
+func ParabolaUpLeft(x float64) float64 {
+	return -math.Pow(x-1, 2) + 1
+}
+
+func ParabolaUpRight(x float64) float64 {
+	return math.Pow(x, 2)
+}

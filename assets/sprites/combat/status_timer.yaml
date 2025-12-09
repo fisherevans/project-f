@@ -1,0 +1,9 @@
+tilesheet:
+  tileWidth: 11
+  tileHeight: 14
+animations:
+  default:
+    h_sequence:
+      row: 1
+    framesPerSecond: 2
+    loop: true

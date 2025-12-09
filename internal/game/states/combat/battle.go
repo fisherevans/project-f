@@ -57,23 +57,21 @@ func (b *Battle) Update(s *State, timeDelta float64) {
 	b.PendingProgress += timeDelta * tps
 	for b.PendingProgress >= 1 {
 		if b.TickPlayerNext {
-			s.Opponent.GetStatuses().DecreaseStacks()
 			if b.OpponentSkillEnding {
 				s.Opponent.SetCurrentSkill(nil)
 				b.OpponentSkillEnding = false
 			}
-			s.Player.GetStatuses().ApplyEffects(s, s.Player)
+			s.Player.GetStatuses().OnCombatTick(s, s.Player)
 			over := s.Player.GetCurrentSkill().Tick(s, s.Player, s.Opponent)
 			if over {
 				b.PlayerSkillEnding = true
 			}
 		} else {
-			s.Player.GetStatuses().DecreaseStacks()
 			if b.PlayerSkillEnding {
 				s.Player.SetCurrentSkill(nil)
 				b.PlayerSkillEnding = false
 			}
-			s.Opponent.GetStatuses().ApplyEffects(s, s.Opponent)
+			s.Opponent.GetStatuses().OnCombatTick(s, s.Opponent)
 			over := s.Opponent.GetCurrentSkill().Tick(s, s.Opponent, s.Player)
 			if over {
 				b.OpponentSkillEnding = true

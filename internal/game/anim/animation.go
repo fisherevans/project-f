@@ -3,6 +3,7 @@ package anim
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"strings"
 
 	"fisherevans.com/project/f/internal/resources"
@@ -11,11 +12,13 @@ import (
 
 type AnimatedSprite struct {
 	frames          []frame
+	totalWeight     float64
 	framesPerSecond float64
 	randomized      bool
 	repeat          bool
 	progression     float64
 	currentFrame    int
+	timeScale       float64
 }
 
 type frame struct {
@@ -33,6 +36,8 @@ func NewStaticAnimation(f pixelutil.BoundedDrawable) *AnimatedSprite {
 			weight:   1,
 		}},
 		framesPerSecond: 1,
+		timeScale:       1.0,
+		totalWeight:     1,
 	}
 }
 
@@ -43,7 +48,32 @@ func NewStaticAnimationFromId(atlas *resources.Atlas, tileId resources.Tilesheet
 func (a *AnimatedSprite) ApplyPingPong() *AnimatedSprite {
 	for i := len(a.frames) - 2; i > 0; i-- {
 		a.frames = append(a.frames, a.frames[i])
+		a.totalWeight += a.frames[i].weight
 	}
+	return a
+}
+
+func (a *AnimatedSprite) Reverse() *AnimatedSprite {
+	slices.Reverse(a.frames)
+	return a
+}
+
+func (a *AnimatedSprite) WithTimescale(scale float64) *AnimatedSprite {
+	a.timeScale = max(0, scale)
+	return a
+}
+
+func (a *AnimatedSprite) WithDuration(dur float64) *AnimatedSprite {
+	weight := 0.0
+	for _, f := range a.frames {
+		w := f.weight
+		if w <= 0 {
+			w = 1
+		}
+		weight += w
+	}
+	regularTime := weight / a.framesPerSecond
+	a.timeScale = regularTime / dur
 	return a
 }
 
@@ -69,12 +99,14 @@ func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecon
 		framesPerSecond: framesPerSecond,
 		randomized:      randomized,
 		repeat:          repeat,
+		timeScale:       1.0,
 	}
 	for _, tile := range tiles {
 		animated.frames = append(animated.frames, frame{
 			drawable: atlas.GetTilesheetSprite(tilesheet, tile.Column, tile.Row),
 			weight:   tile.Weight,
 		})
+		animated.totalWeight += tile.Weight
 	}
 	if repeat == false {
 		animated.currentFrame = len(animated.frames) - 1
@@ -124,9 +156,9 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 	if sequenceCount > 1 {
 		panic(msgf("cannot specify more than one of: h_sequence, v_sequence, or tiles"))
 	}
-	
+
 	var tiles []*resources.SpriteTilesheetAnimationTile
-	
+
 	// Handle horizontal sequence
 	if metadata.HSequence != nil {
 		if metadata.HSequence.Row <= 0 || metadata.HSequence.Row > tilesheet.Rows {
@@ -135,6 +167,7 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 		from := metadata.HSequence.FromColumn
 		to := metadata.HSequence.ToColumn
 		if from == 0 && to == 0 {
+			from = 1
 			to = tilesheet.Columns
 		}
 		if from > tilesheet.Columns || to > tilesheet.Columns {
@@ -171,7 +204,7 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 			})
 		}
 	}
-	
+
 	// Handle vertical sequence
 	if metadata.VSequence != nil {
 		if metadata.VSequence.Column <= 0 || metadata.VSequence.Column > tilesheet.Columns {
@@ -255,6 +288,9 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 		repeat = *metadata.Repeat
 	}
 	a := FromTilesheetTiles(atlas, tilesheetName, metadata.FramesPerSecond, randomize, repeat, tiles)
+	if metadata.Reverse != nil && *metadata.Reverse {
+		a = a.Reverse()
+	}
 	if metadata.PingPong != nil && *metadata.PingPong {
 		a = a.ApplyPingPong()
 	}
@@ -266,8 +302,11 @@ func (a *AnimatedSprite) Sprite() pixelutil.BoundedDrawable {
 }
 
 func (a *AnimatedSprite) Update(timeDelta float64) {
-	a.progression += timeDelta
+	a.progression += timeDelta * a.timeScale
+	a.progress()
+}
 
+func (a *AnimatedSprite) progress() {
 	for {
 		w := a.frames[a.currentFrame].weight
 		if w <= 0 {
@@ -295,4 +334,10 @@ func (a *AnimatedSprite) Update(timeDelta float64) {
 func (a *AnimatedSprite) Reset() {
 	a.currentFrame = 0
 	a.progression = 0
+}
+
+func (a *AnimatedSprite) SetProgress(p float64) {
+	a.currentFrame = 0
+	a.progression = max(0, min(1, p)) * a.totalWeight / a.framesPerSecond
+	a.progress()
 }

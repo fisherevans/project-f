@@ -110,7 +110,7 @@ type effect struct {
 var effectGravity = pixel.V(0, 0)
 
 var effectAlphaKey = interp.NewKeys().
-	WithFunction(interp.Smootherstep).
+	WithDefaultFunction(interp.Smootherstep).
 	WithKey(0, 0).
 	WithKey(0.1, 1).
 	WithKey(0.5, 1).

@@ -30,14 +30,14 @@ func NewCopyright(_ game.StartupCopyrightsIntent) game.State {
 const copyrightDisplayTime = 4
 
 var copyrightFadeKeys = interp.NewKeys().
-	WithFunction(interp.Smootherstep).
+	WithDefaultFunction(interp.Smootherstep).
 	WithKey(0, 0).
 	WithKey(0.1, 1).
 	WithKey(0.9, 1).
 	WithKey(1, 0)
 
 var copyrightMoveKeys = interp.NewKeys().
-	WithFunction(interp.Smootherstep).
+	WithDefaultFunction(interp.Smootherstep).
 	WithKey(0, 1).
 	WithKey(0.2, 0).
 	WithKey(1, 0)

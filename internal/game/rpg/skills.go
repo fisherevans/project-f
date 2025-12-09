@@ -158,7 +158,9 @@ var Skill_Jab = Skill{
 	Name:        "Jab",
 	Description: "Quick strike that deals light damage",
 	Ticks: skillTicks().
-		add(tick().damageAmountVaried(5, 2)).
+		add(tick().damageAmountVaried(5, 2).animate(newAnimation().
+			sourceTransformations(pounce()).
+			targetTransformations(recoil()))).
 		add(tick().repeat(2)...),
 }.register()
 
@@ -168,7 +170,9 @@ var Skill_Strike = Skill{
 	Description: "A heavy blow that leaves you exposed",
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceExposed).repeat(4)...).
-		add(tick().damageAmount(15)),
+		add(tick().damageAmount(15).animate(newAnimation().
+			sourceTransformations(pounce()).
+			targetTransformations(recoil()))),
 }.register()
 
 // ==============================================================
@@ -183,7 +187,9 @@ var Skill_ShoulderRoll = Skill{
 	Description: "Roll over your enemy repeatedly",
 	Ticks: skillTicks().
 		add(tick().repeat(4)...).
-		add(tick().damageAmount(10)),
+		add(tick().damageAmount(10).animate(newAnimation().
+			sourceTransformations(pounce()).
+			targetTransformations(recoil()))),
 }.register()
 
 var Skill_CurlUp = Skill{
@@ -191,7 +197,8 @@ var Skill_CurlUp = Skill{
 	Name:        "Curl Up",
 	Description: "Fortify your defences",
 	Ticks: skillTicks().
-		add(tick().statusSelf(StatusWarded, 5)).
+		add(tick().statusSelf(StatusWarded, 5).animate(newAnimation().
+			sourceTransformations(wiggle()))).
 		add(stanceTick(TickStanceDefending).repeat(3)...),
 }.register()
 
@@ -207,7 +214,8 @@ var Skill_Cinder = Skill{
 	Description: "Ignite your foe with a burning ember",
 	Ticks: skillTicks().
 		add(tick().repeat(3)...).
-		add(tick().statusOpponent(StatusBurning, 3)).
+		add(tick().statusOpponent(StatusBurning, 3).animate(newAnimation().
+			sourceTransformations(wiggle()))).
 		add(tick()),
 }.register()
 
@@ -221,7 +229,8 @@ var Skill_Searline = Skill{
 			Status:                StatusBurning,
 			Stacks:                2,
 			RequireExistingStacks: SkillTickStatusRequireExistingStacks,
-		}, false).repeat(3)...),
+		}, false).animate(newAnimation().
+			sourceTransformations(hop(1))).repeat(3)...),
 }.register()
 
 // ==============================================================
@@ -235,7 +244,8 @@ var Skill_ArcDart = Skill{
 	Ticks: skillTicks().
 		add(stanceTick(TickStanceExposed).repeat(3)...).
 		add(tick()).
-		add(tick().statusOpponent(StatusIonized, 6)),
+		add(tick().statusOpponent(StatusIonized, 6).animate(newAnimation().
+			sourceTransformations(hop(1)))),
 }.register()
 
 var Skill_ZapWrap = Skill{
@@ -244,8 +254,11 @@ var Skill_ZapWrap = Skill{
 	Description: "Ionize your foe as you wrap around them",
 	Ticks: skillTicks().
 		add().
-		add(stanceTick(TickStanceDefending).damageAmountVaried(3, 3).repeat(3)...).
-		add(stanceTick(TickStanceDefending).statusOpponent(StatusIonized, 3)).
+		add(stanceTick(TickStanceDefending).
+			damageAmountVaried(2, 1).
+			animate(newAnimation().sourceTransformations(hop(1))).
+			repeat(3)...).
+		add(stanceTick(TickStanceDefending).statusOpponent(StatusIonized, 5)).
 		add(),
 }.register()
 
@@ -282,9 +295,11 @@ var Skill_MendSpores = Skill{
 	Name:        "Mend Spores",
 	Description: "Release healing spores that restore health",
 	Ticks: skillTicks().
-		add(tick().statusSelf(StatusMending, 5)).
+		add(tick().statusSelf(StatusMending, 5).animate(newAnimation().
+			sourceTransformations(wiggle()))).
 		add(stanceTick(TickStanceExposed).repeat(4)...).
-		add(tick().statusSelf(StatusMending, 5)),
+		add(tick().statusSelf(StatusMending, 5).animate(newAnimation().
+			sourceTransformations(wiggle()))),
 }.register()
 
 var Skill_PhotoSurge = Skill{
@@ -304,5 +319,6 @@ var Skill_PhotoSurge = Skill{
 					},
 				},
 			},
-		})),
+		}).animate(newAnimation().
+			sourceTransformations(hop(2)))),
 }.register()

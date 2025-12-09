@@ -17,6 +17,7 @@ type SpriteTilesheetAnimation struct {
 	Randomize       *bool                              `yaml:"randomize"`
 	PingPong        *bool                              `yaml:"pingPong"`
 	Repeat          *bool                              `yaml:"repeat"`
+	Reverse         *bool                              `yaml:"reverse"`
 }
 
 type SpriteTilesheetAnimationHSequence struct {

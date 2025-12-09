@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -80,16 +81,19 @@ func RenderDebugLines(win *opengl.Window, areaLines map[DebugArea][]string) {
 		top := win.Bounds().H() - debugPadding - debugText.LineHeight
 		bottom := debugText.Bounds().H() + debugPadding
 
+		drawMatrix := pixel.IM
 		switch area {
 		case AreaTopLeft:
-			debugText.Draw(win, pixel.IM.Moved(pixel.V(left, top)))
+			drawMatrix = drawMatrix.Moved(pixel.V(left, top))
 		case AreaBottomLeft:
-			debugText.Draw(win, pixel.IM.Moved(pixel.V(left, bottom)))
+			drawMatrix = drawMatrix.Moved(pixel.V(left, bottom))
 		case AreaTopRight:
-			debugText.Draw(win, pixel.IM.Moved(pixel.V(right, top)))
+			drawMatrix = drawMatrix.Moved(pixel.V(right, top))
 		case AreaBottomRight:
-			debugText.Draw(win, pixel.IM.Moved(pixel.V(right, bottom)))
+			drawMatrix = drawMatrix.Moved(pixel.V(right, bottom))
 		}
+		debugText.DrawColorMask(win, drawMatrix.Moved(pixel.V(1, -1)), colors.Black.RGBA)
+		debugText.DrawColorMask(win, drawMatrix, colors.White.RGBA)
 	}
 }
 
@@ -101,7 +105,9 @@ func RenderNotifications(win *opengl.Window, notifications []string) {
 		debugText.Clear()
 		debugText.WriteString(notification + "\n")
 		dy := (debugPadding + debugText.LineHeight) * (float64(id) + 1)
-		debugText.Draw(win, pixel.IM.Moved(pixel.V((win.Bounds().W()-debugText.Bounds().W())/2, win.Bounds().H()-dy)))
+		drawMatrix := pixel.IM.Moved(pixel.V((win.Bounds().W()-debugText.Bounds().W())/2, win.Bounds().H()-dy))
+		debugText.DrawColorMask(win, drawMatrix.Moved(pixel.V(1, -1)), colors.Black.RGBA)
+		debugText.DrawColorMask(win, drawMatrix, colors.White.RGBA)
 		dy += debugText.LineHeight * 1.5
 	}
 }

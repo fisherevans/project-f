@@ -80,9 +80,87 @@ type SkillTickEffect struct {
 	Status *SkillTickStatus
 }
 
+type SkillTickCombatantTransformationType int
+
+const (
+	SkillTickCombatantTransformationTypeNone SkillTickCombatantTransformationType = iota
+	SkillTickCombatantTransformationTypePounce
+	SkillTickCombatantTransformationTypeRecoil
+	SkillTickCombatantTransformationTypeWiggle
+	SkillTickCombatantTransformationTypeHop
+)
+
+type SkillTickCombatantTransformation struct {
+	Type        SkillTickCombatantTransformationType
+	Speed       float64
+	Repetitions int
+}
+
+func pounce() SkillTickCombatantTransformation {
+	return SkillTickCombatantTransformation{
+		Type:        SkillTickCombatantTransformationTypePounce,
+		Speed:       1.0,
+		Repetitions: 1,
+	}
+}
+
+func recoil() SkillTickCombatantTransformation {
+	return SkillTickCombatantTransformation{
+		Type:        SkillTickCombatantTransformationTypeRecoil,
+		Speed:       1.0,
+		Repetitions: 1,
+	}
+}
+
+func wiggle() SkillTickCombatantTransformation {
+	return SkillTickCombatantTransformation{
+		Type:        SkillTickCombatantTransformationTypeWiggle,
+		Speed:       1.0,
+		Repetitions: 1,
+	}
+}
+
+func hop(count int) SkillTickCombatantTransformation {
+	return SkillTickCombatantTransformation{
+		Type:        SkillTickCombatantTransformationTypeHop,
+		Speed:       1.0,
+		Repetitions: count,
+	}
+}
+
+/*
+- transformation
+  - style (point, squish, recoil)
+  - repetitions
+  - speed?
+- masking
+  - multiple layers?
+  - color/opacity, flashing?
+*/
+
+type SkillTickAnimationConfig struct {
+	SourceTransformations []SkillTickCombatantTransformation
+	TargetTransformations []SkillTickCombatantTransformation
+}
+
+func newAnimation() SkillTickAnimationConfig {
+	return SkillTickAnimationConfig{}
+}
+
+func (c SkillTickAnimationConfig) sourceTransformations(ts ...SkillTickCombatantTransformation) SkillTickAnimationConfig {
+	c.SourceTransformations = ts
+	return c
+}
+
+func (c SkillTickAnimationConfig) targetTransformations(ts ...SkillTickCombatantTransformation) SkillTickAnimationConfig {
+	c.TargetTransformations = ts
+	return c
+}
+
 type SkillTick struct {
-	Effects    []SkillTickEffect
-	StanceType CombatStance
+	Effects         []SkillTickEffect
+	StanceType      CombatStance
+	AnimationConfig SkillTickAnimationConfig
 }
 
 type SkillTicks []SkillTick
@@ -121,6 +199,11 @@ func (st SkillTick) damage(dmg *SkillTickDamage) SkillTick {
 	st.Effects = append(st.Effects, SkillTickEffect{
 		Damage: dmg,
 	})
+	return st
+}
+
+func (st SkillTick) animate(config SkillTickAnimationConfig) SkillTick {
+	st.AnimationConfig = config
 	return st
 }
 

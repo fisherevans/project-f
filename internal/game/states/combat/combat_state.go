@@ -4,10 +4,8 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -136,18 +134,17 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.Player.Update(timeDelta)
 	s.Opponent.Update(timeDelta)
 
-	s.renderCombatantSprite(s.Player.GetAnimation(), s.Player, true, timeDelta)
-	s.renderCombatantSprite(s.Opponent.GetAnimation(), s.Opponent, false, timeDelta)
+	s.Player.GetRenderer().Render(s.batch, timeDelta, s.Player)
+	s.Opponent.GetRenderer().Render(s.batch, timeDelta, s.Opponent)
 
-	s.drawActiveSkills(s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
-
-	for _, fx := range s.fx {
-		fx.Render(s.batch)
+	if s.phase == PhaseBattle {
+		for _, fx := range s.fx {
+			fx.Render(s.batch)
+		}
+		s.drawActiveSkills(s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
+		s.Player.Tempo.Render(s.batch, gfx.Moved(game.GameWidth/2, 45), timeDelta)
+		s.renderSkills(s.batch, targetBounds, timeDelta)
 	}
-
-	s.renderSkills(s.batch, targetBounds, timeDelta)
-
-	s.Player.Tempo.Render(s.batch, gfx.Moved(game.GameWidth/2, 45), timeDelta)
 
 	s.drawPlayerStats(timeDelta)
 	s.drawOpponentStats(timeDelta)
@@ -173,33 +170,4 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	}
 
 	s.batch.Draw(target)
-}
-
-func (s *State) renderCombatantSprite(sprite *anim.AnimatedSprite, com Combatant, leftSide bool, timeDelta float64) {
-	colorMask := com.GetColorMask()
-	if com.IsDead() {
-		colorMask = colors.MixColor(colorMask, colors.HexString("#af8686"))
-	} else {
-		sprite.Update(timeDelta)
-	}
-
-	var position pixel.Vec
-	rotateDirection := 1.0
-	if leftSide {
-		position = pixel.V(math.Floor(game.GameWidth*0.2), math.Floor(game.GameHeight*0.4))
-	} else {
-		position = pixel.V(math.Floor(game.GameWidth*0.8), math.Floor(game.GameHeight*0.4))
-		rotateDirection = -1
-	}
-
-	m := pixel.IM
-	if com.IsDead() {
-		h := sprite.Sprite().Bounds().H()
-		ry := -h / 3.0
-		m = m.Rotated(pixel.V(0, ry), math.Pi/2.0*rotateDirection)
-	}
-	m = m.Moved(position)
-
-	sprite.Sprite().DrawColorMask(s.batch, m, colorMask)
-
 }

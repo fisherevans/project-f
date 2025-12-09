@@ -61,6 +61,8 @@ func (si *SkillInstance) OnTick(s *State, tickId int, source Combatant, target C
 	tick := si.Skill.Ticks[tickId]
 	sourceStats := source.GetStats()
 	targetStats := target.GetStats()
+	source.GetRenderer().AddFromConfig(tick.AnimationConfig.SourceTransformations)
+	target.GetRenderer().AddFromConfig(tick.AnimationConfig.TargetTransformations)
 	for _, effect := range tick.Effects {
 		if effect.Status != nil {
 			applyTo := target

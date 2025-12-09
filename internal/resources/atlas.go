@@ -3,8 +3,10 @@ package resources
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
 	"image/png"
+	"math/rand"
 	"os"
 	"path"
 	"sort"
@@ -321,7 +323,7 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		// Find a free rectangle that can fit this image
 		fi := findRect(w, h)
 		if fi == -1 {
-			panic(fmt.Sprintf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing at %f.1%% usage while finding froom for a %dx%d image", atlasWidth, atlasHeight, len(sourceImages), id, pctUsed(), w, h))
+			panic(fmt.Sprintf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing at %.1f%% usage while finding room for a %dx%d image", atlasWidth, atlasHeight, len(sourceImages), id, pctUsed(), w, h))
 			return nil, nil
 		}
 
@@ -342,14 +344,14 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		// Remove the used rect
 		availableRects = append(availableRects[:fi], availableRects[fi+1:]...)
 
-		// “Guillotine” split: create new availableRects to the right & below (if there is space)
+		// "Guillotine" split: create new availableRects to the right & below (if there is space)
 		// Right split (if there's leftover width)
 		if w < fr.w {
 			availableRects = append(availableRects, rect{
 				x: fr.x + w,
 				y: fr.y,
 				w: fr.w - w,
-				h: fr.h,
+				h: h, // only the height of the placed image to avoid overlap
 			})
 		}
 		// Bottom split (if there's leftover height)
@@ -357,13 +359,26 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 			availableRects = append(availableRects, rect{
 				x: fr.x,
 				y: fr.y + h,
-				w: w,
+				w: fr.w, // use full width to reduce fragmentation
 				h: fr.h - h,
 			})
 		}
 	}
 
 	log.Info().Msgf("Atlas packed %d images, using %.1f%% of available pixels.", len(sourceImages), pctUsed())
+
+	// Fill remaining free rects with random colors for visualization
+	for _, fr := range availableRects {
+		r := uint8(rand.Intn(128) + 64) // 64-191 range for visibility
+		g := uint8(rand.Intn(128) + 64)
+		b := uint8(rand.Intn(128) + 64)
+		fillColor := color.RGBA{r, g, b, 128} // semi-transparent
+		for y := fr.y; y < fr.y+fr.h; y++ {
+			for x := fr.x; x < fr.x+fr.w; x++ {
+				atlasImage.Set(x, y, fillColor)
+			}
+		}
+	}
 
 	return atlasImage, placements
 }

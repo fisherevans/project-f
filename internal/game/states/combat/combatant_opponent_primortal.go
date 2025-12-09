@@ -15,10 +15,10 @@ type PrimortalOpponent struct {
 	Health      *HealthState
 	NextSkill   *rpg.SkillId
 	HealthFlash *HealthFlash
+	Renderer    *CombatantRenderer
 
-	name          string
-	skillChooser  SkillChooser
-	baseAnimation *anim.AnimatedSprite
+	name         string
+	skillChooser SkillChooser
 }
 
 func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
@@ -38,7 +38,7 @@ func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 		HealthFlash:            NewDamageFlashMask(),
 		name:                   p.Name,
 		skillChooser:           NewSkillChooser(archetype.SkillPool),
-		baseAnimation:          anim.LoadTilesheetAnimation(atlas, "primortals/"+string(primortal), "default"),
+		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "primortals/"+string(primortal), "default"), true),
 	}
 }
 
@@ -67,6 +67,10 @@ func (o *PrimortalOpponent) GetColorMask() pixel.RGBA {
 func (o *PrimortalOpponent) AdjustHealth(amount int) {
 	o.Health.AdjustTarget(amount)
 	o.HealthFlash.basedOnAdjust(amount)
+}
+
+func (o *PrimortalOpponent) GetRenderer() *CombatantRenderer {
+	return o.Renderer
 }
 
 func (o *PrimortalOpponent) GetStatuses() *AppliedStatuses {
@@ -107,8 +111,4 @@ func (o *PrimortalOpponent) PopNextSkill() *rpg.SkillId {
 
 func (o *PrimortalOpponent) IsNextSkillCommitted() bool {
 	return true
-}
-
-func (o *PrimortalOpponent) GetAnimation() *anim.AnimatedSprite {
-	return o.baseAnimation
 }

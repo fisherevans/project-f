@@ -7,26 +7,33 @@ import (
 
 type key struct {
 	progress, value float64
+	// fn is what is applied BEFORE this key (to get to it)
+	fn Function
 }
 
 type Keys struct {
-	keys []key
-	fn   Function
+	keys            []key
+	defaultFunction Function
 }
 
 func NewKeys() *Keys {
 	return &Keys{
-		fn: Linear,
+		defaultFunction: Linear,
 	}
 }
 
-func (k *Keys) WithFunction(fn Function) *Keys {
-	k.fn = fn
+func (k *Keys) WithDefaultFunction(fn Function) *Keys {
+	k.defaultFunction = fn
 	return k
 }
 
 func (k *Keys) WithKey(progress, value float64) *Keys {
-	k.keys = append(k.keys, key{progress, value})
+	return k.WithKeyFn(progress, value, nil)
+}
+
+// WithKeyFn lets you supply a fn which is used leading up to the value
+func (k *Keys) WithKeyFn(progress, value float64, fn Function) *Keys {
+	k.keys = append(k.keys, key{progress: progress, value: value, fn: fn})
 	slices.SortFunc(k.keys, func(a, b key) int {
 		return cmp.Compare(a.progress, b.progress)
 	})
@@ -47,7 +54,11 @@ func (k *Keys) Interpolate(progress float64) float64 {
 		if k.keys[i].progress <= progress && k.keys[i+1].progress >= progress {
 			a := k.keys[i].value
 			b := k.keys[i+1].value
-			p := k.fn((progress - k.keys[i].progress) / (k.keys[i+1].progress - k.keys[i].progress))
+			fn := k.defaultFunction
+			if k.keys[i+1].fn != nil {
+				fn = k.keys[i+1].fn
+			}
+			p := fn((progress - k.keys[i].progress) / (k.keys[i+1].progress - k.keys[i].progress))
 			return Lerp(a, b, p)
 		}
 	}

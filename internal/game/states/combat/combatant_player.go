@@ -23,6 +23,7 @@ type PlayerCombatant interface {
 type Player struct {
 	*rpg.Animech
 	*CurrentCombatantSkills
+	Renderer           *CombatantRenderer
 	Statuses           *AppliedStatuses
 	CurrentPrimortal   int
 	NextSkill          *rpg.SkillId
@@ -32,8 +33,6 @@ type Player struct {
 	Shield      *HealthState
 	Syncs       map[int]*HealthState
 	HealthFlash *HealthFlash
-
-	baseAnimation *anim.AnimatedSprite
 }
 
 func NewPlayer(animech *rpg.Animech) *Player {
@@ -45,7 +44,7 @@ func NewPlayer(animech *rpg.Animech) *Player {
 		Shield:                 NewHealthState(animech.GetMaxShield()),
 		Syncs:                  make(map[int]*HealthState),
 		HealthFlash:            NewDamageFlashMask(),
-		baseAnimation:          anim.LoadTilesheetAnimation(atlas, "animech/combat_animech", "default"),
+		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "animech/combat_animech", "default"), false),
 	}
 }
 
@@ -63,6 +62,10 @@ func (p *Player) PeekNextSkill() *rpg.SkillId {
 
 func (p *Player) GetStatuses() *AppliedStatuses {
 	return p.Statuses
+}
+
+func (p *Player) GetRenderer() *CombatantRenderer {
+	return p.Renderer
 }
 
 func (p *Player) PopNextSkill() *rpg.SkillId {
@@ -160,10 +163,6 @@ func (p *Player) IsPlayer() bool {
 
 func (p *Player) Name() string {
 	return "Animech" // todo plumb player name
-}
-
-func (p *Player) GetAnimation() *anim.AnimatedSprite {
-	return p.baseAnimation
 }
 
 type SkillFightOption rpg.Skill

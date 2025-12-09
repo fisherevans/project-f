@@ -58,7 +58,7 @@ func (s *State) drawPlayerStats(timeDelta float64) {
 		originLocation: StatBoxOriginTopLeft,
 	}
 
-	s.drawCombatantStatBox(s.Player.Name(), statBox, s.Player.GetStatuses(), gfx.IVec(0, game.GameHeight), gfx.TopLeft, timeDelta)
+	s.drawCombatantStatBox(s.Player.Name(), statBox, s.Player.GetStatuses(), s.Battle.GetPlayerCurrentTickProgress(), gfx.IVec(0, game.GameHeight), gfx.TopLeft, timeDelta)
 }
 
 func (s *State) drawOpponentStats(timeDelta float64) {
@@ -79,10 +79,10 @@ func (s *State) drawOpponentStats(timeDelta float64) {
 		originLocation: StatBoxOriginTopRight,
 	}
 
-	s.drawCombatantStatBox(s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight, timeDelta)
+	s.drawCombatantStatBox(s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), s.Battle.GetOpponentCurrentTickProgress(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight, timeDelta)
 }
 
-func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *AppliedStatuses, origin pixel.Vec, originLocation gfx.OriginLocation, timeDelta float64) {
+func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *AppliedStatuses, currentTickProgress float64, origin pixel.Vec, originLocation gfx.OriginLocation, timeDelta float64) {
 	renderScale := pixel.V(1, 1)
 	var nameContentOpts []textbox.ContentOpt
 	if originLocation == gfx.TopRight {
@@ -123,7 +123,7 @@ func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *Ap
 		Moved(pixel.V(0, -float64(statBox.FrameHeight()+paddedNameHeight))).
 		Moved(originLocation.AlignFrom(gfx.Centered, float64(sidePadding*2), 0))
 	topCorner = topCorner.Moved(gfx.IVec(0, -1))
-	statuses.Render(topCorner, s.batch, timeDelta, originLocation)
+	statuses.Render(topCorner, s.batch, timeDelta, originLocation, currentTickProgress)
 }
 
 type StatBoxOriginLocation int

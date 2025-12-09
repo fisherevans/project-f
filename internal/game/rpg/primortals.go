@@ -203,8 +203,8 @@ var Primortal_Volteel = Primortal{
 				Random: &CombatSkillPoolRandom{
 					WeightedSkills: map[SkillId]int{
 						Skill_ArcDart.Id: 20,
-						Skill_ZapWrap.Id: 40,
-						Skill_Strike.Id:  10,
+						Skill_ZapWrap.Id: 10,
+						Skill_Jab.Id:     40,
 					},
 				},
 			},

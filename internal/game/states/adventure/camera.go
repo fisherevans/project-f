@@ -94,7 +94,7 @@ func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *E
 		ghostLocation:  initialLocation,
 		target:         target,
 		speed:          speed,
-		lastDeltas:     make([]pixel.Vec, 10),
+		lastDeltas:     make([]pixel.Vec, 16),
 	}
 }
 
