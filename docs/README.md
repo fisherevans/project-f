@@ -12,29 +12,18 @@ You play as an astrobiologist remotely piloting a humanoid Animech to explore al
 ## Quick Links
 
 - [Devlog](https://www.tumblr.com/fishwingdev) (with screenshots & demo footage)
-- [Story](story.md)
-- [Gameplay loop](core-loop.md)
 
 # Game Summary
 
-> ***Bold** words can be found in the [Glossary](glossary.md)...*
+You've been living a life sequestered on a small outer-system planet, researching local ecosystems and fauna. It suffers a terrible tragedy, killing everyone you've grown close to. You survived, but only because of your own selfish actions. Your small group friends and family don't share the same fate. Your roots are completely upended and you are forced to start a new life. You take a job as an Astrobiologist working for Thanadox Industries - the corporation that effectively rules the space frontier. You're tasked with exploring newly discovered planets in order to research fauna found in the outer fringes of explored space.
 
-You've been living a life sequestered on a small outer-system planet, researching local ecosystems and fauna. It suffers a terrible tragedy, killing everyone you've grown close to. You survived, but only because of your own selfish actions. Your small group friends and family don't share the same fate. Your roots are completely upended and you are forced to start a new life. You take a job as an **Astrobiologist** working for **Thanadox Industries** - the corporation that effectively rules the space frontier. You're tasked with exploring newly discovered planets in order to research fauna found in the outer fringes of explored space.
-
-The nature of your job means you live a lonely existence on a one-man research vessel far away from any real civilization. Using a Thanadox **Animech** (a humanoid mech you can control "remotely"), you explore planets without having to land your research vessel. By imbuing your soul into the humanoid robot and leaving your human body in a form of stasis, you can fully control the robot as if it were yourself. The creatures found on these planets have unique strengths and abilities. Your job is to find these **Specimen** and capture the essence of their lifeforms - cataloging both their physical and metaphysical properties: their **Primortal** forms. You do this with a tool called a **XenoCrypt**. These are sent back to Thanadox headquarters for further study.
+The nature of your job means you live a lonely existence on a one-man research vessel far away from any real civilization. Using a Thanadox Animech (a humanoid mech you can control "remotely"), you explore planets without having to land your research vessel. By imbuing your soul into the humanoid robot and leaving your human body in a form of stasis, you can fully control the robot as if it were yourself. The creatures found on these planets have unique strengths and abilities. Your job is to find these Specimen and capture the essence of their lifeforms - cataloging both their physical and metaphysical properties: their Primortal forms. You do this with a tool called a XenoCrypt. These are sent back to Thanadox headquarters for further study.
 
 Your Animech is able to learn from these captured specimen, allowing you to use the skills they themselves used, enhancing your combat abilities. As you gain experience within your Animech you will be able increase its strength and the skills it has access to. The more Primortal forms you capture, the more you are able to learn from their innate abilities and unlock new and stronger skills and traits.
 
-As you explore a planetary **Biome** you will find **Elythium**, a powerful energy resource used to power space travel. You must capture enough of it in order to transfer your Animech's soul back to your ship. If your Animech is destroyed while exploring you lose any physical items acquired (such as captured Primortals) and your own soul slowly finds its way back to your ship, reanimating your human body. You may find checkpoints throughout a Biome that can be used to repair your Animech if it is damaged, as well as offer an opportunity to upload any digitial acquisitions, such as Animech usage data which is considered experience points.
+As you explore a planetary Biome you will find Elythium, a powerful energy resource used to power space travel. You must capture enough of it in order to transfer your Animech's soul back to your ship. If your Animech is destroyed while exploring you lose any physical items acquired (such as captured Primortals) and your own soul slowly finds its way back to your ship, reanimating your human body. You may find checkpoints throughout a Biome that can be used to repair your Animech if it is damaged, as well as offer an opportunity to upload any digitial acquisitions, such as Animech usage data which is considered experience points.
 
-Throughout your explorations you'll make discoveries about Thanadox Industries, the civilization at the outer edge of space exploration, and yourself. Is what you do moral? Is what others do your responsibility? More on the story [here](story.md)...
-
-# Game Overview
-
-- The [Core Loop](core-loop.md) explains the general shape of the game: deploy, extract, upgrade, repeat.
-- You [explore planets](exploration.md), researching specimen and collecting resources.
-- You'll face alien life forms and other NPCs in [Battle](combat-system.md).
-- With the experience and research collected while deployed, you'll be able to [upgrade your Animech's abilities](progression.md) between runs.
+Throughout your explorations you'll make discoveries about Thanadox Industries, the civilization at the outer edge of space exploration, and yourself. Is what you do moral? Is what others do your responsibility?
 
 # Constraints
 
