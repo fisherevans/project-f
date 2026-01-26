@@ -43,12 +43,13 @@ jobs:
           go build -ldflags="-s -w" -o primortal${{ matrix.goos == 'windows' && '.exe' || '' }} ./cmd/launcher
       
       - name: Package release
+        shell: bash
         run: |
           mkdir -p release
           cp primortal${{ matrix.goos == 'windows' && '.exe' || '' }} release/
           cp -r assets release/
           cp -r game_data release/
-          cp README.md release/ || true
+          [ -f README.md ] && cp README.md release/ || true
       
       - name: Create archive
         run: |
