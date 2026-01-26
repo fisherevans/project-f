@@ -42,14 +42,18 @@ jobs:
         run: |
           go build -ldflags="-s -w" -o primortal${{ matrix.goos == 'windows' && '.exe' || '' }} ./cmd/launcher
       
-      - name: Package release
+      - name: Prepare release files
         shell: bash
         run: |
           mkdir -p release
           cp primortal${{ matrix.goos == 'windows' && '.exe' || '' }} release/
-          cp -r assets release/
-          cp -r game_data release/
-          [ -f README.md ] && cp README.md release/ || true
+          cp RUNNING.md release/
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            cp scripts/run_windows.bat release/
+          else
+            cp scripts/run_macos.sh release/
+            chmod +x release/run_macos.sh
+          fi
       
       - name: Create archive
         run: |
