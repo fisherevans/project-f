@@ -2,7 +2,6 @@ package adventure
 
 import (
 	"math/rand"
-	"time"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/audio"
@@ -81,11 +80,11 @@ func (p *StepSoundProvider) Resume(cameraProximityDistance float64) {
 }
 
 type SoundEffect struct {
-	Name    string
-	Loop    bool
-	Falloff Falloff
-	Volume  float64
-	FadeIn  time.Duration
+	Name          string
+	Loop          bool
+	Falloff       Falloff
+	Volume        float64
+	FadeInSeconds float64
 }
 
 func (e SoundEffect) computeVolume(distance float64) float64 {
@@ -123,16 +122,7 @@ func (p *ModeBaseSoundProvider) WithSoundOnEnter(mode string, sound SoundEffect)
 }
 
 func (p *ModeBaseSoundProvider) Update(timeDelta float64, cameraProximityDistance float64) {
-	// todo move mode to metadata
-	renderer, ok := p.entity.GetRenderer()
-	if !ok {
-		return
-	}
-	modeBased, ok := renderer.(*ModeBasedEntityRenderer)
-	if !ok {
-		return
-	}
-	mode := modeBased.currentMode
+	mode := ModeMetadataKey.Get(p.entity)
 	if p.lastMode != mode {
 		for _, sound := range p.activeSounds {
 			if !sound.control.IsPlaying() {
@@ -144,11 +134,11 @@ func (p *ModeBaseSoundProvider) Update(timeDelta float64, cameraProximityDistanc
 		p.lastMode = mode
 		for _, sound := range p.playOnEnter[mode] {
 			volume := sound.computeVolume(cameraProximityDistance)
-			log.Info().Str("mode", mode).Str("entity", p.entity.GetId()).Any("sound", sound).Float64("volume", volume).Msg("playing sound on enter")
+			log.Info().Str("mode", mode).Str("entity", p.entity.GetId()).Any("sound", sound).Float64("volume", volume).Msg("playing sound on mode change")
 			bus := game.GetAudioSystem().Buses.SFX
 			control := game.GetAudioSystem().PlaySoundOnBus(sound.Name, bus, volume, &audio.PlaybackOptions{
-				Loop:   sound.Loop,
-				FadeIn: sound.FadeIn,
+				Loop:          sound.Loop,
+				FadeInSeconds: sound.FadeInSeconds,
 			})
 			p.activeSounds = append(p.activeSounds, activeSound{
 				config:  sound,

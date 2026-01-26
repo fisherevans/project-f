@@ -1,14 +1,36 @@
 package adventure
 
 import (
+	"fmt"
 	"math/rand"
 
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
 
 func init() {
+	registerEventHandler("intro.reset", func(*util.Properties) EventHandler {
+		return BasicHandlerBuilder[None]{
+			OnStateEnter: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnStateEnter) *HandlerOutput {
+				if globals.Get(thisEntity.GetId()).AsString("") == game.InstanceId {
+					return nil
+				}
+				fmt.Println("resetting!")
+				return NewOutput().WithEffects(NewFunctionEffect(func(s *State) {
+					var effects []Effect
+					for _, key := range s.globals.baseGlobals.KeysWithPrefix("intro.") {
+						effects = append(effects, NewSetWorldStateEffect(key, nil))
+					}
+					effects = append(effects, NewSetWorldStateEffect(rpg.GlobalKeyElythium, 0))
+					effects = append(effects, NewSetWorldStateEffect(thisEntity.GetId(), game.InstanceId))
+					s.ExecuteSystemEffects(effects...)
+				}))
+			},
+		}.CreateHandler()
+	})
 	attemptsKey := "intro.not_your_paper.attempts"
 	registerEventHandler("intro.not_your_paper", func(_ *util.Properties) EventHandler {
 		messages := []string{
@@ -168,7 +190,10 @@ func init() {
 			},
 		}.CreateHandler()
 	})
-
+	registerPropertyTemplate("intro.hallway_npc", map[string]any{
+		"script_ref": "intro.hall_way_npc",
+		"movement":   "static",
+	})
 	registerEventHandler("intro.hall_way_npc", func(_ *util.Properties) EventHandler {
 		targets := []string{
 			"intro.hall_way_end.west",
@@ -211,7 +236,9 @@ func init() {
 		return BasicHandlerBuilder[TalkingState]{
 			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state TalkingState) *HandlerOutput {
 				return NewOutput().WithEffects(
-					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithScriptedMotion(EntityBehaviorScriptedMotion{}),
+					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithScriptedMotion(EntityBehaviorScriptedMotion{
+						ActivePlayerZone: "intro.hallway",
+					}),
 					NewStartScriptedMotionEffect(thisEntity.GetId()).WithToEntityId(randomDestination()),
 				)
 			},
@@ -295,7 +322,6 @@ func init() {
 					NewPlaySoundEffect("adventure/beeps/success"),
 					NewDialogueEffect(message),
 					NewSetRunStateEffect(variable, doorOpen),
-					NewPlaySoundEffect("adventure/sealed_door_opens"),
 				)
 			},
 		}.CreateHandler()

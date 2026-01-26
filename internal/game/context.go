@@ -16,6 +16,10 @@ func Controls[T State]() *input.Controls {
 	if ctx == nil {
 		return controls
 	}
+	// when console it active, prevent all state input
+	if Console().IsActive() {
+		return controlsNoop
+	}
 	// Compare the requested state type T against the runtime active state's type
 	if _, ok := any(ctx.activeState).(T); ok {
 		return controls
@@ -46,6 +50,7 @@ type context struct {
 	utils        ContextUtils
 	debugToggles *DebugToggleSystem
 	flags        *FlagRegister
+	console      *CommandConsole
 }
 
 func Initialize(window *opengl.Window, saveId string) {
@@ -70,6 +75,16 @@ func Initialize(window *opengl.Window, saveId string) {
 
 	controls = input.NewControls()
 	controlsNoop = input.NewControls()
+
+	ctx.console = newConsole(func(input string) {
+		if ctx.activeState == nil {
+			Console().Write("No active state")
+			return
+		}
+		if !ctx.activeState.HandleConsoleInput(input) {
+			Console().Write("command was not handled")
+		}
+	})
 }
 
 func Update(window *opengl.Window, timeDelta float64) {
@@ -170,4 +185,8 @@ func TimeElapsed() float64 {
 
 func Flags() *FlagRegister {
 	return ctx.flags
+}
+
+func Console() *CommandConsole {
+	return ctx.console
 }

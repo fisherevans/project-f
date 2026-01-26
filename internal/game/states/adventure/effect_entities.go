@@ -128,7 +128,7 @@ func (e *EffectResetModeBasedEntityAnimation) Process(source EntityReader, s *St
 		logEffectWarnf(source, e, "failed to find mode based entity for mutation")
 		return false
 	}
-	for _, animation := range modeBased.getBasicEntityRenderer(modeBased.currentMode).animations {
+	for _, animation := range modeBased.getBasicEntityRenderer(ModeMetadataKey.Get(entity)).animations {
 		animation.Animation.Reset()
 	}
 	return true

@@ -159,6 +159,7 @@ func renderDebugInfo(window *opengl.Window, m *runtime.MemStats, frameStats, gam
 	game.DebugTLf("Routine count: %v", runtime.NumGoroutine())
 	game.RenderDebugLines(window, game.PopDebugLines())
 	game.RenderNotifications(window, game.PopNotifications(deltaTime))
+	game.Console().OnTick(window)
 }
 
 func handleCaptureHotkeys(window *opengl.Window, sceneCanvas *shaders.Canvas, sceneRecorder, pixelGridRecorder *Recorder) {

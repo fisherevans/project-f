@@ -33,12 +33,47 @@
         {
             "color": "#ffa0a0a4",
             "drawFill": true,
+            "id": 11,
+            "members": [
+                {
+                    "name": "color",
+                    "type": "string",
+                    "value": "#000"
+                },
+                {
+                    "name": "glow_size",
+                    "type": "string",
+                    "value": "2"
+                }
+            ],
+            "name": "BackgroundColor",
+            "type": "class",
+            "useAs": [
+                "property",
+                "map",
+                "layer",
+                "object",
+                "tile",
+                "tileset",
+                "wangcolor",
+                "wangset",
+                "project"
+            ]
+        },
+        {
+            "color": "#ffa0a0a4",
+            "drawFill": true,
             "id": 8,
             "members": [
                 {
                     "name": "target",
                     "type": "string",
                     "value": "other_entity_id"
+                },
+                {
+                    "name": "template",
+                    "type": "string",
+                    "value": ""
                 }
             ],
             "name": "DirectInteraction",
@@ -61,6 +96,11 @@
             "id": 5,
             "members": [
                 {
+                    "name": "active_player_zone",
+                    "type": "string",
+                    "value": ""
+                },
+                {
                     "name": "entity_id",
                     "type": "string",
                     "value": ""
@@ -77,6 +117,11 @@
                 },
                 {
                     "name": "script_ref",
+                    "type": "string",
+                    "value": ""
+                },
+                {
+                    "name": "template",
                     "type": "string",
                     "value": ""
                 }
@@ -129,6 +174,11 @@
                     "name": "speed",
                     "type": "string",
                     "value": "\"\"/fast"
+                },
+                {
+                    "name": "template",
+                    "type": "string",
+                    "value": ""
                 }
             ],
             "name": "NPC",

@@ -14,6 +14,30 @@ func (z Zones) Contains(a string) bool {
 	return contains
 }
 
+func (z Zones) ContainsAny(zones []string) bool {
+	if z == nil {
+		return false
+	}
+	for _, zone := range zones {
+		if _, contains := z[zone]; contains {
+			return true
+		}
+	}
+	return false
+}
+
+func (z Zones) ContainsAll(zones []string) bool {
+	if z == nil {
+		return false
+	}
+	for _, zone := range zones {
+		if _, contains := z[zone]; !contains {
+			return false
+		}
+	}
+	return true
+}
+
 type zones struct {
 	zones map[MapLocation]map[string]struct{}
 }

@@ -1,0 +1,39 @@
+version: 2
+
+project_name: primortal
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: windows
+    main: ./cmd/launcher
+    goos: [windows]
+    goarch: [amd64, arm64]
+    env:
+      - CGO_ENABLED=1
+    ldflags:
+      - -s -w
+    binary: primortal
+
+  - id: macos
+    main: ./cmd/launcher
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    env:
+      - CGO_ENABLED=1
+    ldflags:
+      - -s -w
+    binary: primortal
+
+archives:
+  - format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    builds: [windows, macos]
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  draft: false

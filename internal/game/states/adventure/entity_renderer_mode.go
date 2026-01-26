@@ -27,7 +27,6 @@ type AnimationReference struct {
 type ModeBasedEntityRenderer struct {
 	entity Entity
 
-	currentMode    string
 	lastRenderMode string
 	modes          map[string]*BasicEntityRenderer
 }
@@ -39,11 +38,6 @@ func AttachModeBasedEntityRenderer(entity Entity) *ModeBasedEntityRenderer {
 	}
 	entity.SetRenderer(renderer)
 	return renderer
-}
-
-func (r *ModeBasedEntityRenderer) WithMode(mode string) *ModeBasedEntityRenderer {
-	r.currentMode = mode
-	return r
 }
 
 func (r *ModeBasedEntityRenderer) getBasicEntityRenderer(mode string) *BasicEntityRenderer {
@@ -92,24 +86,24 @@ func (r *ModeBasedEntityRenderer) SetModeLights(modeLights map[string][]LightCon
 }
 
 func (r *ModeBasedEntityRenderer) ZPriority() int {
-	return r.getBasicEntityRenderer(r.currentMode).ZPriority()
+	return r.getBasicEntityRenderer(ModeMetadataKey.Get(r.entity)).ZPriority()
 }
 
 func (r *ModeBasedEntityRenderer) Update(timeDelta float64) {
-	r.getBasicEntityRenderer(r.currentMode).Update(timeDelta)
+	r.getBasicEntityRenderer(ModeMetadataKey.Get(r.entity)).Update(timeDelta)
 }
 
 func (r *ModeBasedEntityRenderer) RenderToScene(target pixel.Target, matrix pixel.Matrix) {
-	renderer := r.getBasicEntityRenderer(r.currentMode)
-	if r.lastRenderMode != r.currentMode {
+	renderer := r.getBasicEntityRenderer(ModeMetadataKey.Get(r.entity))
+	if r.lastRenderMode != ModeMetadataKey.Get(r.entity) {
 		renderer.Reset()
 	}
-	r.lastRenderMode = r.currentMode
+	r.lastRenderMode = ModeMetadataKey.Get(r.entity)
 	renderer.RenderToScene(target, matrix)
 }
 
 func (r *ModeBasedEntityRenderer) RenderToLightMap(target pixel.Target, matrix pixel.Matrix) {
-	r.getBasicEntityRenderer(r.currentMode).RenderToLightMap(target, matrix)
+	r.getBasicEntityRenderer(ModeMetadataKey.Get(r.entity)).RenderToLightMap(target, matrix)
 }
 
 func (r *ModeBasedEntityRenderer) WithPropConfigurations(props *util.Properties) *ModeBasedEntityRenderer {
@@ -125,7 +119,7 @@ func (r *ModeBasedEntityRenderer) WithConfig(config *ModeBaseRenderConfig) *Mode
 		return r
 	}
 	if config.Mode != nil {
-		r.currentMode = *config.Mode
+		ModeMetadataKey.Set(r.entity, *config.Mode)
 	}
 	r.SetModeAnimations(config.Animations)
 	r.SetModeLights(config.Lights)

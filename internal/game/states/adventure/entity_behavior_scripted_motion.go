@@ -10,13 +10,15 @@ import (
 )
 
 type ScriptedMotionBehavior struct {
-	entity Entity
-	target MotionTarget
+	entity           Entity
+	target           MotionTarget
+	activePlayerZone string
 }
 
-func AttachScriptedMotionBehavior(entity Entity) *ScriptedMotionBehavior {
+func AttachScriptedMotionBehavior(entity Entity, activePlayerZone string) *ScriptedMotionBehavior {
 	behavior := &ScriptedMotionBehavior{
-		entity: entity,
+		entity:           entity,
+		activePlayerZone: activePlayerZone,
 	}
 	entity.PushBehavior(behavior)
 	return behavior
@@ -26,7 +28,10 @@ func (s *ScriptedMotionBehavior) MovementComplete() {
 	s.triggerMovement()
 }
 
-func (s *ScriptedMotionBehavior) Update(timeDelta float64) {
+func (s *ScriptedMotionBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
+	if s.activePlayerZone != "" && !globals.GetZonesAt(globals.Player().GetLocation()).Contains(s.activePlayerZone) {
+		return
+	}
 	if s.target != nil {
 		s.target.Update(timeDelta)
 	}

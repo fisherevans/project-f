@@ -32,6 +32,7 @@ type State interface {
 	OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64)
 	OnEnter()
 	OnExit()
+	HandleConsoleInput(string) bool
 }
 
 type BaseState struct{}
@@ -43,6 +44,10 @@ func (s BaseState) ClearColor() color.Color {
 func (s BaseState) OnEnter() {}
 
 func (s BaseState) OnExit() {}
+
+func (s BaseState) HandleConsoleInput(string) bool {
+	return false
+}
 
 type SwirlShader struct {
 	durationSeconds float64

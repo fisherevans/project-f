@@ -3,7 +3,7 @@ character_name: Isaac
 animech:
     skill_set:
         "1": jab
-        "2": acid_string
+        "2": ""
         "3": ""
         "4": ""
     experience_points: 100
@@ -36,25 +36,21 @@ primortals:
         last_seen: 2025-10-14T20:47:49Z
     toxmidge:
         visibility: defeated
-        research_points: 2
+        research_points: 5
         last_seen: 0001-01-01T00:00:00Z
     volteel:
         visibility: defeated
         research_points: 0
         last_seen: 2025-10-14T20:47:49Z
 unlocked_skills:
-    acid_string: {}
     jab: {}
 globals:
     abilities.xenolog_primortals: true
     control_id: controlled_npc
-    door_state: open
+    door_state: closed
     elythium: 0
-    intro.has_papers: true
-    intro.not_your_paper.attempts: 1
-    intro.papers_turned_in: true
-    intro.training.enter.listener: 54564d1f-7c1f-458a-9819-ae3d8a625c5a
-    player_id: tiled-16
+    player_id: tiled-7
+    tiled-363: bd75094f-54be-40e1-99cc-5ba4e7bd78ed
 system_settings:
     lighting:
         lighting_composition: full

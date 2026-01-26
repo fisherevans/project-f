@@ -26,7 +26,7 @@ type PlaybackOptions struct {
 	// FadeIn specifies the duration to fade in from silence.
 	// 0 = no fade (default), starts at target volume immediately
 	// > 0 = fade in from -60dB to target volume over this duration
-	FadeIn time.Duration
+	FadeInSeconds float64
 
 	OnComplete func()
 }
@@ -59,20 +59,62 @@ func (a *System) PlaySoundOnBus(name string, bus *Bus, volume float64, opts *Pla
 }
 
 // PlayMusic starts looping music from file; returns a stop func.
-func (a *System) PlayMusic(assetPath string, volume float64, opts *PlaybackOptions) *PlaybackControl {
-	f, err := assets.FS.Open(assetPath)
-	defer f.Close()
-	if err != nil {
-		log.Error().Str("assetPath", assetPath).Err(err).Msg("failed to open music file")
-		return nil
+// The music is loaded and decoded asynchronously to avoid blocking the main thread.
+// The returned PlaybackControl is immediately usable - control methods called during
+// loading will be queued and applied once the music is ready.
+func (a *System) PlayMusic(assetPath string, opts *PlaybackOptions) *PlaybackControl {
+	if opts == nil {
+		opts = &PlaybackOptions{}
 	}
-	src, fmt, err := openDecode(f, filepath.Ext(assetPath))
-	if err != nil {
-		log.Error().Str("assetPath", assetPath).Err(err).Msg("failed to decode music file")
-		return nil
+
+	// Create stub control that will be populated once loading completes
+	ctrl := &PlaybackControl{
+		system:         a,
+		playbackVolume: 1,
+		fadeVolume:     1,
+		loading:        true,
 	}
-	defer src.Close()
-	return a.PlayOnBus(newSourceBuffer(src, fmt), a.Buses.Music, volume, opts)
+
+	// Prepare fade-in (will be applied with correct timing after loading)
+	if opts.FadeInSeconds > 0 {
+		ctrl.fadeVolume = 0
+	}
+
+	// Load and decode music asynchronously
+	go func() {
+		f, err := assets.FS.Open(assetPath)
+		if err != nil {
+			log.Error().Str("assetPath", assetPath).Err(err).Msg("failed to open music file")
+			ctrl.mu.Lock()
+			ctrl.loading = false
+			ctrl.loadingFailed = true
+			ctrl.mu.Unlock()
+			if opts.OnComplete != nil {
+				opts.OnComplete()
+			}
+			return
+		}
+		defer f.Close()
+
+		src, fmt, err := openDecode(f, filepath.Ext(assetPath))
+		if err != nil {
+			log.Error().Str("assetPath", assetPath).Err(err).Msg("failed to decode music file")
+			ctrl.mu.Lock()
+			ctrl.loading = false
+			ctrl.loadingFailed = true
+			ctrl.mu.Unlock()
+			if opts.OnComplete != nil {
+				opts.OnComplete()
+			}
+			return
+		}
+		defer src.Close()
+
+		buf := newSourceBuffer(src, fmt)
+		ctrl.finishAsyncLoad(buf, a.Buses.Music, opts)
+	}()
+
+	return ctrl
 }
 
 func (a *System) PlayOnBus(buf *beep.Buffer, bus *Bus, volume float64, opts *PlaybackOptions) *PlaybackControl {
@@ -129,14 +171,14 @@ func (a *System) PlayOnBus(buf *beep.Buffer, bus *Bus, volume float64, opts *Pla
 	}
 
 	// Start fade-in if requested (using worker-based fade)
-	if opts.FadeIn > 0 {
+	if opts.FadeInSeconds > 0 {
 		ctrl.fadeVolume = 0
 		// Fade adjustment from silence to 0 (= base volume)
 		ctrl.workerCommand = &controlCommand{
 			fadeFrom:      0,
 			fadeTo:        1,
 			fadeStartTime: time.Now(),
-			fadeDuration:  opts.FadeIn,
+			fadeDuration:  time.Duration(opts.FadeInSeconds * float64(time.Second)),
 		}
 	}
 

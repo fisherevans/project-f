@@ -29,6 +29,7 @@ func init() {
 					WithColorMaskAnimations(cma))
 			}
 		}
+		activePlayerZone := params.Properties.GetString("active_player_zone", "")
 		doesMove, horizOnly := true, false
 		idleChance, maxIdle, speed := 0.05, 6.0, 2.0
 		switch params.Properties.GetString("movement", "") {
@@ -44,7 +45,7 @@ func init() {
 		idleFacingDirection := input.DirectionFromString(params.Properties.GetString("idle_facing_direction", ""))
 		// to walk around and entity, it will take 2 extra moves - adding 1 extra here when walking keeps them walking behind each other
 		AttachBlockIngressPresence(entity, true, NewMovementAwareImpedance(entity, ImpedanceHigh, ImpedanceBase*2))
-		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle, idleFacingDirection)
+		AttachNPCBehavior(entity, doesMove, horizOnly, idleChance, maxIdle, idleFacingDirection, activePlayerZone)
 		entity.SetMovementSpeed(MoveStateWalking, speed)
 		entity.AddSoundProvider(NewStepSoundProvider(entity, createStepSoundsSoft(), FootstepFalloff))
 		if params.Properties.GetString("script_ref", "") != "" {
@@ -78,9 +79,10 @@ type NPCBehavior struct {
 	IdleChance          float64
 	MaxIdleDuration     float64
 	IdleFacingDirection input.Direction
+	activePlayerZone    string
 }
 
-func AttachNPCBehavior(entity Entity, horizOnly, doesMove bool, idleChance, maxIdleDuration float64, idleFacingDirection input.Direction) *NPCBehavior {
+func AttachNPCBehavior(entity Entity, horizOnly, doesMove bool, idleChance, maxIdleDuration float64, idleFacingDirection input.Direction, activePlayerZone string) *NPCBehavior {
 	b := &NPCBehavior{
 		entity:              entity,
 		DoesMove:            doesMove,
@@ -88,6 +90,7 @@ func AttachNPCBehavior(entity Entity, horizOnly, doesMove bool, idleChance, maxI
 		IdleChance:          idleChance,
 		MaxIdleDuration:     maxIdleDuration,
 		IdleFacingDirection: idleFacingDirection,
+		activePlayerZone:    activePlayerZone,
 	}
 	entity.PushBehavior(b)
 	return b
@@ -101,7 +104,10 @@ func (b *NPCBehavior) MovementComplete() {
 	b.doMovement()
 }
 
-func (b *NPCBehavior) Update(timeDelta float64) {
+func (b *NPCBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
+	if b.activePlayerZone != "" && !globals.GetZonesAt(globals.Player().GetLocation()).Contains(b.activePlayerZone) {
+		return
+	}
 	if b.idleDuration > 0 {
 		b.idleDuration -= timeDelta
 		return

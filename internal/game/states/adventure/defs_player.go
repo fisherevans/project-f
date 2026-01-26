@@ -125,7 +125,7 @@ func (b *PlayerBehavior) triggerInteraction() {
 	b.entity.InteractsWith(interactLocation)
 }
 
-func (b *PlayerBehavior) Update(timeDelta float64) {
+func (b *PlayerBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
 	// trigger running or face new direction after movement
 	if b.entity.IsMoving() {
 		if game.Controls[*State]().DPad().IsPressed() {

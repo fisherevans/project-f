@@ -9,15 +9,15 @@ import (
 	"fisherevans.com/project/f/internal/util/colors"
 )
 
-// DrawAmbient renders all ambient zones as solid rects with outer glows.
-func (s *State) DrawAmbient(target *opengl.Canvas, cameraDelta pixel.Vec, renderBounds MapBounds, imd *imdraw.IMDraw) {
+// DrawColoredAreas renders all ambient zones as solid rects with outer glows.
+func (s *State) DrawColoredAreas(areas []resources.ColoredArea, target *opengl.Canvas, cameraDelta pixel.Vec, renderBounds MapBounds, imd *imdraw.IMDraw) {
 	target.SetComposeMethod(pixel.ComposeOver)
 	target.Clear(s.lightClear)
 	imd.Clear()
 
 	imd.SetMatrix(pixel.IM.Moved(cameraDelta))
 
-	for _, zone := range s.ambientLightAreas {
+	for _, zone := range areas {
 		// Calculate glow size in tiles for bounds checking
 		glowTiles := int(zone.GlowSize)
 

@@ -103,7 +103,7 @@ func (e *EffectPushEntityBehavior) Process(source EntityReader, s *State) bool {
 		return false
 	}
 	if e.ScriptedMotion != nil {
-		AttachScriptedMotionBehavior(entity)
+		AttachScriptedMotionBehavior(entity, e.ScriptedMotion.ActivePlayerZone)
 	} else if e.FacingEntity != nil {
 		facing := ""
 		if e.FacingEntity.EntityId != nil {
@@ -121,6 +121,7 @@ type EntityBehaviorNPC struct {
 }
 
 type EntityBehaviorScriptedMotion struct {
+	ActivePlayerZone string
 }
 
 type EntityBehaviorFacingEntity struct {

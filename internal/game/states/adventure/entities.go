@@ -171,7 +171,7 @@ func (es *EntitySystem) Update(timeDelta float64) {
 			lastRemaining = remaining
 		}
 		if hasBehavior && entity.IsBehaviorEnabled() {
-			behavior.Update(timeDelta)
+			behavior.Update(timeDelta, es.state.globals)
 		}
 		if hasRenderer {
 			renderer.Update(timeDelta)

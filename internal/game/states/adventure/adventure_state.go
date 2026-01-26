@@ -4,8 +4,10 @@ import (
 	"image/color"
 	"math"
 	"sort"
+	"time"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
@@ -52,10 +54,11 @@ type State struct {
 	sceneClear pixel.RGBA
 	lightClear pixel.RGBA
 
-	mapWidth, mapHeight int
-	underRenderLayers   []renderLayer
-	overRenderLayers    []renderLayer
-	ambientLightAreas   []resources.AmbientLightArea
+	mapWidth, mapHeight  int
+	underRenderLayers    []renderLayer
+	overRenderLayers     []renderLayer
+	ambientLightAreas    []resources.ColoredArea
+	backgroundColorAreas []resources.ColoredArea
 
 	camera Camera
 	player string
@@ -91,6 +94,8 @@ type State struct {
 	planExecutor    *PlanExecutor
 
 	globals *stateGlobals
+
+	activeSong *audio.PlaybackControl
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -140,6 +145,8 @@ func New(i game.AdventureIntent) game.State {
 
 	initializeMap(a, m)
 
+	// once complete - send on enter to all new entities
+	a.eventDispatcher.Dispatch(EventOnStateEnter{})
 	return a
 }
 
@@ -153,11 +160,22 @@ func (s *State) ClearColor() color.Color {
 
 func (s *State) OnEnter() {
 	s.entities.resumeAllSounds()
+	if s.activeSong == nil {
+		s.activeSong = game.GetAudioSystem().PlayMusic(audio.SongTraining, &audio.PlaybackOptions{
+			Loop:          true,
+			FadeInSeconds: 10,
+		})
+	} else {
+		s.activeSong.ResumeAndFadeIn(3 * time.Second)
+	}
 	s.eventDispatcher.Dispatch(EventOnStateEnter{})
 }
 
 func (s *State) OnExit() {
 	s.entities.pauseAllSounds()
+	if s.activeSong != nil {
+		s.activeSong.FadeOutAndPause(3 * time.Second)
+	}
 }
 
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
@@ -181,6 +199,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
+	s.DrawColoredAreas(s.backgroundColorAreas, s.sceneCanvas, cameraDelta, renderBounds, imdraw.New(nil))
 
 	s.lightMapBatch.Clear()
 
@@ -229,7 +248,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		// a little gross
 		s.lightMapBatch.Clear()
 	}
-	s.DrawAmbient(s.lightMapCanvas, cameraDelta, renderBounds, imdraw.New(nil))
+	s.DrawColoredAreas(s.ambientLightAreas, s.lightMapCanvas, cameraDelta, renderBounds, imdraw.New(nil))
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 

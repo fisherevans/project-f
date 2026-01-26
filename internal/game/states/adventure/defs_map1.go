@@ -3,7 +3,6 @@ package adventure
 import (
 	"fmt"
 	"sync/atomic"
-	"time"
 
 	"fisherevans.com/project/f/internal/util"
 )
@@ -128,11 +127,11 @@ func init() {
 						}),
 					NewAddSoundProviderEffect(thisEntity.GetId()).WithModeBase(NewModeBaseSoundProviderConfig().
 						WithSoundOnEnter("closed", SoundEffect{
-							Name:    "adventure/props/energy_door_hum",
-							Loop:    true,
-							Falloff: StandardFalloff,
-							Volume:  0.9,
-							FadeIn:  time.Millisecond * 1000,
+							Name:          "adventure/props/energy_door_hum",
+							Loop:          true,
+							Falloff:       StandardFalloff,
+							Volume:        0.9,
+							FadeInSeconds: 1,
 						}).
 						WithSoundOnEnter("closed", SoundEffect{
 							Name:    "adventure/props/energy_door_on",

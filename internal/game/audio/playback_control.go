@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gopxl/beep/v2"
 	"github.com/gopxl/beep/v2/effects"
 	"github.com/gopxl/beep/v2/speaker"
 	"github.com/rs/zerolog/log"
@@ -37,6 +38,12 @@ type PlaybackControl struct {
 
 	playbackVolume float64 // The target volume set by SetVolume
 	fadeVolume     float64 // Temporary adjustment for fades (1 = no adjustment)
+
+	// Async loading state (for music that loads in background)
+	loading       bool
+	loadingFailed bool
+	pendingStop   bool // Stop requested during loading
+	pendingPause  bool // Pause requested during loading
 }
 
 // startWorker starts the control worker goroutine if not already running
@@ -107,7 +114,17 @@ func (s *PlaybackControl) workOnTick() {
 
 // StopImmediately stops the sound immediately without fading (may cause audio pops)
 func (s *PlaybackControl) StopImmediately() {
-	if s == nil || s.stoppable == nil {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	if s.loading {
+		s.pendingStop = true
+		s.mu.Unlock()
+		return
+	}
+	s.mu.Unlock()
+	if s.stoppable == nil {
 		return
 	}
 	s.stoppable.Stop()
@@ -120,11 +137,18 @@ func (s *PlaybackControl) Stop() {
 
 // FadeOutAndStop fades out using adjustment, then stops playback
 func (s *PlaybackControl) FadeOutAndStop(duration time.Duration) {
-	if s == nil || s.volumeEffect == nil {
+	if s == nil {
 		return
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.loading {
+		s.pendingStop = true
+		return
+	}
+	if s.volumeEffect == nil {
+		return
+	}
 	s.workerCommand = &controlCommand{
 		fadeFrom:      s.fadeVolume,
 		fadeTo:        0,
@@ -135,7 +159,17 @@ func (s *PlaybackControl) FadeOutAndStop(duration time.Duration) {
 }
 
 func (s *PlaybackControl) PauseImmediately() {
-	if s == nil || s.stoppable == nil {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	if s.loading {
+		s.pendingPause = true
+		s.mu.Unlock()
+		return
+	}
+	s.mu.Unlock()
+	if s.stoppable == nil {
 		return
 	}
 	s.stoppable.Pause()
@@ -146,11 +180,18 @@ func (s *PlaybackControl) Pause() {
 }
 
 func (s *PlaybackControl) FadeOutAndPause(duration time.Duration) {
-	if s == nil || s.volumeEffect == nil {
+	if s == nil {
 		return
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.loading {
+		s.pendingPause = true
+		return
+	}
+	if s.volumeEffect == nil {
+		return
+	}
 	s.workerCommand = &controlCommand{
 		fadeFrom:      s.fadeVolume,
 		fadeTo:        0,
@@ -161,7 +202,17 @@ func (s *PlaybackControl) FadeOutAndPause(duration time.Duration) {
 }
 
 func (s *PlaybackControl) ResumeImmediately() {
-	if s == nil || s.stoppable == nil {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	if s.loading {
+		s.pendingPause = false
+		s.mu.Unlock()
+		return
+	}
+	s.mu.Unlock()
+	if s.stoppable == nil {
 		return
 	}
 	s.fadeVolume = 1
@@ -174,11 +225,18 @@ func (s *PlaybackControl) Resume() {
 }
 
 func (s *PlaybackControl) ResumeAndFadeIn(duration time.Duration) {
-	if s == nil || s.volumeEffect == nil {
+	if s == nil {
 		return
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.loading {
+		s.pendingPause = false
+		return
+	}
+	if s.volumeEffect == nil {
+		return
+	}
 	s.workerCommand = &controlCommand{
 		fadeFrom:      0,
 		fadeTo:        1,
@@ -193,12 +251,19 @@ func (s *PlaybackControl) ResumeAndFadeIn(duration time.Duration) {
 // SetVolume immediately sets the base volume in dB (e.g., 0 = normal, -6 = half, +6 = double)
 // This respects any ongoing fade adjustments (pause/resume fades)
 func (s *PlaybackControl) SetVolume(volume float64) {
-	if s == nil || s.volumeEffect == nil {
+	if s == nil {
 		return
 	}
 	s.mu.Lock()
 	s.playbackVolume = volume
+	if s.loading {
+		s.mu.Unlock()
+		return
+	}
 	s.mu.Unlock()
+	if s.volumeEffect == nil {
+		return
+	}
 	s.updateStreamerVolume()
 }
 
@@ -211,7 +276,16 @@ func (s *PlaybackControl) updateStreamerVolume() {
 
 // IsPlaying returns true if the sound is still playing (not stopped and not finished)
 func (s *PlaybackControl) IsPlaying() bool {
-	if s == nil || s.stoppable == nil {
+	if s == nil {
+		return false
+	}
+	s.mu.Lock()
+	if s.loading {
+		s.mu.Unlock()
+		return true // Still loading, consider it "playing"
+	}
+	s.mu.Unlock()
+	if s.stoppable == nil {
 		return false
 	}
 	return s.stoppable.IsPlaying()
@@ -261,8 +335,126 @@ func (s *PlaybackControl) TimeRemaining() time.Duration {
 
 // IsPaused returns true if the sound is currently paused
 func (s *PlaybackControl) IsPaused() bool {
-	if s == nil || s.stoppable == nil {
+	if s == nil {
+		return false
+	}
+	s.mu.Lock()
+	if s.loading {
+		pending := s.pendingPause
+		s.mu.Unlock()
+		return pending
+	}
+	s.mu.Unlock()
+	if s.stoppable == nil {
 		return false
 	}
 	return s.stoppable.IsPaused()
+}
+
+// finishAsyncLoad completes async loading by initializing the streamer and applying pending operations
+func (s *PlaybackControl) finishAsyncLoad(buf *beep.Buffer, bus *Bus, opts *PlaybackOptions) {
+	s.mu.Lock()
+
+	// Check if stop was requested during loading
+	if s.pendingStop {
+		s.loading = false
+		s.mu.Unlock()
+		if opts.OnComplete != nil {
+			opts.OnComplete()
+		}
+		return
+	}
+
+	// Capture pending state before releasing lock
+	pendingPause := s.pendingPause
+	s.mu.Unlock()
+
+	// Get the buffer streamer (StreamSeeker for looping)
+	bufStreamer := buf.Streamer(0, buf.Len())
+
+	// Apply looping FIRST (requires StreamSeeker)
+	var str beep.Streamer
+	if opts.Loop {
+		str = beep.Loop(-1, bufStreamer)
+	} else {
+		str = bufStreamer
+	}
+
+	// Apply pitch/speed modulation if requested (coupled via resampling)
+	if opts.Speed > 0 && opts.Speed != 1.0 {
+		originalRate := beep.SampleRate(targetSR)
+		modulatedRate := beep.SampleRate(float64(targetSR) * opts.Speed)
+		str = beep.Resample(4, originalRate, modulatedRate, str)
+	}
+
+	// Add completion callback if provided
+	if opts.OnComplete != nil {
+		str = beep.Seq(str, beep.Callback(opts.OnComplete))
+	}
+
+	// Wrap in stoppable so we can stop it mid-playback
+	stoppable := &stoppableStreamer{
+		s:        str,
+		totalLen: buf.Len(),
+	}
+
+	// Calculate initial volume based on fade state
+	s.mu.Lock()
+	initialVolume := s.playbackVolume * s.fadeVolume
+	initialVolumeDB := math.Log(initialVolume) / math.Log(2.0)
+	s.mu.Unlock()
+
+	// Wrap in volume control with correct initial volume
+	volumeEffect := &effects.Volume{
+		Streamer: stoppable,
+		Base:     2,
+		Volume:   initialVolumeDB,
+	}
+
+	// Add to bus mixer (no locks held) - streaming starts NOW
+	speaker.Lock()
+	bus.mix.Add(volumeEffect)
+	speaker.Unlock()
+
+	// Now acquire lock to update state
+	s.mu.Lock()
+	s.stoppable = stoppable
+	s.volumeEffect = volumeEffect
+
+	// Apply pending pause if requested during loading
+	if pendingPause {
+		s.stoppable.Pause()
+	}
+
+	// Set up fade-in if fadeVolume is 0 (indicating fade-in was requested)
+	// Start time is NOW since we just added the streamer to the mixer
+	if s.fadeVolume == 0 && opts.FadeInSeconds > 0 {
+		s.workerCommand = &controlCommand{
+			fadeFrom:      0,
+			fadeTo:        1,
+			fadeStartTime: time.Now(),
+			fadeDuration:  time.Duration(opts.FadeInSeconds * float64(time.Second)),
+		}
+	}
+
+	// Mark loading complete
+	s.loading = false
+
+	// Start worker if not already started
+	if !s.workerStarted {
+		s.workerStarted = true
+		s.workerDone = make(chan struct{})
+		s.mu.Unlock()
+		go func() {
+			ticker := time.NewTicker(16 * time.Millisecond) // ~60 FPS
+			defer ticker.Stop()
+			defer close(s.workerDone)
+			for {
+				<-ticker.C
+				s.workOnTick()
+			}
+		}()
+	} else {
+		s.mu.Unlock()
+	}
 }

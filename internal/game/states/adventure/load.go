@@ -3,6 +3,7 @@ package adventure
 import (
 	"fmt"
 
+	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game/input"
@@ -44,6 +45,9 @@ func initializeMap(a *State, m *resources.Map) {
 	}
 	for _, az := range m.AmbientLightAreas {
 		a.ambientLightAreas = append(a.ambientLightAreas, az.Moved(dx, dy))
+	}
+	for _, bgz := range m.BackgroundColorAreas {
+		a.backgroundColorAreas = append(a.backgroundColorAreas, bgz.Moved(dx, dy))
 	}
 	for _, z := range m.Zones {
 		a.zones.RegisterZone(z.Moved(dx, dy))
@@ -115,16 +119,23 @@ func initializeMap(a *State, m *resources.Map) {
 			Location:   location,
 			Properties: mapEntity.Properties,
 		}
+		if templateKey := newEntityParams.Properties.GetString("template", ""); templateKey != "" {
+			template, ok := entityPropertyTemplates[templateKey]
+			if !ok {
+				log.Fatal().Str("template", templateKey).Str("entity", entityId).Msg("template property does not exist")
+			}
+			newEntityParams.Properties = util.MergeProps(util.NewProps(template), mapEntity.Properties)
+		}
 		if a.registerParameterizedEntity(newEntityParams) {
 			log.Debug().Msgf("added parameterized entity '%s'", entityId)
 			continue
 		}
 		if mapEntity.Class == "ShadowMob" {
-			a.AddMob(NewShadowMob(entityId, location, NewShadowMobParamsFromProperties(mapEntity.Properties)))
+			a.AddMob(NewShadowMob(entityId, location, NewShadowMobParamsFromProperties(newEntityParams.Properties)))
 			log.Debug().Msgf("added shadow mob '%s'", entityId)
 			continue
 		}
-		entityType := mapEntity.Properties.GetString("type", "")
+		entityType := newEntityParams.Properties.GetString("type", "")
 		if mapEntity.SpriteId != nil {
 			switch *mapEntity.SpriteId {
 			case tiles.ShadowMob:
@@ -133,20 +144,20 @@ func initializeMap(a *State, m *resources.Map) {
 		}
 		switch entityType {
 		case "stairs":
-			ref := TeleportReference("teleport:" + mapEntity.Properties.GetString("ref", ""))
+			ref := TeleportReference("teleport:" + newEntityParams.Properties.GetString("ref", ""))
 			if _, exists := a.teleports[ref]; exists {
 				log.Fatal().Msgf("stairs reference %s already exists", ref)
 				break
 			}
-			dest := TeleportReference("teleport:" + mapEntity.Properties.GetString("destination", ""))
+			dest := TeleportReference("teleport:" + newEntityParams.Properties.GetString("destination", ""))
 			a.teleports[ref] = Teleport{
 				Destination:   dest,
 				Location:      location,
-				ExitDirection: input.DirectionFromString(mapEntity.Properties.GetString("exit_direction", "")),
+				ExitDirection: input.DirectionFromString(newEntityParams.Properties.GetString("exit_direction", "")),
 			}
 			a.zones.SetZoneId(location, string(ref))
 		case "shadow":
-			a.AddMob(NewShadowMob(entityId, location, NewShadowMobParamsFromProperties(mapEntity.Properties)))
+			a.AddMob(NewShadowMob(entityId, location, NewShadowMobParamsFromProperties(newEntityParams.Properties)))
 		default:
 			log.Warn().Msgf("Unknown entity type: %s / %s", entityId, entityType)
 		}

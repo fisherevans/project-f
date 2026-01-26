@@ -17,8 +17,9 @@ func init() {
 					return nil
 				}
 				return NewOutput().WithEffects(NewFunctionEffect(func(s *State) {
+					var effects []Effect
 					for _, key := range s.globals.baseGlobals.KeysWithPrefix("intro.training.") {
-						s.globals.baseGlobals.Delete(key)
+						effects = append(effects, NewSetWorldStateEffect(key, nil))
 					}
 					game.CurrentSave().Animech.SkillSet = &rpg.SkillSet{
 						Skill1: rpg.Skill_Jab.Id,
@@ -36,10 +37,11 @@ func init() {
 						Visibility:     rpg.PrimortalVisibilityDefeated,
 						ResearchPoints: 5,
 					}
-					s.globals.baseGlobals.Set(thisEntity.GetId(), game.InstanceId)
-					s.globals.baseGlobals.Delete(globalVariableNameHasXenologAccess)
-					s.globals.baseGlobals.Delete(globalVariableNameHasXenologPrimortals)
-					s.globals.baseGlobals.Set(rpg.GlobalKeyElythium, 0)
+					effects = append(effects, NewSetWorldStateEffect(globalVariableNameHasXenologAccess, nil))
+					effects = append(effects, NewSetWorldStateEffect(globalVariableNameHasXenologPrimortals, nil))
+					effects = append(effects, NewSetWorldStateEffect(rpg.GlobalKeyElythium, 0))
+					effects = append(effects, NewSetWorldStateEffect(thisEntity.GetId(), game.InstanceId))
+					s.ExecuteSystemEffects(effects...)
 				}))
 			},
 		}.CreateHandler()
@@ -73,6 +75,41 @@ func init() {
 			},
 		}.CreateHandler()
 	})
+	registerEventHandler("intro.training.1.npc", func(_ *util.Properties) EventHandler {
+		return BasicHandlerBuilder[None]{
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if event.TargetId != thisEntity.GetId() {
+					return nil
+				}
+				keyDoor := doorKey(10)
+				if globals.Get(keyDoor).AsBool(false) {
+					return NewOutput().WithEffects(
+						NewDialogueEffect("Don't worry, you'll have plenty of time to practice some more... once you're all alone in deep space."),
+						NewDialogueEffect("Now, get through that door."),
+					)
+				}
+				if globals.Get(globalVariableNameHasXenologAccess).AsBool(false) {
+					return NewOutput().WithSerialPlan(
+						NewFocusedSequenceBuilder(thisEntity.GetId(), globals.Player().GetId()).
+							WithMoveCamera(true).
+							WithMiddleEffects(
+								NewDialogueEffect("You're now ready to explore on your own. Proceed through the final door to begin your adventure."),
+								NewMutateFollowCameraEffect().WithFollowEntityId(keyDoor),
+								NewTimerEffect(1.5),
+								NewSetWorldStateEffect(keyDoor, true),
+								NewTimerEffect(1.5),
+								NewMutateFollowCameraEffect().WithFollowEntityId(globals.Player().GetId()),
+							).
+							BuildEffects()...)
+				}
+				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
+					WithMiddleEffects(
+						NewDialogueEffect("Just take a seat over there. All will be explained..."),
+					).
+					Build()
+			},
+		}.CreateHandler()
+	})
 	registerEventHandler("intro.training.1.chair", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
@@ -98,6 +135,21 @@ func init() {
 					NewDialogueEffect("They're your eyes. Your looking at yourself."),
 					NewMutateEntityBehaviorEffect(event.SourceId).WithEnableBy(thisEntity.GetId()),
 				)
+			},
+		}.CreateHandler()
+	})
+	registerEventHandler("intro.training.2.npc", func(_ *util.Properties) EventHandler {
+		return BasicHandlerBuilder[None]{
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				if event.TargetId != thisEntity.GetId() {
+					return nil
+				}
+				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
+					WithMiddleEffects(
+						NewDialogueEffect("Your Animech has a special ability to dash across small gaps."),
+						NewDialogueEffect("Walk up to the edge and press [SPACE]"),
+					).
+					Build()
 			},
 		}.CreateHandler()
 	})
@@ -163,7 +215,7 @@ func init() {
 				if globals.Get(keyDoor).AsBool(false) {
 					return NewOutput().WithEffects(NewDialogueEffect("There's no going back. You must continue to the next room."))
 				}
-				if globals.Get(globalVariableNameHasXenologAccess).AsBool(false) {
+				if globals.Get("intro.training.5.xenolog").AsBool(false) {
 					return NewOutput().WithSerialPlan(
 						NewDialogueEffect("Don't chicken out now."),
 					)
@@ -171,9 +223,9 @@ func init() {
 				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
 					WithMiddleEffects(
 						NewDialogueEffect("Now that your first battle is under your belt, you've gained some experience. With it, we can enhance the synchronization between your soul and the Animech."),
-						NewDialogueEffect("On the table next to me is Xenolog. A device that allows you to track your explorations and see the status of your Animech."),
+						NewDialogueEffect("On the table next to me is a Xenolog. A device that allows you to track your explorations and see the status of your Animech."),
 						NewDialogueEffect("Try opening it up, and spend those experience points to enhance your Animech's abilities."),
-						NewSetWorldStateEffect(globalVariableNameHasXenologAccess, true),
+						NewSetWorldStateEffect("intro.training.5.xenolog", true),
 					).
 					Build()
 			},
@@ -193,14 +245,13 @@ func init() {
 					WithMiddleEffects(
 						NewDialogueEffect("Nicely done."),
 						NewDialogueEffect("Now, lets try battling a real specimen."),
-						NewSetWorldStateEffect(globalVariableNameHasXenologAccess, true),
+						NewMutateFollowCameraEffect().WithFollowEntityId(keyDoor),
+						NewTimerEffect(1.5),
+						NewSetWorldStateEffect(keyDoor, true),
+						NewTimerEffect(1.5),
+						NewMutateFollowCameraEffect().WithFollowEntityId(globals.Player().GetId()),
 					).
 					BuildEffects()
-				effects = append(effects, NewFocusedSequenceBuilder("intro.training.5.door", playerId).
-					WithMiddleEffects(
-						NewSetWorldStateEffect(keyDoor, true),
-					).
-					BuildEffects()...)
 				return NewOutput().WithSerialPlan(effects...)
 			},
 		}.CreateHandler()
@@ -211,9 +262,15 @@ func init() {
 				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}
-				return NewOutput().WithEffects(NewFunctionEffect(func(s *State) {
-					s.openXenolog()
-				}))
+				if globals.Get("intro.training.5.xenolog").AsBool(false) {
+					return NewOutput().WithEffects(NewFunctionEffect(func(s *State) {
+						s.openXenolog()
+					}))
+				}
+				return NewOutput().WithSerialPlan(
+					NewPlaySoundEffect("adventure/beeps/error"),
+					NewChatterEffect(thisEntity.GetId(), 3, "The device is locked."),
+				)
 			},
 		}.CreateHandler()
 	})
@@ -324,9 +381,9 @@ func init() {
 					return nil
 				}
 				have := globals.Get(rpg.GlobalKeyElythium).AsInt(0)
-				need := 4
+				need := 12
 				if have < need {
-					return NewOutput().WithEffects(NewDialogueEffect(fmt.Sprintf("The screen readout says I need to hae %d elythium, but I only have %d.", need, have)))
+					return NewOutput().WithEffects(NewDialogueEffect(fmt.Sprintf("The screen readout says I need to have %d elythium, but I only have %d.", need, have)))
 				}
 				return NewOutput().WithSerialPlan(
 					NewDialogueEffect("You deposit the elythium and press the button..."),
@@ -342,6 +399,8 @@ func init() {
 						}),
 					NewDialogueEffect("You stare at yourself, across the gap."),
 					NewDialogueEffect("But it isn't you."),
+					NewSetWorldStateEffect(globalVariableNameHasXenologAccess, true),
+					NewDialogueEffect("Press [ESC] to access your Xenolog."),
 				)
 			},
 		}.CreateHandler()

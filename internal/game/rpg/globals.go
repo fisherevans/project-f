@@ -234,7 +234,7 @@ func (s *defaultGlobals) Set(key string, value any) *GlobalValue {
 	if normalizedValue != nil {
 		s.values[key] = normalizedValue
 	} else {
-		log.Error().Str("key", key).Msgf("invalid value type: %T", value)
+		s.Delete(key)
 	}
 	return newGlobalValue(key, oldValue, oldExists)
 }

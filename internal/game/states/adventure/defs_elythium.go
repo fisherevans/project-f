@@ -35,7 +35,8 @@ func init() {
 			if isEnabled(system.state.globals) {
 				initialMode = "ready"
 			}
-			AttachModeBasedEntityRenderer(entity).WithMode(initialMode).
+			ModeMetadataKey.Set(entity, initialMode)
+			AttachModeBasedEntityRenderer(entity).
 				WithModeRenderer("ready", NewBasicEntityRenderer(entity).WithAnimations(
 					anim.LoadTilesheetAnimation(atlas, "adventure/entities/elythium/crystals", "default"),
 					anim.LoadTilesheetAnimation(atlas, "adventure/entities/elythium/crystals_sparkle", "default")).

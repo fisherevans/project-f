@@ -10,6 +10,7 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to start audio system: %v", err))
 	}
+	system.SetBusGain(system.Buses.Music, -2)
 }
 
 func GetSystem() *System {

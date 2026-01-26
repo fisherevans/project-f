@@ -22,6 +22,18 @@ func NewProps(kvs map[string]any) *Properties {
 	}
 }
 
+func MergeProps(props ...*Properties) *Properties {
+	kvs := make(map[string]any)
+	for _, prop := range props {
+		for k, v := range prop.kvs {
+			kvs[k] = v
+		}
+	}
+	return &Properties{
+		kvs: kvs,
+	}
+}
+
 func (p *Properties) Get(key string) (any, bool) {
 	if p == nil {
 		return nil, false

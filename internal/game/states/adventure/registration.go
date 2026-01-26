@@ -47,6 +47,17 @@ func (r entityRegistrarTargets) registrar(registrar entityRegistrar) {
 	}
 }
 
+var (
+	entityPropertyTemplates = map[string]map[string]any{}
+)
+
+func registerPropertyTemplate(key string, props map[string]any) {
+	if _, ok := entityPropertyTemplates[key]; ok {
+		log.Fatal().Str("key", key).Msg("duplicate property template")
+	}
+	entityPropertyTemplates[key] = props
+}
+
 type NewEntityParams struct {
 	EntityId   string
 	Class      string

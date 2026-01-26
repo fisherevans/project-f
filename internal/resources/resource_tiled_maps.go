@@ -104,7 +104,7 @@ func populateControlObjects(tiledMap *tiled.Map, tiledGroup *tiled.Group, log ze
 					log.Warn().Msgf("ambient light %d missing color", o.ID)
 					continue
 				}
-				area := &AmbientLightArea{
+				area := &ColoredArea{
 					Color:           colors.FromString(cHex),
 					RectangleEntity: newRectangleEntity(tiledMap, o),
 				}
@@ -117,6 +117,27 @@ func populateControlObjects(tiledMap *tiled.Map, tiledGroup *tiled.Group, log ze
 					}
 				}
 				gameMap.AmbientLightAreas = append(gameMap.AmbientLightAreas, area)
+			}
+		} else if objectGroup.Name == "background_color" {
+			for _, o := range objectGroup.Objects {
+				cHex := o.Properties.GetString("color")
+				if cHex == "" {
+					log.Warn().Msgf("background color area %d missing color", o.ID)
+					continue
+				}
+				area := &ColoredArea{
+					Color:           colors.FromString(cHex),
+					RectangleEntity: newRectangleEntity(tiledMap, o),
+				}
+				glowSizeString := o.Properties.GetString("glow_size")
+				if glowSizeString != "" {
+					var err error
+					area.GlowSize, err = strconv.ParseFloat(glowSizeString, 64)
+					if err != nil {
+						log.Fatal().Err(err).Msgf("failed to parse glow size %s", glowSizeString)
+					}
+				}
+				gameMap.BackgroundColorAreas = append(gameMap.BackgroundColorAreas, area)
 			}
 		} else if objectGroup.Name == "zones" {
 			for _, o := range objectGroup.Objects {

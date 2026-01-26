@@ -2,7 +2,7 @@ package adventure
 
 type EntityBehavior interface {
 	MovementComplete()
-	Update(timeDelta float64)
+	Update(timeDelta float64, globals StateGlobalsReader)
 	Reset()
 }
 
@@ -41,7 +41,7 @@ func (b *FaceEntityBehavior) MovementComplete() {
 
 }
 
-func (b *FaceEntityBehavior) Update(timeDelta float64) {
+func (b *FaceEntityBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
 	if b.entity.IsMoving() {
 		return
 	}

@@ -29,13 +29,14 @@ var TileLayerGroupNames = []string{
 var ControlLayerGroupName = "control"
 
 type Map struct {
-	TileLayerGroups    []*TileLayerGroup
-	Entities           map[string]*Entity
-	AmbientLightAreas  []*AmbientLightArea
-	Zones              []*Zone
-	CollisionTiles     []*Tile
-	SceneClearColor    pixel.RGBA
-	LightingClearColor pixel.RGBA
+	TileLayerGroups      []*TileLayerGroup
+	Entities             map[string]*Entity
+	AmbientLightAreas    []*ColoredArea
+	BackgroundColorAreas []*ColoredArea
+	Zones                []*Zone
+	CollisionTiles       []*Tile
+	SceneClearColor      pixel.RGBA
+	LightingClearColor   pixel.RGBA
 }
 
 func (m *Map) AddEntity(id string, e *Entity) {
@@ -107,13 +108,13 @@ func (z RectangleEntity) Moved(dx int, dy int) RectangleEntity {
 	return z
 }
 
-type AmbientLightArea struct {
+type ColoredArea struct {
 	RectangleEntity
 	Color    pixel.RGBA
 	GlowSize float64
 }
 
-func (z AmbientLightArea) Moved(dx int, dy int) AmbientLightArea {
+func (z ColoredArea) Moved(dx int, dy int) ColoredArea {
 	z.RectangleEntity = z.RectangleEntity.Moved(dx, dy)
 	return z
 }
