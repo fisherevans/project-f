@@ -5,7 +5,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/tiles"
@@ -52,7 +51,7 @@ func init() {
 			return entity, nil
 		}
 		return entity, NewBasicHandler(None{}).
-			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			WithOnInteract(func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}

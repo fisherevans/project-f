@@ -1,7 +1,5 @@
 package adventure
 
-import "fisherevans.com/project/f/internal/game/rpg"
-
 // HandlerOutput is returned by event handlers to specify state changes and effects
 type HandlerOutput struct {
 	State   any
@@ -32,9 +30,9 @@ func (o *HandlerOutput) WithParallelPlan(v ...Effect) *HandlerOutput {
 
 // EventHandler is the interface that all event handlers must implement
 type EventHandler interface {
-	Init(thisEntity EntityReader, globals rpg.GlobalsReader, state any) *HandlerOutput
-	HandleEvent(thisEntity EntityReader, globals rpg.GlobalsReader, state any, event any) *HandlerOutput
+	Init(thisEntity EntityReader, globals StateGlobalsReader, state any) *HandlerOutput
+	HandleEvent(thisEntity EntityReader, globals StateGlobalsReader, state any, event any) *HandlerOutput
 }
 
 // EventHandlerFunc is a function that handles a specific event type
-type EventHandlerFunc func(thisEntity EntityReader, globals rpg.GlobalsReader, state any, event any) *HandlerOutput
+type EventHandlerFunc func(thisEntity EntityReader, globals StateGlobalsReader, state any, event any) *HandlerOutput

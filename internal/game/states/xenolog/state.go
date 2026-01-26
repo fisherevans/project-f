@@ -34,7 +34,7 @@ func New(i game.XenologIntent) game.State {
 		background: i.Background,
 		transition: interp.NewTimedProgress(moveDuration, interp.Smootherstep),
 	}
-	s.screen = NewScreen(s)
+	s.screen = NewScreen(s, i.PrimortalsEnabled)
 	return s
 }
 

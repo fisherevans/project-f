@@ -62,11 +62,11 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 			ToColor:         util.Ptr("#000000FF"),
 			Transitions:     1,
 		},
-		NewFunctionEffect(func() {
+		NewFunctionEffect(func(*State) {
 			game.SetCustomShader(game.NewSwirlShader(3))
 		}),
 		NewMutateEntityBehaviorEffect(s.player).WithEnableBy("combat"),
-		NewFunctionEffect(func() {
+		NewFunctionEffect(func(*State) {
 			s.enteringCombat = false
 			game.RemoveCustomShader()
 			var opponent rpg.PrimortalType
@@ -110,7 +110,7 @@ func (e *EffectLoadMap) Process(source EntityReader, s *State) bool {
 			WithAutoDeactivate(false).
 			WithFromColor("#0000").
 			WithToColor("#000f"),
-		NewFunctionEffect(func() {
+		NewFunctionEffect(func(*State) {
 			game.SetActiveStateIntent(game.AdventureIntent{
 				MapName: e.MapName,
 			})

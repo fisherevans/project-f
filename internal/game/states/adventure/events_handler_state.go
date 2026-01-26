@@ -4,38 +4,58 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 )
 
-type observedGlobals struct {
-	baseGlobals rpg.Globals
-	dispatcher  *Dispatcher
+type StateGlobalsReader interface {
+	rpg.GlobalsReader
+	GetEntityReader(id string) (EntityReader, bool)
+	GetZonesAt(loc MapLocation) Zones
+	Player() EntityReader
 }
 
-func observeGlobals(baseGlobals rpg.Globals) *observedGlobals {
-	return &observedGlobals{
+type stateGlobals struct {
+	baseGlobals rpg.Globals
+	state       *State
+}
+
+func observeGlobals(baseGlobals rpg.Globals, state *State) *stateGlobals {
+	return &stateGlobals{
 		baseGlobals: baseGlobals,
+		state:       state,
 	}
 }
 
-func (s *observedGlobals) withDispatcher(dispatcher *Dispatcher) {
-	s.dispatcher = dispatcher
-}
-
-func (s *observedGlobals) Set(key string, value any) *rpg.GlobalValue {
+func (s *stateGlobals) Set(key string, value any) *rpg.GlobalValue {
 	oldValue := s.baseGlobals.Set(key, value)
 	newValue := s.baseGlobals.Get(key)
-	if s.dispatcher != nil {
-		s.dispatcher.Dispatch(NewEventGlobalVariableUpdated(key, newValue, oldValue))
+	if s.state.eventDispatcher != nil {
+		s.state.eventDispatcher.Dispatch(NewEventGlobalVariableUpdated(key, newValue, oldValue))
 	}
 	return oldValue
 }
 
-func (s *observedGlobals) Delete(key string) *rpg.GlobalValue {
+func (s *stateGlobals) Delete(key string) *rpg.GlobalValue {
 	oldValue := s.baseGlobals.Delete(key)
-	if s.dispatcher != nil {
-		s.dispatcher.Dispatch(NewEventGlobalVariableDeleted(key, oldValue))
+	if s.state.eventDispatcher != nil {
+		s.state.eventDispatcher.Dispatch(NewEventGlobalVariableDeleted(key, oldValue))
 	}
 	return oldValue
 }
 
-func (s *observedGlobals) Get(key string) *rpg.GlobalValue {
+func (s *stateGlobals) Get(key string) *rpg.GlobalValue {
 	return s.baseGlobals.Get(key)
+}
+
+func (s *stateGlobals) GetEntityReader(id string) (EntityReader, bool) {
+	var r EntityReader
+	var ok bool
+	r, ok = s.state.entities.GetEntity(id)
+	return r, ok
+}
+
+func (s *stateGlobals) GetZonesAt(loc MapLocation) Zones {
+	return s.state.zones.ZonesAtSet(loc)
+}
+
+func (s *stateGlobals) Player() EntityReader {
+	e, _ := s.state.entities.GetEntity(s.state.player)
+	return e
 }

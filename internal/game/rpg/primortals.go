@@ -84,7 +84,7 @@ var Primortal_Dummy = Primortal{
 	Type:        "dummy",
 	Name:        "Dummy",
 	Description: "A test robot to hit for fun.",
-	BaseSync:    50,
+	BaseSync:    30,
 	CombatArchetypes: map[string]PrimortalCombatArchetype{
 		"default": {
 			SkillPool: CombatSkillPool{

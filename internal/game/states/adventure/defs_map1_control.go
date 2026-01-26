@@ -4,7 +4,6 @@ import (
 	"math/rand/v2"
 
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 )
 
@@ -12,7 +11,7 @@ func init() {
 	registerEventHandler("control_camera", func(props *util.Properties) EventHandler {
 		controlled := props.GetString("control_id", "")
 		return BasicHandlerBuilder[None]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateBlockingPresenceEffect(thisEntity.GetId()).WithIsBlockingIngress(false),
 					NewPushEntityBehaviorEffect(controlled).
@@ -21,7 +20,7 @@ func init() {
 					NewMutateBlockingPresenceEffect("control_reset").WithIsBlockingIngress(false),
 				)
 			},
-			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
+			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
 				if event.ZoneId == "control" && globals.Get(globalVariableNamePlayerId).AsString("unknown") == event.EntityId {
 					if event.IsEntering {
 						return NewOutput().WithEffects(
@@ -70,7 +69,7 @@ func init() {
 		colorMask := props.GetString("color_mask", "#fff")
 		action := props.GetString("action", "")
 		return BasicHandlerBuilder[None]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
 						WithAnimations(map[string][]AnimationReference{
@@ -80,7 +79,7 @@ func init() {
 							}},
 						}))
 			},
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}

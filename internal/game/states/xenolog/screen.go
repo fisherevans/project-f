@@ -64,7 +64,7 @@ type Screen struct {
 	doDrawLastScreen bool
 }
 
-func NewScreen(state *State) *Screen {
+func NewScreen(state *State, primortalsEnabled bool) *Screen {
 	s := &Screen{
 		state:              state,
 		menuStack:          []Menu{},
@@ -77,7 +77,7 @@ func NewScreen(state *State) *Screen {
 			bloom.DefaultBlurConfig(),
 			bloom.DefaultBlendConfig().WithIntensity(0.5)),
 	}
-	s.menuStack = append(s.menuStack, newHomeMenu(s))
+	s.menuStack = append(s.menuStack, newHomeMenu(s, primortalsEnabled))
 	s.CurrentMenu().Enter()
 	// setup screen transition
 	s.canvas.Clear(colors.Black.RGBA)

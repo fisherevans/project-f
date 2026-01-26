@@ -30,7 +30,7 @@ func logEffect(level zerolog.Level, source EntityReader, e any, messageFormat st
 	log.WithLevel(level).Str("caller", source.GetId()).Interface("e", e).Msgf(messageFormat, args...)
 }
 
-type RunnableFunction func()
+type RunnableFunction func(s *State)
 
 func (RunnableFunction) String() string {
 	return "<inline function>"
@@ -42,7 +42,7 @@ type EffectFunction struct {
 }
 
 func (e *EffectFunction) Process(source EntityReader, s *State) bool {
-	e.Fn()
+	e.Fn(s)
 	return true
 }
 
@@ -153,5 +153,19 @@ func (e *EffectSendEvent) Process(source EntityReader, s *State) bool {
 		return false
 	}
 	s.eventDispatcher.Dispatch(e.Event)
+	return true
+}
+
+type EffectSendBroadcast struct {
+	instantEffect
+	BroadcastId string
+	Data        any
+}
+
+func (e *EffectSendBroadcast) Process(source EntityReader, s *State) bool {
+	if e == nil {
+		return false
+	}
+	s.eventDispatcher.Dispatch(NewEventBroadcast(e.BroadcastId, e.Data))
 	return true
 }

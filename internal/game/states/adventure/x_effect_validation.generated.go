@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-11T20:58:02-05:00 by go generate
+// Generated at 2026-01-25T22:31:09-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -90,6 +90,14 @@ func (e *EffectWaitForCondition) FillDefaultsAndValidate() error {
 func (e *EffectSendEvent) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
+
+	return reporter.report()
+}
+
+func (e *EffectSendBroadcast) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("broadcastId", e.BroadcastId)
 
 	return reporter.report()
 }
@@ -218,6 +226,14 @@ func (e *EffectSetEntityLocation) FillDefaultsAndValidate() error {
 	return reporter.report()
 }
 
+func (e *EffectChangePlayerRenderer) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("style", e.Style)
+
+	return reporter.report()
+}
+
 func (e *EffectTeleportPlayer) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
@@ -236,6 +252,13 @@ func (e *EffectTeleportPlayer) FillDefaultsAndValidate() error {
 		reporter.addf("destination", "exactly one of [toReference, toLocation, toEntityId] must be set")
 	}
 
+	if e.InterstitialEffects != nil {
+		for i, item := range *e.InterstitialEffects {
+			if err := item.FillDefaultsAndValidate(); err != nil {
+				reporter.sub("interstitialEffects").sub(fmt.Sprintf("[%d]", i)).addf("", "%v", err)
+			}
+		}
+	}
 
 	return reporter.report()
 }

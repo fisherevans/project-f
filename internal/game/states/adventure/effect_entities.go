@@ -201,13 +201,33 @@ func (e *EffectSetEntityLocation) Process(source EntityReader, s *State) bool {
 	return true
 }
 
+type EffectChangePlayerRenderer struct {
+	instantEffect
+	Style string
+}
+
+func (e *EffectChangePlayerRenderer) Process(source EntityReader, s *State) bool {
+	player, _ := s.entities.GetEntity(s.player)
+	switch e.Style {
+	case "human":
+		playerHumanRenderer(player)
+		return true
+	case "animech":
+		playerAnimechRenderer(player)
+		return true
+	}
+	logEffectWarnf(source, e, "invalid player style")
+	return false
+}
+
 type EffectTeleportPlayer struct {
 	instantEffect
-	ToReference     *string      `one_of:"destination"`
-	ToLocation      *MapLocation `one_of:"destination"`
-	ToEntityId      *string      `one_of:"destination"`
-	ExitDirection   *input.Direction
-	TransitionStyle *string
+	ToReference         *string      `one_of:"destination"`
+	ToLocation          *MapLocation `one_of:"destination"`
+	ToEntityId          *string      `one_of:"destination"`
+	ExitDirection       *input.Direction
+	TransitionStyle     *string
+	InterstitialEffects *[]Effect
 }
 
 func (e *EffectTeleportPlayer) Process(source EntityReader, s *State) bool {
@@ -263,6 +283,10 @@ func (e *EffectTeleportPlayer) Process(source EntityReader, s *State) bool {
 				WithResetPosition(true),
 			NewPlaySoundEffect("adventure/transition"),
 		)
+
+		if e.InterstitialEffects != nil {
+			effects = append(effects, (*e.InterstitialEffects)...)
+		}
 
 		if exitDirection != nil && *exitDirection != input.NotPressed {
 			effects = append(effects,

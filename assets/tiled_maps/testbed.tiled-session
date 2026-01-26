@@ -15,55 +15,56 @@
         },
         "hq.tmx": {
             "expandedGroupLayers": [
+                2,
                 4,
-                3,
-                2
+                3
             ],
             "expandedObjectLayers": [
                 11,
                 4
             ],
-            "scale": 3.7711,
+            "scale": 6.7071,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 4000.0265174617484,
-                "y": 4000.026517461749
+                "x": 3859.7158235302886,
+                "y": 3774.4330634700545
             }
         },
         "intro.tmx": {
             "expandedGroupLayers": [
+                2,
                 4,
-                3,
-                2
+                3
             ],
             "expandedObjectLayers": [
+                13,
                 11,
                 4
             ],
-            "scale": 1.0295,
+            "scale": 3,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 3915.9786304031077,
-                "y": 3066.0514813016025
+                "x": 1230.8333333333333,
+                "y": 3180.1666666666665
             }
         },
         "map1.tmx": {
             "expandedGroupLayers": [
+                20,
                 21,
-                19,
-                20
+                19
             ],
             "expandedObjectLayers": [
-                21,
                 13,
                 18,
-                6
+                6,
+                21
             ],
-            "scale": 1.3838,
+            "scale": 0.8282,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 706.3882063882064,
-                "y": 1275.8346581875994
+                "x": 891.6928278193673,
+                "y": 1107.8241970538518
             }
         },
         "snowhex_base.tsx": {
@@ -106,10 +107,10 @@
     "project": "testbed.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "hq.tmx",
         "snowhex_base.tsx",
         "space_base.tsx",
         "map1.tmx",
-        "hq.tmx",
         "intro.tmx",
         "testing.tmx",
         "asha_idle-32x32.tsx"

@@ -12,28 +12,7 @@ import (
 func init() {
 	newRegistrarBuilder().byTile(tiles.Player).registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 		entity := system.RegisterEntity(params.EntityId, params.Location)
-		renderer := AttachMovementBasedEntityRenderer(entity)
-
-		dashPlayerLight := NewLight(colors.HexString("#88f"), 1.5)
-		normalPlayerLight := NewLight(colors.HexString("#888"), 1.5)
-		for moveState, animations := range map[MoveState]map[input.Direction]*anim.AnimatedSprite{
-			MoveStateIdle:    anim.AshaIdle(atlas),
-			MoveStateWalking: anim.AshaWalk(atlas),
-			MoveStateRunning: anim.AshaRun(atlas),
-			MoveStateDashing: anim.Dash(atlas),
-		} {
-			for direction, animation := range animations {
-				moveStateRenderer := NewBasicEntityRenderer(entity).WithAnimations(animation).
-					WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
-					WithAnimationOriginOffset(pixel.V(0, 0.25))
-				if moveState == MoveStateDashing {
-					moveStateRenderer.WithLights(dashPlayerLight)
-				} else {
-					moveStateRenderer.WithLights(normalPlayerLight)
-				}
-				renderer.WithMovementStateRenderer(moveState, direction, moveStateRenderer)
-			}
-		}
+		playerHumanRenderer(entity)
 		AttachBlockIngressPresence(entity, false, NewStaticImpedance(ImpedanceHigh))
 		AttachPlayerBehavior(entity)
 		entity.SetMovementSpeed(MoveStateWalking, characterSpeed)
@@ -46,6 +25,56 @@ func init() {
 		system.state.globals.Set(globalVariableNamePlayerId, system.state.player)
 		return nil, nil
 	})
+}
+
+func playerHumanRenderer(entity Entity) *MovementBasedEntityRenderer {
+	renderer := AttachMovementBasedEntityRenderer(entity)
+	dashPlayerLight := NewLight(colors.HexString("#88f"), 1.5)
+	normalPlayerLight := NewLight(colors.HexString("#888"), 1.5)
+	for moveState, animations := range map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+		MoveStateIdle:    anim.AshaIdle(atlas),
+		MoveStateWalking: anim.AshaWalk(atlas),
+		MoveStateRunning: anim.AshaRun(atlas),
+		MoveStateDashing: anim.Dash(atlas),
+	} {
+		for direction, animation := range animations {
+			moveStateRenderer := NewBasicEntityRenderer(entity).WithAnimations(animation).
+				WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
+				WithAnimationOriginOffset(pixel.V(0, 0.25))
+			if moveState == MoveStateDashing {
+				moveStateRenderer.WithLights(dashPlayerLight)
+			} else {
+				moveStateRenderer.WithLights(normalPlayerLight)
+			}
+			renderer.WithMovementStateRenderer(moveState, direction, moveStateRenderer)
+		}
+	}
+	return renderer
+}
+
+func playerAnimechRenderer(entity Entity) *MovementBasedEntityRenderer {
+	renderer := AttachMovementBasedEntityRenderer(entity)
+	dashPlayerLight := NewLight(colors.HexString("#88f"), 1.5)
+	normalPlayerLight := NewLight(colors.HexString("#888"), 1.5)
+	for moveState, animations := range map[MoveState]map[input.Direction]*anim.AnimatedSprite{
+		MoveStateIdle:    anim.AnimechIdle(atlas),
+		MoveStateWalking: anim.AnimechWalk(atlas),
+		MoveStateRunning: anim.AnimechRun(atlas),
+		MoveStateDashing: anim.Dash(atlas),
+	} {
+		for direction, animation := range animations {
+			moveStateRenderer := NewBasicEntityRenderer(entity).WithAnimations(animation).
+				WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
+				WithAnimationOriginOffset(pixel.V(0, 0.25))
+			if moveState == MoveStateDashing {
+				moveStateRenderer.WithLights(dashPlayerLight)
+			} else {
+				moveStateRenderer.WithLights(normalPlayerLight)
+			}
+			renderer.WithMovementStateRenderer(moveState, direction, moveStateRenderer)
+		}
+	}
+	return renderer
 }
 
 type PlayerBehavior struct {

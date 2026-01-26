@@ -72,3 +72,17 @@ type EventScriptedMotionComplete struct {
 	MotionId    string
 	WasCanceled bool
 }
+
+type EventOnStateEnter struct{}
+
+type EventBroadcast struct {
+	Id   string
+	Data any
+}
+
+func NewEventBroadcast(id string, data any) any {
+	return EventBroadcast{
+		Id:   id,
+		Data: data,
+	}
+}

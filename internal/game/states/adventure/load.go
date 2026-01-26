@@ -119,6 +119,11 @@ func initializeMap(a *State, m *resources.Map) {
 			log.Debug().Msgf("added parameterized entity '%s'", entityId)
 			continue
 		}
+		if mapEntity.Class == "ShadowMob" {
+			a.AddMob(NewShadowMob(entityId, location, NewShadowMobParamsFromProperties(mapEntity.Properties)))
+			log.Debug().Msgf("added shadow mob '%s'", entityId)
+			continue
+		}
 		entityType := mapEntity.Properties.GetString("type", "")
 		if mapEntity.SpriteId != nil {
 			switch *mapEntity.SpriteId {
@@ -141,7 +146,7 @@ func initializeMap(a *State, m *resources.Map) {
 			}
 			a.zones.SetZoneId(location, string(ref))
 		case "shadow":
-			a.AddMob(NewShadowMob(entityId, location))
+			a.AddMob(NewShadowMob(entityId, location, NewShadowMobParamsFromProperties(mapEntity.Properties)))
 		default:
 			log.Warn().Msgf("Unknown entity type: %s / %s", entityId, entityType)
 		}

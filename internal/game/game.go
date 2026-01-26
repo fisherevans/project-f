@@ -8,12 +8,15 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game/shaders"
+	"github.com/google/uuid"
 )
 
 const (
 	GameWidth  = 240
 	GameHeight = 160
 )
+
+var InstanceId = uuid.New().String()
 
 type DebugArea int
 

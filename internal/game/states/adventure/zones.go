@@ -1,6 +1,18 @@
 package adventure
 
-import "fisherevans.com/project/f/internal/resources"
+import (
+	"fisherevans.com/project/f/internal/resources"
+)
+
+type Zones map[string]struct{}
+
+func (z Zones) Contains(a string) bool {
+	if z == nil {
+		return false
+	}
+	_, contains := z[a]
+	return contains
+}
 
 type zones struct {
 	zones map[MapLocation]map[string]struct{}
@@ -43,10 +55,10 @@ func (z *zones) ZonesAt(lol MapLocation) []string {
 	return zoneList
 }
 
-func (z *zones) ZonesAtSet(lol MapLocation) map[string]struct{} {
+func (z *zones) ZonesAtSet(lol MapLocation) Zones {
 	zoneSet, hasAny := z.zones[lol]
 	if !hasAny {
-		return nil
+		return map[string]struct{}{}
 	}
 	return zoneSet
 }

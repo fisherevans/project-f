@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -34,7 +33,7 @@ func init() {
 		}
 		duration := props.GetFloat("duration", 4)
 		return NewBasicHandler(None{}).
-			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			WithOnInteract(func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
@@ -60,7 +59,7 @@ func init() {
 			return nil
 		}
 		return NewBasicHandler(None{}).
-			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			WithOnInteract(func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
@@ -75,7 +74,7 @@ func init() {
 
 	registerEventHandler("door.run_state_based", func(props *util.Properties) EventHandler {
 		variable := props.GetString("run_state_key", "")
-		stateValue := func(gs rpg.GlobalsReader) string {
+		stateValue := func(gs StateGlobalsReader) string {
 			v := gs.Get(variable)
 			if !v.Exists() {
 				return doorClosed
@@ -90,14 +89,14 @@ func init() {
 			return gs.Get(variable).AsString(doorClosed)
 		}
 		return BasicHandlerBuilder[None]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
 						WithIsBlockingIngress(stateValue(globals) == doorClosed),
 					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
 						WithMode(stateValue(globals)))
 			},
-			GlobalVariableUpdated: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventGlobalVariableUpdated) *HandlerOutput {
+			GlobalVariableUpdated: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventGlobalVariableUpdated) *HandlerOutput {
 				if event.Key != variable {
 					return nil
 				}
@@ -117,7 +116,7 @@ func init() {
 		AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 		target := params.Properties.GetString("target", "")
 		return entity, NewBasicHandler(None{}).
-			WithOnInteract(func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			WithOnInteract(func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}

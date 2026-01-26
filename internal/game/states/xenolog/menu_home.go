@@ -20,6 +20,8 @@ import (
 var (
 	spriteAnimech   = atlas.GetSprite("xenolog/select_animech")
 	spritePrimortal = atlas.GetSprite("xenolog/select_primortal")
+	spriteUnknown   = atlas.GetSprite("xenolog/select_unknown")
+	labelUnknown    = "???????"
 )
 
 type homeMenu struct {
@@ -29,12 +31,15 @@ type homeMenu struct {
 	right      *selectBox
 }
 
-func newHomeMenu(screen *Screen) *homeMenu {
+func newHomeMenu(screen *Screen, primortalsEnabled bool) *homeMenu {
 	home := &homeMenu{
 		screen:     screen,
 		selectLeft: true,
 		left:       newSelectBox(spriteAnimech, "Animech", ""),
-		right:      newSelectBox(spritePrimortal, "Primortals", ""),
+		right:      newSelectBox(spriteUnknown, labelUnknown, "[locked]"),
+	}
+	if primortalsEnabled {
+		home.right = newSelectBox(spritePrimortal, "Primortals", "")
 	}
 	return home
 }
@@ -46,7 +51,7 @@ func (s *homeMenu) Enter() {
 	}
 
 	s.right.subLabel = ""
-	if isPrimortalUpgradeAvailable() {
+	if s.right.label != labelUnknown && isPrimortalUpgradeAvailable() {
 		s.right.subLabel = "Upgrade Available"
 	}
 }
@@ -77,8 +82,10 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 	if game.Controls[*State]().ButtonA().JustPressed() {
 		if s.selectLeft {
 			s.screen.PushMenuAnimated(newAnimechMenu(s.screen))
-		} else {
+		} else if s.right.label != labelUnknown {
 			s.screen.PushMenuAnimated(newPrimortalsMenu(s.screen))
+		} else {
+			game.GetAudioSystem().PlaySFX("adventure/beeps/error", 1.0)
 		}
 	}
 

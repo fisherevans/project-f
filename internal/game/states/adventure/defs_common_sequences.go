@@ -44,6 +44,10 @@ func (b *FocusedSequenceBuilder) WithPostEffects(effects ...Effect) *FocusedSequ
 }
 
 func (b *FocusedSequenceBuilder) Build() *HandlerOutput {
+	return NewOutput().WithSerialPlan(b.BuildEffects()...)
+}
+
+func (b *FocusedSequenceBuilder) BuildEffects() []Effect {
 	var effects []Effect
 	effects = append(effects, b.preEffects...)
 	effects = append(effects,
@@ -69,5 +73,5 @@ func (b *FocusedSequenceBuilder) Build() *HandlerOutput {
 		NewPopEntityBehaviorEffect(b.focusedEntity),
 		NewMutateEntityBehaviorEffect(b.playerId).WithEnableBy(b.focusedEntity))
 	effects = append(effects, b.postEffects...)
-	return NewOutput().WithSerialPlan(effects...)
+	return effects
 }

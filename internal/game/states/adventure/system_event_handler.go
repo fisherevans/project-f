@@ -2,7 +2,6 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,14 +15,14 @@ func newSystemEventHandler(s *State) EventHandler {
 	}
 }
 
-func (h *SystemEventHandler) Init(thisEntity EntityReader, globals rpg.GlobalsReader, state any) *HandlerOutput {
+func (h *SystemEventHandler) Init(thisEntity EntityReader, globals StateGlobalsReader, state any) *HandlerOutput {
 	return NewOutput().WithEffects(
 		NewFadeEffect(1, 1).
 			WithFromColor("#000f").
 			WithToColor("#0000"))
 }
 
-func (h *SystemEventHandler) HandleEvent(thisEntity EntityReader, globals rpg.GlobalsReader, state any, event any) *HandlerOutput {
+func (h *SystemEventHandler) HandleEvent(thisEntity EntityReader, globals StateGlobalsReader, state any, event any) *HandlerOutput {
 	if event == nil {
 		return nil
 	}
@@ -36,7 +35,7 @@ func (h *SystemEventHandler) HandleEvent(thisEntity EntityReader, globals rpg.Gl
 	return nil
 }
 
-func (h *SystemEventHandler) onInteract(thisEntity EntityReader, globals rpg.GlobalsReader, _ any, event *EventOnInteract) *HandlerOutput {
+func (h *SystemEventHandler) onInteract(thisEntity EntityReader, globals StateGlobalsReader, _ any, event *EventOnInteract) *HandlerOutput {
 	if event.SourceId != h.State.player {
 		log.Warn().Msgf("system event: got interact event for a non-player entity %s", thisEntity.GetId())
 	}
@@ -78,7 +77,7 @@ func findDashDestination(s *State, direction input.Direction, location MapLocati
 	}
 }
 
-func (h *SystemEventHandler) onZoneActivity(thisEntity EntityReader, globals rpg.GlobalsReader, _ any, event *EventEntityZoneActivity) *HandlerOutput {
+func (h *SystemEventHandler) onZoneActivity(thisEntity EntityReader, globals StateGlobalsReader, _ any, event *EventEntityZoneActivity) *HandlerOutput {
 	if !event.IsEntering || event.EntityId != h.State.player || event.WasTeleported {
 		return nil
 	}

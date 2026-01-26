@@ -4,7 +4,6 @@ import (
 	"math/rand"
 
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"github.com/rs/zerolog/log"
 )
@@ -25,7 +24,7 @@ func init() {
 			"Fine, it's not mine, I'll stop... probably",
 		}
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
@@ -38,7 +37,7 @@ func init() {
 	hasPapersKey := "intro.has_papers"
 	registerEventHandler("intro.is_your_paper", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
@@ -64,7 +63,7 @@ func init() {
 	}
 	registerEventHandler("intro.paper_instructor", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[InstructorState]{
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state InstructorState, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state InstructorState, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
@@ -96,7 +95,7 @@ func init() {
 					).
 					Build()
 			},
-			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state InstructorState, event *EventEntityZoneActivity) *HandlerOutput {
+			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state InstructorState, event *EventEntityZoneActivity) *HandlerOutput {
 				papersTurnedIn := globals.Get(papersTurnedInKey).AsBool(false)
 				if !event.IsEntering || event.ZoneId != "papers.instructions" || state.Blabbed || papersTurnedIn {
 					return nil
@@ -107,57 +106,6 @@ func init() {
 					WithFacePlayer(true).
 					WithMiddleEffects(NewChatterEffect(thisEntity.GetId(), 3, "You've gotta fill out your paperwork before you can leave...")).
 					Build().WithState(state)
-			},
-		}.CreateHandler()
-	})
-	registerEventHandler("intro.door.run_state_based", func(props *util.Properties) EventHandler {
-		variable := props.GetString("run_state_key", "")
-		stateValue := func(gs rpg.GlobalsReader) string {
-			v := gs.Get(variable)
-			if !v.Exists() {
-				return doorClosed
-			}
-			if b, ok := v.Value().(bool); ok {
-				if b {
-					return doorOpen
-				} else {
-					return doorClosed
-				}
-			}
-			return gs.Get(variable).AsString(doorClosed)
-		}
-		return BasicHandlerBuilder[None]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
-				return NewOutput().WithEffects(
-					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
-						WithIsBlockingIngress(stateValue(globals) == doorClosed),
-					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
-						WithMode(stateValue(globals)).
-						WithAnimations(map[string][]AnimationReference{
-							doorClosed: {
-								{Name: "adventure/doors/shield_front_1:closed"},
-								{Name: "adventure/doors/shield_front_1:waves"},
-							},
-							doorOpen: {
-								{Name: "adventure/doors/shield_front_1:open"},
-							},
-						}).
-						WithLights(map[string][]LightConfig{
-							doorClosed: {
-								{Color: "#127fd7", Size: 1.5, Modifier: util.Ptr("pulse_slow")},
-							},
-						}),
-				)
-			},
-			GlobalVariableUpdated: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventGlobalVariableUpdated) *HandlerOutput {
-				if event.Key != variable {
-					return nil
-				}
-				return NewOutput().WithEffects(
-					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
-						WithIsBlockingIngress(stateValue(globals) == doorClosed),
-					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
-						WithMode(stateValue(globals)))
 			},
 		}.CreateHandler()
 	})
@@ -195,7 +143,7 @@ func init() {
 		zoneId := props.GetString("zone_id", "")
 		walkBack := input.DirectionFromString(props.GetString("walk_back_direction", ""))
 		return BasicHandlerBuilder[None]{
-			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
+			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
 				if !event.IsEntering || event.ZoneId != zoneId || event.EntityId != globals.Get(globalVariableNamePlayerId).AsString("") {
 					return nil
 				}
@@ -208,7 +156,7 @@ func init() {
 					WithPostEffects(NewTriggerMovementEffect(event.EntityId).WithDirection(walkBack), NewSetRunStateEffect(guardedEntryDenialsKey, attempts+1)).
 					Build()
 			},
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
@@ -261,13 +209,13 @@ func init() {
 			IsTalking bool
 		}
 		return BasicHandlerBuilder[TalkingState]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state TalkingState) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state TalkingState) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewPushEntityBehaviorEffect(thisEntity.GetId()).WithScriptedMotion(EntityBehaviorScriptedMotion{}),
 					NewStartScriptedMotionEffect(thisEntity.GetId()).WithToEntityId(randomDestination()),
 				)
 			},
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state TalkingState, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state TalkingState, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != thisEntity.GetId() || IsBehaviorType[*FaceEntityBehavior](thisEntity) {
 					return nil
 				}
@@ -277,7 +225,7 @@ func init() {
 					NewPopEntityBehaviorEffect(thisEntity.GetId()),
 				)
 			},
-			ScriptedMotionComplete: func(thisEntity EntityReader, globals rpg.GlobalsReader, state TalkingState, event *EventScriptedMotionComplete) *HandlerOutput {
+			ScriptedMotionComplete: func(thisEntity EntityReader, globals StateGlobalsReader, state TalkingState, event *EventScriptedMotionComplete) *HandlerOutput {
 				if event.EntityId != thisEntity.GetId() {
 					return nil
 				}
@@ -296,7 +244,7 @@ func init() {
 	hasEquipmentVariable := "intro.has_equipment_key"
 	registerEventHandler("intro.equipment_specialist", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}
@@ -318,7 +266,7 @@ func init() {
 	registerEventHandler("intro.equipment_door.key_slot", func(props *util.Properties) EventHandler {
 		variable := props.GetString("run_state_key", "not_it")
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}

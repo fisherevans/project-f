@@ -20,8 +20,10 @@ import (
 )
 
 const (
-	characterSpeed             = 3.0
-	globalVariableNamePlayerId = "player_id"
+	characterSpeed                         = 3.0
+	globalVariableNamePlayerId             = "player_id"
+	globalVariableNameHasXenologAccess     = "abilities.xenolog_access"
+	globalVariableNameHasXenologPrimortals = "abilities.xenolog_primortals"
 )
 
 var (
@@ -88,7 +90,7 @@ type State struct {
 	eventDispatcher *Dispatcher
 	planExecutor    *PlanExecutor
 
-	globals *observedGlobals
+	globals *stateGlobals
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -101,7 +103,6 @@ func New(i game.AdventureIntent) game.State {
 		overlays:  NewOverlaySystem(),
 		timers:    newTimers(),
 		zones:     newZones(),
-		globals:   observeGlobals(game.CurrentSave().Globals),
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -129,12 +130,12 @@ func New(i game.AdventureIntent) game.State {
 
 		hudBatch: atlas.NewBatch(),
 	}
+	a.globals = observeGlobals(game.CurrentSave().Globals, a)
 	a.conditions = NewConditions(a)
 	a.planExecutor = NewPlanExecutor(a.processEffects)
 	a.entities = NewEntitySystem(a)
 	a.hud = NewHud(a)
 	a.eventDispatcher = NewDispatcher(a.globals, a.processEffects)
-	a.globals.withDispatcher(a.eventDispatcher)
 	a.eventDispatcher.Register(a.entities.RegisterEntity("system", MapLocation{}), newSystemEventHandler(a))
 
 	initializeMap(a, m)
@@ -142,7 +143,7 @@ func New(i game.AdventureIntent) game.State {
 	return a
 }
 
-func (s *State) Globals() rpg.GlobalsReader {
+func (s *State) Globals() StateGlobalsReader {
 	return s.globals
 }
 
@@ -152,6 +153,7 @@ func (s *State) ClearColor() color.Color {
 
 func (s *State) OnEnter() {
 	s.entities.resumeAllSounds()
+	s.eventDispatcher.Dispatch(EventOnStateEnter{})
 }
 
 func (s *State) OnExit() {
@@ -278,11 +280,16 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 			Background: s,
 		})
 	}
-	if game.Controls[*State]().ButtonStart().JustPressed() {
-		game.SetActiveStateIntent(game.XenologIntent{
-			Background: s,
-		})
+	if s.globals.Get(globalVariableNameHasXenologAccess).AsBool(false) && game.Controls[*State]().ButtonStart().JustPressed() {
+		s.openXenolog()
 	}
+}
+
+func (s *State) openXenolog() {
+	game.SetActiveStateIntent(game.XenologIntent{
+		Background:        s,
+		PrimortalsEnabled: s.globals.Get(globalVariableNameHasXenologPrimortals).AsBool(false),
+	})
 }
 
 func (s *State) AddMob(mob *ShadowMob) {

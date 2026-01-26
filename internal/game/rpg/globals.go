@@ -3,6 +3,7 @@ package rpg
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -292,6 +293,16 @@ func (s *defaultGlobals) Get(key string) *GlobalValue {
 	return newGlobalValue(key, v, exists)
 }
 
+func (s *defaultGlobals) KeysWithPrefix(prefix string) []string {
+	var keys []string
+	for k := range s.values {
+		if strings.HasPrefix(k, prefix) {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
 // MarshalYAML makes defaultGlobals serialize as its inner map.
 func (s *defaultGlobals) MarshalYAML() (any, error) {
 	return s.values, nil
@@ -311,6 +322,7 @@ type Globals interface {
 	GlobalsReader
 	Set(key string, value any) *GlobalValue
 	Delete(key string) *GlobalValue
+	KeysWithPrefix(prefix string) []string
 }
 
 type GlobalsReader interface {

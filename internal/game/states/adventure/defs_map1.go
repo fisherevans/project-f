@@ -5,14 +5,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 )
 
 func init() {
 	registerEventHandler("map1", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}
@@ -28,19 +27,19 @@ func init() {
 	}
 	registerEventHandler("exit_chatter", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[ExitChatterState]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state ExitChatterState) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state ExitChatterState) *HandlerOutput {
 				return NewOutput().WithState(ExitChatterState{
 					Ready: true,
 				})
 			},
-			TimerComplete: func(thisEntity EntityReader, globals rpg.GlobalsReader, state ExitChatterState, event *EventTimerComplete) *HandlerOutput {
+			TimerComplete: func(thisEntity EntityReader, globals StateGlobalsReader, state ExitChatterState, event *EventTimerComplete) *HandlerOutput {
 				if event.CreatedBy != thisEntity.GetId() || event.TimerId != "reset" {
 					return nil
 				}
 				state.Ready = true
 				return NewOutput().WithState(state)
 			},
-			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state ExitChatterState, event *EventEntityZoneActivity) *HandlerOutput {
+			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state ExitChatterState, event *EventEntityZoneActivity) *HandlerOutput {
 				if event.ZoneId == "exit" &&
 					event.IsEntering &&
 					event.EntityId == globals.Get(globalVariableNamePlayerId).AsString("unknown") &&
@@ -66,14 +65,14 @@ func init() {
 const doorStateVariable = "door_state"
 const doorOpen, doorClosed = "open", "closed"
 
-func doorState(globals rpg.GlobalsReader) string {
+func doorState(globals StateGlobalsReader) string {
 	return globals.Get(doorStateVariable).AsString(doorClosed)
 }
 
 func init() {
 	registerEventHandler("door_lever", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
 						WithMode(doorState(globals)).
@@ -87,7 +86,7 @@ func init() {
 						}),
 				)
 			},
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}
@@ -107,7 +106,7 @@ func init() {
 func init() {
 	registerEventHandler("door", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateBlockingPresenceEffect(thisEntity.GetId()).
 						WithIsBlockingIngress(doorState(globals) == doorClosed),
@@ -147,7 +146,7 @@ func init() {
 						})),
 				)
 			},
-			GlobalVariableUpdated: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventGlobalVariableUpdated) *HandlerOutput {
+			GlobalVariableUpdated: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventGlobalVariableUpdated) *HandlerOutput {
 				if event.Key != doorStateVariable {
 					return nil
 				}
@@ -166,7 +165,7 @@ var nextSpawnedEntityId = atomic.Int64{}
 func init() {
 	registerEventHandler("spawn_entity", func(_ *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			Init: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None) *HandlerOutput {
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(thisEntity.GetId()).
 						WithAnimations(map[string][]AnimationReference{
@@ -175,7 +174,7 @@ func init() {
 							}},
 						}))
 			},
-			OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if thisEntity.GetId() != event.TargetId {
 					return nil
 				}

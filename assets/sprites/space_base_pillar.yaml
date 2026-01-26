@@ -1,0 +1,15 @@
+tilesheet:
+  tileWidth: 16
+  tileHeight: 48
+animations:
+  up:
+    h_sequence:
+      row: 1
+    framesPerSecond: 6
+    reverse: true
+    repeat: false
+  down:
+    h_sequence:
+      row: 1
+    framesPerSecond: 6
+    repeat: false

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-11T20:58:02-05:00 by go generate
+// Generated at 2026-01-25T22:31:09-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure

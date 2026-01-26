@@ -44,7 +44,7 @@ func DefaultSelectorState() SelectIntent {
 	i := SelectIntent{}
 	i = i.With("Adventure", func() any {
 		return AdventureIntent{
-			MapName: "map1",
+			MapName: "intro", // map1
 		}
 	})
 

@@ -3,7 +3,6 @@ package adventure
 import (
 	"reflect"
 
-	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/rs/zerolog/log"
 )
 
@@ -14,12 +13,12 @@ type registeredEventHandler struct {
 }
 
 type Dispatcher struct {
-	globals            rpg.GlobalsReader
+	globals            StateGlobalsReader
 	effectDispatcher   EffectDispatcher
 	registeredHandlers map[string]*registeredEventHandler
 }
 
-func NewDispatcher(globals rpg.GlobalsReader, effectDispatcher EffectDispatcher) *Dispatcher {
+func NewDispatcher(globals StateGlobalsReader, effectDispatcher EffectDispatcher) *Dispatcher {
 	return &Dispatcher{
 		globals:            globals,
 		effectDispatcher:   effectDispatcher,

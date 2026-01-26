@@ -117,7 +117,11 @@ func (p *skillListItem) Render(m *skillSwapMenu, topLeftY int, target pixel.Targ
 	if highlightProgress > 0 {
 		mask = colors.Lerp(mask, colorHighlight, highlightProgress)
 	}
-	smallText.render(p.skillId.Get().Name, screenWidth/2, centerY, mask, tbcfg.RenderFrom(gfx.Centered))
+	name := "???"
+	if p.skillId != "" {
+		name = p.skillId.Get().Name
+	}
+	smallText.render(name, screenWidth/2, centerY, mask, tbcfg.RenderFrom(gfx.Centered))
 }
 
 type skillListItemSpacer struct {

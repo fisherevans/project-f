@@ -214,7 +214,7 @@ var Skill_Cinder = Skill{
 	Description: "Ignite your foe with a burning ember",
 	Ticks: skillTicks().
 		add(tick().repeat(3)...).
-		add(tick().statusOpponent(StatusBurning, 3).animate(newAnimation().
+		add(tick().statusOpponent(StatusBurning, 5).animate(newAnimation().
 			sourceTransformations(wiggle()))).
 		add(tick()),
 }.register()

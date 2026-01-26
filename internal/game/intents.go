@@ -50,5 +50,6 @@ type SwapStateIntent struct {
 }
 
 type XenologIntent struct {
-	Background State
+	Background        State
+	PrimortalsEnabled bool
 }

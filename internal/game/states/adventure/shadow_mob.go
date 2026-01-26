@@ -4,12 +4,13 @@ import (
 	"math"
 	"math/rand"
 
-	"fisherevans.com/project/f/internal/game/input"
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
-
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/util"
+	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 )
 
 // Small epsilon used for boundary fudge factors
@@ -82,19 +83,48 @@ type ShadowMobConfig struct {
 	OnTrigger     func(s *State, m *ShadowMob)
 }
 
+type ShadowMobParams struct {
+	CombatId         string             `yaml:"combat_id"`
+	LeashRadius      float64            `yaml:"leash_radius"`
+	RespawnDelay     float64            `yaml:"respawn_delay"`
+	RespawnJitter    float64            `yaml:"respawn_jitter"`
+	CombatBackground string             `yaml:"combat_background"`
+	Opponent         *rpg.PrimortalType `yaml:"opponent"`
+}
+
+func NewShadowMobParamsFromProperties(props *util.Properties) ShadowMobParams {
+	params := DefaultShadowMobParams()
+	if props == nil {
+		return params
+	}
+	props.LoadStructFromKey("shadow_mob", &params)
+	return params
+}
+
+func DefaultShadowMobParams() ShadowMobParams {
+	return ShadowMobParams{
+		LeashRadius:      5,
+		RespawnDelay:     15,
+		RespawnJitter:    0,
+		CombatBackground: "combat/background_sylvoria",
+		Opponent:         nil,
+	}
+}
+
 // DefaultShadowMobConfig returns a config pre-populated with balanced defaults.
-func DefaultShadowMobConfig() ShadowMobConfig {
+func DefaultShadowMobConfig(params ShadowMobParams) ShadowMobConfig {
 	return ShadowMobConfig{
-		LeashRadius:   5,
+		LeashRadius:   params.LeashRadius,
 		SenseMin:      3.5,
 		SenseMax:      4.5,
 		TriggerRadius: 0.8,
 		OnTrigger: func(s *State, m *ShadowMob) {
 			if game.DebugToggles().F5().ToggleState() {
-				s.ExecuteSystemEffectsInOrder(
-					NewTriggerCombatEffect("combat/background_sylvoria"),
-					NewTimerEffect(15),
-					NewFunctionEffect(func() {
+				triggerCombat := NewTriggerCombatEffect(params.CombatBackground).WithCombatId(params.CombatId)
+				triggerCombat.Opponent = params.Opponent
+				effects := []Effect{
+					triggerCombat,
+					NewFunctionEffect(func(*State) { // remove this mob
 						for i, mob := range s.mobs {
 							if mob == m {
 								s.mobs[i] = s.mobs[len(s.mobs)-1]
@@ -103,10 +133,15 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 							}
 						}
 					}),
-					NewFunctionEffect(func() {
-						s.mobs = append(s.mobs, m)
-					}),
-				)
+				}
+				if params.RespawnDelay+params.RespawnJitter > 0 {
+					effects = append(effects,
+						NewTimerEffect(params.RespawnDelay+rand.Float64()*params.RespawnDelay),
+						NewFunctionEffect(func(*State) {
+							s.mobs = append(s.mobs, m)
+						}))
+				}
+				s.ExecuteSystemEffectsInOrder(effects...)
 			} else {
 				game.DebugNotificationf("Mob caught you! Toggle F5")
 			}
@@ -116,25 +151,7 @@ func DefaultShadowMobConfig() ShadowMobConfig {
 
 // NewShadowMobWithConfig constructs a ShadowMob focusing on the key knobs; all
 // other tunables are set to internal defaults that you can modify later if desired.
-func NewShadowMobWithConfig(entityId string, location MapLocation, cfg *ShadowMobConfig) *ShadowMob {
-	c := DefaultShadowMobConfig()
-	if cfg != nil {
-		// Override provided fields (zero values are treated as explicit, except OnTrigger)
-		c.LeashRadius = cfg.LeashRadius
-		if cfg.SenseMin != 0 {
-			c.SenseMin = cfg.SenseMin
-		}
-		if cfg.SenseMax != 0 {
-			c.SenseMax = cfg.SenseMax
-		}
-		if cfg.TriggerRadius != 0 {
-			c.TriggerRadius = cfg.TriggerRadius
-		}
-		if cfg.OnTrigger != nil {
-			c.OnTrigger = cfg.OnTrigger
-		}
-	}
-
+func NewShadowMobWithConfig(entityId string, location MapLocation, c *ShadowMobConfig) *ShadowMob {
 	// All main tunables are grouped for clarity. Wandering movement controls organic patrolling;
 	// leash/aggro/sensing/chase/trigger sections are tuned for fun and variety.
 	m := &ShadowMob{
@@ -196,8 +213,8 @@ func NewShadowMobWithConfig(entityId string, location MapLocation, cfg *ShadowMo
 	return m
 }
 
-func NewShadowMob(entityId string, location MapLocation) *ShadowMob {
-	cfg := DefaultShadowMobConfig()
+func NewShadowMob(entityId string, location MapLocation, params ShadowMobParams) *ShadowMob {
+	cfg := DefaultShadowMobConfig(params)
 	return NewShadowMobWithConfig(entityId, location, &cfg)
 }
 

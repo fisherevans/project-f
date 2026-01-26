@@ -7,6 +7,7 @@ toolchain go1.24.8
 require (
 	github.com/go-gl/mathgl v1.1.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+	github.com/google/uuid v1.6.0
 	github.com/gopxl/beep/v2 v2.1.1
 	github.com/gopxl/glhf/v2 v2.0.0
 	github.com/gopxl/pixel/v2 v2.3.0

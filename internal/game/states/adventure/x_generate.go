@@ -363,10 +363,10 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("// BasicHandlerBuilder provides a simple way to build event handlers with type-safe state\n")
 	sb.WriteString("type BasicHandlerBuilder[T any] struct {\n")
 	sb.WriteString("\tDefaultState func() T\n\n")
-	sb.WriteString("\tInit func(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput\n\n")
+	sb.WriteString("\tInit func(thisEntity EntityReader, globals StateGlobalsReader, state T) *HandlerOutput\n\n")
 
 	for _, event := range events {
-		sb.WriteString(fmt.Sprintf("\t%s func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *%s) *HandlerOutput\n",
+		sb.WriteString(fmt.Sprintf("\t%s func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *%s) *HandlerOutput\n",
 			event.JSFunctionName, event.TypeName))
 	}
 	sb.WriteString("}\n\n")
@@ -381,14 +381,14 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("}\n\n")
 
 	// Generate fluent builder methods
-	sb.WriteString("func (b *BasicHandlerBuilder[T]) WithInit(init func(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput) *BasicHandlerBuilder[T] {\n")
+	sb.WriteString("func (b *BasicHandlerBuilder[T]) WithInit(init func(thisEntity EntityReader, globals StateGlobalsReader, state T) *HandlerOutput) *BasicHandlerBuilder[T] {\n")
 	sb.WriteString("\tb.Init = init\n")
 	sb.WriteString("\treturn b\n")
 	sb.WriteString("}\n\n")
 
 	for _, event := range events {
 		methodName := "With" + event.JSFunctionName
-		sb.WriteString(fmt.Sprintf("func (b *BasicHandlerBuilder[T]) %s(%s func(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *%s) *HandlerOutput) *BasicHandlerBuilder[T] {\n",
+		sb.WriteString(fmt.Sprintf("func (b *BasicHandlerBuilder[T]) %s(%s func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *%s) *HandlerOutput) *BasicHandlerBuilder[T] {\n",
 			methodName, camelCase(event.JSFunctionName), event.TypeName))
 		sb.WriteString(fmt.Sprintf("\tb.%s = %s\n", event.JSFunctionName, camelCase(event.JSFunctionName)))
 		sb.WriteString("\treturn b\n")
@@ -426,7 +426,7 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("}\n\n")
 
 	// Generate Init method
-	sb.WriteString("func (h *basicHandler[T]) Init(thisEntity EntityReader, globals rpg.GlobalsReader, state any) *HandlerOutput {\n")
+	sb.WriteString("func (h *basicHandler[T]) Init(thisEntity EntityReader, globals StateGlobalsReader, state any) *HandlerOutput {\n")
 	sb.WriteString("\tif h.builder.Init == nil {\n")
 	sb.WriteString("\t\treturn nil\n")
 	sb.WriteString("\t}\n")
@@ -434,7 +434,7 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("}\n\n")
 
 	// Generate HandleEvent method
-	sb.WriteString("func (h *basicHandler[T]) HandleEvent(thisEntity EntityReader, globals rpg.GlobalsReader, state any, event any) *HandlerOutput {\n")
+	sb.WriteString("func (h *basicHandler[T]) HandleEvent(thisEntity EntityReader, globals StateGlobalsReader, state any, event any) *HandlerOutput {\n")
 	sb.WriteString("\tconvertedState := h.convertState(state)\n")
 	sb.WriteString("\tswitch e := event.(type) {\n")
 
@@ -459,9 +459,9 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("// Note: Override TypedInit (not Init) and the typed event methods.\n")
 	sb.WriteString("// BaseHandler will automatically call your TypedInit from Init.\n")
 	sb.WriteString("type TypedEventHandler[T any] interface {\n")
-	sb.WriteString("\tTypedInit(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput\n")
+	sb.WriteString("\tTypedInit(thisEntity EntityReader, globals StateGlobalsReader, state T) *HandlerOutput\n")
 	for _, event := range events {
-		sb.WriteString(fmt.Sprintf("\t%s(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *%s) *HandlerOutput\n",
+		sb.WriteString(fmt.Sprintf("\t%s(thisEntity EntityReader, globals StateGlobalsReader, state T, event *%s) *HandlerOutput\n",
 			event.JSFunctionName, event.TypeName))
 	}
 	sb.WriteString("}\n\n")
@@ -491,17 +491,17 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 	sb.WriteString("}\n\n")
 
 	// Generate Init method for BaseHandler (calls TypedInit)
-	sb.WriteString("func (h *BaseHandler[T]) Init(thisEntity EntityReader, globals rpg.GlobalsReader, state any) *HandlerOutput {\n")
+	sb.WriteString("func (h *BaseHandler[T]) Init(thisEntity EntityReader, globals StateGlobalsReader, state any) *HandlerOutput {\n")
 	sb.WriteString("\treturn h.TypedInit(thisEntity, globals, h.convertState(state))\n")
 	sb.WriteString("}\n\n")
 
 	// Generate TypedInit method for BaseHandler
-	sb.WriteString("func (h *BaseHandler[T]) TypedInit(thisEntity EntityReader, globals rpg.GlobalsReader, state T) *HandlerOutput {\n")
+	sb.WriteString("func (h *BaseHandler[T]) TypedInit(thisEntity EntityReader, globals StateGlobalsReader, state T) *HandlerOutput {\n")
 	sb.WriteString("\treturn nil\n")
 	sb.WriteString("}\n\n")
 
 	// Generate HandleEvent method for BaseHandler
-	sb.WriteString("func (h *BaseHandler[T]) HandleEvent(thisEntity EntityReader, globals rpg.GlobalsReader, state any, event any) *HandlerOutput {\n")
+	sb.WriteString("func (h *BaseHandler[T]) HandleEvent(thisEntity EntityReader, globals StateGlobalsReader, state any, event any) *HandlerOutput {\n")
 	sb.WriteString("\tconvertedState := h.convertState(state)\n")
 	sb.WriteString("\tswitch e := event.(type) {\n")
 
@@ -516,7 +516,7 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 
 	// Generate no-op event handler methods for BaseHandler
 	for _, event := range events {
-		sb.WriteString(fmt.Sprintf("func (h *BaseHandler[T]) %s(thisEntity EntityReader, globals rpg.GlobalsReader, state T, event *%s) *HandlerOutput {\n",
+		sb.WriteString(fmt.Sprintf("func (h *BaseHandler[T]) %s(thisEntity EntityReader, globals StateGlobalsReader, state T, event *%s) *HandlerOutput {\n",
 			event.JSFunctionName, event.TypeName))
 		sb.WriteString("\treturn nil\n")
 		sb.WriteString("}\n\n")
@@ -687,28 +687,54 @@ func generateValidateMethod(sb *strings.Builder, effect EffectInfo, typesWithVal
 			// For slices in one_of, check if they're non-empty
 			if strings.HasPrefix(field.GoType, "[]") {
 				sb.WriteString(fmt.Sprintf("\tif len(%s.%s) > 0 {\n", receiverName, field.Name))
+				sb.WriteString(fmt.Sprintf("\t\t%sCount++\n", groupName))
+				fieldType := field.GoType
+				if strings.HasPrefix(fieldType, "[]") {
+					elemType := strings.TrimPrefix(fieldType, "[]")
+					if needsValidation(elemType) {
+						sb.WriteString(fmt.Sprintf("\t\tfor i, item := range %s.%s {\n", receiverName, field.Name))
+						sb.WriteString("\t\t\tif err := item.FillDefaultsAndValidate(); err != nil {\n")
+						sb.WriteString(fmt.Sprintf("\t\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+						sb.WriteString("\t\t\t}\n")
+						sb.WriteString("\t\t}\n")
+					}
+				}
+				sb.WriteString("\t}\n")
+			} else if strings.HasPrefix(field.GoType, "*[]") {
+				sb.WriteString(fmt.Sprintf("\tif %s.%s != nil && len(*%s.%s) > 0 {\n", receiverName, field.Name, receiverName, field.Name))
+				sb.WriteString(fmt.Sprintf("\t\t%sCount++\n", groupName))
+				fieldType := strings.TrimPrefix(field.GoType, "*")
+				if strings.HasPrefix(fieldType, "[]") {
+					elemType := strings.TrimPrefix(fieldType, "[]")
+					if needsValidation(elemType) {
+						sb.WriteString(fmt.Sprintf("\t\tfor i, item := range *%s.%s {\n", receiverName, field.Name))
+						sb.WriteString("\t\t\tif err := item.FillDefaultsAndValidate(); err != nil {\n")
+						sb.WriteString(fmt.Sprintf("\t\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+						sb.WriteString("\t\t\t}\n")
+						sb.WriteString("\t\t}\n")
+					}
+				}
+				sb.WriteString("\t}\n")
 			} else {
 				sb.WriteString(fmt.Sprintf("\tif %s.%s != nil {\n", receiverName, field.Name))
-			}
-			sb.WriteString(fmt.Sprintf("\t\t%sCount++\n", groupName))
-			// Validate nested struct if it needs validation
-			fieldType := strings.TrimPrefix(field.GoType, "*")
-			if strings.HasPrefix(fieldType, "[]") {
-				// Handle slices
-				elemType := strings.TrimPrefix(fieldType, "[]")
-				if needsValidation(elemType) {
-					sb.WriteString(fmt.Sprintf("\t\tfor i, item := range %s.%s {\n", receiverName, field.Name))
-					sb.WriteString("\t\t\tif err := item.FillDefaultsAndValidate(); err != nil {\n")
-					sb.WriteString(fmt.Sprintf("\t\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
-					sb.WriteString("\t\t\t}\n")
+				sb.WriteString(fmt.Sprintf("\t\t%sCount++\n", groupName))
+				fieldType := strings.TrimPrefix(field.GoType, "*")
+				if strings.HasPrefix(fieldType, "[]") {
+					elemType := strings.TrimPrefix(fieldType, "[]")
+					if needsValidation(elemType) {
+						sb.WriteString(fmt.Sprintf("\t\tfor i, item := range %s.%s {\n", receiverName, field.Name))
+						sb.WriteString("\t\t\tif err := item.FillDefaultsAndValidate(); err != nil {\n")
+						sb.WriteString(fmt.Sprintf("\t\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+						sb.WriteString("\t\t\t}\n")
+						sb.WriteString("\t\t}\n")
+					}
+				} else if needsValidation(fieldType) {
+					sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.FillDefaultsAndValidate(); err != nil {\n", receiverName, field.Name))
+					sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
 					sb.WriteString("\t\t}\n")
 				}
-			} else if needsValidation(fieldType) {
-				sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.FillDefaultsAndValidate(); err != nil {\n", receiverName, field.Name))
-				sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
-				sb.WriteString("\t\t}\n")
+				sb.WriteString("\t}\n")
 			}
-			sb.WriteString("\t}\n")
 		}
 		sb.WriteString(fmt.Sprintf("\tif %sCount != 1 {\n", groupName))
 		sb.WriteString(fmt.Sprintf("\t\treporter.addf(%q, \"exactly one of [%s] must be set\")\n",
@@ -753,7 +779,17 @@ func generateValidateMethod(sb *strings.Builder, effect EffectInfo, typesWithVal
 		}
 
 		fieldType := strings.TrimPrefix(field.GoType, "*")
-		if needsValidation(fieldType) {
+		if strings.HasPrefix(fieldType, "[]") {
+			sb.WriteString(fmt.Sprintf("\tif %s.%s != nil {\n", receiverName, field.Name))
+			if needsValidation(strings.TrimPrefix(fieldType, "[]")) {
+				sb.WriteString(fmt.Sprintf("\t\tfor i, item := range *%s.%s {\n", receiverName, field.Name))
+				sb.WriteString("\t\t\tif err := item.FillDefaultsAndValidate(); err != nil {\n")
+				sb.WriteString(fmt.Sprintf("\t\t\t\treporter.sub(%q).sub(fmt.Sprintf(\"[%%d]\", i)).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))
+				sb.WriteString("\t\t\t}\n")
+				sb.WriteString("\t\t}\n")
+			}
+			sb.WriteString("\t}\n")
+		} else if needsValidation(fieldType) {
 			sb.WriteString(fmt.Sprintf("\tif %s.%s != nil {\n", receiverName, field.Name))
 			sb.WriteString(fmt.Sprintf("\t\tif err := %s.%s.FillDefaultsAndValidate(); err != nil {\n", receiverName, field.Name))
 			sb.WriteString(fmt.Sprintf("\t\t\treporter.sub(%q).addf(\"\", \"%%v\", err)\n", camelCase(field.Name)))

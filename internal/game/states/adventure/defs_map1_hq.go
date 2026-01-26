@@ -2,14 +2,13 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 )
 
 func init() {
 	registerEventHandler("captain_chair_front", func(props *util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
-			EntityZoneActivity: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
+			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
 				pId := globals.Get(globalVariableNamePlayerId).AsString("unknown")
 				if event.ZoneId != "captains_area" || pId != event.EntityId || !event.IsEntering {
 					return nil

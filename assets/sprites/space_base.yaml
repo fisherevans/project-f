@@ -8,3 +8,9 @@ animations:
       fromColumn: 1
       toColumn: 4
     framesPerSecond: 2
+  xenolog:
+    h_sequence:
+      row: 29
+      fromColumn: 10
+      toColumn: 15
+    framesPerSecond: 1

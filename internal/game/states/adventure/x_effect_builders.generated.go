@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2025-11-11T20:58:02-05:00 by go generate
+// Generated at 2026-01-25T22:31:09-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -72,6 +72,13 @@ func (e *EffectWaitForCondition) WithConditionId(conditionId string) *EffectWait
 func NewSendEventEffect(event any) *EffectSendEvent {
 	return &EffectSendEvent{
 		Event: event,
+	}
+}
+
+func NewSendBroadcastEffect(broadcastId string, data any) *EffectSendBroadcast {
+	return &EffectSendBroadcast{
+		BroadcastId: broadcastId,
+		Data: data,
 	}
 }
 
@@ -207,6 +214,12 @@ func (e *EffectSetEntityLocation) WithToEntityId(toEntityId string) *EffectSetEn
 	return e
 }
 
+func NewChangePlayerRendererEffect(style string) *EffectChangePlayerRenderer {
+	return &EffectChangePlayerRenderer{
+		Style: style,
+	}
+}
+
 func NewTeleportPlayerEffect() *EffectTeleportPlayer {
 	return &EffectTeleportPlayer{
 	}
@@ -234,6 +247,11 @@ func (e *EffectTeleportPlayer) WithExitDirection(exitDirection input.Direction) 
 
 func (e *EffectTeleportPlayer) WithTransitionStyle(transitionStyle string) *EffectTeleportPlayer {
 	e.TransitionStyle = &transitionStyle
+	return e
+}
+
+func (e *EffectTeleportPlayer) WithInterstitialEffects(interstitialEffects []Effect) *EffectTeleportPlayer {
+	e.InterstitialEffects = &interstitialEffects
 	return e
 }
 

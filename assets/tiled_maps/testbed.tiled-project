@@ -73,7 +73,7 @@
                 {
                     "name": "render_config",
                     "type": "string",
-                    "value": "#animations:\n#  \"mode\":\n#    - name: path/to/tilesheet:default\n#lights:\n#  \"mode\":\n#    - color: #fff\n#      size: 2\n#      modifier: pulse_medium # optional"
+                    "value": "#mode: default\n#animations:\n#  \"default\":\n#    - name: path/to/tilesheet:default\n#lights:\n#  \"default\":\n#    - color: #fff\n#      size: 2\n#      modifier: pulse_medium # optional"
                 },
                 {
                     "name": "script_ref",
@@ -151,6 +151,31 @@
                 }
             ],
             "name": "Zone",
+            "type": "class",
+            "useAs": [
+                "property",
+                "map",
+                "layer",
+                "object",
+                "tile",
+                "tileset",
+                "wangcolor",
+                "wangset",
+                "project"
+            ]
+        },
+        {
+            "color": "#ffb3000c",
+            "drawFill": true,
+            "id": 10,
+            "members": [
+                {
+                    "name": "shadow_mob",
+                    "type": "string",
+                    "value": "#leash_radius: 5\n#respawn_delay: 15\n#respawn_jitter: 10\n#combat_background: combat/background_sylvoria\n#opponent: dummy\n#combat_id: something"
+                }
+            ],
+            "name": "ShadowMob",
             "type": "class",
             "useAs": [
                 "property",

@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/tiles"
 )
 
@@ -12,7 +11,7 @@ func init() {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
 			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 			return entity, BasicHandlerBuilder[None]{
-				OnInteract: func(thisEntity EntityReader, globals rpg.GlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
+				OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 					if thisEntity.GetId() != event.TargetId {
 						return nil
 					}
