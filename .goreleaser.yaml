@@ -1,39 +1,6 @@
-version: 2
-
-project_name: primortal
-
-before:
-  hooks:
-    - go mod tidy
-
-builds:
-  - id: windows
-    main: ./cmd/launcher
-    goos: [windows]
-    goarch: [amd64, arm64]
-    env:
-      - CGO_ENABLED=1
-    ldflags:
-      - -s -w
-    binary: primortal
-
-  - id: macos
-    main: ./cmd/launcher
-    goos: [darwin]
-    goarch: [amd64, arm64]
-    env:
-      - CGO_ENABLED=1
-    ldflags:
-      - -s -w
-    binary: primortal
-
-archives:
-  - format: zip
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    builds: [windows, macos]
-
-checksum:
-  name_template: checksums.txt
-
-release:
-  draft: false
+# This file is kept for reference but not used.
+# The project uses a custom GitHub Actions workflow (.github/workflows/release.yml)
+# because GoReleaser doesn't handle CGO cross-compilation well for OpenGL/GLFW dependencies.
+#
+# The workflow builds on native platforms (windows-latest, macos-latest) to ensure
+# proper CGO support and includes game assets in the release packages.
