@@ -23,10 +23,8 @@ unlocked_skills:
 globals:
     abilities.xenolog_primortals: true
     elythium: 0
-    intro.training.5.xenolog: true
-    intro.training.enter.listener: 4be38155-1eda-40d6-b7bc-b4b41c4acd65
     player_id: tiled-16
-    tiled-363: 4be38155-1eda-40d6-b7bc-b4b41c4acd65
+    tiled-363: 53bc586f-2923-4673-ba12-0e8768cc76bc
 system_settings:
     lighting:
         lighting_composition: full

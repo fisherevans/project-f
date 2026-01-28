@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -65,11 +66,24 @@ func (h fatalStackHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 	}
 }
 
-func init() {
+type LoggingOptions struct {
+	NoColor *bool
+}
+
+func SetupLogging() {
+	SetupLoggingWithOptions(LoggingOptions{})
+}
+
+func SetupLoggingWithOptions(opts LoggingOptions) {
+	noColor := !isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd())
+	if opts.NoColor != nil {
+		noColor = *opts.NoColor
+	}
+
 	log.Logger = zerolog.New(
 		zerolog.ConsoleWriter{
 			Out:        os.Stdout,
-			NoColor:    false,
+			NoColor:    noColor,
 			TimeFormat: "15:04:05.000",
 		},
 	).Hook(fatalStackHook{}).With().Timestamp().Logger()

@@ -11,4 +11,10 @@ temp/**
 *.aup3-wal
 *.aup3-shm
 
+# built binaries
 launcher
+release
+development
+
+# transient game files
+game_data/logs.txt

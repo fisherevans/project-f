@@ -40,7 +40,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
         run: |
-          go build -ldflags="-s -w" -o primortal${{ matrix.goos == 'windows' && '.exe' || '' }} ./cmd/launcher
+          go build -ldflags="-s -w" -o primortal${{ matrix.goos == 'windows' && '.exe' || '' }} ./cmd/release
       
       - name: Prepare release files
         shell: bash

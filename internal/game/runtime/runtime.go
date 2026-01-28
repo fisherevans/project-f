@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/states/adventure"
 	"fisherevans.com/project/f/internal/game/states/combat"
 	"fisherevans.com/project/f/internal/game/states/menu"
@@ -21,20 +22,24 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/util"
 )
 
 type Instance struct {
-	window *opengl.Window
+	saveId             string
+	initialStateIntent any
+	window             *opengl.Window
 }
 
-func NewInstance() *Instance {
-	return &Instance{}
+func NewInstance(saveId string, initialIntent any) *Instance {
+	return &Instance{
+		saveId:             saveId,
+		initialStateIntent: initialIntent,
+	}
 }
 
-func (i *Instance) Run() {
+func (i *Instance) initialize() {
 	if i.window != nil {
 		panic("already running")
 	}
@@ -73,11 +78,16 @@ func (i *Instance) Run() {
 	game.RegisterStateFactory(startup.NewControls)
 	game.RegisterStateFactory(game.DoSwapStateIntent)
 
-	game.Initialize("default", game.StartupDeviceIntent{})
+	game.Initialize(i.saveId, i.initialStateIntent)
 
 	// Wait for audio speaker to start streaming before game loop begins
 	// This prevents the first ~1-2 seconds of audio from being clipped
 	audio.WaitUntilReady()
+
+}
+
+func (i *Instance) Run() {
+	i.initialize()
 
 	// Setup rendering canvases
 	sceneCanvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)

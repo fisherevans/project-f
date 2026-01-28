@@ -3,8 +3,6 @@ package game
 import (
 	"fmt"
 	"reflect"
-
-	"fisherevans.com/project/f/internal/game/rpg"
 )
 
 func DoSwapStateIntent(s SwapStateIntent) State {
@@ -37,34 +35,4 @@ func createState(config any) (State, error) {
 		return nil, fmt.Errorf("no state factory registered for config type %v", key)
 	}
 	return fn(config), nil
-}
-
-func DefaultSelectorState() SelectIntent {
-	i := SelectIntent{}
-	i = i.With("Adventure", func() any {
-		return AdventureIntent{
-			MapName: "intro", // map1
-		}
-	})
-
-	fight := func(p rpg.PrimortalType) {
-		i = i.With("Fight "+rpg.Primortals[p].Name, func() any {
-			return CombatIntent{
-				Opponent:   p,
-				Background: "combat/background_sylvoria",
-				OnComplete: func(r CombatIntentResult) {
-					ctx.Notify("Combat complete!")
-					SetActiveStateIntent(DefaultSelectorState())
-				},
-			}
-		})
-	}
-	fight(rpg.Primortal_Dummy.Type)
-	fight(rpg.Primortal_Pumbl.Type)
-	fight(rpg.Primortal_Myceli.Type)
-	fight(rpg.Primortal_Scintail.Type)
-	fight(rpg.Primortal_Toxmidge.Type)
-	fight(rpg.Primortal_Volteel.Type)
-
-	return i
 }

@@ -95,7 +95,9 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		s.exiting = true
 	}
 	if s.exiting && s.elapsed <= 0 {
-		game.SetActiveStateIntent(game.DefaultSelectorState())
+		game.SetActiveStateIntent(game.AdventureIntent{
+			MapName: "intro",
+		})
 	}
 }
 
