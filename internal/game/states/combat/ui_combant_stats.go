@@ -17,16 +17,16 @@ import (
 )
 
 var (
-	combatStatFrame            = frames.New("combat/combatant_stats/box", atlas)
-	statBarFrame               = frames.New("combat/combatant_stats/bar", atlas)
-	combatantNameText          = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard), tbcfg.NewConfig(200, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+	combatStatFrame            *frames.Instance
+	statBarFrame               *frames.Instance
+	combatantNameText          *textbox.Instance
 	statBorderPadding          = 1
 	statBorderPaddingNameExtra = 6
-	combatantStatText          = textbox.NewInstance(atlas.GetFont(resources.FontNameFF), tbcfg.NewConfig(200, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit)))
-	noneSelectedSprite         = atlas.GetSprite("combat/tick_bar/skill_none_selected")
-	statNameBoxSprite          = atlas.GetTilesheetSprite("combat/combatant_stats/background", 1, 1)
-	statRightSprite            = atlas.GetTilesheetSprite("combat/combatant_stats/background", 2, 1)
-	statBottomSprite           = atlas.GetTilesheetSprite("combat/combatant_stats/background", 3, 1)
+	combatantStatText          *textbox.Instance
+	noneSelectedSprite         pixelutil.BoundedDrawable
+	statNameBoxSprite          pixelutil.BoundedDrawable
+	statRightSprite            pixelutil.BoundedDrawable
+	statBottomSprite           pixelutil.BoundedDrawable
 	statBoxWidth               = 80
 )
 
@@ -239,13 +239,13 @@ func (sb *StatBar) Draw(target pixel.Target, matrix pixel.Matrix, width int) int
 		case StatBarLabel:
 			//moveVec := sb.labelSprite.Bounds().Center()
 			labelContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%s", colors.ToHex(sb.color), sb.label)) // TODO don't compute hex
-			combatantStatText.Render(target, matrix.Moved(pixel.V(float64(2), 0)), labelContent)
+			labelContent.Render(target, matrix.Moved(pixel.V(float64(2), 0)))
 			//sb.labelSprite.DrawColorMask(target, matrix.MovedDelta(pixel.V(float64(2), float64(5)-sb.labelSprite.Bounds().H())).MovedDelta(moveVec), sb.color)
 
 			valueContent := combatantStatText.NewComplexContent(fmt.Sprintf("{+c:%s}%d{+c:%s}/%d", colors.ToHex(sb.colorBright), sb.current, colors.ToHex(sb.color), sb.max)) // TODO don't compute hex
 			valueDx := float64((width - valueContent.Width()) - 2)
 			valueDx = math.Max(valueDx, float64(labelContent.Width()+4))
-			combatantStatText.Render(target, matrix.Moved(pixel.V(valueDx, 0)), valueContent)
+			valueContent.Render(target, matrix.Moved(pixel.V(valueDx, 0)))
 		case StatBarVisual:
 			maxRectWidth := width - 2
 			currentRectWidth := int(float64(maxRectWidth) * float64(sb.current) / float64(sb.max))

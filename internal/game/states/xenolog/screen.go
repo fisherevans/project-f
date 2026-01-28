@@ -26,20 +26,6 @@ var (
 		Button:    colorDark,
 		Highlight: colorHighlight,
 	}
-	badgeASelect    = badges.Using(atlas).ButtonAction("A", "select", badgeButtonStyle)
-	badgeBBack      = badges.Using(atlas).ButtonAction("B", "back", badgeButtonStyle)
-	badgeStartClose = badges.Using(atlas).ButtonAction("start", "close", badgeButtonStyle)
-	badgeF1Reset    = badges.Using(atlas).ButtonAction("F1", "reset", badgeButtonStyle)
-	badgeADetails   = badges.Using(atlas).ButtonAction("A", "details", badgeButtonStyle)
-	badgeAUnlock    = badges.Using(atlas).ButtonAction("A", "unlock", badgeButtonStyle)
-
-	arrowUp      = atlas.GetTilesheetSprite("common/arrows_5px", 1, 1)
-	arrowRight   = atlas.GetTilesheetSprite("common/arrows_5px", 2, 1)
-	arrowDown    = atlas.GetTilesheetSprite("common/arrows_5px", 3, 1)
-	arrowLeft    = atlas.GetTilesheetSprite("common/arrows_5px", 4, 1)
-	arrowLeft6px = atlas.GetTilesheetSprite("common/arrows_6px", 4, 1)
-
-	dot = atlas.GetTilesheetSprite("common/symbols_5px", 1, 1)
 
 	colorDark      = colors.XenoLogDark.RGBA
 	colorClear     = colors.XenoLogClear.RGBA

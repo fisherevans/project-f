@@ -278,6 +278,12 @@ func (c *Content) String() string {
 	return strings.Join(lines, "\n")
 }
 
+// Render is a convenience method that renders this content using its associated textbox.
+// This eliminates the need to manually pair content with the correct textbox instance.
+func (c *Content) Render(target pixel.Target, matrix pixel.Matrix, opts ...tbcfg.ConfigOpt) pixel.Vec {
+	return c.tb.Render(target, matrix, c, opts...)
+}
+
 func (tb *Instance) NewSimpleContent(msg string, opts ...ContentOpt) *Content {
 	msg = messageSanitizer.Replace(msg)
 	var characters []*character

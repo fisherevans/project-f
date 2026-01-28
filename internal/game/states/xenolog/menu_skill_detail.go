@@ -11,12 +11,9 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/states/combat/tick_bar"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"fisherevans.com/project/f/internal/util/sprites"
-	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
@@ -48,22 +45,6 @@ var statusLevels = []rpg.StatusLevel{
 	rpg.StatusLevel2,
 	rpg.StatusLevel3,
 }
-var (
-	noneTickSprite          = atlas.GetSprite("2x2")
-	tickFrameW              = 140
-	tickFrameH              = 68
-	smallTextboxSkillDetail = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
-		tbcfg.NewConfig(tickFrameW-4, 9,
-			tbcfg.WithExpandMode(tbcfg.ExpandFit),
-			tbcfg.HAligned(tbcfg.HAlignLeft),
-			tbcfg.VAligned(tbcfg.VAlignMiddle),
-			tbcfg.Foreground(colorText),
-			tbcfg.RenderFrom(gfx.LeftCenter)))
-	stanceIcons = sprites.StanceIcons(atlas)
-	statusIcons = sprites.StatusIcons(atlas)
-
-	tickBarRenderer = tick_bar.NewRenderer(atlas)
-)
 
 type skillDetailMenu struct {
 	screen    *Screen
@@ -114,6 +95,11 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	_, h := smallTxt.render(skill.Description, x, y, colorText, tbcfg.RenderFrom(gfx.LeftCenter))
 
 	y -= h + 4
+
+	const (
+		tickFrameW = 140
+		tickFrameH = 68
+	)
 
 	tickFrameR := pixel.R(0, 0, float64(tickFrameW), float64(tickFrameH))
 	tickFrameTopLeft := pixel.IM.Moved(gfx.IVec(x-4, y))

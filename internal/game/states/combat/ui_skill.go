@@ -8,27 +8,21 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
-	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
 var (
-	skillFrame                  = frames.New("combat/menu/skill_frame", atlas)
-	skillPendingFrame           = frames.New("combat/menu/skill_pending_frame", atlas)
+	skillFrame                  *frames.Instance
+	skillPendingFrame           *frames.Instance
 	skillFrameWidth             = 84
 	skillFrameHeight            = 13
 	skillFrameHorizontalSpacing = 26
 
-	skillText = textbox.NewInstance(atlas.GetFont(resources.FontNameM3x6), tbcfg.NewConfig(skillFrameWidth, skillFrameHeight,
-		tbcfg.Foreground(colors.Black.RGBA),
-		tbcfg.HAligned(tbcfg.HAlignCenter),
-		tbcfg.VAligned(tbcfg.VAlignMiddle),
-	))
+	skillText *textbox.Instance
 
 	typeOptionKey = map[int]input.Direction{
 		0: input.Up,
@@ -44,12 +38,11 @@ var (
 		input.Left:  3,
 	}
 
-	skillPendingProgress = anim.SkillPendingProgress(atlas)
-
-	skillStatsBadge           = badges.Using(atlas).ButtonAction("select", "stats", badges.ButtonStyleStandard)
-	skillPendingCancelBadge   = badges.Using(atlas).ButtonAction("a", "commit", badges.ButtonStyleStandard)
-	skillCommittedCancelBadge = badges.Using(atlas).ButtonAction("b", "cancel", badges.ButtonStyleStandard)
-	skillMenuBadge            = badges.Using(atlas).ButtonAction("start", "xenolog", badges.ButtonStyleStandard)
+	skillPendingProgress      *anim.AnimatedSprite
+	skillStatsBadge           *badges.ButtonAction
+	skillPendingCancelBadge   *badges.ButtonAction
+	skillCommittedCancelBadge *badges.ButtonAction
+	skillMenuBadge            *badges.ButtonAction
 )
 
 func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
@@ -120,7 +113,7 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 		}
 		frameRect := pixel.R(0, 0, float64(skillFrameWidth), float64(skillFrameHeight))
 		frame.Draw(target, frameRect, matrix)
-		skillText.Render(target, matrix, content)
+		content.Render(target, matrix)
 		if optionPending {
 			skillPendingProgress.Update(timeDelta)
 			s := skillPendingProgress.Sprite()

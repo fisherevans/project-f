@@ -8,11 +8,9 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
-	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
@@ -31,29 +29,15 @@ func newPrimortalDetailMenu(screen *Screen, primortal rpg.PrimortalType) *primor
 	return m
 }
 
+// Variables declared in init_vars.go
 var (
-	detailLineHeight            = 14
-	detailMargin                = 8
-	primortalDescriptionTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
-		tbcfg.NewConfig(screenWidth-primortalIconSize-detailMargin*2-primortalIconMargin*3, 8,
-			tbcfg.WithExpandMode(tbcfg.ExpandFit),
-			tbcfg.HAligned(tbcfg.HAlignCenter),
-			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
-			tbcfg.RenderFrom(gfx.TopCenter)))
-	primortalIconSize   = 48
-	primortalIconMargin = 2
-
-	primortalSkillDetailWidth        = 64
-	primortalSkillDetailMargin       = 2
-	primortalSkillDetailTextMargin   = 5
-	primortalSkillDescriptionTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
-		tbcfg.NewConfig(primortalSkillDetailWidth-primortalSkillDetailMargin*2, 10,
-			tbcfg.WithExpandMode(tbcfg.ExpandFit),
-			tbcfg.HAligned(tbcfg.HAlignCenter),
-			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
-			tbcfg.RenderFrom(gfx.TopCenter)))
+	detailLineHeight           = 14
+	detailMargin               = 8
+	primortalIconSize          = 48
+	primortalIconMargin        = 2
+	primortalSkillDetailWidth  = 64
+	primortalSkillDetailMargin = 2
+	primortalSkillDetailTextMargin = 5
 )
 
 func (*primortalDetailMenu) Enter() {}

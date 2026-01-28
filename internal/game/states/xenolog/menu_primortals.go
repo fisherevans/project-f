@@ -22,10 +22,6 @@ var (
 	primortalListLeftWidth  = 7
 	primortalListRightWidth = 6
 	primortalListRowPadding = 7
-
-	badgeBack       = badges.Using(atlas).Of("back", colorDark, colorText, 30)
-	badgeNextUnlock = badges.Using(atlas).Of("scroll to next unlock", colorDark, colorText, 80)
-	badgeBackToTop  = badges.Using(atlas).Of("back to top", colorDark, colorText, 50)
 )
 
 type primortalsMenu struct {

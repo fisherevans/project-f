@@ -8,7 +8,6 @@ import (
 	"github.com/gopxl/pixel/v2/ext/text"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 )
 
@@ -58,8 +57,7 @@ func (fx *baseFx) Update(s *State, timeDelta float64) bool {
 	return fx.Age > fxMaxAge
 }
 
-var baseFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas).
-	AlignedTo(pixel.Center)
+var baseFxText *text.Text
 
 func (fx *baseFx) renderFx(color pixel.RGBA, text string, target pixel.Target) {
 	color = colors.WithAlphaTodoFix(color, 1.0-(fx.Age/fxMaxAge))

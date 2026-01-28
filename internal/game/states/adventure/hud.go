@@ -8,7 +8,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
@@ -69,19 +68,15 @@ func (h *Hud) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bound
 		txtVNudge := -1.0 // push it down or up to align with sprite
 		txtVNudge -= (sprite.Bounds().H() - content.Bounds().H()) / 2
 		txtHNudge := -1.0 // padding between number and sprite
-		txtHNudge -= sprite.Bounds().W()
-		txtM := topRight.Moved(pixel.V(txtHNudge, txtVNudge))
-		hudCountText.Render(target, txtM, content, tbcfg.RenderFrom(gfx.TopRight))
+		txtM := topRight.
+			Moved(pixel.V(txtHNudge-float64(content.Width()), txtVNudge)).
+			Moved(pixel.V(0, -float64(id)*(sprite.Bounds().H()+rowPadding)))
+		content.Render(target, txtM, tbcfg.RenderFrom(gfx.TopRight))
 	}
 }
 
 var hucCountTextHeight = 10
-var hudCountText = textbox.NewInstance(
-	atlas.GetFont(resources.FontNameM5x7),
-	tbcfg.NewConfig(game.GameWidth/3, hucCountTextHeight,
-		tbcfg.HAligned(tbcfg.HAlignRight),
-		tbcfg.VAligned(tbcfg.VAlignMiddle),
-		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+var hudCountText *textbox.Instance
 
 func (h *Hud) onTickElythiumCount(s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
 	h.elythiumCountIcon.Update(timeDelta)
@@ -94,7 +89,6 @@ func (h *Hud) onTickElythiumCount(s *State, target pixel.Target, matrix pixel.Ma
 	txtVNudge := -1.0 // push it down or up to align with sprite
 	txtVNudge -= (sprite.Bounds().H() - content.Bounds().H()) / 2
 	txtHNudge := -1.0 // padding between number and sprite
-	txtHNudge -= sprite.Bounds().W()
-	txtM := topRight.Moved(pixel.V(txtHNudge, txtVNudge))
-	hudCountText.Render(target, txtM, content, tbcfg.RenderFrom(gfx.TopRight))
+	txtM := topRight.Moved(pixel.V(txtHNudge-float64(content.Width()), txtVNudge))
+	content.Render(target, txtM, tbcfg.RenderFrom(gfx.TopRight))
 }

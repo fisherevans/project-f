@@ -138,10 +138,10 @@ func (m *menuModal) OnTick(target pixel.Target, timeDelta float64) {
 	frame4pxBorder.Draw(target, frameR, modalCenter, frames.WithColor(colorText))
 
 	topCenter := modalCenter.Moved(gfx.IVec(0, frameHeight/2-framePadding))
-	titleTextbox.Render(target, topCenter, titleContent, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(colorHighlight))
-	topCenter = topCenter.Moved(gfx.IVec(0, -(titleContent.Height() + framePadding)))
-	smallTextbox.Render(target, topCenter, textContent, tbcfg.RenderFrom(gfx.TopCenter))
-	topCenter = topCenter.Moved(gfx.IVec(0, -(textContent.Height() + framePadding)))
+	titleContent.Render(target, topCenter, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(colorHighlight))
+	topCenter = topCenter.Moved(gfx.IVec(0, -titleContent.Height()-framePadding))
+	textContent.Render(target, topCenter, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(colorText))
+	topCenter = topCenter.Moved(gfx.IVec(0, -textContent.Height()-framePadding))
 
 	buttonTopLeft := topCenter.Moved(gfx.IVec(-totalButtonWidth/2, 0))
 	for id, b := range buttons {
@@ -152,7 +152,7 @@ func (m *menuModal) OnTick(target pixel.Target, timeDelta float64) {
 		buttonFrameR := pixel.R(0, 0, float64(b.content.Width()+buttonTextXPadding*2), float64(b.content.Height()+buttonTextYPadding*2))
 		frame2px.Draw(target, buttonFrameR, buttonTopLeft, frames.WithColor(bgMask), frames.WithRenderOrigin(gfx.TopLeft))
 		frame2pxBorder.Draw(target, buttonFrameR, buttonTopLeft, frames.WithColor(borderMask), frames.WithRenderOrigin(gfx.TopLeft))
-		smallTextbox.Render(target, buttonTopLeft.Moved(gfx.IVec(buttonTextXPadding+b.content.Width()/2, -buttonTextYPadding)), b.content,
+		b.content.Render(target, buttonTopLeft.Moved(gfx.IVec(buttonTextXPadding+b.content.Width()/2, -buttonTextYPadding)),
 			tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(fgMask))
 		buttonTopLeft = buttonTopLeft.Moved(gfx.IVec(b.content.Width()+buttonTextXPadding*2+buttonMargins, 0))
 	}

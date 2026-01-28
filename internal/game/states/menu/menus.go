@@ -14,6 +14,13 @@ func createMainMenu(s *State) *Menu {
 					State: s.background,
 				})
 			}),
+			newSimpleSelectionOption(s, "Controls", func(s *State) {
+				game.SetActiveStateIntent(game.StartupControlsIntent{
+					ExitStateIntent: game.SwapStateIntent{
+						State: s,
+					},
+				})
+			}),
 			newSimpleSelectionOption(s, "Settings", func(s *State) {
 				s.PushMenu(createSettingsMenu(s))
 			}),

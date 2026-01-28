@@ -8,7 +8,6 @@ import (
 	"github.com/gopxl/beep/v2"
 	"github.com/gopxl/beep/v2/effects"
 	"github.com/gopxl/beep/v2/speaker"
-	"github.com/rs/zerolog/log"
 )
 
 // controlCommand represents the desired state for a sound
@@ -100,7 +99,6 @@ func (s *PlaybackControl) workOnTick() {
 			return
 		}
 
-		log.Info().Any("cmd", s.workerCommand).Msg("sound control work done")
 		// Clear workerCommand
 		s.workerCommand = nil
 	} else {

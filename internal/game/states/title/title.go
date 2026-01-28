@@ -13,15 +13,21 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-var atlas = resources.CreateAtlas(resources.AtlasFilter{
-	DoIncludeSprite: resources.RequireSpritePrefix("title/"),
-	FontNames: []string{
-		resources.FontNameFF,
-	},
-})
+var atlas *resources.Atlas
+var text *textbox.Instance
 
 func init() {
-	game.RegisterStateFactory(New)
+	resources.RunOnceInitialized(func() {
+		atlas = resources.CreateAtlas(resources.AtlasFilter{
+			DoIncludeSprite: resources.RequireSpritePrefix("title/"),
+			FontNames: []string{
+				resources.FontNameFF,
+			},
+		})
+		text = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameFF),
+			tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
+	})
 }
 
 type phase struct {
@@ -62,10 +68,6 @@ func New(intent game.TitleIntent) game.State {
 		maxElapsed: maxUntil,
 	}
 }
-
-var text = textbox.NewInstance(
-	atlas.GetFont(resources.FontNameFF),
-	tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
 
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	target.Clear(colors.FromString("#0a0510"))
@@ -175,7 +177,7 @@ func renderReady(target pixel.Target, center pixel.Matrix, progression, elapsed 
 	fg = colors.WithAlpha(fg, progression)
 	topCenter := center.Moved(gfx.IVec(0, -52))
 	topCenter = moved(topCenter, 0, 35, progression)
-	text.Render(target, topCenter, content, tbcfg.Foreground(fg), tbcfg.RenderFrom(gfx.TopCenter))
+	content.Render(target, topCenter, tbcfg.Foreground(fg), tbcfg.RenderFrom(gfx.TopCenter))
 }
 
 func moved(m pixel.Matrix, x, y int, progression float64) pixel.Matrix {

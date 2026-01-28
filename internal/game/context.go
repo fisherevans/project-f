@@ -42,8 +42,6 @@ type context struct {
 
 	stateIntent any
 
-	window *opengl.Window
-
 	save *rpg.GameSave
 
 	elapsed      float64
@@ -53,20 +51,22 @@ type context struct {
 	console      *CommandConsole
 }
 
-func Initialize(window *opengl.Window, saveId string) {
+func Initialize(saveId string, intent any) {
 	saves, err := rpg.LoadGameSaves()
 	if err != nil {
 		panic(err)
 	}
 	save, ok := saves[saveId]
 	if !ok {
-		panic("Save not found: " + saveId)
+		save = &rpg.GameSave{
+			SaveId:        saveId,
+			CharacterName: "Todd",
+		}
+		save.FillDefaults()
+		log.Info().Str("saveId", saveId).Msg("new save initialized")
 	}
 	ctx = &context{
-		stateIntent: DefaultSelectorState(),
-		//stateIntent: AdventureIntent{MapName: "intro"},
-		//stateIntent: StartupDeviceIntent{},
-		window:       window,
+		stateIntent:  intent,
 		save:         save,
 		debugToggles: newToggles(),
 		flags:        newFlags(),
@@ -161,10 +161,6 @@ func DebugToggles() *DebugToggleSystem {
 
 func CurrentSave() *rpg.GameSave {
 	return ctx.save
-}
-
-func Window() *opengl.Window {
-	return ctx.window
 }
 
 func Utils() ContextUtils {

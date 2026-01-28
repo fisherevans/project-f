@@ -5,26 +5,14 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
-	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
 var (
-	mainFrame = frames.New("menu/background", atlas,
-		frames.WithRenderOrigin(gfx.TopLeft),
-	)
-	mainText = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7), tbcfg.NewConfig(
-		0,
-		0,
-		tbcfg.Foreground(colors.Black.RGBA),
-		tbcfg.HAligned(tbcfg.HAlignLeft),
-		tbcfg.VAligned(tbcfg.VAlignTop),
-		tbcfg.ExtraLineSpacing(2),
-	))
+	mainFrame *frames.Instance
+	mainText  *textbox.Instance
 )
 
 type MenuItem interface {

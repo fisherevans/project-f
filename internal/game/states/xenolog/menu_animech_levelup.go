@@ -13,9 +13,8 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-var (
-	badgeAContinue = badges.Using(atlas).ButtonAction("A", "continue", badgeButtonStyle).Flipped()
-)
+// Variables declared in init_vars.go
+var badgeAContinue *badges.ButtonAction
 
 type animechLevelUpAnimation struct {
 	screen             *Screen

@@ -17,6 +17,20 @@ func (a *Animech) GetMaxSync() int {
 	return BaseAnimechSync + a.Upgrades.AdditionalSync()
 }
 
+func (a *Animech) FillDefaults() {
+	if a.SkillSet == nil {
+		a.SkillSet = &SkillSet{}
+	}
+	if a.SkillSet.IsEmpty() {
+		a.SkillSet = &SkillSet{
+			Skill1: Skill_Jab.Id,
+		}
+	}
+	if a.Upgrades == nil {
+		a.Upgrades = &AnimechUpgrades{}
+	}
+}
+
 type AnimechUpgrades struct {
 	ShieldLevel int `yaml:"shield_level"`
 	SyncLevel   int `yaml:"sync_level"`

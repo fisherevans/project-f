@@ -1,0 +1,44 @@
+save_id: default
+character_name: Todd
+animech:
+    skill_set:
+        "1": ""
+        "2": jab
+        "3": ""
+        "4": ""
+    experience_points: 100
+    upgrades:
+        shield_level: 0
+        sync_level: 0
+loadouts: []
+inventory: null
+primortals:
+    toxmidge:
+        visibility: defeated
+        research_points: 2
+        last_seen: 0001-01-01T00:00:00Z
+unlocked_skills:
+    acid_string: {}
+    jab: {}
+globals:
+    abilities.xenolog_primortals: true
+    elythium: 0
+    intro.training.5.xenolog: true
+    intro.training.enter.listener: 4be38155-1eda-40d6-b7bc-b4b41c4acd65
+    player_id: tiled-16
+    tiled-363: 4be38155-1eda-40d6-b7bc-b4b41c4acd65
+system_settings:
+    lighting:
+        lighting_composition: full
+        lighting_mode: Blended
+        bloom_mode: Blended
+    combat:
+        combat_speed: 1
+    retro_frame:
+        disable_pixel_grid: false
+        scanline_darken: 0.015
+        grid_darken_x: 0.05
+        grid_darken_y: 0.05
+        subpixel_tint: 0.05
+    debugging:
+        show_pathfinding_debugging: false

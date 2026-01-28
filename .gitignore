@@ -10,3 +10,5 @@ temp/**
 *.tiled-session
 *.aup3-wal
 *.aup3-shm
+
+launcher

@@ -62,7 +62,7 @@ func (i *itemEnumToggle[T]) Render(leftCenter pixel.Matrix, target pixel.Target,
 		prefix = "{+u}"
 	}
 	content := mainText.NewComplexContent(prefix + text)
-	mainText.Render(target, leftCenter, content, tbcfg.Foreground(mask), tbcfg.RenderFrom(gfx.LeftCenter))
+	content.Render(target, leftCenter, tbcfg.Foreground(mask), tbcfg.RenderFrom(gfx.LeftCenter))
 }
 
 func (i *itemEnumToggle[T]) selectDelta(delta int) {

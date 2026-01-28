@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 
@@ -16,6 +16,12 @@ import (
 const (
 	DefaultTileSize Pixels = 16
 	MapTileSize     Pixels = DefaultTileSize
+)
+
+var (
+	initMu              sync.Mutex
+	initialized         bool
+	deferredInitializers []func()
 )
 
 var (
@@ -61,7 +67,33 @@ type LocalResource struct {
 	ResourceEncoder resourceEncoder
 }
 
-func init() {
+// RunOnceInitialized registers a callback to run after resources are initialized.
+// If resources are already initialized, the callback runs immediately.
+// This allows packages to defer resource-dependent initialization (like creating atlases)
+// until after the resource files have been loaded.
+func RunOnceInitialized(fn func()) {
+	initMu.Lock()
+	defer initMu.Unlock()
+
+	if initialized {
+		// Already initialized, run immediately
+		fn()
+	} else {
+		// Defer until Initialize() is called
+		deferredInitializers = append(deferredInitializers, fn)
+	}
+}
+
+func Initialize() {
+	initMu.Lock()
+	if initialized {
+		initMu.Unlock()
+		log.Warn().Msg("resources.Initialize() called multiple times")
+		return
+	}
+	initMu.Unlock()
+
+	// Load all resource files
 	for _, localResource := range resources {
 		handler := fsFileHandler(localResource)
 		err := fs.WalkDir(assets.FS, localResource.FileRoot, handler)
@@ -74,6 +106,18 @@ func init() {
 				panic(fmt.Sprintf("failed postprocess %s resources: %v", localResource.FileRoot, err))
 			}
 		}
+	}
+
+	// Mark as initialized and run deferred callbacks
+	initMu.Lock()
+	initialized = true
+	callbacks := deferredInitializers
+	deferredInitializers = nil // Clear the list
+	initMu.Unlock()
+
+	log.Info().Msgf("Running %d deferred initializers", len(callbacks))
+	for _, fn := range callbacks {
+		fn()
 	}
 }
 
@@ -98,7 +142,7 @@ func fsFileHandler(localResource LocalResource) func(string, fs.DirEntry, error)
 			return fmt.Errorf("failed to read file %s: %w", path, err)
 		}
 
-		resourceName := strings.TrimSuffix(strings.TrimPrefix(path, localResource.FileRoot+string(filepath.Separator)), "."+extension)
+		resourceName := strings.TrimSuffix(strings.TrimPrefix(path, localResource.FileRoot+"/"), "."+extension)
 
 		err = localResource.FileLoader(path, resourceName, data)
 		if err == nil {

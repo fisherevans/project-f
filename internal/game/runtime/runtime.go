@@ -7,18 +7,77 @@ import (
 	"runtime"
 	"time"
 
+	"fisherevans.com/project/f/internal/game/states/adventure"
+	"fisherevans.com/project/f/internal/game/states/combat"
+	"fisherevans.com/project/f/internal/game/states/menu"
+	"fisherevans.com/project/f/internal/game/states/startup"
+	"fisherevans.com/project/f/internal/game/states/state_selector"
+	"fisherevans.com/project/f/internal/game/states/title"
+	"fisherevans.com/project/f/internal/game/states/xenolog"
+	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/gopxl/pixel/v2/ext/text"
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/util"
 )
 
-func Run() {
-	window := initWindow()
-	game.Initialize(window, "1")
+type Instance struct {
+	window *opengl.Window
+}
+
+func NewInstance() *Instance {
+	return &Instance{}
+}
+
+func (i *Instance) Run() {
+	if i.window != nil {
+		panic("already running")
+	}
+
+	cfg := opengl.WindowConfig{
+		Title:     "Primortal - Development Build",
+		Bounds:    pixel.R(0, 0, 1280, 800), // steam deck resolution
+		Resizable: true,
+		VSync:     true,
+	}
+	var err error
+	i.window, err = opengl.NewWindow(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	loading := text.New(pixel.V(20, 20), text.Atlas7x13)
+	loading.Color = pixel.RGB(1, 1, 1)
+	loading.WriteString("Loading...")
+	loading.Draw(i.window, pixel.IM)
+	i.window.Update()
+
+	// Load all resources (fonts, sprites, audio, etc.)
+	// This triggers all deferred initializers registered via resources.RunOnceInitialized()
+	resources.Initialize()
+
+	game.RegisterStateFactory(adventure.New)
+	game.RegisterStateFactory(combat.New)
+	game.RegisterStateFactory(menu.New)
+	game.RegisterStateFactory(xenolog.New)
+	game.RegisterStateFactory(state_selector.New)
+	game.RegisterStateFactory(title.New)
+	game.RegisterStateFactory(startup.NewDevice)
+	game.RegisterStateFactory(startup.NewCopyright)
+	game.RegisterStateFactory(startup.NewDeveloper)
+	game.RegisterStateFactory(startup.NewControls)
+	game.RegisterStateFactory(game.DoSwapStateIntent)
+
+	game.Initialize("default", game.StartupDeviceIntent{})
+
+	// Wait for audio speaker to start streaming before game loop begins
+	// This prevents the first ~1-2 seconds of audio from being clipped
+	audio.WaitUntilReady()
 
 	// Setup rendering canvases
 	sceneCanvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)
@@ -27,7 +86,7 @@ func Run() {
 	var (
 		lastSceneCanvasScale = 1.0
 		canvasScale          = 1.0
-		pixelGridCanvas      = createPixelGridCanvas(canvasScale)
+		pixelGridCanvas      = i.createPixelGridCanvas(canvasScale)
 	)
 
 	// Setup recorders (60 FPS for compatibility with QuickTime Player)
@@ -40,7 +99,7 @@ func Run() {
 	gameLogicStats := util.NewFrameStats(600)
 	var m runtime.MemStats
 
-	for !window.Closed() {
+	for !i.window.Closed() {
 		// Frame timing
 		now := time.Now()
 		deltaTime := now.Sub(last).Seconds()
@@ -48,65 +107,51 @@ func Run() {
 		last = now
 
 		// Handle exit
-		if window.JustPressed(pixel.KeyF4) {
+		if i.window.JustPressed(pixel.KeyF4) {
 			os.Exit(0)
 		}
-		if window.JustPressed(pixel.KeySlash) {
+		if i.window.JustPressed(pixel.KeySlash) {
 			log.Info().Msg("----------------------------------------------------------------------------------------------")
 		}
 
 		// Update game state
 		game.ApplyIntent()
-		game.UpdateControls(window)
-		game.Update(window, deltaTime)
+		game.UpdateControls(i.window)
+		game.Update(i.window, deltaTime)
 
 		// Render scene to canvas
-		renderScene(window, sceneCanvas, deltaTime)
+		i.renderScene(sceneCanvas, deltaTime)
 		game.GetActiveState().OnTick(sceneCanvas, sceneCanvas.Bounds(), deltaTime)
 
 		// Update canvas scale and pixel grid canvas
-		canvasScale = calculateCanvasScale(window)
+		canvasScale = i.calculateCanvasScale()
 		if lastSceneCanvasScale != canvasScale || game.Flags().JustChanged("retro_frame_reset") {
 			lastSceneCanvasScale = canvasScale
-			pixelGridCanvas = createPixelGridCanvas(canvasScale)
+			pixelGridCanvas = i.createPixelGridCanvas(canvasScale)
 			pixelGridRecorder.UpdateCanvas(pixelGridCanvas.Canvas)
 		}
 
-		// Composite and draw to window
-		compositeToWindow(window, sceneCanvas, pixelGridCanvas, canvasScale)
+		// Composite and draw to i.window
+		i.compositeToWindow(sceneCanvas, pixelGridCanvas, canvasScale)
 
 		// Debug info
-		renderDebugInfo(window, &m, frameStats, gameLogicStats, deltaTime)
+		i.renderDebugInfo(&m, frameStats, gameLogicStats, deltaTime)
 
 		// Handle capture/recording hotkeys
-		handleCaptureHotkeys(window, sceneCanvas, sceneRecorder, pixelGridRecorder)
+		i.handleCaptureHotkeys(sceneCanvas, sceneRecorder, pixelGridRecorder)
 
 		// Record frames if active
-		captureRecordingFrames(sceneRecorder, pixelGridRecorder, deltaTime)
+		i.captureRecordingFrames(sceneRecorder, pixelGridRecorder, deltaTime)
 
 		// Track game logic timing
 		gameLogicDur := time.Now().Sub(now).Seconds()
 		gameLogicStats.AddFrameTime(gameLogicDur)
 
-		window.Update()
+		i.window.Update()
 	}
 }
 
-func initWindow() *opengl.Window {
-	cfg := opengl.WindowConfig{
-		Title:     "Project F",
-		Bounds:    pixel.R(0, 0, 1280, 800), // steam deck resolution
-		Resizable: true,
-		VSync:     true,
-	}
-	window, err := opengl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
-	return window
-}
-
-func createPixelGridCanvas(scale float64) *shaders.Canvas {
+func (i *Instance) createPixelGridCanvas(scale float64) *shaders.Canvas {
 	c := shaders.NewCanvas(int(game.GameWidth*scale), int(game.GameHeight*scale))
 	if !game.CurrentSave().SystemSettings.RetroFrame.DisablePixelGrid {
 		c.SetPixelGridOverlayShader(
@@ -120,8 +165,8 @@ func createPixelGridCanvas(scale float64) *shaders.Canvas {
 	return c
 }
 
-func calculateCanvasScale(window *opengl.Window) float64 {
-	windowWidth, windowHeight := window.Bounds().Size().XY()
+func (i *Instance) calculateCanvasScale() float64 {
+	windowWidth, windowHeight := i.window.Bounds().Size().XY()
 	scaleX := math.Floor(windowWidth / game.GameWidth)
 	scaleY := math.Floor(windowHeight / game.GameHeight)
 	scale := math.Min(scaleX, scaleY)
@@ -134,8 +179,8 @@ func calculateCanvasScale(window *opengl.Window) float64 {
 	return scale
 }
 
-func renderScene(window *opengl.Window, sceneCanvas *shaders.Canvas, deltaTime float64) {
-	window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
+func (i *Instance) renderScene(sceneCanvas *shaders.Canvas, deltaTime float64) {
+	i.window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
 	sceneCanvas.Clear(game.GetActiveState().ClearColor())
 
 	if s := game.GetCustomShader(); s != nil {
@@ -145,34 +190,34 @@ func renderScene(window *opengl.Window, sceneCanvas *shaders.Canvas, deltaTime f
 	}
 }
 
-func compositeToWindow(window *opengl.Window, sceneCanvas, pixelGridCanvas *shaders.Canvas, scale float64) {
+func (i *Instance) compositeToWindow(sceneCanvas, pixelGridCanvas *shaders.Canvas, scale float64) {
 	pixelGridCanvas.Clear(pixel.RGBA{A: 1})
 	sceneCanvas.Draw(pixelGridCanvas, pixel.IM.Scaled(pixel.ZV, scale).Moved(pixelGridCanvas.Bounds().Center()))
-	pixelGridCanvas.Draw(window, pixel.IM.Moved(window.Bounds().Center()))
+	pixelGridCanvas.Draw(i.window, pixel.IM.Moved(i.window.Bounds().Center()))
 }
 
-func renderDebugInfo(window *opengl.Window, m *runtime.MemStats, frameStats, gameLogicStats *util.FloatStats, deltaTime float64) {
+func (i *Instance) renderDebugInfo(m *runtime.MemStats, frameStats, gameLogicStats *util.FloatStats, deltaTime float64) {
 	runtime.ReadMemStats(m)
 	game.DebugTLf("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
 	game.DebugTLf("%s", frameStats.SummaryFPS())
 	game.DebugTLf("Game Logic %s", gameLogicStats.SummaryMS())
 	game.DebugTLf("Routine count: %v", runtime.NumGoroutine())
-	game.RenderDebugLines(window, game.PopDebugLines())
-	game.RenderNotifications(window, game.PopNotifications(deltaTime))
-	game.Console().OnTick(window)
+	game.RenderDebugLines(i.window, game.PopDebugLines())
+	game.RenderNotifications(i.window, game.PopNotifications(deltaTime))
+	game.Console().OnTick(i.window)
 }
 
-func handleCaptureHotkeys(window *opengl.Window, sceneCanvas *shaders.Canvas, sceneRecorder, pixelGridRecorder *Recorder) {
-	if window.JustPressed(pixel.KeyP) {
-		if window.Pressed(pixel.KeyLeftControl) {
+func (i *Instance) handleCaptureHotkeys(sceneCanvas *shaders.Canvas, sceneRecorder, pixelGridRecorder *Recorder) {
+	if i.window.JustPressed(pixel.KeyP) {
+		if i.window.Pressed(pixel.KeyLeftControl) {
 			sceneRecorder.Toggle()
 		} else {
 			CopyCanvasToClipboard(sceneCanvas.Canvas)
 		}
 	}
 
-	if window.JustPressed(pixel.KeyO) {
-		if window.Pressed(pixel.KeyLeftControl) {
+	if i.window.JustPressed(pixel.KeyO) {
+		if i.window.Pressed(pixel.KeyLeftControl) {
 			pixelGridRecorder.Toggle()
 		} else {
 			CopyCanvasToClipboard(sceneCanvas.Canvas)
@@ -180,7 +225,7 @@ func handleCaptureHotkeys(window *opengl.Window, sceneCanvas *shaders.Canvas, sc
 	}
 }
 
-func captureRecordingFrames(sceneRecorder, pixelGridRecorder *Recorder, deltaTime float64) {
+func (i *Instance) captureRecordingFrames(sceneRecorder, pixelGridRecorder *Recorder, deltaTime float64) {
 	if sceneRecorder.IsRecording() {
 		if err := sceneRecorder.CaptureFrame(deltaTime); err != nil {
 			game.DebugNotificationf("Frame capture error: %v", err)

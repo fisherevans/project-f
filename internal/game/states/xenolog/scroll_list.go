@@ -10,9 +10,7 @@ import (
 	"fisherevans.com/project/f/internal/util/interp"
 )
 
-var (
-	scrollCursor = atlas.GetSprite("xenolog/scroll_cursor")
-)
+// Variables declared in init_vars.go
 
 type scrollListOptions struct {
 	targetHeight              int

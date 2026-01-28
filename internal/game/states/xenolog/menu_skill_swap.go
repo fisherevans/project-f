@@ -20,8 +20,6 @@ var (
 		Button:    colorClear,
 		Highlight: colorHighlight,
 	}
-	badgeBCancelOnDark       = badges.Using(atlas).ButtonAction("B", "cancel", onDarkStyle)
-	badgeSelectDetailsOnDark = badges.Using(atlas).ButtonAction("select", "details", onDarkStyle).Flipped()
 )
 
 type skillSwapMenu struct {
@@ -187,7 +185,7 @@ func (p *skillListItemAction) Render(m *skillSwapMenu, topLeftY int, target pixe
 	padding := 3
 	frameR := pixel.R(0, 0, float64(box.Width()+padding*2), 7)
 	frame1px.Draw(target, frameR, topCenter, frames.WithColor(bgMask), frames.WithRenderOrigin(gfx.TopCenter))
-	smallTextbox.Render(target, topCenter.Moved(gfx.IVec(0, -1)), box, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(fgMask))
+	box.Render(target, topCenter.Moved(gfx.IVec(0, -1)), tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(fgMask))
 }
 
 type skillsCursor struct{}

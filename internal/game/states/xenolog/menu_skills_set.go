@@ -6,23 +6,27 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
+// Variables declared in init_vars.go
 var (
 	skillSetRowHeight = 14
-	skillSetArrows    = map[input.Direction]pixelutil.BoundedDrawable{
-		input.NotPressed: atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 1, 1),
-		input.Up:         atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 2, 1),
-		input.Right:      atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 3, 1),
-		input.Down:       atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 4, 1),
-		input.Left:       atlas.GetTilesheetSprite("xenolog/skill_set_arrows", 5, 1),
+	skillSetArrows    = map[input.Direction]pixelutil.BoundedDrawable{}
+	
+	skillSetCurrentSkillFrameWidth  = screenWidth - 20
+	skillSetCurrentSkillFrameHeight = 40
+)
+
+var (
+	skillSetBadgeStyle = badges.ButtonColorStyle{
+		Action:    colorHighlight,
+		Button:    colorDark,
+		Highlight: colorHighlight,
 	}
 )
 
@@ -147,27 +151,6 @@ func (m *skillSetMenu) renderSkill(direction input.Direction, width, x, y int, t
 		frames.WithColor(borderMask), frames.WithRenderOrigin(gfx.Centered))
 	regularTxt.render(label, x, y, fgMask, tbcfg.RenderFrom(gfx.Centered))
 }
-
-var (
-	skillSetBadgeStyle = badges.ButtonColorStyle{
-		Action:    colorHighlight,
-		Button:    colorDark,
-		Highlight: colorHighlight,
-	}
-	badgeASwap         = badges.Using(atlas).ButtonAction("A", "swap skill", skillSetBadgeStyle).Flipped()
-	badgeSelectDetails = badges.Using(atlas).ButtonAction("select", "view skill details", skillSetBadgeStyle)
-
-	skillSetCurrentSkillFrameWidth  = screenWidth - 20
-	skillSetCurrentSkillFrameHeight = 40
-
-	skillSetDetailSmallTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
-		tbcfg.NewConfig(skillSetCurrentSkillFrameWidth-10, 10,
-			tbcfg.WithExpandMode(tbcfg.ExpandFit),
-			tbcfg.HAligned(tbcfg.HAlignCenter),
-			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
-			tbcfg.RenderFrom(gfx.TopCenter)))
-)
 
 func (m *skillSetMenu) renderSkillDetail(target pixel.Target, topCenter pixel.Matrix) {
 	regularTxt := newTextRenderer(target, regularTextbox).withMatrix(topCenter).withOpts(tbcfg.RenderFrom(gfx.TopCenter))

@@ -10,10 +10,30 @@ import (
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-var atlas = resources.DefaultAtlas()
+var atlas *resources.Atlas
+
+func init() {
+	resources.RunOnceInitialized(func() {
+		atlas = resources.DefaultAtlas()
+		mainFrame = frames.New("menu/background", atlas,
+			frames.WithRenderOrigin(gfx.TopLeft),
+		)
+		mainText = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7), tbcfg.NewConfig(
+			0,
+			0,
+			tbcfg.Foreground(colors.Black.RGBA),
+			tbcfg.HAligned(tbcfg.HAlignLeft),
+			tbcfg.VAligned(tbcfg.VAlignTop),
+			tbcfg.ExtraLineSpacing(2),
+		))
+	})
+}
 
 var (
 	menuContentWidth = 100

@@ -8,20 +8,23 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/pixelutil"
-	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
+// Variables declared in init_vars.go
 var (
-	spriteAnimech   = atlas.GetSprite("xenolog/select_animech")
-	spritePrimortal = atlas.GetSprite("xenolog/select_primortal")
-	spriteUnknown   = atlas.GetSprite("xenolog/select_unknown")
-	labelUnknown    = "???????"
+	labelUnknown = "???????"
+	
+	selectBoxWidth  = 74
+	selectBoxHeight = 82
+	selectBoxLabelMargin = 3
+	selectBoxSubLabelFlashSpeed = 1.0
+	selectBoxSubLabelMargin = 3
+	selectBoxArrowMargin = 2.0
 )
 
 type homeMenu struct {
@@ -103,29 +106,6 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 }
 
 var (
-	selectBoxHeight = 82
-	selectBoxWidth  = 74
-
-	selectBoxLabelMargin = 3
-	selectBoxLabelText   = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard),
-		tbcfg.NewConfig(selectBoxWidth, 10,
-			tbcfg.WithExpandMode(tbcfg.ExpandFit),
-			tbcfg.HAligned(tbcfg.HAlignCenter),
-			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
-			tbcfg.RenderFrom(gfx.TopCenter)))
-
-	selectBoxSubLabelFlashSpeed = 1.0
-	selectBoxSubLabelMargin     = 3
-	selectBoxSubLabelText       = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
-		tbcfg.NewConfig(selectBoxWidth, 10,
-			tbcfg.WithExpandMode(tbcfg.ExpandFit),
-			tbcfg.HAligned(tbcfg.HAlignCenter),
-			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.RenderFrom(gfx.TopCenter)))
-
-	selectBoxArrow             = atlas.GetSprite("xenolog/select_arrow_down")
-	selectBoxArrowMargin       = 2.0
 	selectBoxArrowBounceHeight = 3.0
 	selectBoxArrowBounceSpeed  = 1.0
 )
@@ -160,8 +140,8 @@ func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bo
 	}
 
 	frameRect := pixel.R(0, 0, float64(selectBoxWidth), float64(selectBoxHeight))
-	frame5px.Draw(target, frameRect, center, frames.WithColor(colorDark))
-	frame5pxBorder.Draw(target, frameRect, center, frames.WithColor(mask))
+	frame4px.Draw(target, frameRect, center, frames.WithColor(colorDark))
+	frame4pxBorder.Draw(target, frameRect, center, frames.WithColor(mask))
 
 	bottomCenter := center.Moved(gfx.IVec(0, -selectBoxHeight/2))
 	spriteCenter := bottomCenter.Moved(gfx.BottomCenter.Align(b.sprite))
@@ -169,15 +149,14 @@ func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bo
 
 	if b.label != "" {
 		c := selectBoxLabelText.NewSimpleContent(b.label)
-		selectBoxLabelText.Render(target, center.Moved(gfx.IVec(0, selectBoxHeight/2-selectBoxLabelMargin)), c, tbcfg.Foreground(mask))
+		c.Render(target, center.Moved(gfx.IVec(0, selectBoxHeight/2-selectBoxLabelMargin)), tbcfg.Foreground(mask))
 	}
 
 	if b.subLabel != "" {
 		subLabelMask := colors.Lerp(colorText, colorHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 		c := selectBoxSubLabelText.NewSimpleContent(b.subLabel)
-		selectBoxSubLabelText.Render(target,
+		c.Render(target,
 			center.Moved(gfx.IVec(0, -selectBoxHeight/2-selectBoxSubLabelMargin)),
-			c,
 			tbcfg.Foreground(subLabelMask))
 	}
 

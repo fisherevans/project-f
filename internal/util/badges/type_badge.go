@@ -38,7 +38,7 @@ func (s *skillType) RenderMask(target pixel.Target, matrix pixel.Matrix, origin 
 	s.frame.Draw(target, pixel.R(0, 0, float64(s.textbox.GetConfig().BoxWidth), float64(skillTypeHeight)), matrix,
 		frames.WithRenderOrigin(gfx.BottomLeft),
 		frames.WithColor(bg))
-	s.textbox.Render(target, matrix, s.content, tbcfg.Foreground(fg))
+	s.content.Render(target, matrix, tbcfg.Foreground(fg))
 }
 
 func (b *Builder) Of(name string, bg, fg pixel.RGBA, width int) Instance {

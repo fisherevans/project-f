@@ -211,7 +211,7 @@ func (m *animechMenu) drawActions(target pixel.Target, topCenter pixel.Matrix, a
 			frames.WithRenderOrigin(gfx.BottomLeft), frames.WithColor(bgMask))
 		frame2pxBorder.Draw(target, b.rect, actionBottomLeft,
 			frames.WithRenderOrigin(gfx.BottomLeft), frames.WithColor(borderMask))
-		smallTextbox.Render(target, actionBottomLeft.Moved(b.rect.Bounds().Center()), b.label,
+		b.label.Render(target, actionBottomLeft.Moved(b.rect.Bounds().Center()),
 			tbcfg.RenderFrom(gfx.Centered), tbcfg.Foreground(textMask))
 		actionBottomLeft = actionBottomLeft.Moved(pixel.V(b.rect.W()+actionPadding, 0))
 	}

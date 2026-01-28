@@ -33,7 +33,7 @@ func (s *simpleSelectOption) Render(leftCenter pixel.Matrix, target pixel.Target
 		prefix = "{+u}"
 	}
 	content := mainText.NewComplexContent(prefix + s.label)
-	mainText.Render(target, leftCenter, content, tbcfg.Foreground(mask), tbcfg.RenderFrom(gfx.LeftCenter))
+	content.Render(target, leftCenter, tbcfg.Foreground(mask), tbcfg.RenderFrom(gfx.LeftCenter))
 }
 
 func (s *simpleSelectOption) OnSelect() {

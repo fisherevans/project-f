@@ -17,10 +17,21 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
-var atlas = resources.DefaultAtlas()
+var atlas *resources.Atlas
+
+var titleTextbox *textbox.Instance
+var optionTextbox *textbox.Instance
 
 func init() {
-	game.RegisterStateFactory(New)
+	resources.RunOnceInitialized(func() {
+		atlas = resources.DefaultAtlas()
+		titleTextbox = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameAddStandard),
+			tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
+		optionTextbox = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameFF),
+			tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
+	})
 }
 
 type Selector struct {
@@ -35,14 +46,6 @@ func New(intent game.SelectIntent) game.State {
 		states: intent.Destinations,
 	}
 }
-
-var titleTextbox = textbox.NewInstance(
-	atlas.GetFont(resources.FontNameAddStandard),
-	tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
-
-var optionTextbox = textbox.NewInstance(
-	atlas.GetFont(resources.FontNameFF),
-	tbcfg.NewConfig(0, 0, tbcfg.WithExpandMode(tbcfg.ExpandFit), tbcfg.Foreground(colors.White.RGBA)))
 
 func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	switch game.Controls[*Selector]().DPad().JustPressedDirection() {
@@ -73,7 +76,7 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 	}
 
 	titleContent := titleTextbox.NewSimpleContent("Select a state:")
-	titleTextbox.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)), titleContent)
+	titleContent.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)))
 
 	for index, option := range s.states {
 		str := fmt.Sprintf("%s", option.Name)
@@ -83,7 +86,7 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 			str = "   " + str
 		}
 		optionContent := optionTextbox.NewSimpleContent(str)
-		optionTextbox.Render(target, gfx.Moved(10, int(targetBounds.H())-35-15*index), optionContent)
+		optionContent.Render(target, gfx.Moved(10, int(targetBounds.H())-35-15*index))
 	}
 
 	game.DebugBRf("enter: select")

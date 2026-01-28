@@ -7,11 +7,11 @@ import (
 
 	"fisherevans.com/project/f/internal/game/states/combat/tick_bar"
 	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
-var skillEaterSprite = atlas.GetSprite("combat/tick_bar/skill_eater")
-
-var tickBarRenderer = tick_bar.NewRenderer(atlas)
+var skillEaterSprite pixelutil.BoundedDrawable
+var tickBarRenderer *tick_bar.Renderer
 
 var (
 	tickBarWidth = 8

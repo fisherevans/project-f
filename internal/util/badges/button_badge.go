@@ -84,15 +84,13 @@ func (s *ButtonAction) Render(target pixel.Target, matrix pixel.Matrix, origin g
 		frames.WithColor(s.style.Button))
 
 	// Render button text
-	s.textbox.Render(target,
+	s.buttonContent.Render(target,
 		matrix.Moved(gfx.IVec(buttonTextX, buttonBadgeSpacing)),
-		s.buttonContent,
 		tbcfg.Foreground(s.style.Action))
 
 	// Render action text
-	s.textbox.Render(target,
+	s.actionContent.Render(target,
 		matrix.Moved(gfx.IVec(actionTextX, buttonBadgeSpacing)),
-		s.actionContent,
 		tbcfg.Foreground(s.style.Button))
 }
 

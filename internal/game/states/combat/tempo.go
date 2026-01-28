@@ -5,6 +5,7 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/interp"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/util/colors"
@@ -67,14 +68,14 @@ func (t *Tempo) Update(upNext bool, combatant Combatant, timeDelta float64) {
 }
 
 var (
-	tempoLevel3Border = anim.Load(atlas, "combat/combatant_stats/tempo:level_3_border")
-	tempoLevel2Border = atlas.GetSprite("combat/combatant_stats/tempo:level_2_border")
-	tempoLevel1Border = atlas.GetSprite("combat/combatant_stats/tempo:level_1_border")
-	tempoBase         = atlas.GetSprite("combat/combatant_stats/tempo:base")
-	tempoName         = atlas.GetSprite("combat/combatant_stats/tempo:name")
+	tempoLevel3Border *anim.AnimatedSprite
+	tempoLevel2Border pixelutil.BoundedDrawable
+	tempoLevel1Border pixelutil.BoundedDrawable
+	tempoBase         pixelutil.BoundedDrawable
+	tempoName         pixelutil.BoundedDrawable
 
-	tempoBarGradient = atlas.GetSprite("combat/combatant_stats/tempo_bar:gradient")
-	tempoBarTick     = atlas.GetSprite("combat/combatant_stats/tempo_bar:tick")
+	tempoBarGradient pixelutil.BoundedDrawable
+	tempoBarTick     pixelutil.BoundedDrawable
 )
 
 func (t *Tempo) Render(target pixel.Target, center pixel.Matrix, timeDelta float64) {

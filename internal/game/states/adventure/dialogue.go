@@ -9,12 +9,9 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/textbox"
-	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
 type dialogueState int
@@ -25,7 +22,7 @@ const (
 	dialogStateExiting
 )
 
-var dialogueDoneAnimation = anim.Load(atlas, "dialogue/done")
+var dialogueDoneAnimation *anim.AnimatedSprite
 
 type DialogueSystem struct {
 	queuedDialogues []Dialogue
@@ -54,13 +51,8 @@ func (ds *DialogueSystem) HasPriority() bool {
 }
 
 var dialogueFrameMargin = 4
-var dialogueFrame = frames.New("dialogue/dialogue_frame", atlas)
-var dialogueBox = textbox.NewInstance(
-	atlas.GetFont(resources.FontNameM5x7),
-	tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding(), 0,
-		tbcfg.Paging(2, true),
-		tbcfg.Foreground(colors.HexString("#00164e")),
-		tbcfg.ExtraLineSpacing(4)))
+var dialogueFrame *frames.Instance
+var dialogueBox *textbox.Instance
 
 var dialogueTransitionTime = 0.3
 
@@ -108,7 +100,7 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 	}
 
 	dialogueFrame.Draw(target, frameBounds, pixel.IM.Moved(frameBottomLeft))
-	dotPosition := dialogueBox.Render(target, pixel.IM.Moved(textBoxBottomLeft).Moved(frameBottomLeft), dialogue.Content())
+	dotPosition := dialogue.Content().Render(target, pixel.IM.Moved(textBoxBottomLeft).Moved(frameBottomLeft))
 	if ds.renderState != dialogStateVisible {
 		return
 	}

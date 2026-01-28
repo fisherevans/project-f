@@ -7,12 +7,16 @@ import (
 	"time"
 
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
+	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/textbox"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
@@ -31,11 +35,34 @@ const (
 var (
 	cameraRenderDistanceX = int(math.Ceil(float64(game.GameWidth) / resources.MapTileSize.Float() / 2.0))
 	cameraRenderDistanceY = int(math.Ceil(float64(game.GameHeight) / resources.MapTileSize.Float() / 2.0))
-	atlas                 = resources.DefaultAtlas()
+	atlas                 *resources.Atlas
 )
 
 func init() {
-	atlas.Dump("temp", "adventure")
+	resources.RunOnceInitialized(func() {
+		atlas = resources.DefaultAtlas()
+		chatterArrow = atlas.GetSprite("chatter/chatter_box_arrow")
+		chatterFrame = frames.New("chatter/chatter_box", atlas)
+		chatterBox = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameM3x6),
+			tbcfg.NewConfig(game.GameWidth/3, 0,
+				tbcfg.HAligned(tbcfg.HAlignCenter),
+				tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+		dialogueDoneAnimation = anim.Load(atlas, "dialogue/done")
+		dialogueFrame = frames.New("dialogue/dialogue_frame", atlas)
+		dialogueBox = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameM5x7),
+			tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding(), 0,
+				tbcfg.Paging(2, true),
+				tbcfg.Foreground(colors.HexString("#00164e")),
+				tbcfg.ExtraLineSpacing(4)))
+		hudCountText = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameM5x7),
+			tbcfg.NewConfig(game.GameWidth/3, hucCountTextHeight,
+				tbcfg.HAligned(tbcfg.HAlignRight),
+				tbcfg.VAligned(tbcfg.VAlignMiddle),
+				tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+	})
 }
 
 var _ game.State = &State{}
@@ -229,17 +256,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	sort.Strings(locations)
 	game.DebugBLf("player locations: %v", locations)
 	game.DebugBLf("player behavior enabled: %t (%v)", playerEntity.IsBehaviorEnabled(), s.entities.disabledBehaviors[s.player])
-
-	if game.Window().JustPressed(pixel.KeyB) {
-		s.planExecutor.mu.Lock()
-		for _, batch := range s.planExecutor.activeBatches {
-			log.Info().Int("next effect", batch.nextEffectIndex).
-				Any("waiting", batch.waitingFor).
-				Any("batch", batch.batch).
-				Msg("batch in progress")
-		}
-		s.planExecutor.mu.Unlock()
-	}
 
 	// LIGHTING
 

@@ -317,14 +317,9 @@ func (a *AppliedStatuses) String() string {
 }
 
 var (
-	statusFrame        = frames.New("combat/status_frame", atlas)
-	statusBorder       = atlas.GetSprite("combat/status_border")
-	statusLevelSprites = map[rpg.StatusLevel]pixelutil.BoundedDrawable{
-		rpg.StatusLevel0: atlas.GetTilesheetSprite("combat/status_level", 4, 1), // empty
-		rpg.StatusLevel1: atlas.GetTilesheetSprite("combat/status_level", 1, 1),
-		rpg.StatusLevel2: atlas.GetTilesheetSprite("combat/status_level", 2, 1),
-		rpg.StatusLevel3: atlas.GetTilesheetSprite("combat/status_level", 3, 1),
-	}
+	statusFrame        *frames.Instance
+	statusBorder       pixelutil.BoundedDrawable
+	statusLevelSprites map[rpg.StatusLevel]pixelutil.BoundedDrawable
 )
 
 const statusFadeOut = 2.0

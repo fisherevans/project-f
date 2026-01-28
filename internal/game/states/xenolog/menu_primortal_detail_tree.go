@@ -27,16 +27,10 @@ const (
 	skillNodeStateUnlockable
 )
 
+// Variables declared in init_vars.go
 var (
-	skillNodeSpacingX                    = 48
-	skillNodeSpacingY                    = 24
-	skillNodeSpriteHidden                = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 4, 1)
-	skillNodeSpriteUnlockedHighlighted   = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 3, 1)
-	skillNodeSpriteUnlockableHighlighted = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 2, 1)
-	skillNodeSpriteHighlightCursor       = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 5, 1)
-	skillNodeSpriteUnlocked              = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 6, 1)
-	skillNodeSpriteUnlockable            = atlas.GetTilesheetSprite("xenolog/skill_tree/nodes", 7, 1)
-	particleSprite                       = atlas.GetSprite("1x1")
+	skillNodeSpacingX = 48
+	skillNodeSpacingY = 24
 )
 
 type skillTree struct {

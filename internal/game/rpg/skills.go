@@ -70,6 +70,10 @@ func (s *SkillSet) DirectionOfSkill(skill SkillId) (input.Direction, bool) {
 	}
 }
 
+func (s *SkillSet) IsEmpty() bool {
+	return s.Skill1 == "" && s.Skill2 == "" && s.Skill3 == "" && s.Skill4 == ""
+}
+
 func (s Skill) Duration() int {
 	return len(s.Ticks) - 1
 }

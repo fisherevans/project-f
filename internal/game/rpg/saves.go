@@ -35,12 +35,25 @@ func (g *GameSave) FillDefaults() {
 	if g.SystemSettings == nil {
 		g.SystemSettings = &SystemSettings{}
 	}
+	g.SystemSettings.FillDefaults()
 	if g.Globals == nil {
 		g.Globals = &defaultGlobals{
 			values: make(map[string]any),
 		}
 	}
-	g.SystemSettings.FillDefaults()
+	if g.ControlledUnlockedSkills == nil {
+		g.ControlledUnlockedSkills = make(map[SkillId]struct{})
+	}
+	if _, ok := g.ControlledUnlockedSkills[Skill_Jab.Id]; !ok {
+		g.ControlledUnlockedSkills[Skill_Jab.Id] = struct{}{}
+	}
+	if g.Animech == nil {
+		g.Animech = &Animech{}
+	}
+	g.Animech.FillDefaults()
+	if g.Primortals == nil {
+		g.Primortals = make(map[PrimortalType]*PrimortalProgress)
+	}
 }
 
 func (g *GameSave) IsSkillUnlocked(skill SkillId) bool {
@@ -81,6 +94,11 @@ func (g *GameSave) Save() error {
 	filename := fmt.Sprintf("%s.yaml", g.SaveId)
 	path := filepath.Join(gameSaveDirectory, filename)
 
+	// Create directory if it doesn't exist
+	if err := os.MkdirAll(gameSaveDirectory, 0755); err != nil {
+		return fmt.Errorf("failed to create save directory: %w", err)
+	}
+
 	// Load the existing save (if any) to compute a delta
 	var oldSave *GameSave
 	if existingData, err := os.ReadFile(path); err == nil {
@@ -115,6 +133,10 @@ func LoadGameSaves() (map[string]*GameSave, error) {
 
 	entries, err := os.ReadDir(gameSaveDirectory)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// Directory doesn't exist yet, return empty map
+			return saves, nil
+		}
 		return nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 

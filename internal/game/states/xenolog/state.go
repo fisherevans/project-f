@@ -8,17 +8,25 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/interp"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
-var atlas = resources.DefaultAtlas()
+var atlas *resources.Atlas
+var deviceBackgroundSprite pixelutil.BoundedDrawable
+var moveDuration = 0.4
 
-var (
-	deviceBackgroundSprite = atlas.GetSprite("xenolog/device")
-	moveDuration           = 0.4
-)
+func init() {
+	resources.RunOnceInitialized(func() {
+		atlas = resources.DefaultAtlas()
+		deviceBackgroundSprite = atlas.GetSprite("xenolog/device")
+		initializeXenologVariables()
+		badgeAContinue = badges.Using(atlas).ButtonAction("A", "continue", badgeButtonStyle).Flipped()
+	})
+}
 
 type State struct {
 	game.BaseState

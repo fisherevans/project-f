@@ -60,7 +60,7 @@ func (s *DeveloperState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect,
 	s.elapsed += timeDelta
 	if !s.initialized && s.elapsed > initializeDeveloperAfter {
 		s.initialized = true
-		s.control = audio.GetSystem().PlaySFX("startup/developer", 0)
+		s.control = audio.GetSystem().PlaySFX("startup/developer", 1)
 	}
 
 	if game.Controls[*DeveloperState]().ButtonB().JustPressed() {
@@ -68,7 +68,9 @@ func (s *DeveloperState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect,
 		s.control.Stop()
 	}
 	if s.elapsed > developerEnd || game.Controls[*DeveloperState]().ButtonA().JustPressed() {
-		game.SetActiveStateIntent(game.TitleIntent{})
+		game.SetActiveStateIntent(game.StartupControlsIntent{
+			ExitStateIntent: game.TitleIntent{},
+		})
 		s.control.Stop()
 	}
 

@@ -4,15 +4,15 @@ import (
 	"math"
 	"sort"
 
+	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/textbox"
-	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 )
 
 type ChatterState int
@@ -46,13 +46,9 @@ func (c *ChatterSystem) Add(chatter Chatter) {
 	c.toAdd = append(c.toAdd, chatter)
 }
 
-var chatterArrow = atlas.GetSprite("chatter/chatter_box_arrow")
-var chatterFrame = frames.New("chatter/chatter_box", atlas)
-var chatterBox = textbox.NewInstance(
-	atlas.GetFont(resources.FontNameM3x6),
-	tbcfg.NewConfig(game.GameWidth/3, 0,
-		tbcfg.HAligned(tbcfg.HAlignCenter),
-		tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+var chatterArrow pixelutil.BoundedDrawable
+var chatterFrame *frames.Instance
+var chatterBox *textbox.Instance
 
 func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bounds MapBounds, timeDelta float64) {
 	if len(c.toAdd) > 0 {
@@ -96,7 +92,7 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.
 		chatterArrow.Draw(target, renderMatrix)
 
 		chatter.Content().Update(timeDelta, nil)
-		chatterBox.Render(target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))), chatter.Content())
+		chatter.Content().Render(target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))))
 	}
 	c.chatters = incompleteChatters
 }

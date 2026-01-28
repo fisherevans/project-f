@@ -5,6 +5,10 @@ import "fisherevans.com/project/f/internal/game/rpg"
 type StartupDeviceIntent struct{}
 type StartupCopyrightsIntent struct{}
 type StartupDeveloperIntent struct{}
+
+type StartupControlsIntent struct {
+	ExitStateIntent any
+}
 type TitleIntent struct{}
 
 type SelectIntent struct {

@@ -135,7 +135,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.elapsed += timeDelta
 	if !s.initialized && s.elapsed > initializeDeviceAfter {
 		s.initialized = true
-		s.control = audio.GetSystem().PlaySFX("startup/device", 0)
+		s.control = audio.GetSystem().PlaySFX("startup/device", 1)
 	}
 
 	if game.Controls[*State]().ButtonB().JustPressed() {
