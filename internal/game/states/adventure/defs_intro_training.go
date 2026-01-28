@@ -313,6 +313,7 @@ func init() {
 						NewDialogueEffect("As you battled that specimen, your Animech acquired research points."),
 						NewDialogueEffect("Using the Xenolog, you can spend those research points to unlock new skills."),
 						NewDialogueEffect("Do that, and equip your new skill."),
+						NewSetWorldStateEffect("intro.training.5.xenolog", true), // reset, just for testing when we skip that room
 						NewSetWorldStateEffect(globalVariableNameHasXenologPrimortals, true),
 					).
 					Build()

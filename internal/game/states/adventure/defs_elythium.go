@@ -73,7 +73,7 @@ func init() {
 				if event.Key != cfg.EnabledByKey {
 					return nil
 				}
-				if event.NewValue.AsBool(false) && ModeMetadataKey.Get(thisEntity) != "mined" {
+				if event.NewValue.AsBool(false) && ModeMetadataKey.Get(thisEntity) == "mined" {
 					return NewOutput().WithEffects(NewMutateModeBasedEntityEffect(thisEntity.GetId()).WithMode("ready"))
 				}
 				return nil

@@ -2,8 +2,8 @@ save_id: default
 character_name: Todd
 animech:
     skill_set:
-        "1": ""
-        "2": jab
+        "1": jab
+        "2": acid_string
         "3": ""
         "4": ""
     experience_points: 100
@@ -23,8 +23,10 @@ unlocked_skills:
 globals:
     abilities.xenolog_primortals: true
     elythium: 0
+    intro.training.5.xenolog: true
+    intro.training.enter.listener: 9752c628-d593-4f05-bc36-f6bce08c54d0
     player_id: tiled-16
-    tiled-363: 53bc586f-2923-4673-ba12-0e8768cc76bc
+    tiled-363: 9752c628-d593-4f05-bc36-f6bce08c54d0
 system_settings:
     lighting:
         lighting_composition: full

@@ -15,9 +15,9 @@
         },
         "hq.tmx": {
             "expandedGroupLayers": [
-                2,
+                3,
                 4,
-                3
+                2
             ],
             "expandedObjectLayers": [
                 11,
@@ -26,26 +26,28 @@
             "scale": 6.7071,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 3859.7158235302886,
-                "y": 3774.4330634700545
+                "x": 4000.0149095734373,
+                "y": 4000.0149095734373
             }
         },
         "intro.tmx": {
             "expandedGroupLayers": [
-                2,
+                3,
                 4,
-                3
+                2
             ],
             "expandedObjectLayers": [
-                13,
                 11,
-                4
+                4,
+                12,
+                14,
+                13
             ],
-            "scale": 4.1881,
-            "selectedLayer": 9,
+            "scale": 0.75,
+            "selectedLayer": 5,
             "viewCenter": {
-                "x": 3890.666411976791,
-                "y": 3063.3222702418757
+                "x": 4000.666666666666,
+                "y": 4000.6666666666665
             }
         },
         "map1.tmx": {
@@ -55,16 +57,16 @@
                 19
             ],
             "expandedObjectLayers": [
-                13,
-                18,
                 6,
-                21
+                21,
+                13,
+                18
             ],
             "scale": 1.5804,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 781.7641103518097,
-                "y": 1130.4100227790432
+                "x": 1599.911414831688,
+                "y": 1599.911414831688
             }
         },
         "snowhex_base.tsx": {
@@ -101,16 +103,16 @@
         "snowhex_base.tsx",
         "space_base.tsx",
         "map1.tmx",
-        "hq.tmx",
-        "intro.tmx"
+        "intro.tmx",
+        "hq.tmx"
     ],
     "project": "testbed.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "hq.tmx",
         "snowhex_base.tsx",
         "space_base.tsx",
         "map1.tmx",
+        "hq.tmx",
         "intro.tmx",
         "testing.tmx",
         "asha_idle-32x32.tsx"

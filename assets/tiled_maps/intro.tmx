@@ -4283,7 +4283,7 @@ combat_id: intro.training.6</property>
     </properties>
     <point/>
    </object>
-   <object id="307" type="ShadowMob" x="1464" y="3304">
+   <object id="307" type="ShadowMob" x="1448" y="3288">
     <properties>
      <property name="shadow_mob">leash_radius: 5
 respawn_delay: 15
@@ -4292,7 +4292,7 @@ combat_background: combat/background_space_base</property>
     </properties>
     <point/>
    </object>
-   <object id="308" type="ShadowMob" x="1672" y="3304">
+   <object id="308" type="ShadowMob" x="1688" y="3288">
     <properties>
      <property name="shadow_mob">leash_radius: 5
 respawn_delay: 15
