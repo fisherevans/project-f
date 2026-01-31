@@ -123,6 +123,8 @@ type State struct {
 	globals *stateGlobals
 
 	activeSong *audio.PlaybackControl
+
+	controls *resources.MapControls
 }
 
 func New(i game.AdventureIntent) game.State {

@@ -30,55 +30,16 @@ func NewHud(state *State) *Hud {
 
 func (h *Hud) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bounds MapBounds, timeDelta float64) {
 	h.onTickElythiumCount(s, target, pixel.IM.Moved(cameraDelta), bounds, timeDelta)
-
-	type topRightCount struct {
-		icon   *anim.AnimatedSprite
-		count  int
-		fg     string
-		stroke string
-	}
-
-	// todo display elythium as a guage
-	counts := []topRightCount{
-		{
-			icon:   h.elythiumCountIcon,
-			count:  h.state.globals.Get(rpg.GlobalKeyElythium).AsInt(0),
-			stroke: "#3d1632",
-			fg:     "#edb2dc",
-		},
-		//{
-		//	icon:   h.researchIcon,
-		//	count:  game.CurrentSave().Animech.AnimechExperience, // todo not from a run
-		//	stroke: "#162d3d",
-		//	fg:     "#b2d4ed",
-		//},
-	}
-
-	rowPadding := 2.0
-	padding := 6.0
-	for id, count := range counts {
-		count.icon.Update(timeDelta)
-		sprite := count.icon.Sprite()
-		topRight := pixel.IM.
-			Moved(pixel.V(game.GameWidth-padding, game.GameHeight-padding)).
-			Moved(pixel.V(0, -float64(id)*(sprite.Bounds().H()+rowPadding)))
-		count.icon.Sprite().Draw(target, topRight.Moved(gfx.TopRight.Align(sprite)))
-
-		content := hudCountText.NewComplexContent(fmt.Sprintf("{+o:%s,+c:%s}%d", count.stroke, count.fg, count.count))
-		txtVNudge := -1.0 // push it down or up to align with sprite
-		txtVNudge -= (sprite.Bounds().H() - content.Bounds().H()) / 2
-		txtHNudge := -1.0 // padding between number and sprite
-		txtM := topRight.
-			Moved(pixel.V(txtHNudge-float64(content.Width()), txtVNudge)).
-			Moved(pixel.V(0, -float64(id)*(sprite.Bounds().H()+rowPadding)))
-		content.Render(target, txtM, tbcfg.RenderFrom(gfx.TopRight))
-	}
 }
 
 var hucCountTextHeight = 10
 var hudCountText *textbox.Instance
 
 func (h *Hud) onTickElythiumCount(s *State, target pixel.Target, matrix pixel.Matrix, bounds MapBounds, timeDelta float64) {
+	if !s.EvaluateControlToggles(s.controls.Elythium.Default, s.controls.Elythium.ToggledBy) {
+		return
+	}
+
 	h.elythiumCountIcon.Update(timeDelta)
 	sprite := h.elythiumCountIcon.Sprite()
 	padding := 6.0

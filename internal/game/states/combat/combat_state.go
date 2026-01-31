@@ -1,6 +1,9 @@
 package combat
 
 import (
+	"math/rand/v2"
+
+	"fisherevans.com/project/f/internal/util/highlighter"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
 
@@ -125,6 +128,8 @@ type State struct {
 
 	backgroundSprite pixelutil.BoundedDrawable
 
+	highlighter *highlighter.Drawer
+
 	batch *pixel.Batch
 }
 
@@ -140,6 +145,8 @@ func New(i game.CombatIntent) game.State {
 		cachedContents: map[string]*textbox.Content{},
 
 		backgroundSprite: atlas.GetSprite(i.Background),
+
+		highlighter: highlighter.NewDrawer(atlas, pixel.R(20, 40, 140, 80), 0.25),
 
 		batch: atlas.NewBatch(),
 	}
@@ -215,6 +222,25 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 			s.OnComplete(result)
 		}
 	}
+
+	if game.Controls[*State]().ButtonStart().JustPressed() {
+		x1 := math.Round(rand.Float64() * (game.GameWidth * 0.8))
+		y1 := math.Round(rand.Float64() * (game.GameHeight * 0.8))
+		x2 := x1 + math.Round(rand.Float64()*(float64(game.GameWidth-x1)*0.8))
+		y2 := y1 + math.Round(rand.Float64()*(float64(game.GameHeight-y1)*0.8))
+		target := highlighter.Target{
+			Area: pixel.R(x1, y1, x2, y2),
+			Flip: rand.Float64() > 0.5,
+		}
+		if rand.Float64() > 0.5 {
+			target.BadgeText = "NEXT"
+		}
+		if rand.Float64() > 0.5 {
+			target.Message = "This is some highlight text.\nAnd here's some more!"
+		}
+		s.highlighter.SetTargetArea(target, true)
+	}
+	s.highlighter.Render(s.batch, timeDelta)
 
 	s.batch.Draw(target)
 }

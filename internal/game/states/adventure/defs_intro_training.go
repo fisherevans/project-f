@@ -10,6 +10,7 @@ import (
 )
 
 func init() {
+	keyElythium := "intro.control.elythium"
 	registerEventHandler("intro.training.enter.listener", func(*util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
@@ -289,7 +290,6 @@ func init() {
 	})
 	registerEventHandler("intro.training.7.npc", func(_ *util.Properties) EventHandler {
 		keyDoor := doorKey(7)
-		keyElythium := "intro.training.7.elythium"
 		return BasicHandlerBuilder[None]{
 			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != thisEntity.GetId() {
@@ -401,6 +401,8 @@ func init() {
 					NewDialogueEffect("You stare at yourself, across the gap."),
 					NewDialogueEffect("But it isn't you."),
 					NewSetWorldStateEffect(globalVariableNameHasXenologAccess, true),
+					NewSetWorldStateEffect(keyElythium, false),
+					NewSetWorldStateEffect(rpg.GlobalKeyElythium, 0),
 					NewDialogueEffect("Press [ESC] to access your Xenolog."),
 				)
 			},

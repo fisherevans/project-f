@@ -16,6 +16,7 @@ import (
 	"fisherevans.com/project/f/internal/game/states/title"
 	"fisherevans.com/project/f/internal/game/states/xenolog"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -58,31 +59,64 @@ func (i *Instance) initialize() {
 
 	loading := text.New(pixel.V(20, 20), text.Atlas7x13)
 	loading.Color = pixel.RGB(1, 1, 1)
-	loading.WriteString("Loading...")
-	loading.Draw(i.window, pixel.IM)
-	i.window.Update()
+	initDone := make(chan error, 1)
+	go func() {
+		// Load all resources (fonts, sprites, audio, etc.)
+		// This triggers all deferred initializers registered via resources.RunOnceInitialized()
+		resources.Initialize()
 
-	// Load all resources (fonts, sprites, audio, etc.)
-	// This triggers all deferred initializers registered via resources.RunOnceInitialized()
-	resources.Initialize()
+		game.RegisterStateFactory(adventure.New)
+		game.RegisterStateFactory(combat.New)
+		game.RegisterStateFactory(menu.New)
+		game.RegisterStateFactory(xenolog.New)
+		game.RegisterStateFactory(state_selector.New)
+		game.RegisterStateFactory(title.New)
+		game.RegisterStateFactory(startup.NewDevice)
+		game.RegisterStateFactory(startup.NewCopyright)
+		game.RegisterStateFactory(startup.NewDeveloper)
+		game.RegisterStateFactory(startup.NewControls)
+		game.RegisterStateFactory(game.DoSwapStateIntent)
 
-	game.RegisterStateFactory(adventure.New)
-	game.RegisterStateFactory(combat.New)
-	game.RegisterStateFactory(menu.New)
-	game.RegisterStateFactory(xenolog.New)
-	game.RegisterStateFactory(state_selector.New)
-	game.RegisterStateFactory(title.New)
-	game.RegisterStateFactory(startup.NewDevice)
-	game.RegisterStateFactory(startup.NewCopyright)
-	game.RegisterStateFactory(startup.NewDeveloper)
-	game.RegisterStateFactory(startup.NewControls)
-	game.RegisterStateFactory(game.DoSwapStateIntent)
+		game.Initialize(i.saveId, i.initialStateIntent)
 
-	game.Initialize(i.saveId, i.initialStateIntent)
+		// Wait for audio speaker to start streaming before game loop begins
+		// This prevents the first ~1-2 seconds of audio from being clipped
+		audio.WaitUntilReady()
 
-	// Wait for audio speaker to start streaming before game loop begins
-	// This prevents the first ~1-2 seconds of audio from being clipped
-	audio.WaitUntilReady()
+		initDone <- nil
+	}()
+
+	lastDotTick := time.Now()
+	dotCount := 0
+	for {
+		select {
+		case err := <-initDone:
+			if err != nil {
+				panic(err)
+			}
+			return
+		default:
+		}
+
+		if i.window.Closed() {
+			os.Exit(0)
+		}
+
+		if time.Since(lastDotTick) > 250*time.Millisecond {
+			dotCount = (dotCount + 1) % 4
+			lastDotTick = time.Now()
+		}
+
+		loading.Clear()
+		loading.WriteString("Loading")
+		for j := 0; j < dotCount; j++ {
+			loading.WriteString(".")
+		}
+		i.window.Clear(pixel.RGB(0, 0, 0))
+		loading.Draw(i.window, gfx.Moved(20, 20))
+		i.window.Update()
+		time.Sleep(16 * time.Millisecond)
+	}
 
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game/input"
@@ -13,8 +14,9 @@ import (
 )
 
 func initializeMap(a *State, m *resources.Map) {
-	a.sceneClear = m.SceneClearColor
-	a.lightClear = m.LightingClearColor
+	a.controls = m.Controls
+	a.sceneClear = colors.FromString(util.OrDefaultString(m.Controls.SceneClearColor, "#000"))
+	a.lightClear = colors.FromString(util.OrDefaultString(m.Controls.LightingClearColor, "#fff"))
 
 	// get world bounds first, in order to adjust movement of other object
 	var minX, maxX, minY, maxY int

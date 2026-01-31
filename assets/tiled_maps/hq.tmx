@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="14">
+ <properties>
+  <property name="controls">lighting_clear_color: &quot;#5a5f8b&quot;
+scene_clear_color: &quot;#20212f&quot;
+elythium:
+  default: false
+</property>
+ </properties>
  <tileset firstgid="1" source="space_base.tsx"/>
  <tileset firstgid="1201" source="snowhex_base.tsx"/>
  <group id="2" name="under">

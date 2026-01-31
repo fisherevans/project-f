@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="383">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="385">
  <properties>
-  <property name="lighting_clear_color" value="#9baeae"/>
-  <property name="scene_clear_color" value="#1d2a2a"/>
+  <property name="controls">lighting_clear_color: &quot;#9baeae&quot;
+scene_clear_color: &quot;#1d2a2a&quot;
+elythium:
+  default: false
+  toggled_by:
+  - global_key: intro.control.elythium
+  - zone_id: intro.mining
+</property>
  </properties>
  <tileset firstgid="1" source="space_base.tsx"/>
  <tileset firstgid="1201" source="snowhex_base.tsx"/>
@@ -4213,8 +4219,8 @@ If I see one more checkbox, I’m leaving the planet.</property>
    </object>
    <object id="289" gid="586" x="1520" y="3152" width="16" height="16">
     <properties>
-     <property name="elythium">enabled_by_key: intro.training.7.elythium
-broadcast_on_break: intro.training.7.elythium</property>
+     <property name="elythium">enabled_by_key: intro.control.elythium
+broadcast_on_break: intro.control.elythium</property>
     </properties>
    </object>
    <object id="290" gid="586" x="1424" y="3360" width="16" height="16"/>

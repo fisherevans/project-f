@@ -9,6 +9,7 @@ import (
 
 func main() {
 	redirectLogsToFile("./game_data/logs.txt")
-	setup.SetupLogging()
+	noColor := true
+	setup.SetupLoggingWithOptions(setup.LoggingOptions{NoColor: &noColor})
 	opengl.Run(runtime.NewInstance("default", game.StartupDeviceIntent{}).Run)
 }

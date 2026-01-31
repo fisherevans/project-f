@@ -11,6 +11,7 @@ import (
 	"github.com/lafriks/go-tiled"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 
 	"fisherevans.com/project/f/assets"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -21,6 +22,17 @@ func getColor(tiledMap *tiled.Map, key string) pixel.RGBA {
 		return colors.Black.RGBA
 	}
 	return colors.FromString(tiledMap.Properties.GetString(key))
+}
+
+func getStruct(tiledMap *tiled.Map, key string, initialValue any) {
+	if tiledMap == nil || tiledMap.Properties == nil {
+		return
+	}
+	contents := tiledMap.Properties.GetString(key)
+	err := yaml.Unmarshal([]byte(contents), initialValue)
+	if err != nil {
+		log.Fatal().Err(err).Str("content", contents).Msgf("Error unmarshalling %s to %#v", key, initialValue)
+	}
 }
 
 func loadTiledMap(path string, resourceName string, _ []byte) error {
@@ -35,10 +47,10 @@ func loadTiledMap(path string, resourceName string, _ []byte) error {
 	log := log.With().Str("path", path).Logger()
 
 	gameMap := &Map{
-		Entities:           map[string]*Entity{},
-		SceneClearColor:    getColor(tiledMap, "scene_clear_color"),
-		LightingClearColor: getColor(tiledMap, "lighting_clear_color"),
+		Entities: map[string]*Entity{},
+		Controls: &MapControls{},
 	}
+	getStruct(tiledMap, "controls", gameMap.Controls)
 
 	for _, tiledGroup := range tiledMap.Groups {
 		if slices.Contains(TileLayerGroupNames, tiledGroup.Name) {

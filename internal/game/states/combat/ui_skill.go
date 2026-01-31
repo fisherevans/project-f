@@ -54,24 +54,25 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 	s.skillFlashAlphaInverse = 0.5 + (1.0-sin)*0.5
 
 	if game.Controls[*State]().DPad().IsPressed() {
-		dir := game.Controls[*State]().
-			DPad().PressedDirection()
-		switch dir {
-		case input.Up:
-			s.combatArrowAlpha, s.combatArrowColumn = 1, 2
-		case input.Right:
-			s.combatArrowAlpha, s.combatArrowColumn = 1, 3
-		case input.Down:
-			s.combatArrowAlpha, s.combatArrowColumn = 1, 4
-		case input.Left:
-			s.combatArrowAlpha, s.combatArrowColumn = 1, 5
+		dir := game.Controls[*State]().DPad().PressedDirection()
+		selectSkill := s.Player.GetFightOption(typeOptionKeyReverse[dir])
+		if selectSkill != s.Player.NextSkill {
+			s.Player.NextSkill = selectSkill
+			s.Player.NextSkillCommitted = false
 		}
-		if game.Controls[*State]().DPad().JustPressed() {
-			selectSkill := s.Player.GetFightOption(typeOptionKeyReverse[dir])
-			if selectSkill != s.Player.NextSkill {
-				s.Player.NextSkill = s.Player.GetFightOption(typeOptionKeyReverse[dir])
-				s.Player.NextSkillCommitted = false
+		if selectSkill != nil {
+			switch dir {
+			case input.Up:
+				s.combatArrowAlpha, s.combatArrowColumn = 1, 2
+			case input.Right:
+				s.combatArrowAlpha, s.combatArrowColumn = 1, 3
+			case input.Down:
+				s.combatArrowAlpha, s.combatArrowColumn = 1, 4
+			case input.Left:
+				s.combatArrowAlpha, s.combatArrowColumn = 1, 5
 			}
+		} else {
+			s.combatArrowAlpha, s.combatArrowColumn = 0, 0
 		}
 	}
 
@@ -127,7 +128,7 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 		float64(skillFrameWidth+(skillFrameHorizontalSpacing/2)),
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
 	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).Draw(target, centerMatrix)
-	s.combatArrowAlpha -= timeDelta * 0.75
+	//s.combatArrowAlpha -= timeDelta * 0.75
 	game.DebugTRf("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
 		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
@@ -147,6 +148,7 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 		} else if game.Controls[*State]().ButtonB().JustPressed() {
 			s.Player.NextSkill = nil
 			s.Player.NextSkillCommitted = false
+			s.combatArrowAlpha, s.combatArrowColumn = 0, 0
 		}
 	} else {
 		skillMenuBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
@@ -154,6 +156,8 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 
 	if s.Player.NextSkill != nil && game.Controls[*State]().ButtonB().JustPressed() {
 		s.Player.NextSkill = nil
+		s.Player.NextSkillCommitted = false
+		s.combatArrowAlpha, s.combatArrowColumn = 0, 0
 	}
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {

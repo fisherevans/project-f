@@ -28,6 +28,22 @@ var TileLayerGroupNames = []string{
 
 var ControlLayerGroupName = "control"
 
+type ControlToggle struct {
+	GlobalKey string `yaml:"global_key"`
+	ZoneId    string `yaml:"zone_id"`
+}
+
+type ElythiumControls struct {
+	Default   bool            `yaml:"default"`
+	ToggledBy []ControlToggle `yaml:"toggled_by"`
+}
+
+type MapControls struct {
+	Elythium           ElythiumControls `yaml:"elythium"`
+	SceneClearColor    string           `yaml:"scene_clear_color"`
+	LightingClearColor string           `yaml:"lighting_clear_color"`
+}
+
 type Map struct {
 	TileLayerGroups      []*TileLayerGroup
 	Entities             map[string]*Entity
@@ -35,8 +51,7 @@ type Map struct {
 	BackgroundColorAreas []*ColoredArea
 	Zones                []*Zone
 	CollisionTiles       []*Tile
-	SceneClearColor      pixel.RGBA
-	LightingClearColor   pixel.RGBA
+	Controls             *MapControls
 }
 
 func (m *Map) AddEntity(id string, e *Entity) {

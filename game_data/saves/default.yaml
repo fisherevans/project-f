@@ -3,8 +3,8 @@ character_name: Todd
 animech:
     skill_set:
         "1": jab
-        "2": acid_string
-        "3": ""
+        "2": ""
+        "3": acid_string
         "4": ""
     experience_points: 100
     upgrades:
@@ -24,9 +24,9 @@ globals:
     abilities.xenolog_primortals: true
     elythium: 0
     intro.training.5.xenolog: true
-    intro.training.enter.listener: 9752c628-d593-4f05-bc36-f6bce08c54d0
+    intro.training.enter.listener: 1268c478-09ec-4399-8e8e-40c20787eb4d
     player_id: tiled-16
-    tiled-363: 9752c628-d593-4f05-bc36-f6bce08c54d0
+    tiled-363: 1268c478-09ec-4399-8e8e-40c20787eb4d
 system_settings:
     lighting:
         lighting_composition: full
