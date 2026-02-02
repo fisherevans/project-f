@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="385">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="389">
  <properties>
   <property name="controls">lighting_clear_color: &quot;#9baeae&quot;
 scene_clear_color: &quot;#1d2a2a&quot;
@@ -4267,7 +4267,8 @@ respawn_delay: 0
 respawn_jitter: 0
 combat_background: combat/background_space_base
 opponent: dummy
-combat_id: intro.training.4</property>
+broadcast_id: intro.training.4.combat
+#combat_id: intro.training.4</property>
     </properties>
     <point/>
    </object>
@@ -4278,32 +4279,13 @@ combat_id: intro.training.4</property>
     </properties>
     <point/>
    </object>
-   <object id="306" type="ShadowMob" x="1352" y="3144">
-    <properties>
-     <property name="shadow_mob">leash_radius: 3
-respawn_delay: 0
-respawn_jitter: 0
-combat_background: combat/background_space_base
-opponent: toxmidge
-combat_id: intro.training.6</property>
-    </properties>
-    <point/>
-   </object>
    <object id="307" type="ShadowMob" x="1448" y="3288">
     <properties>
      <property name="shadow_mob">leash_radius: 5
 respawn_delay: 15
 respawn_jitter: 5
-combat_background: combat/background_space_base</property>
-    </properties>
-    <point/>
-   </object>
-   <object id="308" type="ShadowMob" x="1688" y="3288">
-    <properties>
-     <property name="shadow_mob">leash_radius: 5
-respawn_delay: 15
-respawn_jitter: 5
-combat_background: combat/background_space_base</property>
+combat_background: combat/background_space_base
+opponent_pool: intro.training.8.pool</property>
     </properties>
     <point/>
    </object>
@@ -4448,17 +4430,44 @@ lights:
    <object id="379" gid="27" x="1296" y="3568" width="16" height="16"/>
    <object id="380" gid="25" x="1152" y="3296" width="16" height="16"/>
    <object id="381" gid="25" x="1312" y="3152" width="16" height="16"/>
-   <object id="382" type="ShadowMob" x="1576" y="3304">
+   <object id="385" type="ModeBasedEntity" x="1320" y="3352">
+    <properties>
+     <property name="entity_id" value="training"/>
+    </properties>
+    <point/>
+   </object>
+   <object id="386" type="ShadowMob" x="1352" y="3144">
+    <properties>
+     <property name="shadow_mob">leash_radius: 3
+respawn_delay: 0
+respawn_jitter: 0
+combat_background: combat/background_space_base
+broadcast_id: intro.training.6.combat</property>
+    </properties>
+    <point/>
+   </object>
+   <object id="387" type="ShadowMob" x="1560" y="3320">
     <properties>
      <property name="shadow_mob">leash_radius: 5
 respawn_delay: 15
 respawn_jitter: 5
-combat_background: combat/background_space_base</property>
+combat_background: combat/background_space_base
+opponent_pool: intro.training.8.pool</property>
+    </properties>
+    <point/>
+   </object>
+   <object id="388" type="ShadowMob" x="1688" y="3288">
+    <properties>
+     <property name="shadow_mob">leash_radius: 5
+respawn_delay: 15
+respawn_jitter: 5
+combat_background: combat/background_space_base
+opponent_pool: intro.training.8.pool</property>
     </properties>
     <point/>
    </object>
   </objectgroup>
-  <objectgroup id="12" name="zones" visible="0">
+  <objectgroup id="12" name="zones">
    <object id="89" type="Zone" x="3856" y="3072" width="16" height="16">
     <properties>
      <property name="zone_id" value="papers.instructions"/>
@@ -4489,7 +4498,7 @@ combat_background: combat/background_space_base</property>
      <property name="zone_id" value="intro.training.7"/>
     </properties>
    </object>
-   <object id="321" type="Zone" x="1664" y="3600" width="48" height="16">
+   <object id="321" type="Zone" x="1616" y="3536" width="16" height="48">
     <properties>
      <property name="zone_id" value="intro.training.enter"/>
     </properties>

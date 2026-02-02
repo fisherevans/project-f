@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -91,8 +92,10 @@ func init() {
 					return NewOutput().WithSerialPlan(
 						NewDialogueEffect(message),
 						NewMutateEntityBehaviorEffect(globals.Get(globalVariableNamePlayerId).AsString("unknown")).WithDisableBy("robot"),
-						NewTriggerCombatEffect("combat/background_space_base").
-							WithOpponent(rpg.Primortal_Dummy.Type),
+						NewTriggerCombatEffect(rpg.CombatBGSpaceBase).
+							WithOpponent(game.CombatOpponent{
+								Type: rpg.Primortal_Dummy.Type,
+							}),
 						NewDialogueEffect("Well, butter my bolts... you actually did it."),
 						NewMutateEntityBehaviorEffect(globals.Get(globalVariableNamePlayerId).AsString("unknown")).WithEnableBy("robot"),
 					)

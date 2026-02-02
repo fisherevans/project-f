@@ -9,12 +9,30 @@ import (
 func (s *State) HandleConsoleInput(cmd string) bool {
 	args := strings.Split(cmd, " ")
 	switch args[0] {
+	case "tp":
+		s.commandTeleport(args)
+		return true
 	case "detail":
 		s.commandDetail(args)
 		return true
 	default:
 		return false
 	}
+}
+
+func (s *State) commandTeleport(args []string) {
+	if len(args) < 2 {
+		game.Console().Write("supply an entity id")
+		return
+	}
+	_, ok := s.entities.GetEntity(args[1])
+	if !ok {
+		game.Console().Write("entity not found")
+		return
+	}
+	s.ExecuteSystemEffectsInOrder(NewTeleportPlayerEffect().
+		WithToEntityId(args[1]))
+	game.Console().Write("teleport complete")
 }
 
 func (s *State) commandDetail(args []string) {

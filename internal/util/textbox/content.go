@@ -27,6 +27,8 @@ type Content struct {
 
 	alignmentOverride *tbcfg.HAlignment
 
+	autoWrapWidth int
+
 	// pre-computed
 	width  int
 	height int
@@ -40,6 +42,12 @@ func WithTyping(timePerCharacter float64) ContentOpt {
 			timePerCharacter: timePerCharacter,
 			fasterScale:      4,
 		}
+	}
+}
+
+func WithAutoWrapWidth(width int) ContentOpt {
+	return func(c *Content) {
+		c.autoWrapWidth = width
 	}
 }
 
@@ -184,8 +192,13 @@ func (c *Content) pageLines() []*line {
 
 func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *Content {
 	content := &Content{
-		tb: tb,
+		tb:            tb,
+		autoWrapWidth: tb.cfg.BoxWidth,
 	}
+	for _, opt := range opts {
+		opt(content)
+	}
+
 	currentLine := newLine()
 
 	var pendingWhitespace, pendingText []*character
@@ -193,7 +206,7 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	flushPendingText := func() {
 		if len(pendingText) > 0 {
 			potentialLineText := currentLine.text + asString(pendingWhitespace) + asString(pendingText)
-			if tb.cfg.BoxWidth > 0 && int(tb.text.BoundsOf(potentialLineText).W()) > tb.cfg.BoxWidth {
+			if content.autoWrapWidth > 0 && int(tb.text.BoundsOf(potentialLineText).W()) > content.autoWrapWidth {
 				content.appendLine(currentLine, tb.text)
 				currentLine = newLine()
 				pendingWhitespace = nil // drop pending space on new lines
@@ -224,10 +237,6 @@ func (tb *Instance) newContent(paragraphs [][]*character, opts ...ContentOpt) *C
 	}
 
 	content.setPage(0)
-
-	for _, opt := range opts {
-		opt(content)
-	}
 
 	// pre compute details
 	lineCount := tb.cfg.LinesPerPage
@@ -281,7 +290,7 @@ func (c *Content) String() string {
 // Render is a convenience method that renders this content using its associated textbox.
 // This eliminates the need to manually pair content with the correct textbox instance.
 func (c *Content) Render(target pixel.Target, matrix pixel.Matrix, opts ...tbcfg.ConfigOpt) pixel.Vec {
-	return c.tb.Render(target, matrix, c, opts...)
+	return c.tb.render(target, matrix, c, opts...)
 }
 
 func (tb *Instance) NewSimpleContent(msg string, opts ...ContentOpt) *Content {

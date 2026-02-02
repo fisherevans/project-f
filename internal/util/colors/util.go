@@ -139,7 +139,7 @@ func toHexByte(r float64) string {
 func HSLToRGBA(h, s, l float64) pixel.RGBA {
 	// Scale hue from [0,1] to [0,360] degrees
 	hue := h * 360.0
-	
+
 	c := (1 - math.Abs(2*l-1)) * s
 	x := c * (1 - math.Abs(math.Mod(hue/60, 2)-1))
 	m := l - c/2
@@ -208,6 +208,15 @@ func WithAlpha(c pixel.RGBA, a float64) pixel.RGBA {
 		G: c.G * unalpha * a,
 		B: c.B * unalpha * a,
 		A: a,
+	}
+}
+
+func LayerAlpha(c pixel.RGBA, a float64) pixel.RGBA {
+	return pixel.RGBA{
+		R: c.R * a,
+		G: c.G * a,
+		B: c.B * a,
+		A: c.A * a,
 	}
 }
 

@@ -86,8 +86,8 @@ func init() {
 					{
 						Name:          "adventure/props/energy_door_hum",
 						Loop:          true,
-						Falloff:       StandardFalloff,
-						Volume:        1.0,
+						Falloff:       AmbientFalloff,
+						Volume:        0.5,
 						FadeInSeconds: 1,
 					},
 				},

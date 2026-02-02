@@ -39,10 +39,42 @@ type CombatIntentResult struct {
 
 type CombatIntentComplete func(r CombatIntentResult)
 
+type CombatOpponent struct {
+	Type      rpg.PrimortalType
+	Archetype string
+}
+
+func NewCombatOpponent(t rpg.PrimortalType, archetype string) CombatOpponent {
+	return CombatOpponent{
+		Type:      t,
+		Archetype: archetype,
+	}
+}
+
+type CombatPlayer struct {
+	SkillSet      *rpg.SkillSet
+	InitialSync   int
+	MaxSync       int
+	InitialShield int
+	MaxShield     int
+}
+
+func NewCombatPlayer(animech *rpg.Animech) CombatPlayer {
+	return CombatPlayer{
+		SkillSet:      animech.SkillSet,
+		InitialSync:   animech.GetMaxSync(),
+		MaxSync:       animech.GetMaxSync(),
+		InitialShield: animech.GetMaxShield(),
+		MaxShield:     animech.GetMaxShield(),
+	}
+}
+
 type CombatIntent struct {
-	Opponent   rpg.PrimortalType
-	OnComplete CombatIntentComplete
-	Background string
+	Opponent         CombatOpponent
+	Player           CombatPlayer
+	OnComplete       CombatIntentComplete
+	Background       string
+	TrainingSequence string
 }
 
 type AdventureIntent struct {

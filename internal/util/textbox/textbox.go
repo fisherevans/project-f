@@ -37,7 +37,7 @@ type characterRenderParams struct {
 	foreground pixel.RGBA
 }
 
-func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Content, opts ...tbcfg.ConfigOpt) pixel.Vec {
+func (tb *Instance) render(target pixel.Target, matrix pixel.Matrix, content *Content, opts ...tbcfg.ConfigOpt) pixel.Vec {
 	tb.text.Clear()
 
 	// per render cfg overrides
@@ -125,7 +125,7 @@ func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Co
 			if underlineStart == nil || underlineEnd == nil {
 				return
 			}
-			tb.imd.Color = underlineColor
+			tb.imd.Color = underlineColor.Mul(tb.cfg.ColorMask)
 			tb.imd.Push(*underlineStart, *underlineEnd)
 			tb.imd.Line(1)
 		}
@@ -207,7 +207,7 @@ func (tb *Instance) Render(target pixel.Target, matrix pixel.Matrix, content *Co
 			origDot := tb.text.Dot
 			for _, r := range renders {
 				tb.text.Dot = origDot.Add(pixel.V(float64(r.dx), float64(r.dy)))
-				tb.text.Color = r.color
+				tb.text.Color = r.color.Mul(tb.cfg.ColorMask)
 				tb.text.WriteByte(c.c)
 			}
 			// undo effect delta

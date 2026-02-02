@@ -12,6 +12,8 @@ import (
 
 const (
 	GlobalKeyElythium = "elythium"
+
+	CombatBGSpaceBase = "combat/background_space_base"
 )
 
 type GlobalValue struct {

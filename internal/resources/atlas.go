@@ -327,7 +327,7 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 			return nil, nil
 		}
 
-		// Place the image in that free rectangle
+		// Placement the image in that free rectangle
 		fr := availableRects[fi]
 		// Draw onto atlasImage (top-left origin for the image package)
 		draw.Draw(atlasImage, image.Rect(fr.x, fr.y, fr.x+w, fr.y+h), img, b.Min, draw.Over)

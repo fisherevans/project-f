@@ -10,7 +10,7 @@ import (
 )
 
 var controls *input.Controls
-var controlsNoop *input.Controls
+var ControlsNoop *input.Controls
 
 func Controls[T State]() *input.Controls {
 	if ctx == nil {
@@ -18,14 +18,14 @@ func Controls[T State]() *input.Controls {
 	}
 	// when console it active, prevent all state input
 	if Console().IsActive() {
-		return controlsNoop
+		return ControlsNoop
 	}
 	// Compare the requested state type T against the runtime active state's type
 	if _, ok := any(ctx.activeState).(T); ok {
 		return controls
 	}
 	// Non-active states get a controls instance that is never updated (reads as neutral)
-	return controlsNoop
+	return ControlsNoop
 }
 
 func UpdateControls(window *opengl.Window) {
@@ -74,7 +74,7 @@ func Initialize(saveId string, intent any) {
 	ctx.utils = ContextUtils{}
 
 	controls = input.NewControls()
-	controlsNoop = input.NewControls()
+	ControlsNoop = input.NewControls()
 
 	ctx.console = newConsole(func(input string) {
 		if ctx.activeState == nil {

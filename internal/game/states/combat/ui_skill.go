@@ -53,8 +53,8 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 	s.skillFlashAlpha = 0.5 + sin*0.5                         // [0.5-1]
 	s.skillFlashAlphaInverse = 0.5 + (1.0-sin)*0.5
 
-	if game.Controls[*State]().DPad().IsPressed() {
-		dir := game.Controls[*State]().DPad().PressedDirection()
+	if s.Controls().DPad().IsPressed() {
+		dir := s.Controls().DPad().PressedDirection()
 		selectSkill := s.Player.GetFightOption(typeOptionKeyReverse[dir])
 		if selectSkill != s.Player.NextSkill {
 			s.Player.NextSkill = selectSkill
@@ -143,9 +143,9 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 		} else {
 			skillPendingCancelBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
 		}
-		if game.Controls[*State]().ButtonA().JustPressed() {
+		if s.Controls().ButtonA().JustPressed() {
 			s.Player.NextSkillCommitted = true
-		} else if game.Controls[*State]().ButtonB().JustPressed() {
+		} else if s.Controls().ButtonB().JustPressed() {
 			s.Player.NextSkill = nil
 			s.Player.NextSkillCommitted = false
 			s.combatArrowAlpha, s.combatArrowColumn = 0, 0
@@ -154,17 +154,17 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 		skillMenuBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
 	}
 
-	if s.Player.NextSkill != nil && game.Controls[*State]().ButtonB().JustPressed() {
+	if s.Player.NextSkill != nil && s.Controls().ButtonB().JustPressed() {
 		s.Player.NextSkill = nil
 		s.Player.NextSkillCommitted = false
 		s.combatArrowAlpha, s.combatArrowColumn = 0, 0
 	}
 
-	if game.Controls[*State]().ButtonSelect().JustPressed() {
+	if s.Controls().ButtonSelect().JustPressed() {
 		game.DebugNotificationf("TODO - add stats xenolog")
 	}
 
-	if game.Controls[*State]().ButtonStart().JustPressed() {
+	if s.Controls().ButtonStart().JustPressed() {
 		game.DebugNotificationf("TODO - add combat xenolog")
 	}
 }

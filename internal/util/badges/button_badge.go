@@ -43,6 +43,10 @@ func (s *ButtonAction) Bounds() pixel.Rect {
 }
 
 func (s *ButtonAction) Render(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation) {
+	s.RenderWithColorMask(target, matrix, origin, colors.White.RGBA)
+}
+
+func (s *ButtonAction) RenderWithColorMask(target pixel.Target, matrix pixel.Matrix, origin gfx.OriginLocation, mask pixel.RGBA) {
 	buttonContentW := s.buttonContent.Width()
 	actionContentW := s.actionContent.Width()
 	buttonFrameW := buttonBadgeSpacing + buttonTextPadding + buttonContentW + buttonTextPadding + buttonBadgeSpacing
@@ -67,31 +71,33 @@ func (s *ButtonAction) Render(target pixel.Target, matrix pixel.Matrix, origin g
 	s.frame.Draw(target, pixel.R(0, 0, float64(fullFrameW), float64(buttonBadgeHeight-2)),
 		matrix.Moved(gfx.IVec(0, 1)),
 		frames.WithRenderOrigin(gfx.BottomLeft),
-		frames.WithColor(s.style.Action))
+		frames.WithColor(s.style.Action.Mul(mask)))
 
 	// Draw highlight if needed
 	if s.highlighted {
 		s.frame.Draw(target, pixel.R(0, 0, float64(buttonFrameW+2), float64(buttonBadgeHeight+2)),
 			matrix.Moved(pixel.V(float64(buttonFrameX)-1, -1)),
 			frames.WithRenderOrigin(gfx.BottomLeft),
-			frames.WithColor(s.style.Highlight))
+			frames.WithColor(s.style.Highlight.Mul(mask)))
 	}
 
 	// Draw button frame
 	s.frame.Draw(target, pixel.R(0, 0, float64(buttonFrameW), float64(buttonBadgeHeight)),
 		matrix.Moved(gfx.IVec(buttonFrameX, 0)),
 		frames.WithRenderOrigin(gfx.BottomLeft),
-		frames.WithColor(s.style.Button))
+		frames.WithColor(s.style.Button.Mul(mask)))
 
 	// Render button text
 	s.buttonContent.Render(target,
 		matrix.Moved(gfx.IVec(buttonTextX, buttonBadgeSpacing)),
-		tbcfg.Foreground(s.style.Action))
+		tbcfg.Foreground(s.style.Action),
+		tbcfg.ColorMask(mask))
 
 	// Render action text
 	s.actionContent.Render(target,
 		matrix.Moved(gfx.IVec(actionTextX, buttonBadgeSpacing)),
-		tbcfg.Foreground(s.style.Button))
+		tbcfg.Foreground(s.style.Button),
+		tbcfg.ColorMask(mask))
 }
 
 func (b *Builder) ButtonAction(button, action string, style ButtonColorStyle) *ButtonAction {

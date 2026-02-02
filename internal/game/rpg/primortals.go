@@ -37,7 +37,8 @@ type CombatSkillPool struct {
 }
 
 type CombatSkillPoolRandom struct {
-	WeightedSkills map[SkillId]int `yaml:"weighted_skills"`
+	InitialOrderedSkills []SkillId       `yaml:"initial_ordered_skills"`
+	WeightedSkills       map[SkillId]int `yaml:"weighted_skills"`
 }
 
 type UnlockableSkill struct {
@@ -86,6 +87,16 @@ var Primortal_Dummy = Primortal{
 	Description: "A test robot to hit for fun.",
 	BaseSync:    30,
 	CombatArchetypes: map[string]PrimortalCombatArchetype{
+		"training.1": {
+			AdditionalSync: 10,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					WeightedSkills: map[SkillId]int{
+						Skill_Dummy_Defend.Id: 1,
+					},
+				},
+			},
+		},
 		"default": {
 			SkillPool: CombatSkillPool{
 				Random: &CombatSkillPoolRandom{
@@ -220,7 +231,7 @@ var Primortal_Toxmidge = Primortal{
 	Name:         "Toxmidge",
 	XenoLogIndex: 9,
 	Description:  "A menacing aerial predator that secretes highly corrosive enzymes, capable of dissolving even the toughest materials with its acidic spray.",
-	BaseSync:     15,
+	BaseSync:     25,
 	UnlockableSkills: map[SkillId]UnlockableSkill{
 		Skill_AcidSting.Id: {
 			Cost: 3,
@@ -241,6 +252,22 @@ var Primortal_Toxmidge = Primortal{
 						Skill_Molt.Id:      10,
 						Skill_Guard.Id:     20,
 						Skill_Jab.Id:       20,
+					},
+				},
+			},
+		},
+		"training.2": {
+			AdditionalSync: 5,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					InitialOrderedSkills: []SkillId{
+						Skill_Guard.Id,
+						Skill_Guard.Id,
+						Skill_AcidSting.Id,
+					},
+					WeightedSkills: map[SkillId]int{
+						Skill_AcidSting.Id: 1,
+						Skill_Guard.Id:     2,
 					},
 				},
 			},

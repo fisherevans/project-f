@@ -3,6 +3,7 @@ package combat
 import (
 	"math/rand"
 
+	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game/anim"
@@ -21,11 +22,15 @@ type PrimortalOpponent struct {
 	skillChooser SkillChooser
 }
 
-func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
-	p := rpg.Primortals[primortal]
-	archetype, exists := primortal.Primortal().CombatArchetypes["default"]
+func NewPrimortalOpponent(cfg game.CombatOpponent) *PrimortalOpponent {
+	p := cfg.Type.Primortal()
+	archetypeName := cfg.Archetype
+	if archetypeName == "" {
+		archetypeName = "default"
+	}
+	archetype, exists := p.CombatArchetypes[archetypeName]
 	if !exists {
-		panic("no default archetype for primortal: " + primortal)
+		panic("no archetype " + archetypeName + " for primortal: " + p.Name)
 	}
 	syncVariance := archetype.AdditionalSyncVariance
 	if syncVariance > 0 {
@@ -34,11 +39,11 @@ func NewPrimortalOpponent(primortal rpg.PrimortalType) *PrimortalOpponent {
 	return &PrimortalOpponent{
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
-		Health:                 NewHealthState(p.BaseSync + archetype.AdditionalSync),
+		Health:                 NewFullHealthState(p.BaseSync + archetype.AdditionalSync),
 		HealthFlash:            NewDamageFlashMask(),
 		name:                   p.Name,
 		skillChooser:           NewSkillChooser(archetype.SkillPool),
-		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "primortals/"+string(primortal), "default"), true),
+		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "primortals/"+string(p.Type), "default"), true),
 	}
 }
 

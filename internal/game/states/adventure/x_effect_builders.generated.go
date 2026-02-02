@@ -1,12 +1,12 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2026-01-25T22:31:09-05:00 by go generate
+// Generated at 2026-02-01T09:17:21-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
 
 import (
 	"fisherevans.com/project/f/internal/game/input"
-	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
 )
@@ -395,8 +395,18 @@ func (e *EffectTriggerCombat) WithCombatId(combatId string) *EffectTriggerCombat
 	return e
 }
 
-func (e *EffectTriggerCombat) WithOpponent(opponent rpg.PrimortalType) *EffectTriggerCombat {
+func (e *EffectTriggerCombat) WithOpponent(opponent game.CombatOpponent) *EffectTriggerCombat {
 	e.Opponent = &opponent
+	return e
+}
+
+func (e *EffectTriggerCombat) WithPlayer(player game.CombatPlayer) *EffectTriggerCombat {
+	e.Player = &player
+	return e
+}
+
+func (e *EffectTriggerCombat) WithTrainingSequence(trainingSequence string) *EffectTriggerCombat {
+	e.TrainingSequence = &trainingSequence
 	return e
 }
 

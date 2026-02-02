@@ -1,14 +1,9 @@
 package combat
 
 import (
-	"math/rand/v2"
-
-	"fisherevans.com/project/f/internal/util/highlighter"
-	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/ext/text"
-
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
+	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/states/combat/tick_bar"
@@ -17,9 +12,12 @@ import (
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/gfx"
+	"fisherevans.com/project/f/internal/util/highlighter"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/ext/text"
 
 	"image/color"
 	"math"
@@ -128,14 +126,15 @@ type State struct {
 
 	backgroundSprite pixelutil.BoundedDrawable
 
-	highlighter *highlighter.Drawer
+	highlighter *highlighter.SequencedDrawer
 
-	batch *pixel.Batch
+	batch    *pixel.Batch
+	training *TrainingListener
 }
 
 func New(i game.CombatIntent) game.State {
-	return &State{
-		Player:     NewPlayer(game.CurrentSave().Animech),
+	s := &State{
+		Player:     NewPlayer(i.Player),
 		Opponent:   NewPrimortalOpponent(i.Opponent),
 		OnComplete: i.OnComplete,
 		Battle:     &Battle{},
@@ -146,10 +145,20 @@ func New(i game.CombatIntent) game.State {
 
 		backgroundSprite: atlas.GetSprite(i.Background),
 
-		highlighter: highlighter.NewDrawer(atlas, pixel.R(20, 40, 140, 80), 0.25),
+		highlighter: highlighter.NewSequencedDrawer(highlighter.NewDrawer(atlas, resources.FontNameM3x6, 0.25)),
+		training:    NewTrainingListener(),
 
 		batch: atlas.NewBatch(),
 	}
+	s.loadTrainingSequence(i.TrainingSequence)
+	return s
+}
+
+func (s *State) Controls() *input.Controls {
+	if s.highlighter.IsActive() {
+		return game.ControlsNoop
+	}
+	return game.Controls[*State]()
 }
 
 func (s *State) ClearColor() color.Color {
@@ -158,6 +167,8 @@ func (s *State) ClearColor() color.Color {
 
 func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
+
+	s.training.OnTick(s)
 
 	s.backgroundSprite.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 	target.SetComposeMethod(pixel.ComposeMultiply)
@@ -169,8 +180,12 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		s.Player.GetCurrentShield().Update(timeDelta)
 		s.Player.GetCurrentSync().Update(timeDelta)
 
-		s.Battle.Update(s, timeDelta)
-		s.Player.GetTempo().Update(s.Battle.TickPlayerNext, s.Player, timeDelta)
+		battleTimeDelta := timeDelta
+		if s.training.ShouldPauseCombat() {
+			battleTimeDelta = 0
+		}
+		s.Battle.Update(s, battleTimeDelta)
+		s.Player.GetTempo().Update(s.Battle.TickPlayerNext, s.Player, battleTimeDelta)
 
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 || s.Opponent.GetHealth().GetCurrentInt() <= 0 {
 			s.phase = PhaseComplete
@@ -217,30 +232,13 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 			result.ResearchPoints = 1
 		}
 		content := combatantNameText.NewComplexContent(overlay)
-		combatantNameText.Render(s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, math.Floor(game.GameHeight*0.6))), content, tbcfg.RenderFrom(gfx.Centered))
-		if game.Controls[*State]().ButtonA().JustPressed() || game.Controls[*State]().ButtonB().JustPressed() {
+		content.Render(s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, math.Floor(game.GameHeight*0.6))), tbcfg.RenderFrom(gfx.Centered))
+		if s.Controls().ButtonA().JustPressed() || s.Controls().ButtonB().JustPressed() {
 			s.OnComplete(result)
 		}
 	}
 
-	if game.Controls[*State]().ButtonStart().JustPressed() {
-		x1 := math.Round(rand.Float64() * (game.GameWidth * 0.8))
-		y1 := math.Round(rand.Float64() * (game.GameHeight * 0.8))
-		x2 := x1 + math.Round(rand.Float64()*(float64(game.GameWidth-x1)*0.8))
-		y2 := y1 + math.Round(rand.Float64()*(float64(game.GameHeight-y1)*0.8))
-		target := highlighter.Target{
-			Area: pixel.R(x1, y1, x2, y2),
-			Flip: rand.Float64() > 0.5,
-		}
-		if rand.Float64() > 0.5 {
-			target.BadgeText = "NEXT"
-		}
-		if rand.Float64() > 0.5 {
-			target.Message = "This is some highlight text.\nAnd here's some more!"
-		}
-		s.highlighter.SetTargetArea(target, true)
-	}
-	s.highlighter.Render(s.batch, timeDelta)
+	s.highlighter.Render(s.batch, timeDelta, game.Controls[*State]())
 
 	s.batch.Draw(target)
 }

@@ -36,11 +36,15 @@ type HealthState struct {
 	AdjustRate float64
 }
 
-func NewHealthState(max int) *HealthState {
+func NewFullHealthState(max int) *HealthState {
+	return NewHealthState(max, max)
+}
+
+func NewHealthState(current, max int) *HealthState {
 	return &HealthState{
 		Max:        max,
-		Current:    float64(max),
-		Target:     max,
+		Current:    float64(current),
+		Target:     current,
 		AdjustRate: 1.0, //0.1, // 1 == turn off
 	}
 }

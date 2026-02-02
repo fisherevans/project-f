@@ -16,8 +16,9 @@ type randomSkillChoice struct {
 }
 
 type RandomSkillChooser struct {
-	options     []randomSkillChoice
-	totalWeight int
+	initialOrderedSkills []rpg.SkillId
+	options              []randomSkillChoice
+	totalWeight          int
 }
 
 func NewSkillChooser(pool rpg.CombatSkillPool) SkillChooser {
@@ -28,10 +29,12 @@ func NewSkillChooser(pool rpg.CombatSkillPool) SkillChooser {
 	for skill, weight := range pool.Random.WeightedSkills {
 		options = append(options, randomSkillChoice{skill: &skill, weight: weight})
 	}
-	return NewRandomSkillChooser(options)
+	rsc := NewRandomSkillChooser(options)
+	rsc.SetInitialOrderedSkills(pool.Random.InitialOrderedSkills)
+	return rsc
 }
 
-func NewRandomSkillChooser(options []randomSkillChoice) SkillChooser {
+func NewRandomSkillChooser(options []randomSkillChoice) *RandomSkillChooser {
 	totalWeight := 0
 	for _, option := range options {
 		totalWeight += option.weight
@@ -42,7 +45,12 @@ func NewRandomSkillChooser(options []randomSkillChoice) SkillChooser {
 	}
 }
 
-func (r RandomSkillChooser) NextSkill() *rpg.SkillId {
+func (r *RandomSkillChooser) NextSkill() *rpg.SkillId {
+	if len(r.initialOrderedSkills) > 0 {
+		next := r.initialOrderedSkills[0]
+		r.initialOrderedSkills = r.initialOrderedSkills[1:]
+		return &next
+	}
 	if len(r.options) == 0 {
 		panic("no options")
 	}
@@ -54,4 +62,8 @@ func (r RandomSkillChooser) NextSkill() *rpg.SkillId {
 		}
 	}
 	return r.options[0].skill
+}
+
+func (r *RandomSkillChooser) SetInitialOrderedSkills(skills []rpg.SkillId) {
+	r.initialOrderedSkills = skills
 }

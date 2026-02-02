@@ -183,7 +183,7 @@ func init() {
 				}
 				return NewFocusedSequenceBuilder(thisEntity.GetId(), event.SourceId).
 					WithMiddleEffects(
-						NewDialogueEffect("Well, at least your can move around in that Animech."),
+						NewDialogueEffect("Well, at least you can move around in that Animech."),
 						NewDialogueEffect("Next, you'll need to know how to battle specimen. Go through to the next room and defeat the little vermin."),
 						NewTimerEffect(.25),
 						NewSetRunStateEffect(key, true),
@@ -194,13 +194,34 @@ func init() {
 		}.CreateHandler()
 	})
 	registerEventHandler("intro.training.4.listener", func(_ *util.Properties) EventHandler {
+		combatOver := "intro.training.4.combat_over"
 		return BasicHandlerBuilder[None]{
+			Broadcast: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventBroadcast) *HandlerOutput {
+				if event.Id != "intro.training.4.combat" {
+					return nil
+				}
+				combatPlayer := game.NewCombatPlayer(game.CurrentSave().Animech)
+				combatPlayer.SkillSet = &rpg.SkillSet{
+					Skill1: rpg.Skill_Tackle.Id,
+					Skill2: rpg.Skill_Guard.Id,
+				}
+				triggerCombat := NewTriggerCombatEffect(rpg.CombatBGSpaceBase).
+					WithCombatId(combatOver).
+					WithOpponent(game.CombatOpponent{
+						Type:      rpg.Primortal_Dummy.Type,
+						Archetype: "training.1",
+					}).
+					WithPlayer(combatPlayer).
+					WithTrainingSequence("training.1")
+				return NewOutput().WithEffects(triggerCombat)
+			},
 			CombatComplete: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventCombatComplete) *HandlerOutput {
-				if event.CombatId != "intro.training.4" {
+				if event.CombatId != combatOver {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
 					NewDialogueEffect("INTERCOM: Nice job recruit. Most folks curl up in a ball when hey face their first foe."),
+					NewDialogueEffect("INTERCOM: I don't know why though. That combat dummy can't even attack."),
 					NewSetRunStateEffect(doorKey(4), true),
 				)
 			},
@@ -276,13 +297,33 @@ func init() {
 		}.CreateHandler()
 	})
 	registerEventHandler("intro.training.6.listener", func(_ *util.Properties) EventHandler {
+		combatOver := "intro.training.6.combat_over"
 		return BasicHandlerBuilder[None]{
+			Broadcast: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventBroadcast) *HandlerOutput {
+				if event.Id != "intro.training.6.combat" {
+					return nil
+				}
+				combatPlayer := game.NewCombatPlayer(game.CurrentSave().Animech)
+				combatPlayer.SkillSet = &rpg.SkillSet{
+					Skill1: rpg.Skill_Tackle.Id,
+					Skill2: rpg.Skill_Guard.Id,
+				}
+				triggerCombat := NewTriggerCombatEffect(rpg.CombatBGSpaceBase).
+					WithCombatId(combatOver).
+					WithOpponent(game.CombatOpponent{
+						Type:      rpg.Primortal_Toxmidge.Type,
+						Archetype: "training.2",
+					}).
+					WithPlayer(combatPlayer).
+					WithTrainingSequence("training.2")
+				return NewOutput().WithEffects(triggerCombat)
+			},
 			CombatComplete: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventCombatComplete) *HandlerOutput {
-				if event.CombatId != "intro.training.6" {
+				if event.CombatId != combatOver {
 					return nil
 				}
 				return NewOutput().WithSerialPlan(
-					NewDialogueEffect("INTERCOM: Not bad, kid.. not bad."),
+					NewDialogueEffect("INTERCOM: Okay, I'll be honest. I expected you to chicken out of that one."),
 					NewSetRunStateEffect(doorKey(6), true),
 				)
 			},
@@ -357,8 +398,11 @@ func init() {
 				return NewOutput().WithSerialPlan(effects...)
 			},
 			Broadcast: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventBroadcast) *HandlerOutput {
+				if event.Id != "intro.training.7.elythium" {
+					return nil
+				}
 				doneKey := "intro.training.7.elythium.done"
-				if event.Id != "intro.training.7.elythium" && globals.Get(doneKey).AsBool(false) {
+				if globals.Get(doneKey).AsBool(false) {
 					return nil
 				}
 				return NewOutput().WithEffects(
@@ -398,6 +442,7 @@ func init() {
 							NewChangePlayerRendererEffect("human"),
 							NewEntityFaceDirectionEffect(event.SourceId).WithDirection(input.Up),
 						}),
+					NewTimerEffect(1.5),
 					NewDialogueEffect("You stare at yourself, across the gap."),
 					NewDialogueEffect("But it isn't you."),
 					NewSetWorldStateEffect(globalVariableNameHasXenologAccess, true),

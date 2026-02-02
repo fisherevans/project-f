@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2026-01-25T22:31:09-05:00 by go generate
+// Generated at 2026-02-01T09:17:21-05:00 by go generate
 // Source: internal/game/adventure/events_handler.go
 
 package adventure
@@ -10,16 +10,16 @@ type BasicHandlerBuilder[T any] struct {
 
 	Init func(thisEntity EntityReader, globals StateGlobalsReader, state T) *HandlerOutput
 
-	OnInteract             func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventOnInteract) *HandlerOutput
-	DialogueComplete       func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventDialogueComplete) *HandlerOutput
-	ChatterComplete        func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventChatterComplete) *HandlerOutput
-	TimerComplete          func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventTimerComplete) *HandlerOutput
-	EntityZoneActivity     func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventEntityZoneActivity) *HandlerOutput
-	GlobalVariableUpdated  func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventGlobalVariableUpdated) *HandlerOutput
-	CombatComplete         func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventCombatComplete) *HandlerOutput
+	OnInteract func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventOnInteract) *HandlerOutput
+	DialogueComplete func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventDialogueComplete) *HandlerOutput
+	ChatterComplete func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventChatterComplete) *HandlerOutput
+	TimerComplete func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventTimerComplete) *HandlerOutput
+	EntityZoneActivity func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventEntityZoneActivity) *HandlerOutput
+	GlobalVariableUpdated func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventGlobalVariableUpdated) *HandlerOutput
+	CombatComplete func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventCombatComplete) *HandlerOutput
 	ScriptedMotionComplete func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventScriptedMotionComplete) *HandlerOutput
-	OnStateEnter           func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventOnStateEnter) *HandlerOutput
-	Broadcast              func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventBroadcast) *HandlerOutput
+	OnStateEnter func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventOnStateEnter) *HandlerOutput
+	Broadcast func(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventBroadcast) *HandlerOutput
 }
 
 func NewBasicHandler[T any](defaultState T) *BasicHandlerBuilder[T] {
@@ -293,3 +293,4 @@ func (h *BaseHandler[T]) OnStateEnter(thisEntity EntityReader, globals StateGlob
 func (h *BaseHandler[T]) Broadcast(thisEntity EntityReader, globals StateGlobalsReader, state T, event *EventBroadcast) *HandlerOutput {
 	return nil
 }
+

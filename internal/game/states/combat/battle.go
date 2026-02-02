@@ -12,6 +12,8 @@ type Battle struct {
 
 	PlayerSkillEnding   bool
 	OpponentSkillEnding bool
+
+	TicksTriggered int
 }
 
 func (b *Battle) GetPlayerCurrentTickProgress() float64 {
@@ -55,31 +57,33 @@ func (b *Battle) Update(s *State, timeDelta float64) {
 		tps *= 2
 	}
 	b.PendingProgress += timeDelta * tps
-	for b.PendingProgress >= 1 {
-		if b.TickPlayerNext {
-			if b.OpponentSkillEnding {
-				s.Opponent.SetCurrentSkill(nil)
-				b.OpponentSkillEnding = false
-			}
-			s.Player.GetStatuses().OnCombatTick(s, s.Player)
-			over := s.Player.GetCurrentSkill().Tick(s, s.Player, s.Opponent)
-			if over {
-				b.PlayerSkillEnding = true
-			}
-		} else {
-			if b.PlayerSkillEnding {
-				s.Player.SetCurrentSkill(nil)
-				b.PlayerSkillEnding = false
-			}
-			s.Opponent.GetStatuses().OnCombatTick(s, s.Opponent)
-			over := s.Opponent.GetCurrentSkill().Tick(s, s.Opponent, s.Player)
-			if over {
-				b.OpponentSkillEnding = true
-			}
-		}
-		b.PendingProgress -= 1.0
-		b.TickPlayerNext = !b.TickPlayerNext
+	if b.PendingProgress < 1 {
+		return
 	}
+	if b.TickPlayerNext {
+		if b.OpponentSkillEnding {
+			s.Opponent.SetCurrentSkill(nil)
+			b.OpponentSkillEnding = false
+		}
+		s.Player.GetStatuses().OnCombatTick(s, s.Player)
+		over := s.Player.GetCurrentSkill().Tick(s, s.Player, s.Opponent)
+		if over {
+			b.PlayerSkillEnding = true
+		}
+	} else {
+		if b.PlayerSkillEnding {
+			s.Player.SetCurrentSkill(nil)
+			b.PlayerSkillEnding = false
+		}
+		s.Opponent.GetStatuses().OnCombatTick(s, s.Opponent)
+		over := s.Opponent.GetCurrentSkill().Tick(s, s.Opponent, s.Player)
+		if over {
+			b.OpponentSkillEnding = true
+		}
+	}
+	b.TicksTriggered++
+	b.PendingProgress -= 1.0
+	b.TickPlayerNext = !b.TickPlayerNext
 }
 
 func (i *SkillInstance) Tick(s *State, source Combatant, target Combatant) bool {

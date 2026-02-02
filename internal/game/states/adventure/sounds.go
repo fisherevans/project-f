@@ -11,6 +11,7 @@ var (
 	ExplosionFalloff = NewFalloffFromNearFar(8, 48)
 	ChatterFalloff   = NewFalloffFromNearFar(2, 4)
 	StandardFalloff  = NewFalloffFromNearFar(2, 4)
+	AmbientFalloff   = NewFalloffFromNearFar(3, 8)
 )
 
 type Falloff struct {

@@ -21,28 +21,31 @@ type PlayerCombatant interface {
 }
 
 type Player struct {
-	*rpg.Animech
 	*CurrentCombatantSkills
 	Renderer           *CombatantRenderer
 	Statuses           *AppliedStatuses
-	CurrentPrimortal   int
 	NextSkill          *rpg.SkillId
 	NextSkillCommitted bool
 	Tempo              *Tempo
 
 	Shield      *HealthState
-	Syncs       map[int]*HealthState
+	Sync        *HealthState
 	HealthFlash *HealthFlash
+
+	SkillSet  *rpg.SkillSet
+	MaxShield int
+	MaxSync   int
 }
 
-func NewPlayer(animech *rpg.Animech) *Player {
+func NewPlayer(cfg game.CombatPlayer) *Player {
 	return &Player{
-		Animech:                animech,
+		SkillSet: cfg.SkillSet,
+		Shield:   NewHealthState(cfg.InitialShield, cfg.MaxShield),
+		Sync:     NewHealthState(cfg.InitialSync, cfg.MaxSync),
+
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
 		Tempo:                  &Tempo{},
-		Shield:                 NewHealthState(animech.GetMaxShield()),
-		Syncs:                  make(map[int]*HealthState),
 		HealthFlash:            NewDamageFlashMask(),
 		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "animech/combat_animech", "default"), false),
 	}
@@ -86,10 +89,6 @@ func (p *Player) GetTempo() *Tempo {
 	return p.Tempo
 }
 
-func (p *Player) getAnimech() *rpg.Animech {
-	return p.Animech
-}
-
 var _ PlayerCombatant = &Player{}
 
 func (p *Player) GetStats() rpg.CombatantStats {
@@ -119,17 +118,16 @@ func (p *Player) AdjustHealth(amount int) {
 }
 
 func (p *Player) GetFightOption(slot int) *rpg.SkillId {
-	animech := p.getAnimech()
 	var id rpg.SkillId
 	switch slot {
 	case 0:
-		id = animech.SkillSet.Skill1
+		id = p.SkillSet.Skill1
 	case 1:
-		id = animech.SkillSet.Skill2
+		id = p.SkillSet.Skill2
 	case 2:
-		id = animech.SkillSet.Skill3
+		id = p.SkillSet.Skill3
 	case 3:
-		id = animech.SkillSet.Skill4
+		id = p.SkillSet.Skill4
 	}
 	if id == rpg.UnsetSkillId {
 		return nil
@@ -138,12 +136,7 @@ func (p *Player) GetFightOption(slot int) *rpg.SkillId {
 }
 
 func (p *Player) GetCurrentSync() *HealthState {
-	sync, exists := p.Syncs[p.CurrentPrimortal]
-	if !exists {
-		sync = NewHealthState(p.Animech.GetMaxSync())
-		p.Syncs[p.CurrentPrimortal] = sync
-	}
-	return sync
+	return p.Sync
 }
 
 func (p *Player) GetCurrentShield() *HealthState {

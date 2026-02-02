@@ -1,6 +1,7 @@
 package tbcfg
 
 import (
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/util/gfx"
@@ -23,6 +24,8 @@ type Config struct {
 	Origin gfx.OriginLocation
 
 	ScrollTimePerLine float64
+
+	ColorMask pixel.RGBA
 }
 
 func NewConfig(boxWidth, boxHeight int, opts ...ConfigOpt) Config {
@@ -36,6 +39,7 @@ func NewConfig(boxWidth, boxHeight int, opts ...ConfigOpt) Config {
 		Foreground:        pixel.RGB(0, 0, 0),
 		LinesPerPage:      0,
 		ScrollTimePerLine: 0.2,
+		ColorMask:         colors.White.RGBA,
 	}
 	for _, opt := range opts {
 		opt(&c)
@@ -44,6 +48,18 @@ func NewConfig(boxWidth, boxHeight int, opts ...ConfigOpt) Config {
 }
 
 type ConfigOpt func(c *Config)
+
+func BoxWidth(boxWidth int) ConfigOpt {
+	return func(c *Config) {
+		c.BoxWidth = boxWidth
+	}
+}
+
+func BoxHeight(boxHeight int) ConfigOpt {
+	return func(c *Config) {
+		c.BoxHeight = boxHeight
+	}
+}
 
 func HAligned(alignment HAlignment) func(c *Config) {
 	return func(c *Config) {
@@ -85,6 +101,12 @@ func RenderFrom(origin gfx.OriginLocation) func(c *Config) {
 func ExtraLineSpacing(amount int) func(c *Config) {
 	return func(c *Config) {
 		c.ExtraLineSpacing = amount
+	}
+}
+
+func ColorMask(color pixel.RGBA) func(c *Config) {
+	return func(c *Config) {
+		c.ColorMask = color
 	}
 }
 

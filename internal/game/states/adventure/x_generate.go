@@ -357,8 +357,6 @@ func generateBasicHandlerBuilder(events []EventInfo) string {
 
 	sb.WriteString("package adventure\n\n")
 
-	sb.WriteString("import \"fisherevans.com/project/f/internal/game/rpg\"\n\n")
-
 	// Generate BasicHandlerBuilder struct
 	sb.WriteString("// BasicHandlerBuilder provides a simple way to build event handlers with type-safe state\n")
 	sb.WriteString("type BasicHandlerBuilder[T any] struct {\n")
@@ -850,7 +848,7 @@ func generateEffectBuilders(effects []EffectInfo) string {
 	sb.WriteString("package adventure\n\n")
 	sb.WriteString("import (\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/input\"\n")
-	sb.WriteString("\t\"fisherevans.com/project/f/internal/game/rpg\"\n")
+	sb.WriteString("\t\"fisherevans.com/project/f/internal/game\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/resources\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/util\"\n")
 	sb.WriteString(")\n\n")

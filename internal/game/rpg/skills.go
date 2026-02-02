@@ -141,8 +141,8 @@ var Skill_Brace = Skill{
 	Name:        "Brace",
 	Description: "Raise defenses after a rest",
 	Ticks: skillTicks().
-		add(tick().repeat(3)...).
-		add(stanceTick(TickStanceDefending).repeat(2)...),
+		add(stanceTick(TickStanceDefending).repeat(3)...).
+		add(tick().repeat(3)...),
 }.register()
 
 var Skill_Guard = Skill{
@@ -156,6 +156,18 @@ var Skill_Guard = Skill{
 }.register()
 
 // Attacking
+
+var Skill_Tackle = Skill{
+	Id:          "tackle",
+	Name:        "Tackle",
+	Description: "A crude physical attack",
+	Ticks: skillTicks().
+		add(tick().repeat(2)...).
+		add(tick().damageAmountVaried(5, 2).animate(newAnimation().
+			sourceTransformations(pounce()).
+			targetTransformations(recoil()))).
+		add(tick().repeat(1)...),
+}.register()
 
 var Skill_Jab = Skill{
 	Id:          "jab",
@@ -325,4 +337,28 @@ var Skill_PhotoSurge = Skill{
 			},
 		}).animate(newAnimation().
 			sourceTransformations(hop(2)))),
+}.register()
+
+// ========================================
+
+// Dummy moves
+
+var Skill_Dummy_Defend = Skill{
+	Id:          "dummy_defend",
+	Name:        "Dummy Defend",
+	Description: "not used",
+	Ticks: skillTicks().
+		add(tick().repeat(2)...).
+		add(stanceTick(TickStanceDefending).repeat(3)...),
+}.register()
+
+var Skill_Dummy_Attack = Skill{
+	Id:          "dummy_attack",
+	Name:        "Dummy Attack",
+	Description: "not used",
+	Ticks: skillTicks().
+		add(tick().repeat(2)...).
+		add(tick().damageAmountVaried(2, 0).animate(newAnimation().
+			sourceTransformations(pounce()).
+			targetTransformations(recoil()))),
 }.register()

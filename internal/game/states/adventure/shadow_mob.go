@@ -84,12 +84,16 @@ type ShadowMobConfig struct {
 }
 
 type ShadowMobParams struct {
-	CombatId         string             `yaml:"combat_id"`
-	LeashRadius      float64            `yaml:"leash_radius"`
-	RespawnDelay     float64            `yaml:"respawn_delay"`
-	RespawnJitter    float64            `yaml:"respawn_jitter"`
-	CombatBackground string             `yaml:"combat_background"`
-	Opponent         *rpg.PrimortalType `yaml:"opponent"`
+	CombatId         string  `yaml:"combat_id"`
+	BroadcastId      string  `yaml:"broadcast_id"`
+	LeashRadius      float64 `yaml:"leash_radius"`
+	RespawnDelay     float64 `yaml:"respawn_delay"`
+	RespawnJitter    float64 `yaml:"respawn_jitter"`
+	CombatBackground string  `yaml:"combat_background"`
+
+	OpponentPool      string            `yaml:"opponent_pool"`
+	Opponent          rpg.PrimortalType `yaml:"opponent"`
+	OpponentArchetype string            `yaml:"opponent_archetype"`
 }
 
 func NewShadowMobParamsFromProperties(props *util.Properties) ShadowMobParams {
@@ -98,6 +102,22 @@ func NewShadowMobParamsFromProperties(props *util.Properties) ShadowMobParams {
 		return params
 	}
 	props.LoadStructFromKey("shadow_mob", &params)
+	triggerTypes := 0
+	if params.CombatId != "" {
+		triggerTypes++
+	}
+	if params.BroadcastId != "" {
+		triggerTypes++
+	}
+	if params.OpponentPool != "" {
+		triggerTypes++
+	}
+	if triggerTypes > 1 {
+		log.Fatal().Msg("Cannot specify more than one trigger type for shadow mob.")
+	}
+	if triggerTypes == 0 {
+		log.Fatal().Msg("Must specify exactly one trigger type for shadow mob.")
+	}
 	return params
 }
 
@@ -107,7 +127,6 @@ func DefaultShadowMobParams() ShadowMobParams {
 		RespawnDelay:     15,
 		RespawnJitter:    0,
 		CombatBackground: "combat/background_sylvoria",
-		Opponent:         nil,
 	}
 }
 
@@ -119,32 +138,42 @@ func DefaultShadowMobConfig(params ShadowMobParams) ShadowMobConfig {
 		SenseMax:      4.5,
 		TriggerRadius: 0.8,
 		OnTrigger: func(s *State, m *ShadowMob) {
-			if game.DebugToggles().F5().ToggleState() {
-				triggerCombat := NewTriggerCombatEffect(params.CombatBackground).WithCombatId(params.CombatId)
-				triggerCombat.Opponent = params.Opponent
-				effects := []Effect{
-					triggerCombat,
-					NewFunctionEffect(func(*State) { // remove this mob
-						for i, mob := range s.mobs {
-							if mob == m {
-								s.mobs[i] = s.mobs[len(s.mobs)-1]
-								s.mobs = s.mobs[:len(s.mobs)-1]
-								break
-							}
-						}
-					}),
-				}
-				if params.RespawnDelay+params.RespawnJitter > 0 {
-					effects = append(effects,
-						NewTimerEffect(params.RespawnDelay+rand.Float64()*params.RespawnDelay),
-						NewFunctionEffect(func(*State) {
-							s.mobs = append(s.mobs, m)
-						}))
-				}
-				s.ExecuteSystemEffectsInOrder(effects...)
+			var effects []Effect
+			if params.BroadcastId != "" {
+				effects = append(effects, NewSendBroadcastEffect(params.BroadcastId, nil))
 			} else {
-				game.DebugNotificationf("Mob caught you! Toggle F5")
+				var opponent rpg.PrimortalType
+				var opponentArchetype string
+				if params.OpponentPool != "" {
+					opponent, opponentArchetype = rpg.GetOpponentPool(params.OpponentPool).Random()
+				} else {
+					opponent = params.Opponent
+					opponentArchetype = params.OpponentArchetype
+				}
+				triggerCombat := NewTriggerCombatEffect(params.CombatBackground).
+					WithCombatId(params.CombatId).
+					WithOpponent(game.NewCombatOpponent(opponent, opponentArchetype))
+				effects = append(effects, triggerCombat)
 			}
+			effects = append(effects,
+				NewFunctionEffect(func(*State) { // remove this mob
+					for i, mob := range s.mobs {
+						if mob == m {
+							s.mobs[i] = s.mobs[len(s.mobs)-1]
+							s.mobs = s.mobs[:len(s.mobs)-1]
+							break
+						}
+					}
+				}),
+			)
+			if params.RespawnDelay+params.RespawnJitter > 0 {
+				effects = append(effects,
+					NewTimerEffect(params.RespawnDelay+rand.Float64()*params.RespawnDelay),
+					NewFunctionEffect(func(*State) {
+						s.mobs = append(s.mobs, m)
+					}))
+			}
+			s.ExecuteSystemEffectsInOrder(effects...)
 		},
 	}
 }

@@ -111,9 +111,8 @@ func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *Ap
 		Moved(originLocation.Align(statBottomSprite)).
 		Moved(gfx.IVec(0, -nameBoxHeight).ScaledXY(renderScale)))
 
-	combatantNameText.Render(s.batch,
+	nameContent.Render(s.batch,
 		matrix.Moved(gfx.IVec(statBorderPadding+statBorderPaddingNameExtra, -statBorderPadding).ScaledXY(renderScale)),
-		nameContent,
 		tbcfg.RenderFrom(originLocation))
 
 	statBox.Draw(s.batch, matrix.Moved(gfx.IVec(statBorderPadding, -paddedNameHeight).ScaledXY(renderScale)), statBoxWidth)

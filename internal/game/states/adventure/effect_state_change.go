@@ -9,9 +9,11 @@ import (
 )
 
 type EffectTriggerCombat struct {
-	CombatId   string `auto_generate:"true"`
-	Opponent   *rpg.PrimortalType
-	Background string
+	CombatId         string `auto_generate:"true"`
+	Opponent         *game.CombatOpponent
+	Player           *game.CombatPlayer
+	Background       string
+	TrainingSequence *string
 }
 
 func (e *EffectTriggerCombat) CompletionID() string {
@@ -69,7 +71,7 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 		NewFunctionEffect(func(*State) {
 			s.enteringCombat = false
 			game.RemoveCustomShader()
-			var opponent rpg.PrimortalType
+			var opponent game.CombatOpponent
 			if e.Opponent != nil {
 				opponent = *e.Opponent
 			} else {
@@ -80,13 +82,26 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 					rpg.Primortal_Myceli.Type,
 					rpg.Primortal_Pumbl.Type,
 				}
-				opponent = options[rand.Intn(len(options))]
+				opponent = game.CombatOpponent{
+					Type: options[rand.Intn(len(options))],
+				}
 			}
-			game.SetActiveStateIntent(game.CombatIntent{
+			var player game.CombatPlayer
+			if e.Player != nil {
+				player = *e.Player
+			} else {
+				player = game.NewCombatPlayer(game.CurrentSave().Animech)
+			}
+			intent := game.CombatIntent{
+				Player:     player,
 				Opponent:   opponent,
-				Background: e.Background,
 				OnComplete: postCombat,
-			})
+				Background: e.Background,
+			}
+			if e.TrainingSequence != nil {
+				intent.TrainingSequence = *e.TrainingSequence
+			}
+			game.SetActiveStateIntent(intent)
 		}),
 	)
 	return true

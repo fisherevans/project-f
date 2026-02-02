@@ -28,7 +28,7 @@ func Warmup(targetX pixel.Target) {
 	for _, f := range atlas.GetAllFonts() {
 		tb := textbox.NewInstance(f, tbcfg.NewConfig(0, 0))
 		c := tb.NewComplexContent("hello")
-		tb.Render(batch, pixel.IM, c)
+		c.Render(batch, pixel.IM)
 	}
 	batch.Draw(targetX)
 	log.Info().Dur("duration", time.Since(start)).Msgf("Warming sprites complete")

@@ -29,10 +29,59 @@ func createInitialIntent() any {
 		}
 	})
 
+	i = i.With("Training Combat 1", func() any {
+		return game.CombatIntent{
+			Opponent: game.CombatOpponent{
+				Type:      rpg.Primortal_Dummy.Type,
+				Archetype: "training.1",
+			},
+			Player: game.CombatPlayer{
+				SkillSet: &rpg.SkillSet{
+					Skill1: rpg.Skill_Tackle.Id,
+					Skill2: rpg.Skill_Guard.Id,
+				},
+				InitialSync:   25,
+				MaxSync:       25,
+				InitialShield: 15,
+				MaxShield:     15,
+			},
+			TrainingSequence: "training.1",
+			Background:       rpg.CombatBGSpaceBase,
+			OnComplete: func(r game.CombatIntentResult) {
+				game.SetActiveStateIntent(createInitialIntent())
+			},
+		}
+	})
+
+	i = i.With("Training Combat 2", func() any {
+		return game.CombatIntent{
+			Opponent: game.CombatOpponent{
+				Type:      rpg.Primortal_Toxmidge.Type,
+				Archetype: "training.2",
+			},
+			Player: game.CombatPlayer{
+				SkillSet: &rpg.SkillSet{
+					Skill1: rpg.Skill_Tackle.Id,
+					Skill2: rpg.Skill_Guard.Id,
+				},
+				InitialSync:   25,
+				MaxSync:       25,
+				InitialShield: 15,
+				MaxShield:     15,
+			},
+			TrainingSequence: "training.2",
+			Background:       rpg.CombatBGSpaceBase,
+			OnComplete: func(r game.CombatIntentResult) {
+				game.SetActiveStateIntent(createInitialIntent())
+			},
+		}
+	})
+
 	fight := func(p rpg.PrimortalType) {
 		i = i.With("Fight "+rpg.Primortals[p].Name, func() any {
 			return game.CombatIntent{
-				Opponent:   p,
+				Opponent:   game.NewCombatOpponent(p, ""),
+				Player:     game.NewCombatPlayer(game.CurrentSave().Animech),
 				Background: "combat/background_sylvoria",
 				OnComplete: func(r game.CombatIntentResult) {
 					game.SetActiveStateIntent(createInitialIntent())
