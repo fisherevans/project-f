@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2026-02-01T09:17:21-05:00 by go generate
+// Generated at 2026-02-02T21:53:46-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -98,6 +98,14 @@ func (e *EffectSendBroadcast) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("broadcastId", e.BroadcastId)
+
+	return reporter.report()
+}
+
+func (e *EffectPushTooltip) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
+	reporter.requireString("message", e.Message)
 
 	return reporter.report()
 }

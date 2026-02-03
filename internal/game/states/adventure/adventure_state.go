@@ -9,6 +9,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/audio"
+	"fisherevans.com/project/f/internal/game/commands"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
@@ -99,6 +100,7 @@ type State struct {
 	timers     *timers
 	conditions *Conditions
 	zones      *zones
+	tooltips   *Tooltips
 
 	hud *Hud
 
@@ -125,6 +127,8 @@ type State struct {
 	activeSong *audio.PlaybackControl
 
 	controls *resources.MapControls
+
+	commandRoot *commands.Root
 }
 
 func New(i game.AdventureIntent) game.State {
@@ -137,6 +141,7 @@ func New(i game.AdventureIntent) game.State {
 		overlays:  NewOverlaySystem(),
 		timers:    newTimers(),
 		zones:     newZones(),
+		tooltips:  NewTooltips(),
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -173,6 +178,8 @@ func New(i game.AdventureIntent) game.State {
 	a.eventDispatcher.Register(a.entities.RegisterEntity("system", MapLocation{}), newSystemEventHandler(a))
 
 	initializeMap(a, m)
+
+	a.initCommands()
 
 	// once complete - send on enter to all new entities
 	a.eventDispatcher.Dispatch(EventOnStateEnter{})
@@ -310,6 +317,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.hud.OnTick(s, s.hudBatch, cameraDelta, renderBounds, timeDelta)
 	s.overlays.OnTick(s, target, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
+	s.tooltips.OnTick(s.hudBatch, timeDelta)
 	s.hudBatch.Draw(target)
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {

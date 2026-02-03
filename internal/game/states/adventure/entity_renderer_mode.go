@@ -13,6 +13,11 @@ type ModeBaseRenderConfig struct {
 	Lights     map[string][]LightConfig        `yaml:"lights"`
 }
 
+type OffsetConfig struct {
+	X float64 `yaml:"x"`
+	Y float64 `yaml:"y"`
+}
+
 type LightConfig struct {
 	Color    string  `yaml:"color"`
 	Size     float64 `yaml:"size"`
@@ -20,8 +25,9 @@ type LightConfig struct {
 }
 
 type AnimationReference struct {
-	Name      string  `yaml:"name"`
-	ColorMask *string `yaml:"colorMask"`
+	Name      string        `yaml:"name"`
+	ColorMask *string       `yaml:"colorMask"`
+	Offset    *OffsetConfig `yaml:"offset"`
 }
 
 type ModeBasedEntityRenderer struct {
@@ -61,6 +67,9 @@ func (r *ModeBasedEntityRenderer) SetModeAnimations(modeAnimations map[string][]
 			}
 			if animationRef.ColorMask != nil {
 				cma.ColorMask = util.Ptr(colors.FromString(*animationRef.ColorMask))
+			}
+			if animationRef.Offset != nil {
+				cma.Offset = pixel.V(animationRef.Offset.X, animationRef.Offset.Y)
 			}
 			animations = append(animations, cma)
 		}
@@ -124,4 +133,20 @@ func (r *ModeBasedEntityRenderer) WithConfig(config *ModeBaseRenderConfig) *Mode
 	r.SetModeAnimations(config.Animations)
 	r.SetModeLights(config.Lights)
 	return r
+}
+
+func GetModeBasedRenderer(s *State, eId string) (EntityReader, *ModeBasedEntityRenderer, bool) {
+	entity, ok := s.entities.GetEntity(eId)
+	if !ok {
+		return nil, nil, false
+	}
+	renderer, ok := entity.GetRenderer()
+	if !ok {
+		return nil, nil, false
+	}
+	modeBased, ok := renderer.(*ModeBasedEntityRenderer)
+	if !ok {
+		return nil, nil, false
+	}
+	return entity, modeBased, true
 }

@@ -59,6 +59,7 @@ var (
 )
 
 type CombatantStats struct {
+	IsPlayer     bool
 	TempoLevel   TempoLevel
 	Stance       CombatStance
 	StatusLevels map[StatusType]StatusLevel
@@ -79,15 +80,18 @@ type DamageResult struct {
 	SourceStatusStackReductions map[StatusType]float64
 }
 
-func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantStats) DamageResult {
+func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantStats) (result DamageResult) {
+	var calcNotes []string
+	defer func() {
+		log.Info().Msgf("damage result: %v", result)
+		for _, note := range calcNotes {
+			log.Info().Msgf(" - %s", note)
+		}
+	}()
 	if dmg.MissRate > 0 && rand.Float64() < dmg.MissRate {
 		return DamageResult{
 			Missed: true,
 		}
-	}
-
-	if dmg.Amount == 5 {
-		fmt.Println("hi")
 	}
 
 	targetDamage := float64(dmg.Amount)
@@ -96,7 +100,7 @@ func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantS
 	}
 	sourceDamage := 0.0
 
-	log.Info().Msgf("base damage: %f", targetDamage)
+	calcNotes = append(calcNotes, fmt.Sprintf("base damage: %f", targetDamage))
 
 	tempoMultiplier, exists := tempoMultipliers[source.TempoLevel]
 	if !exists {
@@ -105,7 +109,7 @@ func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantS
 	}
 	targetDamage *= tempoMultiplier
 
-	log.Info().Msgf("after tempo: %f", targetDamage)
+	calcNotes = append(calcNotes, fmt.Sprintf("after tempo multiplier %.3f: %f", tempoMultiplier, targetDamage))
 
 	if wardedLevel, isWarded := target.StatusLevels[StatusWarded]; isWarded {
 		if mult, ok := statusWardedMultipliersIncoming[wardedLevel]; ok {
@@ -138,7 +142,7 @@ func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantS
 	targetDamage = ScaleByStatus(targetDamage, target.StatusLevels, dmg.ScaledBy.TargetStatus)
 	targetDamage = ScaleByStatus(targetDamage, source.StatusLevels, dmg.ScaledBy.SourceStatus)
 
-	log.Info().Msgf("after stance %d - target: %f - source: %f", target.Stance, targetDamage, sourceDamage)
+	calcNotes = append(calcNotes, fmt.Sprintf("after stance %d - target: %f - source: %f", target.Stance, targetDamage, sourceDamage))
 
 	return DamageResult{
 		TargetDamage:                int(math.Ceil(targetDamage)), // short of immune, always deal at least 1 damage

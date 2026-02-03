@@ -73,19 +73,9 @@ type EffectMutateModeBasedEntity struct {
 }
 
 func (e *EffectMutateModeBasedEntity) Process(source EntityReader, s *State) bool {
-	entity, ok := s.entities.GetEntity(e.EntityId)
+	_, modeBased, ok := GetModeBasedRenderer(s, e.EntityId)
 	if !ok {
-		logEffectWarnf(source, e, "failed to find entity for mutation")
-		return false
-	}
-	renderer, ok := entity.GetRenderer()
-	if !ok {
-		logEffectWarnf(source, e, "failed to find renderer")
-		return false
-	}
-	modeBased, ok := renderer.(*ModeBasedEntityRenderer)
-	if !ok {
-		logEffectWarnf(source, e, "failed to find mode based entity for mutation")
+		logEffectWarnf(source, e, "failed to find mode based entity renderer for mutation")
 		return false
 	}
 	modeBased.WithConfig(&e.ModeBaseRenderConfig)
@@ -214,6 +204,9 @@ func (e *EffectChangePlayerRenderer) Process(source EntityReader, s *State) bool
 		return true
 	case "animech":
 		playerAnimechRenderer(player)
+		return true
+	case "hidden":
+		playerHiddenRenderer(player)
 		return true
 	}
 	logEffectWarnf(source, e, "invalid player style")

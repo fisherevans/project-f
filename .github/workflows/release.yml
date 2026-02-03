@@ -59,9 +59,9 @@ jobs:
         run: |
           cd release
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            7z a ../primortal_${{ matrix.goos }}_${{ matrix.goarch }}.zip *
+            7z a ../primortal_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.zip *
           else
-            tar -czf ../primortal_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz *
+            tar -czf ../primortal_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz *
           fi
         shell: bash
       
@@ -69,4 +69,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            primortal_${{ matrix.goos }}_${{ matrix.goarch }}.${{ matrix.goos == 'windows' && 'zip' || 'tar.gz' }}
+            primortal_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.${{ matrix.goos == 'windows' && 'zip' || 'tar.gz' }}

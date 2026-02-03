@@ -19,6 +19,9 @@ type AnimatedSprite struct {
 	progression     float64
 	currentFrame    int
 	timeScale       float64
+
+	// complete is true when a non-repeated animation is done progressing
+	complete bool
 }
 
 type frame struct {
@@ -316,6 +319,7 @@ func (a *AnimatedSprite) progress() {
 		if a.progression < dur {
 			break
 		}
+		a.complete = false
 		nextFrame := a.currentFrame + 1
 		a.progression -= dur
 		if a.randomized {
@@ -325,6 +329,7 @@ func (a *AnimatedSprite) progress() {
 				nextFrame = 0
 			} else {
 				nextFrame = len(a.frames) - 1
+				a.complete = true
 			}
 		}
 		a.currentFrame = nextFrame
@@ -340,4 +345,12 @@ func (a *AnimatedSprite) SetProgress(p float64) {
 	a.currentFrame = 0
 	a.progression = max(0, min(1, p)) * a.totalWeight / a.framesPerSecond
 	a.progress()
+}
+
+func (a *AnimatedSprite) DoesRepeat() bool {
+	return a.repeat
+}
+
+func (a *AnimatedSprite) IsNonRepeatedComplete() bool {
+	return a.complete
 }

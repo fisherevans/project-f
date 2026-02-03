@@ -9,6 +9,7 @@ type StateGlobalsReader interface {
 	GetEntityReader(id string) (EntityReader, bool)
 	GetZonesAt(loc MapLocation) Zones
 	Player() EntityReader
+	KeysWithPrefix(prefix string) []string
 }
 
 type stateGlobals struct {
@@ -58,4 +59,8 @@ func (s *stateGlobals) GetZonesAt(loc MapLocation) Zones {
 func (s *stateGlobals) Player() EntityReader {
 	e, _ := s.state.entities.GetEntity(s.state.player)
 	return e
+}
+
+func (s *stateGlobals) KeysWithPrefix(prefix string) []string {
+	return s.baseGlobals.KeysWithPrefix(prefix)
 }

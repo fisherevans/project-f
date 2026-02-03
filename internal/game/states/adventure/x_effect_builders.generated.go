@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2026-02-01T09:17:21-05:00 by go generate
+// Generated at 2026-02-02T21:53:46-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -79,6 +79,12 @@ func NewSendBroadcastEffect(broadcastId string, data any) *EffectSendBroadcast {
 	return &EffectSendBroadcast{
 		BroadcastId: broadcastId,
 		Data: data,
+	}
+}
+
+func NewPushTooltipEffect(message string) *EffectPushTooltip {
+	return &EffectPushTooltip{
+		Message: message,
 	}
 }
 

@@ -12,6 +12,38 @@ import (
 )
 
 func init() {
+	registerEventHandler("hint.listener", func(*util.Properties) EventHandler {
+		keys := map[string]string{
+			"hint.interact": "Press A to interact",
+			"hint.run":      "Hold B to run",
+		}
+		processHint := func(hint string, globals StateGlobalsReader) *HandlerOutput {
+			message, ok := keys[hint]
+			if !ok {
+				return nil
+			}
+			key := "intro.hints." + hint
+			if globals.Get(key).AsString("") == game.InstanceId {
+				return nil
+			}
+			return NewOutput().WithSerialPlan(
+				NewSetWorldStateEffect(key, game.InstanceId),
+				NewTimerEffect(3),
+				NewPushTooltipEffect(message),
+			)
+		}
+		return BasicHandlerBuilder[None]{
+			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
+				return processHint("hint.interact", globals)
+			},
+			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventEntityZoneActivity) *HandlerOutput {
+				if _, ok := keys[event.ZoneId]; !ok || event.EntityId != globals.Player().GetId() {
+					return nil
+				}
+				return processHint(event.ZoneId, globals)
+			},
+		}.CreateHandler()
+	})
 	registerEventHandler("intro.reset", func(*util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			OnStateEnter: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnStateEnter) *HandlerOutput {

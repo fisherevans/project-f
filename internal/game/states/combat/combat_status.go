@@ -146,11 +146,11 @@ func NewAppliedStatuses() *AppliedStatuses {
 					var pct float64
 					switch cs.Level() {
 					case rpg.StatusLevel3:
-						pct = 0.06
+						pct = 0.07
 					case rpg.StatusLevel2:
-						pct = 0.04
+						pct = 0.05
 					default:
-						pct = 0.02
+						pct = 0.03
 					}
 					dmg := int(math.Max(float64(appliedTo.GetTotalMaxHealth())*pct, 1.0))
 					s.AdjustHealth(-dmg, appliedTo, &DamageOptions{
@@ -184,7 +184,6 @@ func NewAppliedStatuses() *AppliedStatuses {
 						Status: rpg.StatusBurning,
 					})
 				},
-
 				CustomTickDecay: func(s *State, cs *CombatStatus) {
 					// decay faster the higher the level
 					decayPerTick := func(l rpg.StatusLevel) float64 {

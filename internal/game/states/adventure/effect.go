@@ -169,3 +169,16 @@ func (e *EffectSendBroadcast) Process(source EntityReader, s *State) bool {
 	s.eventDispatcher.Dispatch(NewEventBroadcast(e.BroadcastId, e.Data))
 	return true
 }
+
+type EffectPushTooltip struct {
+	instantEffect
+	Message string
+}
+
+func (e *EffectPushTooltip) Process(source EntityReader, s *State) bool {
+	if e == nil {
+		return false
+	}
+	s.tooltips.Add(e.Message)
+	return true
+}

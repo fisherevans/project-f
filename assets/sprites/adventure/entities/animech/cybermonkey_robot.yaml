@@ -3,6 +3,12 @@ tilesheet:
   tileHeight: 32
 
 animations:
+  frozen_down:
+    h_sequence:
+      row: 1
+      fromColumn: 1
+      toColumn: 1
+    framesPerSecond: 2
   idle_down:
     h_sequence:
       row: 1

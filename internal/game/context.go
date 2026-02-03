@@ -78,12 +78,10 @@ func Initialize(saveId string, intent any) {
 
 	ctx.console = newConsole(func(input string) {
 		if ctx.activeState == nil {
-			Console().Write("No active state")
+			Console().WriteLines("No active state")
 			return
 		}
-		if !ctx.activeState.HandleConsoleInput(input) {
-			Console().Write("command was not handled")
-		}
+		ctx.activeState.HandleConsoleInput(input)
 	})
 }
 

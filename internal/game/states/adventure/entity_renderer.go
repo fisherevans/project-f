@@ -51,6 +51,7 @@ func NewBasicEntityRenderer(entity Entity) *BasicEntityRenderer {
 type ColorMaskAnimation struct {
 	Animation *anim.AnimatedSprite
 	ColorMask *pixel.RGBA
+	Offset    pixel.Vec
 }
 
 func NewColorMaskAnimation(animation *anim.AnimatedSprite) ColorMaskAnimation {
@@ -138,7 +139,8 @@ func (r *BasicEntityRenderer) RenderToSceneAlpha(target pixel.Target, matrix pix
 			mask = *a.ColorMask
 		}
 		mask = colors.WithAlpha(mask, alpha)
-		a.Animation.Sprite().DrawColorMask(target, m, mask)
+		localM := m.Moved(a.Offset.Scaled(resources.MapTileSize.Float()))
+		a.Animation.Sprite().DrawColorMask(target, localM, mask)
 	}
 }
 
@@ -150,4 +152,16 @@ func (r *BasicEntityRenderer) RenderToLightMapAlpha(target pixel.Target, matrix 
 	for _, l := range r.lights {
 		l.RenderAlpha(target, matrix.Moved(r.lightOriginOffset), alpha)
 	}
+}
+
+func (r *BasicEntityRenderer) AreAnimationsComplete() bool {
+	for _, maskedAnimation := range r.animations {
+		if maskedAnimation.Animation.DoesRepeat() {
+			continue
+		}
+		if !maskedAnimation.Animation.IsNonRepeatedComplete() {
+			return false
+		}
+	}
+	return true
 }

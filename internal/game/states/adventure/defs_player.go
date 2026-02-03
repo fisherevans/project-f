@@ -77,6 +77,11 @@ func playerAnimechRenderer(entity Entity) *MovementBasedEntityRenderer {
 	return renderer
 }
 
+func playerHiddenRenderer(entity Entity) *MovementBasedEntityRenderer {
+	renderer := AttachMovementBasedEntityRenderer(entity)
+	return renderer
+}
+
 type PlayerBehavior struct {
 	entity Entity
 

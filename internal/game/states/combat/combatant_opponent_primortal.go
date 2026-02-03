@@ -49,6 +49,7 @@ func NewPrimortalOpponent(cfg game.CombatOpponent) *PrimortalOpponent {
 
 func (o *PrimortalOpponent) GetStats() rpg.CombatantStats {
 	return rpg.CombatantStats{
+		IsPlayer:     false,
 		TempoLevel:   rpg.TempoLevel0,
 		Stance:       o.GetCurrentSkill().GetCurrentStance(),
 		StatusLevels: o.Statuses.GetLevels(),

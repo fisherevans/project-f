@@ -7,4 +7,18 @@ animations:
       row: 1
       fromColumn: 1
       toColumn: 1
-    framesPerSecond: 2
+    framesPerSecond: 6
+  enter:
+    h_sequence:
+      row: 1
+      fromColumn: 2
+      toColumn: 14
+    framesPerSecond: 6
+    repeat: false
+  exit:
+    h_sequence:
+      row: 1
+      fromColumn: 15
+      toColumn: 21
+    framesPerSecond: 6
+    repeat: false

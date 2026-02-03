@@ -140,7 +140,7 @@ func (p *Properties) LoadStructFromKey(key string, target any) bool {
 	decoder.KnownFields(true)
 	if err := decoder.Decode(target); err != nil {
 		log.Fatal().Any("props", p).Str("key", key).Type("target", target).Err(err).
-			Msgf("failed to load struct from key")
+			Msgf("failed to load struct from key: %w", err)
 		return false
 	}
 	return true

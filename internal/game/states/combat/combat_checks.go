@@ -105,12 +105,8 @@ func WaitSomeTicks(waitFor int, andThen func(state *State) bool) func(state *Sta
 	if andThen == nil {
 		log.Fatal().Msg("andThen must be provided")
 	}
-	start := -1
 	return func(state *State) bool {
-		if start <= 0 {
-			start = state.Battle.TicksTriggered
-		}
-		if state.Battle.TicksTriggered < start+waitFor {
+		if state.training.TicksSinceLastSequence(state) < waitFor {
 			return false
 		}
 		return andThen(state)
