@@ -393,20 +393,11 @@ func init() {
 				if !globals.GetZonesAt(globals.Player().GetLocation()).Contains("intro.training.7") {
 					return nil
 				}
-				skills := 0
-				if game.CurrentSave().Animech.SkillSet.Skill1 != "" {
-					skills++
-				}
-				if game.CurrentSave().Animech.SkillSet.Skill2 != "" {
-					skills++
-				}
-				if game.CurrentSave().Animech.SkillSet.Skill3 != "" {
-					skills++
-				}
-				if game.CurrentSave().Animech.SkillSet.Skill4 != "" {
-					skills++
-				}
-				if skills < 2 {
+				hasAcidString := game.CurrentSave().Animech.SkillSet.Skill1 == rpg.Skill_AcidSting.Id ||
+					game.CurrentSave().Animech.SkillSet.Skill2 == rpg.Skill_AcidSting.Id ||
+					game.CurrentSave().Animech.SkillSet.Skill3 == rpg.Skill_AcidSting.Id ||
+					game.CurrentSave().Animech.SkillSet.Skill4 == rpg.Skill_AcidSting.Id
+				if !hasAcidString {
 					return NewOutput().WithEffects(NewFocusedSequenceBuilder(thisEntity.GetId(), globals.Player().GetId()).
 						WithMoveCamera(true).
 						WithMiddleEffects(

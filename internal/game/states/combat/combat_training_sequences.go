@@ -168,6 +168,7 @@ func (s *State) loadTrainingSequenceTraining1() {
 		WithReadyToQueue(func(s *State) bool {
 			return s.Player.NextSkillCommitted
 		}).
+		WithPauseCombat(false).
 		WithTargets(
 			highlightTargetActive("Both your skills and your opponent's show up here."),
 			highlightTargetActive("Both combatant's active skills trigger in parallel."),

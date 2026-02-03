@@ -3,30 +3,43 @@ character_name: Todd
 animech:
     skill_set:
         "1": tackle
-        "2": guard
-        "3": ""
+        "2": acid_string
+        "3": guard
         "4": ""
-    experience_points: 100
+    experience_points: 53
     upgrades:
         shield_level: 0
-        sync_level: 0
+        sync_level: 1
 loadouts: []
 inventory: null
 primortals:
     toxmidge:
         visibility: defeated
-        research_points: 5
+        research_points: 2
         last_seen: 0001-01-01T00:00:00Z
 unlocked_skills:
+    acid_string: {}
     guard: {}
-    jab: {}
     tackle: {}
 globals:
     abilities.xenolog_access: true
+    abilities.xenolog_primortals: true
+    combat.training.opponent_attacks_while_player_defends: true
+    combat.training.player_attacks_while_opponent_defends: true
+    combat.training.player_status.poisoned: true
     control_id: controlled_npc
     elythium: 0
+    intro.control.elythium: false
+    intro.training.4.door: true
+    intro.training.5.door: true
+    intro.training.5.xenolog: true
+    intro.training.6.door: true
+    intro.training.7.door: true
+    intro.training.7.elythium.done: true
+    intro.training.10.door: true
+    intro.training.enter.listener: 08607328-9b43-432c-a0c8-0e3373005804
     player_id: tiled-16
-    tiled-363: 9216f716-e281-4443-aa09-20cf0f14c1eb
+    tiled-363: 08607328-9b43-432c-a0c8-0e3373005804
 system_settings:
     lighting:
         lighting_composition: full
