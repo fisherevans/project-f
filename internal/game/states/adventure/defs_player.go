@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -14,7 +13,7 @@ func init() {
 		entity := system.RegisterEntity(params.EntityId, params.Location)
 		playerHumanRenderer(entity)
 		AttachBlockIngressPresence(entity, false, NewStaticImpedance(ImpedanceHigh))
-		AttachPlayerBehavior(entity)
+		AttachPlayerBehavior(entity, system.state.Controls)
 		entity.SetMovementSpeed(MoveStateWalking, characterSpeed)
 		entity.SetMovementSpeed(MoveStateRunning, characterSpeed*1.75)
 		entity.SetMovementSpeed(MoveStateDashing, characterSpeed*3)
@@ -88,11 +87,14 @@ type PlayerBehavior struct {
 	intentDirection     input.Direction
 	intentDuration      float64
 	awaitingInteraction bool
+
+	controls func() *input.Controls
 }
 
-func AttachPlayerBehavior(entity Entity) *PlayerBehavior {
+func AttachPlayerBehavior(entity Entity, controls func() *input.Controls) *PlayerBehavior {
 	b := &PlayerBehavior{
-		entity: entity,
+		entity:   entity,
+		controls: controls,
 	}
 	entity.PushBehavior(b)
 	return b
@@ -109,13 +111,13 @@ func (b *PlayerBehavior) MovementComplete() {
 }
 
 func (b *PlayerBehavior) triggerMovement() {
-	doTrigger := game.Controls[*State]().DPad().IsPressed() && b.intentDuration > 0.075
+	doTrigger := b.controls().DPad().IsPressed() && b.intentDuration > 0.075
 	if !doTrigger {
 		return
 	}
-	direction := game.Controls[*State]().DPad().GetDirection()
+	direction := b.controls().DPad().GetDirection()
 	moveState := MoveStateWalking
-	if game.Controls[*State]().ButtonB().IsPressed() {
+	if b.controls().ButtonB().IsPressed() {
 		moveState = MoveStateRunning
 	}
 	b.entity.GetSystem().state.ExecuteSystemEffects(
@@ -133,11 +135,11 @@ func (b *PlayerBehavior) triggerInteraction() {
 func (b *PlayerBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
 	// trigger running or face new direction after movement
 	if b.entity.IsMoving() {
-		if game.Controls[*State]().DPad().IsPressed() {
-			b.intentDirection = game.Controls[*State]().DPad().GetDirection()
+		if b.controls().DPad().IsPressed() {
+			b.intentDirection = b.controls().DPad().GetDirection()
 			b.intentDuration += timeDelta
 		}
-		if game.Controls[*State]().ButtonB().IsPressed() {
+		if b.controls().ButtonB().IsPressed() {
 			if b.entity.GetMovementState() == MoveStateWalking {
 				b.entity.AlterMovementState(MoveStateRunning)
 			}
@@ -146,7 +148,7 @@ func (b *PlayerBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
 				b.entity.AlterMovementState(MoveStateWalking)
 			}
 		}
-		if game.Controls[*State]().ButtonA().JustPressedOrRepeated() {
+		if b.controls().ButtonA().JustPressedOrRepeated() {
 			b.awaitingInteraction = true
 		}
 		return
@@ -156,8 +158,8 @@ func (b *PlayerBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
 		b.entity.SetFacingDirection(b.intentDirection)
 	}
 	// trigger movement if player is pressing a direction
-	if game.Controls[*State]().DPad().IsPressed() {
-		direction := game.Controls[*State]().DPad().GetDirection()
+	if b.controls().DPad().IsPressed() {
+		direction := b.controls().DPad().GetDirection()
 		b.entity.SetFacingDirection(b.intentDirection)
 		if b.intentDirection != direction {
 			b.intentDirection = direction
@@ -170,7 +172,7 @@ func (b *PlayerBehavior) Update(timeDelta float64, globals StateGlobalsReader) {
 		return
 	}
 	// interact with item if player is pressing A
-	if game.Controls[*State]().ButtonA().JustPressedOrRepeated() && b.entity.GetFacingDirection() != input.NotPressed {
+	if b.controls().ButtonA().JustPressedOrRepeated() && b.entity.GetFacingDirection() != input.NotPressed {
 		b.triggerInteraction()
 	} else {
 		b.triggerMovement()

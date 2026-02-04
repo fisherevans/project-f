@@ -1,0 +1,10 @@
+tilesheet:
+  tileWidth: 3
+  tileHeight: 3
+
+animations:
+  random:
+    h_sequence:
+      row: 1
+    framesPerSecond: 1
+    randomize: true

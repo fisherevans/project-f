@@ -65,9 +65,9 @@ type TargetMessage struct {
 	AutoWrapWidth int
 }
 
-func NewMessage(label string, placement MessagePlacement) *TargetMessage {
+func NewMessage(text string, placement MessagePlacement) *TargetMessage {
 	return &TargetMessage{
-		Text:      label,
+		Text:      text,
 		Placement: placement,
 	}
 }
@@ -144,7 +144,7 @@ type Drawer struct {
 	transitionTime    float64
 }
 
-func NewDrawer(atlas *resources.Atlas, font string, transitionTime float64) *Drawer {
+func NewDrawer(atlas *resources.Atlas, font string) *Drawer {
 	d := &Drawer{
 		matrix:       pixel.IM,
 		screenWidth:  game.GameWidth,
@@ -157,8 +157,8 @@ func NewDrawer(atlas *resources.Atlas, font string, transitionTime float64) *Dra
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignMiddle),
 			tbcfg.RenderFrom(gfx.BottomCenter))),
-		transitionElapsed: transitionTime,
-		transitionTime:    transitionTime,
+		transitionElapsed: 0.25,
+		transitionTime:    0.25,
 	}
 	d.Dismiss(false)
 	return d

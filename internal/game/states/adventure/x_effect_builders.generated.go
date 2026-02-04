@@ -1,14 +1,15 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2026-02-02T21:53:46-05:00 by go generate
+// Generated at 2026-02-03T23:20:24-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
 
 import (
-	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/highlighter"
 )
 
 func NewFunctionEffect(fn RunnableFunction) *EffectFunction {
@@ -30,14 +31,14 @@ func (e *EffectTimer) WithTimerId(timerId string) *EffectTimer {
 
 func NewSetWorldStateEffect(key string, value any) *EffectSetWorldState {
 	return &EffectSetWorldState{
-		Key: key,
+		Key:   key,
 		Value: value,
 	}
 }
 
 func NewSetRunStateEffect(key string, value any) *EffectSetRunState {
 	return &EffectSetRunState{
-		Key: key,
+		Key:   key,
 		Value: value,
 	}
 }
@@ -78,13 +79,19 @@ func NewSendEventEffect(event any) *EffectSendEvent {
 func NewSendBroadcastEffect(broadcastId string, data any) *EffectSendBroadcast {
 	return &EffectSendBroadcast{
 		BroadcastId: broadcastId,
-		Data: data,
+		Data:        data,
 	}
 }
 
 func NewPushTooltipEffect(message string) *EffectPushTooltip {
 	return &EffectPushTooltip{
 		Message: message,
+	}
+}
+
+func NewSetHighlightSequenceEffect(targets []highlighter.Target) *EffectSetHighlightSequence {
+	return &EffectSetHighlightSequence{
+		Targets: targets,
 	}
 }
 
@@ -105,8 +112,7 @@ func (e *EffectPlaySound) WithVolume(volume float64) *EffectPlaySound {
 }
 
 func NewOverrideCameraEffect() *EffectOverrideCamera {
-	return &EffectOverrideCamera{
-	}
+	return &EffectOverrideCamera{}
 }
 
 func (e *EffectOverrideCamera) WithFollow(follow FollowCamera) *EffectOverrideCamera {
@@ -121,8 +127,7 @@ func NewPopCameraOverrideEffect(maintainCurrentLocation bool) *EffectPopCameraOv
 }
 
 func NewMutateFollowCameraEffect() *EffectMutateFollowCamera {
-	return &EffectMutateFollowCamera{
-	}
+	return &EffectMutateFollowCamera{}
 }
 
 func (e *EffectMutateFollowCamera) WithFollowEntityId(followEntityId string) *EffectMutateFollowCamera {
@@ -142,8 +147,7 @@ func NewDeleteEntityEffect(entityId string) *EffectDeleteEntity {
 }
 
 func NewRegisterEntityEffect() *EffectRegisterEntity {
-	return &EffectRegisterEntity{
-	}
+	return &EffectRegisterEntity{}
 }
 
 func (e *EffectRegisterEntity) WithEntityId(entityId string) *EffectRegisterEntity {
@@ -227,8 +231,7 @@ func NewChangePlayerRendererEffect(style string) *EffectChangePlayerRenderer {
 }
 
 func NewTeleportPlayerEffect() *EffectTeleportPlayer {
-	return &EffectTeleportPlayer{
-	}
+	return &EffectTeleportPlayer{}
 }
 
 func (e *EffectTeleportPlayer) WithToReference(toReference string) *EffectTeleportPlayer {
@@ -435,9 +438,9 @@ func (e *EffectDialogue) WithDialogueId(dialogueId string) *EffectDialogue {
 
 func NewChatterEffect(entityId string, durationSeconds float64, message string) *EffectChatter {
 	return &EffectChatter{
-		EntityId: entityId,
+		EntityId:        entityId,
 		DurationSeconds: durationSeconds,
-		Message: message,
+		Message:         message,
 	}
 }
 
@@ -449,7 +452,7 @@ func (e *EffectChatter) WithChatterId(chatterId string) *EffectChatter {
 func NewFadeEffect(durationSeconds float64, transitions int) *EffectFade {
 	return &EffectFade{
 		DurationSeconds: durationSeconds,
-		Transitions: transitions,
+		Transitions:     transitions,
 	}
 }
 
@@ -478,4 +481,3 @@ func NewDeactivateFadeEffect(fadeId string) *EffectDeactivateFade {
 		FadeId: fadeId,
 	}
 }
-

@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2026-02-02T21:53:46-05:00 by go generate
+// Generated at 2026-02-03T23:20:24-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -106,6 +106,13 @@ func (e *EffectPushTooltip) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("message", e.Message)
+
+	return reporter.report()
+}
+
+func (e *EffectSetHighlightSequence) FillDefaultsAndValidate() error {
+	reporter := newIssueReporter()
+
 
 	return reporter.report()
 }

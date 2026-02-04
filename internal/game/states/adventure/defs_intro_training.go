@@ -7,6 +7,7 @@ import (
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/highlighter"
 	"github.com/rs/zerolog/log"
 )
 
@@ -411,6 +412,7 @@ func init() {
 						NewDialogueEffect("Now. In order to transfer your soul back to your body, you'll need to gather enough Elythium."),
 						NewDialogueEffect("Go gather that crystal over there."),
 						NewSetRunStateEffect(keyElythium, true),
+						NewSetWorldStateEffect(rpg.GlobalKeyElythiumGoal, 12),
 					).
 					BuildEffects()
 				return NewOutput().WithSerialPlan(effects...)
@@ -423,7 +425,7 @@ func init() {
 				if globals.Get(doneKey).AsBool(false) {
 					return nil
 				}
-				return NewOutput().WithEffects(
+				effects := []Effect{
 					NewSetWorldStateEffect(doneKey, true),
 					NewSerialPlan(NewFocusedSequenceBuilder(thisEntity.GetId(), globals.Player().GetId()).
 						WithMoveCamera(true).
@@ -433,7 +435,20 @@ func init() {
 							NewSetRunStateEffect(keyDoor, true),
 						).
 						BuildEffects()...),
+				}
+				elythiumHighlight := func(msg string) highlighter.Target {
+					return highlighter.NewTarget(util.R(200, 135, 40, 24)).
+						WithMessage(highlighter.NewMessage(msg, highlighter.MessageOnLeft).Wrapped(140)).
+						WithBadge(highlighter.NewBadge(highlighter.BadgeOnBottomMiddle).WithLabel("Okay"))
+				}
+				effects = append(effects,
+					NewTimerEffect(0.5),
+					NewSetHighlightSequenceEffect([]highlighter.Target{
+						elythiumHighlight("This gauge tells you how much Elythium you've collected."),
+						elythiumHighlight("Once it's full, you're ready to transfer back to your body."),
+					}),
 				)
+				return NewOutput().WithSerialPlan(effects...)
 			},
 		}.CreateHandler()
 	})

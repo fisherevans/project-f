@@ -851,6 +851,8 @@ func generateEffectBuilders(effects []EffectInfo) string {
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/game\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/resources\"\n")
 	sb.WriteString("\t\"fisherevans.com/project/f/internal/util\"\n")
+	sb.WriteString("\t\"fisherevans.com/project/f/internal/util/highlighter\"\n")
+
 	sb.WriteString(")\n\n")
 
 	for _, effect := range effects {

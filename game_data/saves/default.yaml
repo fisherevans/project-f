@@ -3,13 +3,13 @@ character_name: Todd
 animech:
     skill_set:
         "1": tackle
-        "2": acid_string
-        "3": guard
+        "2": guard
+        "3": acid_string
         "4": ""
-    experience_points: 53
+    experience_points: 100
     upgrades:
         shield_level: 0
-        sync_level: 1
+        sync_level: 0
 loadouts: []
 inventory: null
 primortals:
@@ -22,24 +22,13 @@ unlocked_skills:
     guard: {}
     tackle: {}
 globals:
-    abilities.xenolog_access: true
     abilities.xenolog_primortals: true
-    combat.training.opponent_attacks_while_player_defends: true
-    combat.training.player_attacks_while_opponent_defends: true
-    combat.training.player_status.poisoned: true
     control_id: controlled_npc
     elythium: 0
-    intro.control.elythium: false
-    intro.training.4.door: true
-    intro.training.5.door: true
     intro.training.5.xenolog: true
-    intro.training.6.door: true
-    intro.training.7.door: true
-    intro.training.7.elythium.done: true
-    intro.training.10.door: true
-    intro.training.enter.listener: 08607328-9b43-432c-a0c8-0e3373005804
+    intro.training.enter.listener: fe294999-6092-489d-a44f-224c46086aef
     player_id: tiled-16
-    tiled-363: 08607328-9b43-432c-a0c8-0e3373005804
+    tiled-363: fe294999-6092-489d-a44f-224c46086aef
 system_settings:
     lighting:
         lighting_composition: full

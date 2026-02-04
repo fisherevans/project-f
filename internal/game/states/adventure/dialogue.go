@@ -114,11 +114,11 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 	}
 	dialogue.Content().Update(timeDelta, typeListener)
 
-	a := game.Controls[*State]().ButtonA().JustPressed()
-	bPressed := game.Controls[*State]().ButtonB().IsPressed()
-	bJustPressed := game.Controls[*State]().ButtonB().JustPressed()
-	down := game.Controls[*State]().DPad().DirectionJustPressed(input.Down)
-	up := game.Controls[*State]().DPad().DirectionJustPressed(input.Up)
+	a := s.Controls().ButtonA().JustPressed()
+	bPressed := s.Controls().ButtonB().IsPressed()
+	bJustPressed := s.Controls().ButtonB().JustPressed()
+	down := s.Controls().DPad().DirectionJustPressed(input.Down)
+	up := s.Controls().DPad().DirectionJustPressed(input.Up)
 	if a || bPressed || bJustPressed || down {
 		if dialogue.Content().IsContentFullyDisplayed() {
 			if a || bJustPressed {

@@ -145,7 +145,7 @@ func New(i game.CombatIntent) game.State {
 
 		backgroundSprite: atlas.GetSprite(i.Background),
 
-		highlighter: highlighter.NewSequencedDrawer(highlighter.NewDrawer(atlas, resources.FontNameM3x6, 0.25)),
+		highlighter: highlighter.NewSequencedDrawer(highlighter.NewDrawer(atlas, resources.FontNameM3x6)),
 		training:    NewTrainingListener(),
 
 		batch: atlas.NewBatch(),

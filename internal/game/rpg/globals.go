@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	GlobalKeyElythium = "elythium"
+	GlobalKeyElythium     = "elythium"
+	GlobalKeyElythiumGoal = "elythium_goal"
 
 	CombatBGSpaceBase = "combat/background_space_base"
 )

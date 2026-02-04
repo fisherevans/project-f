@@ -10,12 +10,14 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/commands"
+	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/highlighter"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
@@ -57,12 +59,7 @@ func init() {
 				tbcfg.Paging(2, true),
 				tbcfg.Foreground(colors.HexString("#00164e")),
 				tbcfg.ExtraLineSpacing(4)))
-		hudCountText = textbox.NewInstance(
-			atlas.GetFont(resources.FontNameM5x7),
-			tbcfg.NewConfig(game.GameWidth/3, hucCountTextHeight,
-				tbcfg.HAligned(tbcfg.HAlignRight),
-				tbcfg.VAligned(tbcfg.VAlignMiddle),
-				tbcfg.WithExpandMode(tbcfg.ExpandFit)))
+		elythiumBarFrame = frames.New("adventure/hud/elythium_frame", atlas)
 	})
 }
 
@@ -93,14 +90,15 @@ type State struct {
 
 	entities *EntitySystem
 
-	teleports  map[TeleportReference]Teleport
-	chatters   *ChatterSystem
-	dialogues  *DialogueSystem
-	overlays   *OverlaySystem
-	timers     *timers
-	conditions *Conditions
-	zones      *zones
-	tooltips   *Tooltips
+	teleports   map[TeleportReference]Teleport
+	chatters    *ChatterSystem
+	dialogues   *DialogueSystem
+	overlays    *OverlaySystem
+	timers      *timers
+	conditions  *Conditions
+	zones       *zones
+	tooltips    *Tooltips
+	highlighter *highlighter.SequencedDrawer
 
 	hud *Hud
 
@@ -134,14 +132,15 @@ type State struct {
 func New(i game.AdventureIntent) game.State {
 	m := resources.GetMap(i.MapName)
 	a := &State{
-		teleports: make(map[TeleportReference]Teleport),
-		camera:    NewStaticCamera(pixel.Vec{}),
-		chatters:  NewChatterSystem(),
-		dialogues: NewDialogueSystem(),
-		overlays:  NewOverlaySystem(),
-		timers:    newTimers(),
-		zones:     newZones(),
-		tooltips:  NewTooltips(),
+		teleports:   make(map[TeleportReference]Teleport),
+		camera:      NewStaticCamera(pixel.Vec{}),
+		chatters:    NewChatterSystem(),
+		dialogues:   NewDialogueSystem(),
+		overlays:    NewOverlaySystem(),
+		timers:      newTimers(),
+		zones:       newZones(),
+		tooltips:    NewTooltips(),
+		highlighter: highlighter.NewSequencedDrawer(highlighter.NewDrawer(atlas, resources.FontNameM3x6)),
 
 		sceneBatch:  atlas.NewBatch(),
 		sceneCanvas: opengl.NewCanvas(pixel.R(0, 0, game.GameWidth, game.GameHeight)),
@@ -184,6 +183,13 @@ func New(i game.AdventureIntent) game.State {
 	// once complete - send on enter to all new entities
 	a.eventDispatcher.Dispatch(EventOnStateEnter{})
 	return a
+}
+
+func (s *State) Controls() *input.Controls {
+	if s.highlighter.IsActive() {
+		return game.ControlsNoop
+	}
+	return game.Controls[*State]()
 }
 
 func (s *State) Globals() StateGlobalsReader {
@@ -318,14 +324,15 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.overlays.OnTick(s, target, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.tooltips.OnTick(s.hudBatch, timeDelta)
+	s.highlighter.Render(s.hudBatch, timeDelta, game.Controls[*State]())
 	s.hudBatch.Draw(target)
 
-	if game.Controls[*State]().ButtonSelect().JustPressed() {
+	if s.Controls().ButtonSelect().JustPressed() {
 		game.SetActiveStateIntent(game.MenuIntent{
 			Background: s,
 		})
 	}
-	if s.globals.Get(globalVariableNameHasXenologAccess).AsBool(false) && game.Controls[*State]().ButtonStart().JustPressed() {
+	if s.globals.Get(globalVariableNameHasXenologAccess).AsBool(false) && s.Controls().ButtonStart().JustPressed() {
 		s.openXenolog()
 	}
 }

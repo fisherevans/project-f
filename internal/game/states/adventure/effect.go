@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/highlighter"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -180,5 +181,18 @@ func (e *EffectPushTooltip) Process(source EntityReader, s *State) bool {
 		return false
 	}
 	s.tooltips.Add(e.Message)
+	return true
+}
+
+type EffectSetHighlightSequence struct {
+	instantEffect
+	Targets []highlighter.Target
+}
+
+func (e *EffectSetHighlightSequence) Process(source EntityReader, s *State) bool {
+	if e == nil {
+		return false
+	}
+	s.highlighter.AppendTargets(e.Targets...)
 	return true
 }

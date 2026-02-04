@@ -56,7 +56,7 @@ func (s *SequencedDrawer) ClearSequence() {
 	s.sequence = nil
 }
 
-func (s *SequencedDrawer) SetSequence(targets ...Target) {
+func (s *SequencedDrawer) AppendTargets(targets ...Target) {
 	s.sequence = append(targets)
 	s.currentTarget = 0
 }

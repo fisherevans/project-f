@@ -52,14 +52,14 @@ func (l *TrainingListener) OnTick(s *State) {
 		if l.sequences[0].ReadyToQueue(s) {
 			l.activeSequence = l.sequences[0]
 			l.sequences = l.sequences[1:]
-			s.highlighter.SetSequence(l.activeSequence.Targets...)
+			s.highlighter.AppendTargets(l.activeSequence.Targets...)
 		}
 	} else {
 		for i, seq := range l.sequences {
 			if seq.ReadyToQueue(s) {
 				l.activeSequence = seq
 				l.sequences = append(l.sequences[:i], l.sequences[i+1:]...)
-				s.highlighter.SetSequence(l.activeSequence.Targets...)
+				s.highlighter.AppendTargets(l.activeSequence.Targets...)
 				return
 			}
 		}
