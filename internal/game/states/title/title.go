@@ -6,7 +6,6 @@ import (
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/textbox"
@@ -69,8 +68,11 @@ func New(intent game.TitleIntent) game.State {
 	}
 }
 
-func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
-	target.Clear(colors.FromString("#0a0510"))
+func (s *State) ClearColor() pixel.RGBA {
+	return colors.FromString("#0a0510")
+}
+
+func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	if s.exiting {
 		s.elapsed -= timeDelta * 18
 	} else {

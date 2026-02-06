@@ -131,7 +131,15 @@ func NewDevice(_ game.StartupDeviceIntent) game.State {
 
 const initializeDeviceAfter = 0.3
 
-func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) ClearColor() pixel.RGBA {
+	bgProgress := interp.Smoothstep(min(s.elapsed/(baseOffset*6), 1.0))
+	bgFrom := colors.FromString("#444")
+	bgTo := colors.FromString("#eee")
+	bg := colors.Lerp(bgFrom, bgTo, bgProgress)
+	return bg
+}
+
+func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	s.elapsed += timeDelta
 	if !s.initialized && s.elapsed > initializeDeviceAfter {
 		s.initialized = true
@@ -178,14 +186,6 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 
 	s.spriteCanvas.Clear(pixel.RGBA{})
 	s.spriteBatch.Draw(s.spriteCanvas)
-
-	// clear background on target
-
-	bgProgress := interp.Smoothstep(min(s.elapsed/(baseOffset*6), 1.0))
-	bgFrom := colors.FromString("#444")
-	bgTo := colors.FromString("#eee")
-	bg := colors.Lerp(bgFrom, bgTo, bgProgress)
-	target.Clear(bg)
 
 	// draw sprites to target
 

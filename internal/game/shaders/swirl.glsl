@@ -35,9 +35,7 @@ void main() {
     vec2 uv = atlasUV(vTexCoords, uTexBounds);
 
     // --- Swirl with guaranteed edge preservation ---
-    // Compute the MAX safe radius so a circle around uCenter fits inside [0,1]^2
-    float rMax = min(min(uCenter.x, 1.0 - uCenter.x), min(uCenter.y, 1.0 - uCenter.y));
-    float r    = clamp(uRadius, 0.0, 1.0) * rMax;
+    float r = uRadius;
 
     // Vector from center, normalized by r
     vec2  d   = uv - uCenter;
@@ -51,11 +49,18 @@ void main() {
         float t = 1.0 - (len / r);                 // 1 at center → 0 at edge
         // Soft falloff near edge
         float f = (uFalloff <= 0.0) ? t : smoothstep(0.0, 1.0, pow(t, 1.0 + 2.0*uFalloff));
+        
+        // Smooth the progress to avoid jarring start/stop
+        float smoothP = smoothstep(0.0, 1.0, uProgress);
         // Scale by overall progress
-        f *= clamp(uProgress, 0.0, 1.0);
+        f *= smoothP;
+
+        // To avoid tearing at edges, we fade the effect based on distance to nearest edge
+        float distToEdge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+        float edgeFade = smoothstep(0.0, 0.04, distToEdge); 
 
         // Rotation angle decreases toward edge (max at center)
-        float a = uSwirl * f;
+        float a = uSwirl * f * edgeFade;
 
         // Rotate d by angle a
         float s = sin(a), c = cos(a);

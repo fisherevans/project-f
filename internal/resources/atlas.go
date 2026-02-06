@@ -149,95 +149,104 @@ func IgnoreSpritePrefix(prefixes ...string) func(string) bool {
 }
 
 func CreateAtlas(filter AtlasFilter) *Atlas {
-	var atlasedListeners []func(*Atlas, pixel.Rect)
-	var images []image.Image
+	atlas := &Atlas{}
+	load := func() {
+		var atlasedListeners []func(*Atlas, pixel.Rect)
+		var images []image.Image
 
-	for spriteName, sprite := range spriteResources {
-		if filter.DoIncludeSprite != nil && !filter.DoIncludeSprite(spriteName) {
-			continue
-		}
-		atlasedListeners = append(atlasedListeners, func(atlas *Atlas, placement pixel.Rect) {
-			if sprite.metadata.Tilesheet != nil {
-				tilesheet := sprite.metadata.Tilesheet
-				for y := 0; y < tilesheet.Rows; y++ {
-					for x := 0; x < tilesheet.Columns; x++ {
-						spriteId := TilesheetSpriteId{
-							Tilesheet: spriteName,
-							Column:    x + 1,
-							Row:       tilesheet.Rows - y,
+		for spriteName, sprite := range spriteResources {
+			if filter.DoIncludeSprite != nil && !filter.DoIncludeSprite(spriteName) {
+				continue
+			}
+			atlasedListeners = append(atlasedListeners, func(atlas *Atlas, placement pixel.Rect) {
+				if sprite.metadata.Tilesheet != nil {
+					tilesheet := sprite.metadata.Tilesheet
+					for y := 0; y < tilesheet.Rows; y++ {
+						for x := 0; x < tilesheet.Columns; x++ {
+							spriteId := TilesheetSpriteId{
+								Tilesheet: spriteName,
+								Column:    x + 1,
+								Row:       tilesheet.Rows - y,
+							}
+							posX := placement.Min.X + (float64(x) * tilesheet.TileWidth.Float())
+							posY := placement.Min.Y + (float64(y) * tilesheet.TileHeight.Float())
+							r := pixel.R(posX, posY, posX+tilesheet.TileWidth.Float(), posY+tilesheet.TileHeight.Float())
+							atlas.tilesheetSprites[spriteId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, r))
 						}
-						posX := placement.Min.X + (float64(x) * tilesheet.TileWidth.Float())
-						posY := placement.Min.Y + (float64(y) * tilesheet.TileHeight.Float())
-						r := pixel.R(posX, posY, posX+tilesheet.TileWidth.Float(), posY+tilesheet.TileHeight.Float())
-						atlas.tilesheetSprites[spriteId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, r))
 					}
+					return
 				}
-				return
-			}
-			if sprite.metadata.Frame != nil {
-				sf := sprite.metadata.Frame
-				registerSide := func(side FrameSide, rect pixel.Rect) {
-					frameId := FrameSpriteId{
-						Frame: spriteName,
-						Side:  side,
+				if sprite.metadata.Frame != nil {
+					sf := sprite.metadata.Frame
+					registerSide := func(side FrameSide, rect pixel.Rect) {
+						frameId := FrameSpriteId{
+							Frame: spriteName,
+							Side:  side,
+						}
+						atlas.frameSprites[frameId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, rect))
 					}
-					atlas.frameSprites[frameId] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, rect))
+					top := float64(sf.CutMargin[FrameTop])
+					left := float64(sf.CutMargin[FrameLeft])
+					bottom := float64(sf.CutMargin[FrameBottom])
+					right := float64(sf.CutMargin[FrameRight])
+					registerSide(FrameTopLeft, pixel.R(placement.Min.X, placement.Max.Y-top, placement.Min.X+left, placement.Max.Y))
+					registerSide(FrameTop, pixel.R(placement.Min.X+left, placement.Max.Y-top, placement.Max.X-right, placement.Max.Y))
+					registerSide(FrameTopRight, pixel.R(placement.Max.X-right, placement.Max.Y-top, placement.Max.X, placement.Max.Y))
+					registerSide(FrameLeft, pixel.R(placement.Min.X, placement.Min.Y+bottom, placement.Min.X+left, placement.Max.Y-top))
+					registerSide(FrameMiddle, pixel.R(placement.Min.X+left, placement.Min.Y+bottom, placement.Max.X-right, placement.Max.Y-top))
+					registerSide(FrameRight, pixel.R(placement.Max.X-right, placement.Min.Y+bottom, placement.Max.X, placement.Max.Y-top))
+					registerSide(FrameBottomLeft, pixel.R(placement.Min.X, placement.Min.Y, placement.Min.X+left, placement.Min.Y+bottom))
+					registerSide(FrameBottom, pixel.R(placement.Min.X+left, placement.Min.Y, placement.Max.X-right, placement.Min.Y+bottom))
+					registerSide(FrameBottomRight, pixel.R(placement.Max.X-right, placement.Min.Y, placement.Max.X, placement.Min.Y+bottom))
+					return
 				}
-				top := float64(sf.CutMargin[FrameTop])
-				left := float64(sf.CutMargin[FrameLeft])
-				bottom := float64(sf.CutMargin[FrameBottom])
-				right := float64(sf.CutMargin[FrameRight])
-				registerSide(FrameTopLeft, pixel.R(placement.Min.X, placement.Max.Y-top, placement.Min.X+left, placement.Max.Y))
-				registerSide(FrameTop, pixel.R(placement.Min.X+left, placement.Max.Y-top, placement.Max.X-right, placement.Max.Y))
-				registerSide(FrameTopRight, pixel.R(placement.Max.X-right, placement.Max.Y-top, placement.Max.X, placement.Max.Y))
-				registerSide(FrameLeft, pixel.R(placement.Min.X, placement.Min.Y+bottom, placement.Min.X+left, placement.Max.Y-top))
-				registerSide(FrameMiddle, pixel.R(placement.Min.X+left, placement.Min.Y+bottom, placement.Max.X-right, placement.Max.Y-top))
-				registerSide(FrameRight, pixel.R(placement.Max.X-right, placement.Min.Y+bottom, placement.Max.X, placement.Max.Y-top))
-				registerSide(FrameBottomLeft, pixel.R(placement.Min.X, placement.Min.Y, placement.Min.X+left, placement.Min.Y+bottom))
-				registerSide(FrameBottom, pixel.R(placement.Min.X+left, placement.Min.Y, placement.Max.X-right, placement.Min.Y+bottom))
-				registerSide(FrameBottomRight, pixel.R(placement.Max.X-right, placement.Min.Y, placement.Max.X, placement.Min.Y+bottom))
-				return
+				atlas.sprites[spriteName] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, placement))
+
+			})
+			images = append(images, sprite.data)
+		}
+
+		for _, fontName := range filter.FontNames {
+			instance := CreateFont(fontName)
+			images = append(images, instance.Atlas.PictureDataCopy().Image())
+			atlasedListeners = append(atlasedListeners, func(atlas *Atlas, placement pixel.Rect) {
+				instance.Atlas = instance.Atlas.CloneWithPictureData(atlas.source, placement)
+				atlas.fonts[fontName] = instance
+			})
+		}
+
+		atlasImage, placements := createAtlasGuillotine(images, maxSpriteAtlasSize, maxSpriteAtlasSize)
+
+		atlas.source = pixel.PictureDataFromImage(atlasImage)
+		atlas.sprites = map[string]pixelutil.BoundedDrawable{}
+		atlas.tilesheetSprites = map[TilesheetSpriteId]pixelutil.BoundedDrawable{}
+		atlas.frameSprites = map[FrameSpriteId]pixelutil.BoundedDrawable{}
+		atlas.fonts = map[string]FontInstance{}
+
+		for id, listener := range atlasedListeners {
+			listener(atlas, placements[id])
+		}
+
+		for tilesheetName, namedSprites := range tilesheetSprites {
+			for spriteName, _ := range namedSprites {
+				id := GetNamedTilesheetSpriteId(tilesheetName, spriteName)
+				drawable, exists := atlas.tilesheetSprites[id]
+				if !exists {
+					continue // likely filtered out
+				}
+				atlas.sprites[tilesheetName+":"+spriteName] = drawable
 			}
-			atlas.sprites[spriteName] = pixelutil.DrawableSprite(pixel.NewSprite(atlas.source, placement))
-
-		})
-		images = append(images, sprite.data)
-	}
-
-	for _, fontName := range filter.FontNames {
-		instance := CreateFont(fontName)
-		images = append(images, instance.Atlas.PictureDataCopy().Image())
-		atlasedListeners = append(atlasedListeners, func(atlas *Atlas, placement pixel.Rect) {
-			instance.Atlas = instance.Atlas.CloneWithPictureData(atlas.source, placement)
-			atlas.fonts[fontName] = instance
-		})
-	}
-
-	atlasImage, placements := createAtlasGuillotine(images, maxSpriteAtlasSize, maxSpriteAtlasSize)
-
-	atlas := &Atlas{
-		source:           pixel.PictureDataFromImage(atlasImage),
-		sprites:          map[string]pixelutil.BoundedDrawable{},
-		tilesheetSprites: map[TilesheetSpriteId]pixelutil.BoundedDrawable{},
-		frameSprites:     map[FrameSpriteId]pixelutil.BoundedDrawable{},
-		fonts:            map[string]FontInstance{},
-	}
-
-	for id, listener := range atlasedListeners {
-		listener(atlas, placements[id])
-	}
-
-	for tilesheetName, namedSprites := range tilesheetSprites {
-		for spriteName, _ := range namedSprites {
-			id := GetNamedTilesheetSpriteId(tilesheetName, spriteName)
-			drawable, exists := atlas.tilesheetSprites[id]
-			if !exists {
-				continue // likely filtered out
-			}
-			atlas.sprites[tilesheetName+":"+spriteName] = drawable
 		}
 	}
-
+	initMu.Lock()
+	defer initMu.Unlock()
+	if initialized {
+		// Already initialized, run immediately
+		load()
+	} else {
+		// load it in the beginning
+		deferredInitializers = append([]func(){load}, deferredInitializers...)
+	}
 	return atlas
 }
 

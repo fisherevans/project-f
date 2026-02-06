@@ -1,13 +1,15 @@
 package combat
 
 import (
+	"math"
+
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/states/combat/tick_bar"
 	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
@@ -18,9 +20,7 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
-
-	"image/color"
-	"math"
+	"github.com/rs/zerolog/log"
 )
 
 // Things to add
@@ -53,12 +53,11 @@ import (
 
 var ticksPerSecond = 2.25
 
-var atlas *resources.Atlas
+var atlas = resources.DefaultAtlas()
 var backgroundVignette *pixel.Sprite
 
 func init() {
 	resources.RunOnceInitialized(func() {
-		atlas = resources.DefaultAtlas()
 		backgroundVignette = resources.LoadSprite("combat/background_vignette_mask")
 		baseFxText = text.New(pixel.ZV, atlas.GetFont(resources.FontNameM3x6).Atlas).AlignedTo(pixel.Center)
 		skillEaterSprite = atlas.GetSprite("combat/tick_bar/skill_eater")
@@ -101,10 +100,15 @@ func init() {
 	})
 }
 
-type Phase string
+type Phase int
 
-const PhaseBattle Phase = "battle"
-const PhaseComplete Phase = "complete"
+const (
+	PhaseIntro Phase = iota
+	PhaseBattle
+	PhaseEnd
+	PhaseReward
+	PhaseTerminal
+)
 
 type State struct {
 	game.BaseState
@@ -130,6 +134,25 @@ type State struct {
 
 	batch    *pixel.Batch
 	training *TrainingListener
+
+	visibilityBackground     *util.Visibility
+	visibilityPlayer         *util.Visibility
+	visibilityPlayerStats    *util.Visibility
+	visibilityOpponentStats  *util.Visibility
+	visibilityOpponent       *util.Visibility
+	visibilityActiveSkills   *util.Visibility
+	visibilitySkillSelection *util.Visibility
+	visibilityTempoBar       *util.Visibility
+
+	introTimers     []actionTimer
+	battleEndTimers []actionTimer
+	rewardTimers    []actionTimer
+
+	currentRewardModal int
+	rewardModals       []*rewardModal
+
+	elapsedLastPhase Phase
+	elapsed          float64
 }
 
 func New(i game.CombatIntent) game.State {
@@ -139,7 +162,7 @@ func New(i game.CombatIntent) game.State {
 		OnComplete: i.OnComplete,
 		Battle:     &Battle{},
 
-		phase: PhaseBattle,
+		phase: PhaseIntro,
 
 		cachedContents: map[string]*textbox.Content{},
 
@@ -149,33 +172,99 @@ func New(i game.CombatIntent) game.State {
 		training:    NewTrainingListener(),
 
 		batch: atlas.NewBatch(),
+
+		visibilityBackground:     util.NewVisibility(false, 1.5, true),
+		visibilityPlayer:         util.NewVisibility(false, 2, true),
+		visibilityOpponent:       util.NewVisibility(false, 2, true),
+		visibilityPlayerStats:    util.NewVisibility(false, 0.5, true),
+		visibilityOpponentStats:  util.NewVisibility(false, 0.5, true),
+		visibilityActiveSkills:   util.NewVisibility(false, 0.75, true),
+		visibilitySkillSelection: util.NewVisibility(false, 0.75, true),
+		visibilityTempoBar:       util.NewVisibility(false, 3, true),
+
+		rewardModals: []*rewardModal{
+			newRewardExperience(147, 130, 250),
+			newRewardResearch(rpg.Primortal_Pumbl.Type, 2, 3, 7),
+		},
+	}
+	s.introTimers = []actionTimer{
+		newSetVisibleTimer(0, s.visibilityBackground, true),
+		newSetVisibleTimer(0.1, s.visibilityPlayer, true),
+		newSetVisibleTimer(0.2, s.visibilityOpponent, true),
+		newSetVisibleTimer(2, s.visibilityOpponentStats, true),
+		newSetVisibleTimer(2, s.visibilityPlayerStats, true),
+		newSetVisibleTimer(2, s.visibilitySkillSelection, true),
+		newSetVisibleTimer(3, s.visibilityTempoBar, true),
+		newSetVisibleTimer(3, s.visibilityActiveSkills, true),
+		{
+			triggerAfter: 3.75,
+		},
+	}
+	s.battleEndTimers = []actionTimer{
+		newSetVisibleTimer(1, s.visibilitySkillSelection, false),
+		newSetVisibleTimer(1, s.visibilityTempoBar, false),
+		newSetVisibleTimer(1, s.visibilityActiveSkills, false),
+		newSetVisibleTimer(1, s.visibilityBackground, false),
+	}
+	s.rewardTimers = []actionTimer{
+		newSetVisibleTimer(1, s.visibilityOpponentStats, false),
+		newSetVisibleTimer(1, s.visibilityPlayerStats, false),
+		newSetVisibleTimer(0, s.visibilityPlayer, false),
+		newSetVisibleTimer(0, s.visibilityOpponent, false),
 	}
 	s.loadTrainingSequence(i.TrainingSequence)
 	return s
 }
 
 func (s *State) Controls() *input.Controls {
-	if s.highlighter.IsActive() {
+	if s.highlighter.IsActive() || s.phase == PhaseIntro {
 		return game.ControlsNoop
 	}
 	return game.Controls[*State]()
 }
 
-func (s *State) ClearColor() color.Color {
-	return color.Black
+func (s *State) ClearColor() pixel.RGBA {
+	return colors.Black.RGBA
 }
 
-func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 
-	s.training.OnTick(s)
+	s.visibilityBackground.Update(timeDelta)
+	s.visibilityPlayer.Update(timeDelta)
+	s.visibilityPlayerStats.Update(timeDelta)
+	s.visibilityOpponentStats.Update(timeDelta)
+	s.visibilityOpponent.Update(timeDelta)
+	s.visibilityActiveSkills.Update(timeDelta)
+	s.visibilitySkillSelection.Update(timeDelta)
+	s.visibilityTempoBar.Update(timeDelta)
 
-	s.backgroundSprite.Draw(target, pixel.IM.Moved(targetBounds.Center()))
+	if s.phase == PhaseIntro {
+		s.introTimers = s.triggerTimers(s.introTimers)
+		if len(s.introTimers) == 0 {
+			log.Info().Msg("intro phase complete")
+			s.phase = PhaseBattle
+		} else {
+			game.DebugBLf("intro times left: %d", len(s.introTimers))
+		}
+	}
+	if s.phase >= PhaseEnd {
+		s.battleEndTimers = s.triggerTimers(s.battleEndTimers)
+	}
+	if s.phase >= PhaseReward {
+		s.rewardTimers = s.triggerTimers(s.rewardTimers)
+	}
+
+	bgMask := colors.Lerp(colors.White.RGBA, colors.Black.RGBA, 0.5*s.visibilityBackground.GetInvisibleAmount())
+	bgMatrix := pixel.IM.Moved(targetBounds.Center())
+	s.backgroundSprite.DrawColorMask(target, bgMatrix, bgMask)
 	target.SetComposeMethod(pixel.ComposeMultiply)
 	backgroundVignette.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 	target.SetComposeMethod(pixel.ComposeOver)
 
 	if s.phase == PhaseBattle {
+		s.training.OnTick(s)
+
 		s.Opponent.GetHealth().Update(timeDelta)
 		s.Player.GetCurrentShield().Update(timeDelta)
 		s.Player.GetCurrentSync().Update(timeDelta)
@@ -188,7 +277,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		s.Player.GetTempo().Update(s.Battle.TickPlayerNext, s.Player, battleTimeDelta)
 
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 || s.Opponent.GetHealth().GetCurrentInt() <= 0 {
-			s.phase = PhaseComplete
+			s.phase = PhaseEnd
 		}
 	}
 
@@ -203,17 +292,16 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.Player.Update(timeDelta)
 	s.Opponent.Update(timeDelta)
 
-	s.Player.GetRenderer().Render(s.batch, timeDelta, s.Player)
-	s.Opponent.GetRenderer().Render(s.batch, timeDelta, s.Opponent)
+	// todo move matrix based on visibility
+	s.Player.GetRenderer().Render(s.batch, timeDelta, s.Player, s.visibilityPlayer)
+	s.Opponent.GetRenderer().Render(s.batch, timeDelta, s.Opponent, s.visibilityOpponent)
 
-	if s.phase == PhaseBattle {
-		for _, fx := range s.fx {
-			fx.Render(s.batch)
-		}
-		s.drawActiveSkills(s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
-		s.Player.Tempo.Render(s.batch, gfx.Moved(game.GameWidth/2, 45), timeDelta)
-		s.renderSkills(s.batch, targetBounds, timeDelta)
+	for _, fx := range s.fx {
+		fx.Render(s.batch)
 	}
+	s.drawActiveSkills(s.batch, targetBounds, pixel.IM.Moved(pixel.V(targetBounds.Center().X, targetBounds.H())))
+	s.Player.Tempo.Render(s.batch, gfx.Moved(game.GameWidth/2, 45), s.visibilityTempoBar, timeDelta)
+	s.renderSkills(s.batch, targetBounds, timeDelta)
 
 	s.drawPlayerStats(timeDelta)
 	s.drawOpponentStats(timeDelta)
@@ -221,24 +309,54 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	game.DebugBLf("player status: %s", s.Player.GetStatuses().String())
 	game.DebugBLf("opponent status: %s", s.Opponent.GetStatuses().String())
 
-	if s.phase == PhaseComplete {
+	if s.phase == PhaseEnd {
 		overlay := "Battle complete!"
-		result := game.CombatIntentResult{}
 		if s.Player.GetCurrentSync().GetCurrentInt() <= 0 {
 			overlay = "{+c:#e64565,+o}YOU DIED!"
 		} else if s.Opponent.GetHealth().GetCurrentInt() <= 0 {
 			overlay = "{+c:#45e682,+o}YOU WON!"
-			result.PlayerWon = true
-			result.ResearchPoints = 1
 		}
 		content := combatantNameText.NewComplexContent(overlay)
-		content.Render(s.batch, pixel.IM.Moved(pixel.V(game.GameWidth/2, math.Floor(game.GameHeight*0.6))), tbcfg.RenderFrom(gfx.Centered))
+		topMiddle := pixel.IM.Moved(pixel.V(game.GameWidth/2, math.Floor(game.GameHeight*0.6)))
+		content.Render(s.batch, topMiddle, tbcfg.RenderFrom(gfx.Centered))
 		if s.Controls().ButtonA().JustPressed() || s.Controls().ButtonB().JustPressed() {
-			s.OnComplete(result)
+			s.phase = PhaseReward
+		}
+	} else if s.phase == PhaseReward {
+		topMiddle := pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight-23))
+		dx := 0
+		spacing := 100
+		if len(s.rewardModals) > 0 {
+			dx -= ((len(s.rewardModals) - 1) * spacing) / 2
+		}
+		for idx := 0; idx < len(s.rewardModals); idx++ {
+			if idx <= s.currentRewardModal {
+				s.rewardModals[idx].Render(s.batch, topMiddle.Moved(gfx.IVec(dx, 0)), idx == s.currentRewardModal, timeDelta)
+			}
+			dx += spacing
+		}
+		if s.Controls().ButtonA().JustPressed() || s.Controls().ButtonB().JustPressed() {
+			if s.currentRewardModal < len(s.rewardModals)-1 {
+				s.currentRewardModal++
+			} else {
+				result := game.CombatIntentResult{}
+				if s.Opponent.GetHealth().GetCurrentInt() <= 0 {
+					result.PlayerWon = true
+					result.ResearchPoints = 1
+				}
+				s.OnComplete(s, result)
+				s.phase = PhaseTerminal
+			}
 		}
 	}
 
 	s.highlighter.Render(s.batch, timeDelta, game.Controls[*State]())
 
 	s.batch.Draw(target)
+
+	if s.elapsedLastPhase != s.phase {
+		s.elapsed = 0
+		s.elapsedLastPhase = s.phase
+	}
+	s.elapsed += timeDelta
 }

@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"image/color"
 	"math"
 	"sort"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
+	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/highlighter"
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
@@ -180,8 +180,9 @@ func New(i game.AdventureIntent) game.State {
 
 	a.initCommands()
 
-	// once complete - send on enter to all new entities
+	// once complete - send on enter to all new entities and dispatch queued events from init
 	a.eventDispatcher.Dispatch(EventOnStateEnter{})
+	a.eventDispatcher.Activate()
 	return a
 }
 
@@ -196,7 +197,7 @@ func (s *State) Globals() StateGlobalsReader {
 	return s.globals
 }
 
-func (s *State) ClearColor() color.Color {
+func (s *State) ClearColor() pixel.RGBA {
 	return s.sceneClear
 }
 
@@ -220,7 +221,7 @@ func (s *State) OnExit() {
 	}
 }
 
-func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	game.DebugTLf("delta: %.3f", timeDelta)
 
 	s.entities.Update(timeDelta)
@@ -309,7 +310,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		}
 		bloomed := s.bloom.GenerateBloomCanvas(s.sceneCanvas)
 		s.bloom.Passes = oldPasses
-		target.Clear(pixel.RGBA{})
+		gfx.DrawRect(atlas, target, pixel.IM, gfx.BottomLeft, game.GameWidth, game.GameHeight, colors.Black.RGBA)
 		bloomed.Draw(target, pixel.IM.Moved(targetBounds.Center()))
 	case rpg.BloomModeBlended:
 		bloomed := s.bloom.ApplyBloom(s.sceneCanvas)
@@ -321,7 +322,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.hudBatch.Clear()
 	s.chatters.OnTick(s, s.hudBatch, cameraDelta, renderBounds, timeDelta)
 	s.hud.OnTick(s, s.hudBatch, cameraDelta, renderBounds, timeDelta)
-	s.overlays.OnTick(s, target, s.hudBatch, timeDelta)
+	s.overlays.OnTick(s, s.hudBatch, timeDelta)
 	s.dialogues.OnTick(s, s.hudBatch, renderBounds, timeDelta)
 	s.tooltips.OnTick(s.hudBatch, timeDelta)
 	s.highlighter.Render(s.hudBatch, timeDelta, game.Controls[*State]())

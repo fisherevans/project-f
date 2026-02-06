@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"fisherevans.com/project/f/internal/util"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -58,7 +59,7 @@ func (s *State) drawPlayerStats(timeDelta float64) {
 		originLocation: StatBoxOriginTopLeft,
 	}
 
-	s.drawCombatantStatBox(s.Player.Name(), statBox, s.Player.GetStatuses(), s.Battle.GetPlayerCurrentTickProgress(), gfx.IVec(0, game.GameHeight), gfx.TopLeft, timeDelta)
+	s.drawCombatantStatBox(s.Player.Name(), statBox, s.Player.GetStatuses(), s.Battle.GetPlayerCurrentTickProgress(), gfx.IVec(0, game.GameHeight), gfx.TopLeft, s.visibilityPlayerStats, timeDelta)
 }
 
 func (s *State) drawOpponentStats(timeDelta float64) {
@@ -79,10 +80,10 @@ func (s *State) drawOpponentStats(timeDelta float64) {
 		originLocation: StatBoxOriginTopRight,
 	}
 
-	s.drawCombatantStatBox(s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), s.Battle.GetOpponentCurrentTickProgress(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight, timeDelta)
+	s.drawCombatantStatBox(s.Opponent.Name(), statBox, s.Opponent.GetStatuses(), s.Battle.GetOpponentCurrentTickProgress(), gfx.IVec(game.GameWidth, game.GameHeight), gfx.TopRight, s.visibilityOpponentStats, timeDelta)
 }
 
-func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *AppliedStatuses, currentTickProgress float64, origin pixel.Vec, originLocation gfx.OriginLocation, timeDelta float64) {
+func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *AppliedStatuses, currentTickProgress float64, origin pixel.Vec, originLocation gfx.OriginLocation, visibility *util.Visibility, timeDelta float64) {
 	renderScale := pixel.V(1, 1)
 	var nameContentOpts []textbox.ContentOpt
 	if originLocation == gfx.TopRight {
@@ -93,6 +94,9 @@ func (s *State) drawCombatantStatBox(name string, statBox *StatBox, statuses *Ap
 	paddedNameHeight := statBorderPadding + combatantNameText.Metadata.GetFullLineHeight() + 3 // 1 for outline, 1 for spacing, 1 for letter tails
 
 	matrix := pixel.IM.Moved(origin)
+	dy := visibility.GetInvisibleAmount() * 40
+	dx := visibility.GetInvisibleAmount() * -80
+	matrix = matrix.Moved(pixel.V(dx, dy).ScaledXY(renderScale))
 
 	nameBoxHeight := paddedNameHeight + statBox.FrameHeight() - int(statBottomSprite.Bounds().H())
 	nameBoxWidth := statBorderPadding + statBorderPaddingNameExtra + nameContent.Width() + statBorderPaddingNameExtra

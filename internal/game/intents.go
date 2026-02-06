@@ -1,6 +1,8 @@
 package game
 
-import "fisherevans.com/project/f/internal/game/rpg"
+import (
+	"fisherevans.com/project/f/internal/game/rpg"
+)
 
 type StartupDeviceIntent struct{}
 type StartupCopyrightsIntent struct{}
@@ -37,7 +39,7 @@ type CombatIntentResult struct {
 	ResearchPoints int
 }
 
-type CombatIntentComplete func(r CombatIntentResult)
+type CombatIntentComplete func(combatState State, r CombatIntentResult)
 
 type CombatOpponent struct {
 	Type      rpg.PrimortalType
@@ -53,6 +55,7 @@ func NewCombatOpponent(t rpg.PrimortalType, archetype string) CombatOpponent {
 
 type CombatPlayer struct {
 	SkillSet      *rpg.SkillSet
+	HasTempo      bool
 	InitialSync   int
 	MaxSync       int
 	InitialShield int
@@ -88,4 +91,30 @@ type SwapStateIntent struct {
 type XenologIntent struct {
 	Background        State
 	PrimortalsEnabled bool
+}
+
+type BaseTransitionIntent struct {
+	From     State
+	ToState  State
+	ToIntent any
+}
+
+type TransitionFadeIntent struct {
+	BaseTransitionIntent
+	Duration float64
+}
+
+type TransitionSwirlIntent struct {
+	BaseTransitionIntent
+	Duration float64
+}
+
+type TransitionGlitchIntent struct {
+	BaseTransitionIntent
+	Duration float64
+}
+
+type TransitionFlushIntent struct {
+	BaseTransitionIntent
+	Duration float64
 }

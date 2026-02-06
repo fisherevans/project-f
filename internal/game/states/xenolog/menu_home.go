@@ -18,13 +18,13 @@ import (
 // Variables declared in init_vars.go
 var (
 	labelUnknown = "???????"
-	
-	selectBoxWidth  = 74
-	selectBoxHeight = 82
-	selectBoxLabelMargin = 3
+
+	selectBoxWidth              = 74
+	selectBoxHeight             = 82
+	selectBoxLabelMargin        = 3
 	selectBoxSubLabelFlashSpeed = 1.0
-	selectBoxSubLabelMargin = 3
-	selectBoxArrowMargin = 2.0
+	selectBoxSubLabelMargin     = 3
+	selectBoxArrowMargin        = 2.0
 )
 
 type homeMenu struct {

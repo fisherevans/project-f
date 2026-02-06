@@ -1,9 +1,9 @@
 package game
 
 import (
-	"image/color"
 	"math"
 
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/gopxl/pixel/v2"
 
@@ -28,8 +28,8 @@ const (
 )
 
 type State interface {
-	ClearColor() color.Color
-	OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64)
+	ClearColor() pixel.RGBA
+	OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64)
 	OnEnter()
 	OnExit()
 	HandleConsoleInput(string) bool
@@ -37,8 +37,8 @@ type State interface {
 
 type BaseState struct{}
 
-func (s BaseState) ClearColor() color.Color {
-	return color.Black
+func (s BaseState) ClearColor() pixel.RGBA {
+	return colors.Black.RGBA
 }
 
 func (s BaseState) OnEnter() {}
@@ -64,7 +64,7 @@ func (s *SwirlShader) Apply(shader shaders.Options, timeDelta float64) {
 	s.elapsedSeconds += timeDelta
 	shader.SetSwirlShader(
 		mgl32.Vec2{0.5, 0.5}, // center
-		30,                   // radius (full safe radius)
+		0.8,                  // radius (covering corners)
 		20,                   // swirl radians
 		0.6,                  // falloff
 		float32(math.Min(1, s.elapsedSeconds/s.durationSeconds)), // progress

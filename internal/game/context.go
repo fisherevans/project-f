@@ -37,8 +37,7 @@ var ctx *context
 type context struct {
 	DebugInfo
 
-	activeState  State
-	customShader AppliedShader
+	activeState State
 
 	stateIntent any
 
@@ -105,7 +104,7 @@ func ApplyIntent() {
 	if ctx.stateIntent == nil {
 		return
 	}
-	s, err := createState(ctx.stateIntent)
+	s, err := CreateStateFromIntent(ctx.stateIntent)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create new state from intent")
 	}
@@ -115,18 +114,6 @@ func ApplyIntent() {
 	ctx.activeState = s
 	ctx.stateIntent = nil
 	ctx.activeState.OnEnter()
-}
-
-func SetCustomShader(shader AppliedShader) {
-	ctx.customShader = shader
-}
-
-func GetCustomShader() AppliedShader {
-	return ctx.customShader
-}
-
-func RemoveCustomShader() {
-	ctx.customShader = nil
 }
 
 type AppliedShader interface {

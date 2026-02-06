@@ -14,7 +14,7 @@ import (
 
 func main() {
 	setup.SetupLogging()
-	instance := runtime.NewInstance("default", createInitialIntent())
+	instance := runtime.NewInstance("default", createInitialIntent)
 	go func() { // expose pprof to diagnose memory usage
 		http.ListenAndServe("localhost:6060", nil)
 	}()
@@ -26,6 +26,30 @@ func createInitialIntent() any {
 	i = i.With("Adventure", func() any {
 		return game.AdventureIntent{
 			MapName: "intro", // map1
+		}
+	})
+
+	i = i.With("Training Combat One Hit", func() any {
+		return game.CombatIntent{
+			Opponent: game.CombatOpponent{
+				Type:      rpg.Primortal_Dummy.Type,
+				Archetype: "onehit",
+			},
+			Player: game.CombatPlayer{
+				SkillSet: &rpg.SkillSet{
+					Skill1: rpg.Skill_Tackle.Id,
+					Skill2: rpg.Skill_Guard.Id,
+				},
+				InitialSync:   25,
+				MaxSync:       25,
+				InitialShield: 15,
+				MaxShield:     15,
+			},
+			TrainingSequence: "none",
+			Background:       rpg.CombatBGSpaceBase,
+			OnComplete: func(_ game.State, r game.CombatIntentResult) {
+				game.SetActiveStateIntent(createInitialIntent())
+			},
 		}
 	})
 
@@ -47,7 +71,7 @@ func createInitialIntent() any {
 			},
 			TrainingSequence: "training.1",
 			Background:       rpg.CombatBGSpaceBase,
-			OnComplete: func(r game.CombatIntentResult) {
+			OnComplete: func(_ game.State, r game.CombatIntentResult) {
 				game.SetActiveStateIntent(createInitialIntent())
 			},
 		}
@@ -71,7 +95,7 @@ func createInitialIntent() any {
 			},
 			TrainingSequence: "training.2",
 			Background:       rpg.CombatBGSpaceBase,
-			OnComplete: func(r game.CombatIntentResult) {
+			OnComplete: func(_ game.State, r game.CombatIntentResult) {
 				game.SetActiveStateIntent(createInitialIntent())
 			},
 		}
@@ -83,7 +107,7 @@ func createInitialIntent() any {
 				Opponent:   game.NewCombatOpponent(p, ""),
 				Player:     game.NewCombatPlayer(game.CurrentSave().Animech),
 				Background: "combat/background_sylvoria",
-				OnComplete: func(r game.CombatIntentResult) {
+				OnComplete: func(_ game.State, r game.CombatIntentResult) {
 					game.SetActiveStateIntent(createInitialIntent())
 				},
 			}

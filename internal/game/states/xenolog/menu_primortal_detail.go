@@ -31,12 +31,12 @@ func newPrimortalDetailMenu(screen *Screen, primortal rpg.PrimortalType) *primor
 
 // Variables declared in init_vars.go
 var (
-	detailLineHeight           = 14
-	detailMargin               = 8
-	primortalIconSize          = 48
-	primortalIconMargin        = 2
-	primortalSkillDetailWidth  = 64
-	primortalSkillDetailMargin = 2
+	detailLineHeight               = 14
+	detailMargin                   = 8
+	primortalIconSize              = 48
+	primortalIconMargin            = 2
+	primortalSkillDetailWidth      = 64
+	primortalSkillDetailMargin     = 2
 	primortalSkillDetailTextMargin = 5
 )
 

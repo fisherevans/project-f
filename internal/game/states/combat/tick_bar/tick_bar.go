@@ -2,7 +2,6 @@ package tick_bar
 
 import (
 	"math"
-	"runtime"
 	"time"
 
 	"github.com/gopxl/pixel/v2"
@@ -114,41 +113,11 @@ type DrawResult struct {
 }
 
 func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill *rpg.Skill, opt DrawOptions) DrawResult {
-	// Diagnostic: Track memory and time for first draw
-	var m1, m2 runtime.MemStats
-	runtime.ReadMemStats(&m1)
-	startTime := time.Now()
-	defer func() {
-		runtime.ReadMemStats(&m2)
-		elapsed := time.Since(startTime)
-		allocDiff := int64(m2.Alloc) - int64(m1.Alloc)
-		heapDiff := int64(m2.HeapAlloc) - int64(m1.HeapAlloc)
-		if elapsed > 100*time.Millisecond || allocDiff > 10*1024*1024 {
-			log.Warn().
-				Dur("elapsed", elapsed).
-				Int64("alloc_mb", allocDiff/(1024*1024)).
-				Int64("heap_mb", heapDiff/(1024*1024)).
-				Uint64("total_alloc_mb", m2.TotalAlloc/(1024*1024)).
-				Uint32("num_gc", m2.NumGC-m1.NumGC).
-				Uint64("sys_mb", m2.Sys/(1024*1024)).
-				Msg("TICK_BAR_DRAW: Slow or large allocation detected")
-			
-			// Force GC and check if memory is released
-			runtime.GC()
-			var m3 runtime.MemStats
-			runtime.ReadMemStats(&m3)
-			log.Info().
-				Int64("after_gc_alloc_mb", int64(m3.Alloc)/(1024*1024)).
-				Int64("freed_mb", (int64(m2.Alloc)-int64(m3.Alloc))/(1024*1024)).
-				Msg("TICK_BAR_DRAW: Memory after forced GC")
-		}
-	}()
-	
 	result := DrawResult{}
 	if skill == nil {
 		return result
 	}
-	mask := colors.WithAlphaTodoFix(opt.mask, opt.alpha)
+	mask := colors.LayerAlpha(opt.mask, opt.alpha)
 	if opt.interruptedAt >= 0 {
 		mask = colors.ScaleColor(mask, 0.5)
 	}
@@ -161,7 +130,7 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 	if opt.active {
 		frame = r.activeFrame
 	}
-	
+
 	// Diagnostic: Time the frame draw specifically
 	frameStart := time.Now()
 	frame.Draw(target, rect, matrixBottomLeft, frames.WithColor(mask))
@@ -245,9 +214,9 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 					iconMatrix = iconMatrix.Moved(pixel.V(-1.5, -5.5))
 				}
 				iconMatrix = iconMatrix.Moved(stanceDelta)
-				stanceMask := colors.Black.RGBA
+				stanceMask := colors.Black.RGBA.Mul(mask)
 				if opt.interruptedAt >= 0 {
-					stanceMask = colors.WithAlphaTodoFix(mask, 0.2)
+					stanceMask = colors.LayerAlpha(stanceMask, 0.2)
 				}
 				{
 					thisMatrix := iconMatrix.Chained(tickSpriteCenterMatrix)

@@ -6,6 +6,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/interp"
 	"github.com/gopxl/pixel/v2"
@@ -61,24 +62,45 @@ func (r *CombatantRenderer) AddFromConfig(ts []rpg.SkillTickCombatantTransformat
 	}
 }
 
-func (r *CombatantRenderer) Render(target pixel.Target, timeDelta float64, com Combatant) {
+func (r *CombatantRenderer) Render(target pixel.Target, timeDelta float64, com Combatant, visibility *util.Visibility) {
 	colorMask := com.GetColorMask()
 	if com.IsDead() {
 		colorMask = colors.MixColor(colorMask, colors.HexString("#af8686"))
 	} else {
 		r.animation.Update(timeDelta)
 	}
+	vis := visibility.GetVisibleAmount()
+	easedVis := interp.Smootherstep(vis)
+	// Alpha fading
+	colorMask = colorMask.Mul(colors.Alpha(easedVis))
 
 	var position pixel.Vec
+	var scale float64
 	rotateDirection := 1.0
-	if r.flip {
-		position = pixel.V(math.Floor(game.GameWidth*0.8), math.Floor(game.GameHeight*0.4))
+	arc := math.Sin(vis*math.Pi) * 30.0
+
+	if r.flip { // opponent
+		targetPos := pixel.V(math.Floor(game.GameWidth*0.8), math.Floor(game.GameHeight*0.4))
+		startPos := pixel.V(math.Floor(game.GameWidth*0.3), math.Floor(game.GameHeight*0.5))
+		position = pixel.V(
+			interp.Lerp(startPos.X, targetPos.X, easedVis),
+			interp.Lerp(startPos.Y, targetPos.Y, easedVis),
+		)
+		position.Y += arc // swoop up
+		scale = interp.Lerp(0.1, 1.0, easedVis)
 		rotateDirection = -1
-	} else {
-		position = pixel.V(math.Floor(game.GameWidth*0.2), math.Floor(game.GameHeight*0.4))
+	} else { // animech
+		targetPos := pixel.V(math.Floor(game.GameWidth*0.2), math.Floor(game.GameHeight*0.4))
+		startPos := pixel.V(math.Floor(game.GameWidth*0.7), math.Floor(game.GameHeight*0.1))
+		position = pixel.V(
+			interp.Lerp(startPos.X, targetPos.X, easedVis),
+			interp.Lerp(startPos.Y, targetPos.Y, easedVis),
+		)
+		position.Y -= arc // swoop down
+		scale = interp.Lerp(3.0, 1.0, easedVis)
 	}
 
-	m := pixel.IM
+	m := pixel.IM.Scaled(pixel.ZV, scale)
 	if com.IsDead() {
 		h := r.animation.Sprite().Bounds().H()
 		ry := -h / 3.0

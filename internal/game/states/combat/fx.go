@@ -60,7 +60,7 @@ func (fx *baseFx) Update(s *State, timeDelta float64) bool {
 var baseFxText *text.Text
 
 func (fx *baseFx) renderFx(color pixel.RGBA, text string, target pixel.Target) {
-	color = colors.WithAlphaTodoFix(color, 1.0-(fx.Age/fxMaxAge))
+	color = colors.WithAlpha(color, 1.0-(fx.Age/fxMaxAge))
 
 	baseFxText.Clear()
 	baseFxText.Dot = pixel.ZV

@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/interp"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/gopxl/pixel/v2"
@@ -26,6 +27,9 @@ func (t *Tempo) GetCurrent() float64 {
 }
 
 func (t *Tempo) GetLevel() rpg.TempoLevel {
+	if t == nil {
+		return rpg.TempoLevel0
+	}
 	return rpg.TempoLevel(t.current / (MaxTempo / tempoLevels))
 }
 
@@ -53,6 +57,9 @@ func newComboText(fontName string) *textbox.Instance {
 // todo make rates tunable
 // todo - account for battle speed + time delta
 func (t *Tempo) Update(upNext bool, combatant Combatant, timeDelta float64) {
+	if t == nil {
+		return
+	}
 	noSkillSelected := upNext && combatant.GetCurrentSkill() == nil && !combatant.IsNextSkillCommitted()
 	isInterrupted := combatant.GetCurrentSkill() != nil && combatant.GetCurrentSkill().IsInterrupted()
 	if noSkillSelected || isInterrupted {
@@ -78,23 +85,29 @@ var (
 	tempoBarTick     pixelutil.BoundedDrawable
 )
 
-func (t *Tempo) Render(target pixel.Target, center pixel.Matrix, timeDelta float64) {
+func (t *Tempo) Render(target pixel.Target, center pixel.Matrix, visibility *util.Visibility, timeDelta float64) {
+	if t == nil {
+		return
+	}
 	game.DebugBLf("tempo: %.2f (%d)", t.current, t.GetLevel())
+
+	// No alpha fading
+	mask := colors.Alpha(1.0)
 
 	topLeft := center //.Moved(tempoTopLeftDelta)
 
 	tempoBase.Draw(target, topLeft)
-	tempoName.DrawColorMask(target, topLeft, colors.FromString("#ff00aa"))
+	tempoName.DrawColorMask(target, topLeft, colors.FromString("#ff00aa").Mul(mask))
 	level := t.GetLevel()
 	switch level {
 	case rpg.TempoLevel1:
-		mask := colors.Alpha(interp.Lerp(0.1, 0.25, game.Utils().TimeCycleSin(0.33)))
+		mask := colors.Alpha(interp.Lerp(0.1, 0.25, game.Utils().TimeCycleSin(0.33))).Mul(mask)
 		tempoLevel1Border.DrawColorMask(target, topLeft, mask)
 	case rpg.TempoLevel2:
-		mask := colors.Alpha(interp.Lerp(0.25, 0.5, game.Utils().TimeCycleSin(0.66)))
+		mask := colors.Alpha(interp.Lerp(0.25, 0.5, game.Utils().TimeCycleSin(0.66))).Mul(mask)
 		tempoLevel2Border.DrawColorMask(target, topLeft, mask)
 	case rpg.TempoLevel3:
-		mask := colors.Alpha(0.5)
+		mask := colors.Alpha(0.5).Mul(mask)
 		tempoLevel2Border.DrawColorMask(target, topLeft, mask)
 		tempoLevel3Border.Update(timeDelta)
 		tempoLevel3Border.Sprite().Draw(target, topLeft)
@@ -105,10 +118,10 @@ func (t *Tempo) Render(target pixel.Target, center pixel.Matrix, timeDelta float
 	barScale := (1.0 / tempoBarGradient.Bounds().W()) * barWidth
 	barMatrix := pixel.IM.Moved(gfx.TopLeft.Align(tempoBarGradient)).ScaledXY(pixel.ZV, pixel.V(barScale, 1.0))
 	barTopLeft := topLeft.Moved(gfx.IVec(-6, 2))
-	tempoBarGradient.DrawColorMask(target, barMatrix.Chained(barTopLeft), colors.FromString("#ff6ace"))
+	tempoBarGradient.DrawColorMask(target, barMatrix.Chained(barTopLeft), colors.FromString("#ff6ace").Mul(mask))
 	for tickNumber := 1; tickNumber < int(tempoLevels); tickNumber++ {
 		tickTopLeft := barTopLeft.Moved(gfx.IVec(int(barMaxWidth/float64(tempoLevels)*float64(tickNumber))-1, 0))
 		tickMatrix := pixel.IM.Moved(gfx.TopLeft.Align(tempoBarTick)).ScaledXY(pixel.ZV, pixel.V(1.0/tempoBarTick.Bounds().W(), 1.0))
-		tempoBarTick.DrawColorMask(target, tickMatrix.Chained(tickTopLeft), colors.Alpha(0.5))
+		tempoBarTick.DrawColorMask(target, tickMatrix.Chained(tickTopLeft), colors.Alpha(0.5).Mul(mask))
 	}
 }

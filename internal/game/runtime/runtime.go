@@ -8,13 +8,6 @@ import (
 	"time"
 
 	"fisherevans.com/project/f/internal/game/audio"
-	"fisherevans.com/project/f/internal/game/states/adventure"
-	"fisherevans.com/project/f/internal/game/states/combat"
-	"fisherevans.com/project/f/internal/game/states/menu"
-	"fisherevans.com/project/f/internal/game/states/startup"
-	"fisherevans.com/project/f/internal/game/states/state_selector"
-	"fisherevans.com/project/f/internal/game/states/title"
-	"fisherevans.com/project/f/internal/game/states/xenolog"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
@@ -29,14 +22,14 @@ import (
 
 type Instance struct {
 	saveId             string
-	initialStateIntent any
+	resetIntentFactory func() any
 	window             *opengl.Window
 }
 
-func NewInstance(saveId string, initialIntent any) *Instance {
+func NewInstance(saveId string, resetIntentFactory func() any) *Instance {
 	return &Instance{
 		saveId:             saveId,
-		initialStateIntent: initialIntent,
+		resetIntentFactory: resetIntentFactory,
 	}
 }
 
@@ -65,19 +58,9 @@ func (i *Instance) initialize() {
 		// This triggers all deferred initializers registered via resources.RunOnceInitialized()
 		resources.Initialize()
 
-		game.RegisterStateFactory(adventure.New)
-		game.RegisterStateFactory(combat.New)
-		game.RegisterStateFactory(menu.New)
-		game.RegisterStateFactory(xenolog.New)
-		game.RegisterStateFactory(state_selector.New)
-		game.RegisterStateFactory(title.New)
-		game.RegisterStateFactory(startup.NewDevice)
-		game.RegisterStateFactory(startup.NewCopyright)
-		game.RegisterStateFactory(startup.NewDeveloper)
-		game.RegisterStateFactory(startup.NewControls)
-		game.RegisterStateFactory(game.DoSwapStateIntent)
+		registerIntents()
 
-		game.Initialize(i.saveId, i.initialStateIntent)
+		game.Initialize(i.saveId, i.resetIntentFactory())
 
 		// Wait for audio speaker to start streaming before game loop begins
 		// This prevents the first ~1-2 seconds of audio from being clipped
@@ -150,9 +133,8 @@ func (i *Instance) Run() {
 		frameStats.AddFrameTime(deltaTime)
 		last = now
 
-		// Handle exit
-		if i.window.JustPressed(pixel.KeyF4) {
-			os.Exit(0)
+		if i.window.JustPressed(pixel.KeyF8) {
+			game.SetActiveStateIntent(i.resetIntentFactory())
 		}
 		if i.window.JustPressed(pixel.KeySlash) {
 			log.Info().Msg("----------------------------------------------------------------------------------------------")
@@ -226,12 +208,6 @@ func (i *Instance) calculateCanvasScale() float64 {
 func (i *Instance) renderScene(sceneCanvas *shaders.Canvas, deltaTime float64) {
 	i.window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
 	sceneCanvas.Clear(game.GetActiveState().ClearColor())
-
-	if s := game.GetCustomShader(); s != nil {
-		s.Apply(sceneCanvas, deltaTime)
-	} else {
-		sceneCanvas.Reset()
-	}
 }
 
 func (i *Instance) compositeToWindow(sceneCanvas, pixelGridCanvas *shaders.Canvas, scale float64) {

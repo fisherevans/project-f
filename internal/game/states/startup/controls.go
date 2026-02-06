@@ -1,8 +1,6 @@
 package startup
 
 import (
-	"image/color"
-
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -30,7 +28,7 @@ func NewControls(i game.StartupControlsIntent) game.State {
 	}
 }
 
-func (s *ControlsState) ClearColor() color.Color {
+func (s *ControlsState) ClearColor() pixel.RGBA {
 	return pixel.RGB(0.1, 0.1, 0.1)
 }
 
@@ -53,7 +51,7 @@ var (
 	titleText *textbox.Instance
 )
 
-func (s *ControlsState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *ControlsState) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	if game.Controls[*ControlsState]().ButtonA().IsPressed() {
 		s.pressedDuration += timeDelta
 	} else {

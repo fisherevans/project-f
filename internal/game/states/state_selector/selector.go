@@ -9,7 +9,6 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/runtime/warming"
-	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
@@ -47,7 +46,7 @@ func New(intent game.SelectIntent) game.State {
 	}
 }
 
-func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *Selector) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	switch game.Controls[*Selector]().DPad().JustPressedDirection() {
 	case input.Up:
 		s.selected--
@@ -72,11 +71,10 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 	if !s.initialized {
 		s.initialized = true
 		warming.Warmup(target)
-		target.Clear(colors.Black.RGBA)
 	}
 
 	titleContent := titleTextbox.NewSimpleContent("Select a state:")
-	titleContent.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-15)))
+	titleContent.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-10)))
 
 	for index, option := range s.states {
 		str := fmt.Sprintf("%s", option.Name)
@@ -86,7 +84,7 @@ func (s *Selector) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeD
 			str = "   " + str
 		}
 		optionContent := optionTextbox.NewSimpleContent(str)
-		optionContent.Render(target, gfx.Moved(10, int(targetBounds.H())-35-15*index))
+		optionContent.Render(target, gfx.Moved(10, int(targetBounds.H())-35-12*index))
 	}
 
 	game.DebugBRf("enter: select")

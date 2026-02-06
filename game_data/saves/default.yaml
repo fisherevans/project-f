@@ -20,15 +20,15 @@ primortals:
 unlocked_skills:
     acid_string: {}
     guard: {}
+    jab: {}
     tackle: {}
 globals:
     abilities.xenolog_primortals: true
+    combat.training.opponent_attacks_while_player_defends: true
     control_id: controlled_npc
     elythium: 0
-    intro.training.5.xenolog: true
-    intro.training.enter.listener: fe294999-6092-489d-a44f-224c46086aef
     player_id: tiled-16
-    tiled-363: fe294999-6092-489d-a44f-224c46086aef
+    tiled-363: 6b28b108-3bcf-4e84-b3f4-d4580cfe43e2
 system_settings:
     lighting:
         lighting_composition: full

@@ -16,6 +16,9 @@ type Dispatcher struct {
 	globals            StateGlobalsReader
 	effectDispatcher   EffectDispatcher
 	registeredHandlers map[string]*registeredEventHandler
+
+	isActive     bool
+	queuedEvents []any
 }
 
 func NewDispatcher(globals StateGlobalsReader, effectDispatcher EffectDispatcher) *Dispatcher {
@@ -24,6 +27,13 @@ func NewDispatcher(globals StateGlobalsReader, effectDispatcher EffectDispatcher
 		effectDispatcher:   effectDispatcher,
 		registeredHandlers: make(map[string]*registeredEventHandler),
 	}
+}
+
+func (d *Dispatcher) Activate() {
+	d.isActive = true
+	toDispatch := d.queuedEvents
+	d.queuedEvents = nil
+	d.Dispatch(toDispatch...)
 }
 
 func (d *Dispatcher) Register(entity EntityReader, handler EventHandler) {
@@ -56,6 +66,10 @@ func (d *Dispatcher) Unregister(entity EntityReader) {
 }
 
 func (d *Dispatcher) Dispatch(events ...any) {
+	if !d.isActive {
+		d.queuedEvents = append(d.queuedEvents, events...)
+		return
+	}
 	for _, event := range events {
 		log.Debug().Interface("event", event).Type("type", event).Msg("dispatching event")
 		eventPtr := event

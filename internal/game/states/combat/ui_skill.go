@@ -3,6 +3,7 @@ package combat
 import (
 	"math"
 
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -47,6 +48,9 @@ var (
 
 func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 	bottomLeft := pixel.V(float64((game.GameWidth-(skillFrameWidth*2+skillFrameHorizontalSpacing))/2), 3)
+
+	bottomLeft = bottomLeft.Add(pixel.V(0, -5*s.visibilitySkillSelection.GetInvisibleAmount()))
+	mask := colors.Alpha(s.visibilitySkillSelection.GetVisibleAmount())
 
 	s.skillFlashTimeElapsed += timeDelta
 	sin := (math.Sin(s.skillFlashTimeElapsed*10) + 1.0) / 2.0 // [0-1]
@@ -113,35 +117,37 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 			frame = skillPendingFrame
 		}
 		frameRect := pixel.R(0, 0, float64(skillFrameWidth), float64(skillFrameHeight))
-		frame.Draw(target, frameRect, matrix)
-		content.Render(target, matrix)
+		frame.Draw(target, frameRect, matrix, frames.WithColor(mask))
+		content.Render(target, matrix, tbcfg.ColorMask(mask))
 		if optionPending {
 			skillPendingProgress.Update(timeDelta)
 			s := skillPendingProgress.Sprite()
 			padding := (skillFrameHeight - int(s.Bounds().H())) / 2
-			s.Draw(target, matrix.
+			s.DrawColorMask(target, matrix.
 				Moved(gfx.IVec(skillFrameWidth-padding, padding)).
-				Moved(gfx.BottomRight.Align(s)))
+				Moved(gfx.BottomRight.Align(s)),
+				mask)
 		}
 	}
 	centerMatrix := pixel.IM.Moved(bottomLeft).Moved(pixel.V(
 		float64(skillFrameWidth+(skillFrameHorizontalSpacing/2)),
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
-	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).Draw(target, centerMatrix)
+	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).DrawColorMask(target, centerMatrix, mask)
 	//s.combatArrowAlpha -= timeDelta * 0.75
 	game.DebugTRf("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
-		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.Alpha(s.combatArrowAlpha))
+		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.LayerAlpha(mask, s.combatArrowAlpha))
 	}
 
-	badgeBottomLeft := pixel.V(3, 3)
-	badgeBottomRight := pixel.V(targetBounds.W()-3, 3)
-	skillStatsBadge.Render(target, pixel.IM.Moved(badgeBottomLeft), gfx.BottomLeft)
+	badgeVisibilityDelta := s.visibilitySkillSelection.GetInvisibleAmount() * 126
+	badgeBottomLeft := pixel.V(3-badgeVisibilityDelta, 3-badgeVisibilityDelta)
+	badgeBottomRight := pixel.V(targetBounds.W()-3+badgeVisibilityDelta, 3-badgeVisibilityDelta)
+	skillStatsBadge.RenderWithColorMask(target, pixel.IM.Moved(badgeBottomLeft), gfx.BottomLeft, mask)
 	if s.Player.NextSkill != nil {
 		if s.Player.IsNextSkillCommitted() {
-			skillCommittedCancelBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+			skillCommittedCancelBadge.RenderWithColorMask(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight, mask)
 		} else {
-			skillPendingCancelBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+			skillPendingCancelBadge.RenderWithColorMask(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight, mask)
 		}
 		if s.Controls().ButtonA().JustPressed() {
 			s.Player.NextSkillCommitted = true
@@ -151,7 +157,7 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 			s.combatArrowAlpha, s.combatArrowColumn = 0, 0
 		}
 	} else {
-		skillMenuBadge.Render(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight)
+		skillMenuBadge.RenderWithColorMask(target, pixel.IM.Moved(badgeBottomRight), gfx.BottomRight, mask)
 	}
 
 	if s.Player.NextSkill != nil && s.Controls().ButtonB().JustPressed() {

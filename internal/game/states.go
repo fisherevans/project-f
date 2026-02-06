@@ -25,7 +25,7 @@ func RegisterStateFactory[T any](fn func(T) State) {
 	}
 }
 
-func createState(config any) (State, error) {
+func CreateStateFromIntent(config any) (State, error) {
 	if config == nil {
 		return nil, fmt.Errorf("nil config")
 	}

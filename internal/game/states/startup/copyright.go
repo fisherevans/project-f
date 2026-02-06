@@ -13,11 +13,13 @@ type CopyrightState struct {
 	game.BaseState
 	elapsed float64
 
-	bloom *bloom.Helper
+	canvas *shaders.Canvas
+	bloom  *bloom.Helper
 }
 
 func NewCopyright(_ game.StartupCopyrightsIntent) game.State {
 	s := &CopyrightState{
+		canvas: shaders.NewCanvas(game.GameWidth, game.GameHeight),
 		bloom: bloom.NewHelper(
 			game.GameWidth, game.GameWidth,
 			bloom.DefaultBrightnessConfig(),
@@ -42,7 +44,9 @@ var copyrightMoveKeys = interp.NewKeys().
 	WithKey(0.2, 0).
 	WithKey(1, 0)
 
-func (s *CopyrightState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *CopyrightState) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
+	s.canvas.Clear(colors.Black.RGBA)
+
 	if game.Controls[*CopyrightState]().ButtonB().JustPressed() {
 		game.SetActiveStateIntent(game.StartupDeviceIntent{})
 	}
@@ -58,7 +62,9 @@ func (s *CopyrightState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect,
 	dy := -10 * copyrightMoveKeys.Interpolate(progress)
 
 	m := centerMatrix.Moved(pixel.V(0, dy))
-	atlas.GetSprite("startup/copyright").DrawColorMask(target, m, mask)
-	generatedBloom := s.bloom.ApplyBloom(target)
-	generatedBloom.Draw(target, centerMatrix)
+	atlas.GetSprite("startup/copyright").DrawColorMask(s.canvas, m, mask)
+	generatedBloom := s.bloom.ApplyBloom(s.canvas)
+	generatedBloom.Draw(s.canvas, centerMatrix)
+
+	s.canvas.Draw(target, centerMatrix)
 }

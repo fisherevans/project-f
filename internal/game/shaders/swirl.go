@@ -17,3 +17,8 @@ func (c *Canvas) SetSwirlShader(center mgl32.Vec2, radius, swirl, falloff, progr
 	c.SetUniform("uProgress", progress)
 	c.setFragmentShaderIfNeeded("swirl", swirlFragShader)
 }
+
+func (c *Canvas) UpdateSwirlShader(progress float64) {
+	c.SetUniform("uProgress", float32(progress))
+	c.setFragmentShaderIfNeeded("swirl", swirlFragShader)
+}

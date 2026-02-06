@@ -29,14 +29,17 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 	}
 	s.enteringCombat = true
 
-	postCombat := func(r game.CombatIntentResult) {
-		game.DebugNotificationf("Combat complete!")
+	postCombat := func(combatState game.State, r game.CombatIntentResult) {
 		if !r.PlayerWon {
 			game.SetActiveStateIntent(game.StartupDeviceIntent{})
 			return
 		}
-		game.SetActiveStateIntent(game.SwapStateIntent{
-			State: s,
+		game.SetActiveStateIntent(game.TransitionFlushIntent{
+			BaseTransitionIntent: game.BaseTransitionIntent{
+				From:    combatState,
+				ToState: s,
+			},
+			Duration: 1.5,
 		})
 		game.CurrentSave().Animech.AnimechExperience += r.ResearchPoints // todo this isn't right
 		s.ExecuteSystemEffects(NewDeactivateFadeEffect("combat_fade"))
@@ -56,21 +59,9 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 			ToColor:         util.Ptr("#000000FF"),
 			Transitions:     6,
 		},
-		&EffectFade{
-			FadeId:          "combat_fade",
-			DurationSeconds: 3,
-			AutoDeactivate:  util.Ptr(false),
-			FromColor:       util.Ptr("#00000000"),
-			ToColor:         util.Ptr("#000000FF"),
-			Transitions:     1,
-		},
-		NewFunctionEffect(func(*State) {
-			game.SetCustomShader(game.NewSwirlShader(3))
-		}),
 		NewMutateEntityBehaviorEffect(s.player).WithEnableBy("combat"),
 		NewFunctionEffect(func(*State) {
 			s.enteringCombat = false
-			game.RemoveCustomShader()
 			var opponent game.CombatOpponent
 			if e.Opponent != nil {
 				opponent = *e.Opponent
@@ -101,7 +92,13 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 			if e.TrainingSequence != nil {
 				intent.TrainingSequence = *e.TrainingSequence
 			}
-			game.SetActiveStateIntent(intent)
+			game.SetActiveStateIntent(game.TransitionGlitchIntent{
+				BaseTransitionIntent: game.BaseTransitionIntent{
+					From:     s,
+					ToIntent: intent,
+				},
+				Duration: 2.5,
+			})
 		}),
 	)
 	return true

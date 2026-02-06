@@ -6,7 +6,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/audio"
-	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/interp"
@@ -56,7 +55,11 @@ func NewDeveloper(_ game.StartupDeveloperIntent) game.State {
 const initializeDeveloperAfter = 0.2
 const developerEnd = 8.0
 
-func (s *DeveloperState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *DeveloperState) ClearColor() pixel.RGBA {
+	return colors.FromString("#563da6")
+}
+
+func (s *DeveloperState) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	s.elapsed += timeDelta
 	if !s.initialized && s.elapsed > initializeDeveloperAfter {
 		s.initialized = true
@@ -73,8 +76,6 @@ func (s *DeveloperState) OnTick(target *shaders.Canvas, targetBounds pixel.Rect,
 		})
 		s.control.Stop()
 	}
-
-	target.Clear(colors.FromString("#563da6"))
 
 	for _, p := range s.phases {
 		phaseElapsed := s.elapsed - p.from

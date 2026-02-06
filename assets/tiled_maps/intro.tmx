@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="403">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="500" height="500" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="404">
  <properties>
   <property name="controls">lighting_clear_color: &quot;#9baeae&quot;
 scene_clear_color: &quot;#1d2a2a&quot;
@@ -4526,6 +4526,13 @@ animations:
    </object>
    <object id="401" gid="27" x="1568" y="3504" width="16" height="16"/>
    <object id="402" gid="27" x="1504" y="3568" width="16" height="16"/>
+   <object id="403" type="ModeBasedEntity" x="1128" y="3256">
+    <properties>
+     <property name="entity_id" value="x"/>
+     <property name="presence_config" value="block_ingress: false"/>
+    </properties>
+    <point/>
+   </object>
   </objectgroup>
   <objectgroup id="12" name="zones">
    <object id="89" type="Zone" x="3856" y="3072" width="16" height="16">

@@ -17,7 +17,7 @@ import (
 var (
 	skillSetRowHeight = 14
 	skillSetArrows    = map[input.Direction]pixelutil.BoundedDrawable{}
-	
+
 	skillSetCurrentSkillFrameWidth  = screenWidth - 20
 	skillSetCurrentSkillFrameHeight = 40
 )

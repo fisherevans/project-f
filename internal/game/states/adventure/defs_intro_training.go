@@ -461,7 +461,7 @@ func init() {
 				have := globals.Get(rpg.GlobalKeyElythium).AsInt(0)
 				need := 12
 				if have < need {
-					return NewOutput().WithEffects(NewDialogueEffect(fmt.Sprintf("The screen readout says I need to have %d elythium, but I only have %d.", need, have)))
+					return NewOutput().WithEffects(NewDialogueEffect("This transfer station won't work until I collect more Elythium."))
 				}
 				pId := globals.Player().GetId()
 				chairId := "intro.training.1.chair"

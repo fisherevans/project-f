@@ -8,7 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/util/colors"
 )
 
@@ -32,7 +31,7 @@ func (o *OverlaySystem) Add(overlay Overlay) {
 	o.overlays = append(o.overlays, overlay)
 }
 
-func (o *OverlaySystem) OnTick(s *State, shader shaders.Options, target *pixel.Batch, timeDelta float64) {
+func (o *OverlaySystem) OnTick(s *State, target *pixel.Batch, timeDelta float64) {
 	var remaining []Overlay
 	for _, overlay := range o.overlays {
 		overlay.OnTick(s, target, timeDelta)

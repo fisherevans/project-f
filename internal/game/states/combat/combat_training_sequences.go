@@ -61,6 +61,8 @@ func (s *State) loadTrainingSequence(sequence string) {
 		s.loadTrainingSequenceTraining1()
 	case "training.2":
 		s.loadTrainingSequenceTraining2()
+	case "none":
+
 	default:
 		log.Fatal().Msgf("invalid training sequence %s", sequence)
 	}

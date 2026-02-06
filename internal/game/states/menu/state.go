@@ -1,13 +1,11 @@
 package menu
 
 import (
-	"image/color"
 	"math"
 
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/frames"
@@ -63,11 +61,11 @@ func New(i game.MenuIntent) game.State {
 	return s
 }
 
-func (s *State) ClearColor() color.Color {
+func (s *State) ClearColor() pixel.RGBA {
 	return colors.Black.RGBA
 }
 
-func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	if s.background != nil {
 		s.background.OnTick(target, targetBounds, 0)
 	}
@@ -81,7 +79,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 	s.transition = math.Min(1, s.transition+transitionDt*(1.0/transitionTime))
 	if s.exiting && s.transition <= 0 {
 		if err := game.CurrentSave().Save(); err != nil {
-			game.DebugNotificationf("failed to save: " + err.Error())
+			game.DebugNotificationf("failed to save: %v", err)
 		}
 		game.SetActiveStateIntent(game.SwapStateIntent{
 			State: s.background,
@@ -89,7 +87,7 @@ func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelt
 		return
 	}
 
-	fadeColor := colors.WithAlphaTodoFix(colors.Black.RGBA, 0.7*s.transition)
+	fadeColor := colors.WithAlpha(colors.Black.RGBA, 0.7*s.transition)
 	gfx.DrawRect(atlas, s.batch, pixel.IM, gfx.BottomLeft, game.GameWidth, game.GameHeight, fadeColor)
 
 	if game.Controls[*State]().ButtonSelect().JustPressed() {

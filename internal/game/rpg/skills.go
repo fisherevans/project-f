@@ -343,6 +343,13 @@ var Skill_PhotoSurge = Skill{
 
 // Dummy moves
 
+var Skill_DoNothing5 = Skill{
+	Id:          "do_nothing_5",
+	Name:        "Do Nothing 5",
+	Description: "not used",
+	Ticks:       skillTicks().add(tick().repeat(5)...),
+}.register()
+
 var Skill_Dummy_Defend = Skill{
 	Id:          "dummy_defend",
 	Name:        "Dummy Defend",

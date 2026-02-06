@@ -1,5 +1,7 @@
 package rpg
 
+import "fmt"
+
 var Primortals = map[PrimortalType]Primortal{}
 var XenoLogEntries = map[int]PrimortalType{}
 var MaxXenoLogEntryIndex = 0
@@ -56,11 +58,11 @@ func (p Primortal) register() Primortal {
 		}
 	}
 	if p.XenoLogIndex < 0 || p.XenoLogIndex > 1000 {
-		panic("invalid XenoLogIndex: " + string(p.XenoLogIndex))
+		panic(fmt.Sprintf("invalid XenoLogIndex: %d", p.XenoLogIndex))
 	}
 	if p.XenoLogIndex != 0 {
 		if _, exists := XenoLogEntries[p.XenoLogIndex]; exists {
-			panic("duplicate XenoLogIndex: " + string(p.XenoLogIndex))
+			panic(fmt.Sprintf("duplicate XenoLogIndex: %d", p.XenoLogIndex))
 		}
 		XenoLogEntries[p.XenoLogIndex] = p.Type
 		if p.XenoLogIndex > MaxXenoLogEntryIndex {
@@ -85,19 +87,38 @@ var Primortal_Dummy = Primortal{
 	Type:        "dummy",
 	Name:        "Dummy",
 	Description: "A test robot to hit for fun.",
-	BaseSync:    30,
+	BaseSync:    0,
 	CombatArchetypes: map[string]PrimortalCombatArchetype{
-		"training.1": {
-			AdditionalSync: 10,
+		"onehit": {
+			AdditionalSync: 1,
 			SkillPool: CombatSkillPool{
 				Random: &CombatSkillPoolRandom{
 					WeightedSkills: map[SkillId]int{
+						Skill_DoNothing5.Id: 1,
+					},
+				},
+			},
+		},
+		"training.1": {
+			AdditionalSync: 40,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					InitialOrderedSkills: []SkillId{
+						Skill_DoNothing5.Id,
+						Skill_DoNothing5.Id,
+						Skill_DoNothing5.Id,
+						Skill_Dummy_Defend.Id,
+						Skill_DoNothing5.Id,
+					},
+					WeightedSkills: map[SkillId]int{
+						Skill_DoNothing5.Id:   3,
 						Skill_Dummy_Defend.Id: 1,
 					},
 				},
 			},
 		},
 		"default": {
+			AdditionalSync: 40,
 			SkillPool: CombatSkillPool{
 				Random: &CombatSkillPoolRandom{
 					WeightedSkills: map[SkillId]int{

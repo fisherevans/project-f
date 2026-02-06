@@ -1,12 +1,9 @@
 package xenolog
 
 import (
-	"image/color"
-
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -46,11 +43,11 @@ func New(i game.XenologIntent) game.State {
 	return s
 }
 
-func (s *State) ClearColor() color.Color {
+func (s *State) ClearColor() pixel.RGBA {
 	return colors.Black.RGBA
 }
 
-func (s *State) OnTick(target *shaders.Canvas, targetBounds pixel.Rect, timeDelta float64) {
+func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	s.transition.Update(timeDelta)
 
 	if s.exiting || !s.transition.IsComplete() {

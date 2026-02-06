@@ -38,17 +38,20 @@ type Player struct {
 }
 
 func NewPlayer(cfg game.CombatPlayer) *Player {
-	return &Player{
+	p := &Player{
 		SkillSet: cfg.SkillSet,
 		Shield:   NewHealthState(cfg.InitialShield, cfg.MaxShield),
 		Sync:     NewHealthState(cfg.InitialSync, cfg.MaxSync),
 
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
-		Tempo:                  &Tempo{},
 		HealthFlash:            NewDamageFlashMask(),
 		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "animech/combat_animech", "default"), false),
 	}
+	if cfg.HasTempo {
+		p.Tempo = &Tempo{}
+	}
+	return p
 }
 
 func (p *Player) Update(timeDelta float64) {

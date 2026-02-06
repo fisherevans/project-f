@@ -31,15 +31,20 @@ func (s *State) drawActiveSkills(target pixel.Target, targetBounds pixel.Rect, m
 		opponentProgress += 0.5
 	}
 	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, -skillEaterSprite.Bounds().H()/2))
-	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Player, false)
-	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Opponent, true)
-	skillEaterSprite.Draw(target, matrixTopMiddle)
+
+	dy := s.visibilityActiveSkills.GetInvisibleAmount() * 10
+	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, dy))
+	mask := colors.Alpha(s.visibilityActiveSkills.GetVisibleAmount())
+
+	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Player, false, mask)
+	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Opponent, true, mask)
+	skillEaterSprite.DrawColorMask(target, matrixTopMiddle, mask)
 }
 
 var baseNextSkillMaskScale = 0.8
 var nextSkillFlashRation = 0.2
 
-func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, combatant Combatant, flip bool) {
+func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.Matrix, currentTickProgress float64, combatant Combatant, flip bool, visMask pixel.RGBA) {
 	nextSkillMaskScale := baseNextSkillMaskScale*(1-nextSkillFlashRation) + baseNextSkillMaskScale*nextSkillFlashRation*s.skillFlashAlpha
 	noNextSkillAlpha := 1.0
 	currentSkill := combatant.GetCurrentSkill()
@@ -55,7 +60,7 @@ func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.M
 		if skillProgressRemaining < 0.5 {
 			nextSkillProgress = 0.5 - skillProgressRemaining
 		}
-		mask := pixel.RGBA{1, 1, 1, 1}
+		mask := visMask
 		alpha := math.Min((skillProgress)/1, 1)*(1-nextSkillMaskScale) + nextSkillMaskScale
 		mask = colors.ScaleColor(mask, alpha)
 		tickBarOpts := tick_bar.NewDrawOptions(tickBarWidth, tickSpacing).
@@ -72,7 +77,7 @@ func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.M
 	}
 	if nextSkillId != nil {
 		nextSkill := nextSkillId.Get()
-		mask := pixel.RGBA{1, 1, 1, 1}
+		mask := visMask
 		mask = colors.ScaleColor(mask, 0.95)
 		if !combatant.IsNextSkillCommitted() {
 			mask = colors.ScaleColor(mask, 0.9)
@@ -90,6 +95,7 @@ func (s *State) drawCombatantSkills(target pixel.Target, matrixTopMiddle pixel.M
 	} else {
 		y := noneSelectedSprite.Bounds().H() / 2
 		noNextSkillAlpha *= s.skillFlashAlphaInverse
-		noneSelectedSprite.DrawColorMask(target, matrixTopMiddle.Moved(pixel.V(0, -y)), pixel.RGBA{noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha, noNextSkillAlpha})
+		mask := colors.LayerAlpha(visMask, noNextSkillAlpha)
+		noneSelectedSprite.DrawColorMask(target, matrixTopMiddle.Moved(pixel.V(0, -y)), mask)
 	}
 }
