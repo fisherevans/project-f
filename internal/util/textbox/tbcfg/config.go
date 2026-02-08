@@ -67,6 +67,42 @@ func HAligned(alignment HAlignment) func(c *Config) {
 	}
 }
 
+func HAlignedLeft() func(c *Config) {
+	return func(c *Config) {
+		c.HAlignment = HAlignLeft
+	}
+}
+
+func HAlignedCenter() func(c *Config) {
+	return func(c *Config) {
+		c.HAlignment = HAlignCenter
+	}
+}
+
+func HAlignedRight() func(c *Config) {
+	return func(c *Config) {
+		c.HAlignment = HAlignRight
+	}
+}
+
+func VAlignedTop() func(c *Config) {
+	return func(c *Config) {
+		c.VAlignment = VAlignTop
+	}
+}
+
+func VAlignedMiddle() func(c *Config) {
+	return func(c *Config) {
+		c.VAlignment = VAlignMiddle
+	}
+}
+
+func VAlignedBottom() func(c *Config) {
+	return func(c *Config) {
+		c.VAlignment = VAlignBottom
+	}
+}
+
 func VAligned(alignment VAlignment) func(c *Config) {
 	return func(c *Config) {
 		c.VAlignment = alignment

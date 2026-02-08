@@ -12,6 +12,7 @@ type EffectTriggerCombat struct {
 	CombatId         string `auto_generate:"true"`
 	Opponent         *game.CombatOpponent
 	Player           *game.CombatPlayer
+	Reward           *game.CombatReward
 	Background       string
 	TrainingSequence *string
 }
@@ -41,7 +42,6 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 			},
 			Duration: 1.5,
 		})
-		game.CurrentSave().Animech.AnimechExperience += r.ResearchPoints // todo this isn't right
 		s.ExecuteSystemEffects(NewDeactivateFadeEffect("combat_fade"))
 		s.eventDispatcher.Dispatch(&EventCombatComplete{
 			CombatId: e.CombatId,
@@ -77,6 +77,10 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 					Type: options[rand.Intn(len(options))],
 				}
 			}
+			var reward game.CombatReward
+			if e.Reward != nil {
+				reward = *e.Reward
+			}
 			var player game.CombatPlayer
 			if e.Player != nil {
 				player = *e.Player
@@ -86,6 +90,7 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 			intent := game.CombatIntent{
 				Player:     player,
 				Opponent:   opponent,
+				Reward:     reward,
 				OnComplete: postCombat,
 				Background: e.Background,
 			}

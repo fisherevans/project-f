@@ -45,6 +45,11 @@ func createInitialIntent() any {
 				InitialShield: 15,
 				MaxShield:     15,
 			},
+			Reward: game.CombatReward{
+				ExperiencePoints: 10,
+				ResearchPoints:   2,
+				ResearchType:     rpg.Primortal_Dummy.Type,
+			},
 			TrainingSequence: "none",
 			Background:       rpg.CombatBGSpaceBase,
 			OnComplete: func(_ game.State, r game.CombatIntentResult) {

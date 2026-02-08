@@ -35,8 +35,7 @@ type MenuIntent struct {
 }
 
 type CombatIntentResult struct {
-	PlayerWon      bool
-	ResearchPoints int
+	PlayerWon bool
 }
 
 type CombatIntentComplete func(combatState State, r CombatIntentResult)
@@ -72,12 +71,19 @@ func NewCombatPlayer(animech *rpg.Animech) CombatPlayer {
 	}
 }
 
+type CombatReward struct {
+	ExperiencePoints int
+	ResearchPoints   int
+	ResearchType     rpg.PrimortalType
+}
+
 type CombatIntent struct {
-	Opponent         CombatOpponent
 	Player           CombatPlayer
-	OnComplete       CombatIntentComplete
+	Opponent         CombatOpponent
+	Reward           CombatReward
 	Background       string
 	TrainingSequence string
+	OnComplete       CombatIntentComplete
 }
 
 type AdventureIntent struct {

@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"strings"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
@@ -17,6 +18,7 @@ import (
 	"fisherevans.com/project/f/internal/util/textbox"
 	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -51,10 +53,18 @@ type rewardModal struct {
 	awarded   int
 	nextAward int
 
-	keyGroup   *keyframe.Group
-	keyPlus    *keyframe.Member
-	keyTotal   *keyframe.Member
-	keyMessage *keyframe.Member
+	exiting bool
+
+	enterKeyGroup   *keyframe.Group
+	keyBottomAppear *keyframe.Member
+	keyTopAppear    *keyframe.Member
+	keyPlus         *keyframe.Member
+	keyTotal        *keyframe.Member
+	keyButton       *keyframe.Member
+
+	exitKeyGroup  *keyframe.Group
+	keyTopExit    *keyframe.Member
+	keyBottomExit *keyframe.Member
 
 	textName    *textbox.Content
 	textTitle   *textbox.Content
@@ -67,6 +77,46 @@ type rewardModal struct {
 
 	colorDark, color, colorLight pixel.RGBA
 	sprite                       pixelutil.BoundedDrawable
+}
+
+func newRewardModals(reward game.CombatReward) []*rewardModal {
+	var modals []*rewardModal
+	if reward.ExperiencePoints > 0 {
+		nextLevel := 1
+		if u := game.CurrentSave().Animech.Upgrades; u != nil {
+			nextLevel = u.GetLevel() + 1
+		}
+		required := rpg.AnimechUpgradeExperienceRequiredToUpgrade(nextLevel)
+		modals = append(modals, newRewardExperience(game.CurrentSave().Animech.AnimechExperience, reward.ExperiencePoints, required))
+	}
+	if reward.ExperiencePoints > 0 {
+		current := 0
+		if prog, ok := game.CurrentSave().Primortals[reward.ResearchType]; ok {
+			current = prog.ResearchPoints
+		}
+		required := -1
+		primortal, ok := rpg.Primortals[reward.ResearchType]
+		if !ok {
+			log.Fatal().Str("type", string(reward.ResearchType)).Msg("primortal not found")
+		}
+		for skillId, skillReqs := range primortal.UnlockableSkills {
+			if game.CurrentSave().IsSkillUnlocked(skillId) {
+				continue
+			}
+			available := true
+			for _, prereq := range skillReqs.Prerequisites {
+				if !game.CurrentSave().IsSkillUnlocked(prereq) {
+					available = false
+					break
+				}
+			}
+			if available && required < skillReqs.Cost {
+				required = skillReqs.Cost
+			}
+		}
+		modals = append(modals, newRewardResearch(reward.ResearchType, current, reward.ResearchPoints, required))
+	}
+	return modals
 }
 
 func newRewardExperience(from, awarded, nextAward int) *rewardModal {
@@ -86,20 +136,30 @@ func newRewardResearch(primortal rpg.PrimortalType, from, awarded, nextAward int
 }
 
 func newRewardModal(sprite pixelutil.BoundedDrawable, name, title, message string, from, awarded, nextAward int, dark, color, light pixel.RGBA) *rewardModal {
-	kg := keyframe.NewGroup()
-	if from+awarded >= nextAward {
+	enterKg := keyframe.NewGroup(interp.Smoothstep)
+	exitKg := keyframe.NewGroup(interp.Smoothstep)
+	if nextAward < 0 {
+		message = "No " + strings.ToLower(message) + " available"
+	} else if from+awarded >= nextAward {
 		message += " available!"
 	} else {
 		message += fmt.Sprintf(" at: %d", nextAward)
 	}
 	return &rewardModal{
-		from:       from,
-		awarded:    awarded,
-		nextAward:  nextAward,
-		keyGroup:   kg,
-		keyPlus:    kg.AddKeyFrameFn(0.5, 3.0, interp.Smootherstep),
-		keyTotal:   kg.AddKeyFrame(2.0, 3.0),
-		keyMessage: kg.AddKeyFrame(3.0, 4.0),
+		from:      from,
+		awarded:   awarded,
+		nextAward: nextAward,
+
+		enterKeyGroup:   enterKg,
+		keyBottomAppear: enterKg.AddKeyFrame(0.0, 0.5),
+		keyTopAppear:    enterKg.AddKeyFrame(0.25, 0.75),
+		keyPlus:         enterKg.AddKeyFrame(0.25, 2.25),
+		keyTotal:        enterKg.AddKeyFrame(1.5, 2.5),
+		keyButton:       enterKg.AddKeyFrame(2.5, 3.0),
+
+		exitKeyGroup:  exitKg,
+		keyTopExit:    exitKg.AddKeyFrame(0, 0.25),
+		keyBottomExit: exitKg.AddKeyFrame(0.5, 0.75),
 
 		sprite: sprite,
 
@@ -116,6 +176,10 @@ func newRewardModal(sprite pixelutil.BoundedDrawable, name, title, message strin
 		color:      color,
 		colorLight: light,
 	}
+}
+
+func (r *rewardModal) Exit() {
+	r.exiting = true
 }
 
 var (
@@ -136,46 +200,64 @@ var (
 )
 
 func (r *rewardModal) Render(target pixel.Target, topMiddle pixel.Matrix, renderButton bool, timeDelta float64) {
-	r.keyGroup.Update(timeDelta)
-	if !renderButton {
-		r.keyGroup.Skip()
+	if r.exiting {
+		r.enterKeyGroup.Skip()
+		r.exitKeyGroup.Update(timeDelta)
+	} else {
+		if renderButton {
+			r.enterKeyGroup.Update(timeDelta)
+		} else {
+			r.enterKeyGroup.Skip()
+		}
 	}
 
-	combatStatFrame.Draw(target, gfx.R(52, 65), topMiddle, frames.WithRenderOrigin(gfx.TopCenter))
+	topDelta := pixel.V(0, -10*(r.keyTopAppear.InverseProgress()+r.keyTopExit.Progress()))
+	topMask := colors.Alpha(r.keyTopAppear.Progress() * r.keyTopExit.InverseProgress())
+	bottomDelta := pixel.V(0, 10*(r.keyBottomAppear.InverseProgress()+r.keyBottomExit.Progress()))
+	bottomMask := colors.Alpha(r.keyBottomAppear.Progress() * r.keyBottomExit.InverseProgress())
+
+	// TOP
+
+	// logo frame
+	combatStatFrame.Draw(target, gfx.R(52, 65), topMiddle.Moved(topDelta), frames.WithRenderOrigin(gfx.TopCenter), frames.WithColor(topMask))
 
 	// sprite, actually center (shhhh)
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -24-2))
-	r.sprite.Draw(target, topMiddle)
+	r.sprite.DrawColorMask(target, topMiddle.Moved(topDelta), topMask)
 
 	// name
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -24))
-	r.textName.Render(target, topMiddle, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.RenderFrom(gfx.TopCenter), tbcfg.ColorMask(colors.White.RGBA))
+	r.textName.Render(target, topMiddle.Moved(topDelta), tbcfg.RenderFrom(gfx.TopCenter), tbcfg.RenderFrom(gfx.TopCenter), tbcfg.ColorMask(topMask))
+
+	// BOTTOM
+
+	topMiddle = topMiddle.Moved(bottomDelta)
 
 	// stat frame
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -12))
-	rewardsFrame.Draw(target, gfx.R(rewardWidth, rewardHeight), topMiddle, frames.WithRenderOrigin(gfx.TopCenter))
+	rewardsFrame.Draw(target, gfx.R(rewardWidth, rewardHeight), topMiddle, frames.WithRenderOrigin(gfx.TopCenter), frames.WithColor(bottomMask))
 
 	// title
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -3))
-	r.textTitle.Render(target, topMiddle, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.ColorMask(greyLight))
+	r.textTitle.Render(target, topMiddle, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.ColorMask(greyLight.Mul(bottomMask)))
 
 	// math equation
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -16))
 	padding := 4
 	totalWidth := r.textFrom.Width() + padding + r.textPlus.Width() + padding + int(rewardArrow.Bounds().W()) + padding + r.textTotal.Width()
 	topLeft := topMiddle.Moved(gfx.IVec(-totalWidth/2, 0))
-	r.textFrom.Render(target, topLeft, tbcfg.RenderFrom(gfx.LeftCenter), tbcfg.ColorMask(r.colorDark), tbcfg.HAligned(tbcfg.HAlignLeft), tbcfg.VAligned(tbcfg.VAlignMiddle))
+	r.textFrom.Render(target, topLeft, tbcfg.RenderFrom(gfx.LeftCenter), tbcfg.ColorMask(r.colorDark.Mul(bottomMask)), tbcfg.HAligned(tbcfg.HAlignLeft), tbcfg.VAligned(tbcfg.VAlignMiddle))
 	topLeft = topLeft.Moved(gfx.IVec(r.textFrom.Width()+padding, 0))
-	r.textPlus.Render(target, topLeft, tbcfg.RenderFrom(gfx.LeftCenter), tbcfg.ColorMask(r.keyPlus.Alpha(colors.White.RGBA)), tbcfg.HAligned(tbcfg.HAlignLeft), tbcfg.VAligned(tbcfg.VAlignMiddle))
+	r.textPlus.Render(target, topLeft, tbcfg.RenderFrom(gfx.LeftCenter), tbcfg.ColorMask(r.keyPlus.Alpha(colors.White.RGBA).Mul(bottomMask)), tbcfg.HAligned(tbcfg.HAlignLeft), tbcfg.VAligned(tbcfg.VAlignMiddle))
 	topLeft = topLeft.Moved(gfx.IVec(r.textPlus.Width()+padding, 0))
-	rewardArrow.DrawColorMask(target, topLeft.Moved(gfx.LeftCenter.Align(rewardArrow).Add(gfx.IVec(0, 1))), r.keyTotal.Alpha(greyLight))
+	rewardArrow.DrawColorMask(target, topLeft.Moved(gfx.LeftCenter.Align(rewardArrow).Add(gfx.IVec(0, 1))), r.keyTotal.Alpha(greyLight).Mul(bottomMask))
 	topLeft = topLeft.Moved(gfx.IVec(int(rewardArrow.Bounds().W())+padding, 0))
-	r.textTotal.Render(target, topLeft, tbcfg.RenderFrom(gfx.LeftCenter), tbcfg.ColorMask(r.keyTotal.Alpha(r.color)), tbcfg.HAligned(tbcfg.HAlignLeft), tbcfg.VAligned(tbcfg.VAlignMiddle))
+	r.textTotal.Render(target, topLeft, tbcfg.RenderFrom(gfx.LeftCenter), tbcfg.ColorMask(r.keyTotal.Alpha(r.color).Mul(bottomMask)), tbcfg.HAligned(tbcfg.HAlignLeft), tbcfg.VAligned(tbcfg.VAlignMiddle))
 
 	// bar
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -7))
 	topLeft = topMiddle.Moved(gfx.IVec(-rewardBarWidth/2, 0))
-	gfx.DrawRect(atlas, target, topLeft, gfx.TopLeft, rewardBarWidth, 4, greyDark)
+	gfx.DrawRect(atlas, target, topLeft, gfx.TopLeft, rewardBarWidth, 4, greyDark.Mul(bottomMask))
 	var fromBarWidth, awardedBarWidth, markerLocation int
 	total := r.from + r.awarded
 	if total > r.nextAward {
@@ -187,23 +269,23 @@ func (r *rewardModal) Render(target pixel.Target, topMiddle pixel.Matrix, render
 		awardedBarWidth = int(float64(rewardBarWidth) * float64(r.awarded) / float64(r.nextAward))
 	}
 	awardedBarWidth = int(float64(awardedBarWidth) * r.keyPlus.Progress())
-	gfx.DrawRect(atlas, target, topLeft, gfx.TopLeft, fromBarWidth, 4, r.colorDark)
-	gfx.DrawRect(atlas, target, topLeft.Moved(gfx.IVec(fromBarWidth, 0)), gfx.TopLeft, awardedBarWidth, 4, r.color)
+	gfx.DrawRect(atlas, target, topLeft, gfx.TopLeft, fromBarWidth, 4, r.colorDark.Mul(bottomMask))
+	gfx.DrawRect(atlas, target, topLeft.Moved(gfx.IVec(fromBarWidth, 0)), gfx.TopLeft, awardedBarWidth, 4, r.color.Mul(bottomMask))
 	if markerLocation > 0 {
-		gfx.DrawRect(atlas, target, topLeft.Moved(gfx.IVec(markerLocation, 0)), gfx.TopLeft, 1, 4, r.keyPlus.Alpha(colors.White.RGBA))
+		gfx.DrawRect(atlas, target, topLeft.Moved(gfx.IVec(markerLocation, 0)), gfx.TopLeft, 1, 4, r.keyPlus.Alpha(colors.White.RGBA).Mul(bottomMask))
 	}
 
 	// message
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -8))
 	messageMask := greyDark
-	if total > r.nextAward {
+	if r.nextAward >= 0 && total > r.nextAward {
 		messageMask = colors.Lerp(r.colorLight, colors.White.RGBA, game.Utils().TimeCycleSin(0.5))
 	}
-	r.textMessage.Render(target, topMiddle, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.ColorMask(r.keyMessage.Alpha(messageMask)))
+	r.textMessage.Render(target, topMiddle, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.ColorMask(r.keyTotal.Alpha(messageMask).Mul(bottomMask)))
 
 	if !renderButton {
 		return
 	}
 	topMiddle = topMiddle.Moved(gfx.IVec(0, -13))
-	r.rewardNextBadge.RenderWithColorMask(target, topMiddle, gfx.TopCenter, colors.Alpha(r.keyMessage.Progress()))
+	r.rewardNextBadge.RenderWithColorMask(target, topMiddle, gfx.TopCenter, colors.Alpha(r.keyButton.Progress()).Mul(bottomMask))
 }

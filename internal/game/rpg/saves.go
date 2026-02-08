@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -126,6 +127,24 @@ func (g *GameSave) Save() error {
 	}
 
 	return nil
+}
+
+func (g *GameSave) GrantResearchPoints(p PrimortalType, points int) {
+	if _, ok := g.Primortals[p]; !ok {
+		g.Primortals[p] = &PrimortalProgress{}
+	}
+	g.Primortals[p].Visibility = PrimortalVisibilityDefeated
+	g.Primortals[p].ResearchPoints += points
+	g.Primortals[p].LastSeen = time.Now()
+
+}
+
+func (g *GameSave) GrantExperience(points int) {
+	if g.Animech == nil {
+		g.Animech = &Animech{}
+		g.Animech.FillDefaults()
+	}
+	g.Animech.AnimechExperience += points
 }
 
 func LoadGameSaves() (map[string]*GameSave, error) {

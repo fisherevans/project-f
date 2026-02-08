@@ -49,7 +49,7 @@ var (
 func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeDelta float64) {
 	bottomLeft := pixel.V(float64((game.GameWidth-(skillFrameWidth*2+skillFrameHorizontalSpacing))/2), 3)
 
-	bottomLeft = bottomLeft.Add(pixel.V(0, -5*s.visibilitySkillSelection.GetInvisibleAmount()))
+	bottomLeft = bottomLeft.Add(pixel.V(0, math.Floor(-5*s.visibilitySkillSelection.GetInvisibleAmount())))
 	mask := colors.Alpha(s.visibilitySkillSelection.GetVisibleAmount())
 
 	s.skillFlashTimeElapsed += timeDelta
@@ -134,12 +134,11 @@ func (s *State) renderSkills(target pixel.Target, targetBounds pixel.Rect, timeD
 		math.Ceil(float64(skillFrameHeight-1)*1.5)))
 	atlas.GetTilesheetSprite("combat/menu/skill_arrows", 1, 1).DrawColorMask(target, centerMatrix, mask)
 	//s.combatArrowAlpha -= timeDelta * 0.75
-	game.DebugTRf("arrow: %.2f, %d", s.combatArrowAlpha, s.combatArrowColumn)
 	if s.combatArrowAlpha > 0 {
 		atlas.GetTilesheetSprite("combat/menu/skill_arrows", s.combatArrowColumn, 1).DrawColorMask(target, centerMatrix, colors.LayerAlpha(mask, s.combatArrowAlpha))
 	}
 
-	badgeVisibilityDelta := s.visibilitySkillSelection.GetInvisibleAmount() * 126
+	badgeVisibilityDelta := math.Floor(s.visibilitySkillSelection.GetInvisibleAmount() * 126)
 	badgeBottomLeft := pixel.V(3-badgeVisibilityDelta, 3-badgeVisibilityDelta)
 	badgeBottomRight := pixel.V(targetBounds.W()-3+badgeVisibilityDelta, 3-badgeVisibilityDelta)
 	skillStatsBadge.RenderWithColorMask(target, pixel.IM.Moved(badgeBottomLeft), gfx.BottomLeft, mask)

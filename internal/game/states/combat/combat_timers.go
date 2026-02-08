@@ -14,10 +14,10 @@ func newSetVisibleTimer(after float64, vis *util.Visibility, makeVisible bool) a
 	}
 }
 
-func (s *State) triggerTimers(timers []actionTimer) []actionTimer {
+func (s *State) triggerTimers(timers []actionTimer, p Phase) []actionTimer {
 	for idx := 0; idx < len(timers); idx++ {
 		timer := timers[idx]
-		if s.elapsed >= timer.triggerAfter {
+		if s.timeSincePhase(p) >= timer.triggerAfter {
 			if timer.action != nil {
 				timer.action(s)
 			}

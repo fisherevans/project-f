@@ -26,8 +26,8 @@ func (v *Visibility) Update(timeDelta float64) {
 	v.visibleAmount = max(min(1.0, v.visibleAmount+timeDelta/v.transitionDuration), 0)
 }
 
-func (v *Visibility) IsVisible() bool {
-	return v.isVisible
+func (v *Visibility) IsFullyVisible() bool {
+	return v.isVisible && v.GetVisibleAmount() == 1
 }
 
 func (v *Visibility) SetVisible(isVisible bool) {

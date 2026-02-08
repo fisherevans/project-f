@@ -4,31 +4,33 @@ animech:
     skill_set:
         "1": tackle
         "2": guard
-        "3": acid_string
+        "3": ""
         "4": ""
-    experience_points: 100
+    experience_points: 50
     upgrades:
         shield_level: 0
-        sync_level: 0
+        sync_level: 1
 loadouts: []
 inventory: null
 primortals:
+    dummy:
+        visibility: defeated
+        research_points: 0
+        last_seen: 2026-02-07T19:48:21.633819-05:00
     toxmidge:
         visibility: defeated
-        research_points: 2
+        research_points: 5
         last_seen: 0001-01-01T00:00:00Z
 unlocked_skills:
-    acid_string: {}
     guard: {}
-    jab: {}
     tackle: {}
 globals:
-    abilities.xenolog_primortals: true
-    combat.training.opponent_attacks_while_player_defends: true
     control_id: controlled_npc
     elythium: 0
+    intro.training.5.xenolog: true
+    intro.training.enter.listener: 288e3e88-c20a-4354-bcbe-40f8b1215c75
     player_id: tiled-16
-    tiled-363: 6b28b108-3bcf-4e84-b3f4-d4580cfe43e2
+    tiled-363: 288e3e88-c20a-4354-bcbe-40f8b1215c75
 system_settings:
     lighting:
         lighting_composition: full

@@ -7,19 +7,32 @@ import (
 )
 
 type Group struct {
-	timeElapsed float64
-	reverse     bool
-	maxFrom     float64
+	timeElapsed     float64
+	timeScale       float64
+	reverse         bool
+	maxFrom         float64
+	defaultFunction interp.Function
 }
 
-func NewGroup() *Group {
-	return &Group{}
+func NewGroup(defaultFunction interp.Function) *Group {
+	if defaultFunction == nil {
+		defaultFunction = interp.Linear
+	}
+	return &Group{
+		defaultFunction: defaultFunction,
+		timeScale:       1,
+	}
+}
+
+func (g *Group) SetTimeScale(scale float64) {
+	g.timeScale = scale
 }
 
 func (g *Group) Update(timeDelta float64) {
 	if g.reverse {
 		timeDelta *= -1
 	}
+	timeDelta *= g.timeScale
 	g.timeElapsed = max(min(g.timeElapsed+timeDelta, g.maxFrom), 0)
 }
 
@@ -44,13 +57,10 @@ func (g *Group) SetReverse(reverse bool) {
 }
 
 func (g *Group) AddKeyFrame(from, to float64) *Member {
-	return g.AddKeyFrameFn(from, to, interp.Linear)
+	return g.AddKeyFrameFn(from, to, nil)
 }
 
 func (g *Group) AddKeyFrameFn(from, to float64, function interp.Function) *Member {
-	if function == nil {
-		function = interp.Linear
-	}
 	kf := &Member{
 		group:      g,
 		from:       from,
@@ -74,7 +84,11 @@ func (kf *Member) Progress() float64 {
 	if kf.group.timeElapsed > kf.to {
 		return 1
 	}
-	return kf.interpFunc((kf.group.timeElapsed - kf.from) / (kf.to - kf.from))
+	fn := kf.interpFunc
+	if fn == nil {
+		fn = kf.group.defaultFunction
+	}
+	return fn((kf.group.timeElapsed - kf.from) / (kf.to - kf.from))
 }
 
 func (kf *Member) InverseProgress() float64 {

@@ -342,6 +342,11 @@ func init() {
 						Type:      rpg.Primortal_Toxmidge.Type,
 						Archetype: "training.2",
 					}).
+					WithReward(game.CombatReward{
+						ExperiencePoints: 25,
+						ResearchType:     rpg.Primortal_Toxmidge.Type,
+						ResearchPoints:   4,
+					}).
 					WithPlayer(combatPlayer).
 					WithTrainingSequence("training.2")
 				return NewOutput().WithEffects(triggerCombat)

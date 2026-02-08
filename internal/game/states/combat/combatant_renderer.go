@@ -62,42 +62,44 @@ func (r *CombatantRenderer) AddFromConfig(ts []rpg.SkillTickCombatantTransformat
 	}
 }
 
-func (r *CombatantRenderer) Render(target pixel.Target, timeDelta float64, com Combatant, visibility *util.Visibility) {
+func (r *CombatantRenderer) Render(target pixel.Target, timeDelta float64, com Combatant, enterVisibility, exitVisibility *util.Visibility) {
 	colorMask := com.GetColorMask()
 	if com.IsDead() {
 		colorMask = colors.MixColor(colorMask, colors.HexString("#af8686"))
 	} else {
 		r.animation.Update(timeDelta)
 	}
-	vis := visibility.GetVisibleAmount()
-	easedVis := interp.Smootherstep(vis)
+	enterVis := enterVisibility.GetVisibleAmount()
+	easedEnterVis := interp.Smootherstep(enterVis)
 	// Alpha fading
-	colorMask = colorMask.Mul(colors.Alpha(easedVis))
+	colorMask = colorMask.Mul(colors.Alpha(easedEnterVis * exitVisibility.GetInvisibleAmount()))
 
 	var position pixel.Vec
 	var scale float64
 	rotateDirection := 1.0
-	arc := math.Sin(vis*math.Pi) * 30.0
+	arc := math.Sin(enterVis*math.Pi) * 30.0
 
 	if r.flip { // opponent
 		targetPos := pixel.V(math.Floor(game.GameWidth*0.8), math.Floor(game.GameHeight*0.4))
 		startPos := pixel.V(math.Floor(game.GameWidth*0.3), math.Floor(game.GameHeight*0.5))
 		position = pixel.V(
-			interp.Lerp(startPos.X, targetPos.X, easedVis),
-			interp.Lerp(startPos.Y, targetPos.Y, easedVis),
+			interp.Lerp(startPos.X, targetPos.X, easedEnterVis),
+			interp.Lerp(startPos.Y, targetPos.Y, easedEnterVis),
 		)
 		position.Y += arc // swoop up
-		scale = interp.Lerp(0.1, 1.0, easedVis)
+		scale = interp.Lerp(0.1, 1.0, easedEnterVis)
 		rotateDirection = -1
+		position.X += 60.0 * exitVisibility.GetVisibleAmount()
 	} else { // animech
 		targetPos := pixel.V(math.Floor(game.GameWidth*0.2), math.Floor(game.GameHeight*0.4))
 		startPos := pixel.V(math.Floor(game.GameWidth*0.7), math.Floor(game.GameHeight*0.1))
 		position = pixel.V(
-			interp.Lerp(startPos.X, targetPos.X, easedVis),
-			interp.Lerp(startPos.Y, targetPos.Y, easedVis),
+			interp.Lerp(startPos.X, targetPos.X, easedEnterVis),
+			interp.Lerp(startPos.Y, targetPos.Y, easedEnterVis),
 		)
 		position.Y -= arc // swoop down
-		scale = interp.Lerp(3.0, 1.0, easedVis)
+		scale = interp.Lerp(3.0, 1.0, easedEnterVis)
+		position.X -= 60.0 * exitVisibility.GetVisibleAmount()
 	}
 
 	m := pixel.IM.Scaled(pixel.ZV, scale)
@@ -154,7 +156,7 @@ type CombatantRenderTransformationBasic struct {
 func NewCombatantRenderTransformationPounce(speed float64) *CombatantRenderTransformationBasic {
 	return &CombatantRenderTransformationBasic{
 		baseCombatantRenderEffect: newBaseCombatantRenderEffect(1.0 / speed),
-		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smootherstep).
+		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smoothstep).
 			WithKey(0, 0).
 			WithKey(0.33, 20).
 			WithKey(1, 0),
@@ -169,7 +171,7 @@ func NewCombatantRenderTransformationPounce(speed float64) *CombatantRenderTrans
 func NewCombatantRenderTransformationRecoil(speed float64) *CombatantRenderTransformationBasic {
 	return &CombatantRenderTransformationBasic{
 		baseCombatantRenderEffect: newBaseCombatantRenderEffect(1.0 / speed),
-		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smootherstep).
+		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smoothstep).
 			WithKey(0, 0).
 			WithKey(0.25, 0).
 			WithKey(0.33, -10).
@@ -184,7 +186,7 @@ func NewCombatantRenderTransformationRecoil(speed float64) *CombatantRenderTrans
 func NewCombatantRenderTransformationHop(speed float64) *CombatantRenderTransformationBasic {
 	return &CombatantRenderTransformationBasic{
 		baseCombatantRenderEffect: newBaseCombatantRenderEffect(0.5 / speed),
-		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smootherstep).
+		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smoothstep).
 			WithKey(0, 0).
 			WithKey(1, 0),
 		yKeys: interp.NewKeys().
@@ -197,7 +199,7 @@ func NewCombatantRenderTransformationHop(speed float64) *CombatantRenderTransfor
 func NewCombatantRenderTransformationWiggle(speed float64) *CombatantRenderTransformationBasic {
 	return &CombatantRenderTransformationBasic{
 		baseCombatantRenderEffect: newBaseCombatantRenderEffect(0.5 / speed),
-		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smootherstep).
+		xKeys: interp.NewKeys().WithDefaultFunction(interp.Smoothstep).
 			WithKey(0, 0).
 			WithKey(0.25, -3).
 			WithKey(0.75, 3).

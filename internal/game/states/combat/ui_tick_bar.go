@@ -3,6 +3,7 @@ package combat
 import (
 	"math"
 
+	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game/states/combat/tick_bar"
@@ -36,9 +37,13 @@ func (s *State) drawActiveSkills(target pixel.Target, targetBounds pixel.Rect, m
 	matrixTopMiddle = matrixTopMiddle.Moved(pixel.V(0, dy))
 	mask := colors.Alpha(s.visibilityActiveSkills.GetVisibleAmount())
 
-	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Player, false, mask)
-	s.drawCombatantSkills(target, matrixTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Opponent, true, mask)
-	skillEaterSprite.DrawColorMask(target, matrixTopMiddle, mask)
+	skillBarTopMiddle := matrixTopMiddle.Moved(pixel.V(0, game.GameHeight*s.visibilityActiveSkills.GetInvisibleAmount()))
+	s.drawCombatantSkills(target, skillBarTopMiddle.Moved(pixel.V(-float64(skillBarSpacing/2+skillBarWidth/2), 0)), playerProgress, s.Player, false, mask)
+	s.drawCombatantSkills(target, skillBarTopMiddle.Moved(pixel.V(float64(skillBarSpacing/2+skillBarWidth/2), 0)), opponentProgress, s.Opponent, true, mask)
+
+	game.DebugTRf("eater: %.3f", s.visibilityActiveSkillEater.GetInvisibleAmount())
+	skillEaterTopMiddle := matrixTopMiddle.Moved(pixel.V(0, 10*s.visibilityActiveSkillEater.GetInvisibleAmount()))
+	skillEaterSprite.DrawColorMask(target, skillEaterTopMiddle, mask)
 }
 
 var baseNextSkillMaskScale = 0.8
