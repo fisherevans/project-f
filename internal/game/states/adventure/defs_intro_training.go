@@ -125,7 +125,7 @@ func init() {
 					return nil
 				}
 				if globals.Get(globalVariableNameHasXenologPrimortals).AsBool(false) {
-					return NewOutput().WithEffects(NewDialogueEffect("Uhhh. I don't think I need to do that again..."))
+					return NewOutput().WithEffects(NewSelfDialogueEffect("Uhhh. I don't think I need to do that again..."))
 				}
 				chairId := "intro.training.1.chair"
 				chairFrontId := "intro.training.1.chair_front"
@@ -136,7 +136,7 @@ func init() {
 					NewStartScriptedMotionEffect(pId).WithToEntityId(chairFrontId),
 					NewPopEntityBehaviorEffect(pId),
 					NewEntityFaceDirectionEffect(event.SourceId).WithDirection(input.Down),
-					NewDialogueEffect("Hesitantly, you climb into the chair..."),
+					NewSelfDialogueEffect("Hesitantly, you climb into the chair..."),
 					NewChangePlayerRendererEffect("hidden"),
 					NewMutateModeBasedEntityEffect(chairId).WithMode("enter"),
 					NewWaitForConditionEffect(func(s *State, td float64) bool {
@@ -147,7 +147,7 @@ func init() {
 						return r.getBasicEntityRenderer(ModeMetadataKey.Get(e)).AreAnimationsComplete()
 					}),
 					NewPlaySoundEffect("adventure/beeps/success"),
-					NewDialogueEffect("Without any warning, you feel it. Your mind slips backwards. Not quite falling, but... floating?"),
+					NewSelfDialogueEffect("Without any warning, you feel it. Your mind slips backwards. Not quite falling, but... floating?"),
 					NewTeleportPlayerEffect().
 						WithToEntityId(animechEntityId).
 						WithInterstitialEffects([]Effect{
@@ -157,11 +157,11 @@ func init() {
 						}),
 					NewMutateEntityBehaviorEffect(event.SourceId).WithDisableBy(thisEntity.GetId()),
 					NewTimerEffect(1),
-					NewDialogueEffect("You open your eyes..... and see yourself. Across the gap."),
+					NewSelfDialogueEffect("You open your eyes..... and see yourself. Across the gap."),
 					NewEntityFaceDirectionEffect(pId).WithDirection(input.Right),
-					NewDialogueEffect("Your limbs feel rigid. But strong."),
-					NewDialogueEffect("Your balance feels solid, like its on auto pilot."),
-					NewDialogueEffect("You {+u}are{-u} an Animech."),
+					NewSelfDialogueEffect("Your limbs feel rigid. But strong."),
+					NewSelfDialogueEffect("Your balance feels solid, like its on auto pilot."),
+					NewSelfDialogueEffect("You {+u}are{-u} an Animech."),
 					NewMutateEntityBehaviorEffect(event.SourceId).WithEnableBy(thisEntity.GetId()),
 				)
 			},
@@ -190,7 +190,7 @@ func init() {
 				}
 				key := doorKey(2)
 				if globals.Get(key).AsBool(false) {
-					return NewOutput().WithEffects(NewDialogueEffect("The door has already been opened."))
+					return NewOutput().WithEffects(NewSelfDialogueEffect("The door has already been opened."))
 				}
 				return NewOutput().WithSerialPlan(
 					NewPlaySoundEffect("adventure/beeps/success"),
@@ -240,6 +240,9 @@ func init() {
 						Archetype: "training.1",
 					}).
 					WithPlayer(combatPlayer).
+					WithReward(game.CombatReward{
+						ExperiencePoints: 25,
+					}).
 					WithTrainingSequence("training.1")
 				return NewOutput().WithEffects(triggerCombat)
 			},
@@ -466,13 +469,13 @@ func init() {
 				have := globals.Get(rpg.GlobalKeyElythium).AsInt(0)
 				need := 12
 				if have < need {
-					return NewOutput().WithEffects(NewDialogueEffect("This transfer station won't work until I collect more Elythium."))
+					return NewOutput().WithEffects(NewSelfDialogueEffect("This transfer station won't work until I collect more Elythium."))
 				}
 				pId := globals.Player().GetId()
 				chairId := "intro.training.1.chair"
 				anmechEntityId := "intro.training.9.animech"
 				return NewOutput().WithSerialPlan(
-					NewDialogueEffect("You deposit the elythium and press the button..."),
+					NewSelfDialogueEffect("You deposit the elythium and press the button..."),
 					NewPushEntityBehaviorEffect(pId).WithScriptedMotion(EntityBehaviorScriptedMotion{}),
 					NewStartScriptedMotionEffect(pId).WithToEntityId(anmechEntityId),
 					NewPopEntityBehaviorEffect(pId),
@@ -481,17 +484,17 @@ func init() {
 					NewTimerEffect(0.25),
 					NewMutateModeBasedEntityEffect(anmechEntityId).WithMode("visible"),
 					NewChangePlayerRendererEffect("hidden"),
-					NewDialogueEffect("Your feet latch into the depressions. Suddenly, you can't move your body. Not an inch..."),
+					NewSelfDialogueEffect("Your feet latch into the depressions. Suddenly, you can't move your body. Not an inch..."),
 					NewPlaySoundEffect("adventure/beeps/success"),
-					NewDialogueEffect("Your vision swims. You feel... liquid. Your mind melting inwards."),
+					NewSelfDialogueEffect("Your vision swims. You feel... liquid. Your mind melting inwards."),
 					NewTeleportPlayerEffect().
 						WithToEntityId("intro.training.1.return").
 						WithInterstitialEffects([]Effect{
 							NewEntityFaceDirectionEffect(event.SourceId).WithDirection(input.Left),
 						}),
 					NewTimerEffect(1.5),
-					NewDialogueEffect("You awake."),
-					NewDialogueEffect("It takes enormous effort to climb out of the chair."),
+					NewSelfDialogueEffect("You awake."),
+					NewSelfDialogueEffect("It takes enormous effort to climb out of the chair."),
 					NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
 					NewWaitForConditionEffect(func(s *State, td float64) bool {
 						e, r, ok := GetModeBasedRenderer(s, chairId)
@@ -503,8 +506,8 @@ func init() {
 					NewChangePlayerRendererEffect("human"),
 					NewMutateModeBasedEntityEffect(chairId).WithMode(""),
 					NewTimerEffect(0.5),
-					NewDialogueEffect("Your limbs are heavy, sluggish. The light hurts your eyes."),
-					NewDialogueEffect("You'r back in your own body."),
+					NewSelfDialogueEffect("Your limbs are heavy, sluggish. The light hurts your eyes."),
+					NewSelfDialogueEffect("You'r back in your own body."),
 					NewSetWorldStateEffect(globalVariableNameHasXenologAccess, true),
 					NewSetWorldStateEffect(keyElythium, false),
 					NewSetWorldStateEffect(rpg.GlobalKeyElythium, 0),

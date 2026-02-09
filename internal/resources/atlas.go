@@ -41,6 +41,7 @@ func DefaultAtlas() *Atlas {
 				FontNameAddStandard,
 				FontNameFF,
 				FontName3x5,
+				FontNameFF57i,
 			},
 		})
 	}

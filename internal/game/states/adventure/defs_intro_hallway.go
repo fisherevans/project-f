@@ -84,7 +84,7 @@ func init() {
 				}
 				attempts := globals.Get(attemptsKey).AsInt(0)
 				message := messages[attempts%len(messages)]
-				return NewOutput().WithEffects(NewDialogueEffect(message), NewSetRunStateEffect(attemptsKey, attempts+1))
+				return NewOutput().WithEffects(NewSelfDialogueEffect(message), NewSetRunStateEffect(attemptsKey, attempts+1))
 			},
 		}.CreateHandler()
 	})
@@ -105,7 +105,7 @@ func init() {
 					message = "Ah, the elusive papers that are actually mine."
 				}
 				return NewOutput().WithEffects(
-					NewDialogueEffect(message),
+					NewSelfDialogueEffect(message),
 					NewDeleteEntityEffect(thisEntity.GetId()),
 					NewSetRunStateEffect(hasPapersKey, true))
 			},
@@ -335,24 +335,24 @@ func init() {
 					if hasEquipmentKey {
 						return NewOutput().WithSerialPlan(
 							NewPlaySoundEffect("adventure/beeps/error"),
-							NewDialogueEffect("Yeah, that key card doesn't work in this slot..."),
+							NewSelfDialogueEffect("Yeah, that key card doesn't work in this slot..."),
 						)
 					}
 					return NewOutput().WithSerialPlan(
-						NewDialogueEffect(defaultMessage),
+						NewSelfDialogueEffect(defaultMessage),
 					)
 				}
 				equipmentDoorState := globals.Get(equipmentDoorVariable).AsString(doorClosed)
 				if equipmentDoorState == doorOpen {
-					return NewOutput().WithEffects(NewDialogueEffect("The door is already open."))
+					return NewOutput().WithEffects(NewSelfDialogueEffect("The door is already open."))
 				}
 				if !hasEquipmentKey {
-					return NewOutput().WithEffects(NewDialogueEffect(defaultMessage))
+					return NewOutput().WithEffects(NewSelfDialogueEffect(defaultMessage))
 				}
 				message := "That worked!"
 				return NewOutput().WithSerialPlan(
 					NewPlaySoundEffect("adventure/beeps/success"),
-					NewDialogueEffect(message),
+					NewSelfDialogueEffect(message),
 					NewSetRunStateEffect(variable, doorOpen),
 				)
 			},

@@ -3,6 +3,15 @@ package adventure
 type EffectDialogue struct {
 	DialogueId string `auto_generate:"true"`
 	Text       string
+	Style      *DialogueStyle
+}
+
+func NewSelfDialogueEffect(text string) *EffectDialogue {
+	s := DialogueStyleSelf
+	return &EffectDialogue{
+		Text:  text,
+		Style: &s,
+	}
 }
 
 func (e *EffectDialogue) CompletionID() string {
@@ -15,7 +24,12 @@ func (e *EffectDialogue) CompletionID() string {
 func (e *EffectDialogue) Process(source EntityReader, s *State) bool {
 	entity, _ := s.entities.GetEntity(source.GetId())
 	cfg := TalkerConfigMetadataKey.Get(entity)
-	s.dialogues.Append(NewBasicDialogue(e.Text, e.DialogueId, e.CompletionID(), cfg))
+	style := DialogueStyleRegular
+	if e.Style != nil {
+		style = *e.Style
+	}
+	dialogue := NewDialogue(e.Text, e.DialogueId, e.CompletionID(), cfg, style)
+	s.dialogues.Append(dialogue)
 	return true
 }
 

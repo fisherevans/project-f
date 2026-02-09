@@ -187,7 +187,6 @@ func New(i game.CombatIntent) game.State {
 		visibilityTempoBar:         util.NewVisibility(false, 3, true),
 		visibilityCombatantExit:    util.NewVisibility(false, 1, true),
 
-		endModal:     newEndModal(i.Opponent.Type.Primortal().Name, i.Reward),
 		rewardModals: newRewardModals(i.Reward),
 		reward:       i.Reward,
 	}
@@ -329,6 +328,13 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 	// END MODAL
 	if s.phase >= PhaseEnd {
 		topMiddle := pixel.IM.Moved(pixel.V(game.GameWidth/2, game.GameHeight/2))
+		if s.endModal == nil {
+			if s.Opponent.GetHealth().GetCurrentInt() <= 0 {
+				s.endModal = newEndWonModal(s.Opponent.Name(), s.reward)
+			} else {
+				s.endModal = newEndLostModal()
+			}
+		}
 		s.endModal.render(s.batch, topMiddle, timeDelta, s.phase == PhaseEnd)
 	}
 
@@ -352,7 +358,11 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 	if s.phase == PhaseEnd {
 		if s.Controls().ButtonA().JustPressed() {
 			s.endModal.exit()
-			s.phase = PhaseReward
+			if len(s.rewardModals) == 0 || s.Opponent.GetHealth().GetCurrentInt() > 0 {
+				s.phase = PhaseTerminal
+			} else {
+				s.phase = PhaseReward
+			}
 		}
 	} else if s.phase == PhaseReward {
 		if s.Controls().ButtonA().JustPressed() {

@@ -3,7 +3,10 @@ package adventure
 import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/audio"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/interp"
+	"fisherevans.com/project/f/internal/util/textbox/tbcfg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
@@ -22,7 +25,41 @@ const (
 	dialogStateExiting
 )
 
-var dialogueDoneAnimation *anim.AnimatedSprite
+type DialogueStyle int
+
+const (
+	DialogueStyleRegular DialogueStyle = iota
+	DialogueStyleSelf
+)
+
+var (
+	dialogueDoneAnimation     *anim.AnimatedSprite
+	dialogueRegularForeground = colors.HexString("#00164e")
+	dialogueSelfForeground    = colors.HexString("#5c515c")
+	dialogueTransitionTime    = 0.3
+)
+
+var dialogueFrameMargin = 4
+var dialogueFrameRegular, dialogueFrameSelf *frames.Instance
+var dialogueBoxRegular, dialogueBoxSelf *textbox.Instance
+
+func init() {
+	resources.RunOnceInitialized(func() {
+		dialogueDoneAnimation = anim.Load(atlas, "dialogue/done")
+		dialogueFrameRegular = frames.New("dialogue/dialogue_frame", atlas)
+		dialogueFrameSelf = frames.New("dialogue/dialogue_self_frame", atlas)
+		dialogueBoxRegular = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameM5x7),
+			tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrameRegular.HorizontalPadding(), 0,
+				tbcfg.Paging(2, true),
+				tbcfg.ExtraLineSpacing(4)))
+		dialogueBoxSelf = textbox.NewInstance(
+			atlas.GetFont(resources.FontNameFF57i),
+			tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrameRegular.HorizontalPadding(), 0,
+				tbcfg.Paging(2, true),
+				tbcfg.ExtraLineSpacing(4)))
+	})
+}
 
 type DialogueSystem struct {
 	queuedDialogues []Dialogue
@@ -50,12 +87,6 @@ func (ds *DialogueSystem) HasPriority() bool {
 	return len(ds.queuedDialogues) > 0
 }
 
-var dialogueFrameMargin = 4
-var dialogueFrame *frames.Instance
-var dialogueBox *textbox.Instance
-
-var dialogueTransitionTime = 0.3
-
 func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds, timeDelta float64) {
 	defer ds.flushPending()
 	game.DebugBRf("dialogue queue: %d", len(ds.queuedDialogues))
@@ -76,9 +107,9 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 		float64(dialogueFrameMargin),
 		float64(dialogueFrameMargin),
 		float64(game.GameWidth-dialogueFrameMargin),
-		float64(dialogueFrameMargin+dialogue.Content().Height()+dialogueFrame.VerticalPadding()))
+		float64(dialogueFrameMargin+dialogue.Content().Height()+dialogue.Frame().VerticalPadding()))
 
-	textBoxBottomLeft := gfx.IVec(dialogueFrameMargin+dialogueFrame.LeftPadding(), dialogueFrameMargin+dialogueFrame.BottomPadding())
+	textBoxBottomLeft := gfx.IVec(dialogueFrameMargin+dialogue.Frame().LeftPadding(), dialogueFrameMargin+dialogue.Frame().BottomPadding())
 
 	ds.renderStateElapsed += timeDelta
 	renderStateProgress := interp.Smootherstep(min(ds.renderStateElapsed/dialogueTransitionTime, 1.0))
@@ -99,8 +130,8 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 		frameBottomLeft.Y = -(renderStateProgress) * transitionHeight
 	}
 
-	dialogueFrame.Draw(target, frameBounds, pixel.IM.Moved(frameBottomLeft))
-	dotPosition := dialogue.Content().Render(target, pixel.IM.Moved(textBoxBottomLeft).Moved(frameBottomLeft))
+	dialogue.Frame().Draw(target, frameBounds, pixel.IM.Moved(frameBottomLeft))
+	dotPosition := dialogue.Content().Render(target, pixel.IM.Moved(textBoxBottomLeft).Moved(frameBottomLeft), tbcfg.Foreground(dialogue.Foreground()))
 	if ds.renderState != dialogStateVisible {
 		return
 	}
@@ -135,10 +166,11 @@ func (ds *DialogueSystem) OnTick(s *State, target pixel.Target, bounds MapBounds
 
 	if dialogue.Content().IsContentFullyDisplayed() {
 		dialogueDoneAnimation.Update(timeDelta)
+		doneMask := colors.Lerp(colors.White.RGBA, dialogue.Foreground(), 0.75)
 		doneSprite := dialogueDoneAnimation.Sprite()
 		doneMatrix := pixel.IM.Moved(textBoxBottomLeft).Moved(dotPosition).Moved(gfx.BottomLeft.Align(doneSprite))
 		//doneMatrix := pixel.IM.Moved(frameBottomLeft).Moved(pixel.V(frameBounds.W()+2.0, 6.0)).Moved(gfx.BottomRight.Align(doneSprite))
-		doneSprite.Draw(target, doneMatrix)
+		doneSprite.DrawColorMask(target, doneMatrix, doneMask)
 	}
 }
 
@@ -182,26 +214,49 @@ type Dialogue interface {
 	Content() *textbox.Content
 	Speech() *audio.SpeechGenerator
 	Talker() *audio.Talker
+	Frame() *frames.Instance
+	Style() DialogueStyle
+	Foreground() pixel.RGBA
 }
 
 type basicDialogue struct {
+	frame        *frames.Instance
 	dialogueId   string
 	completionId string
 	message      string
 	content      *textbox.Content
 	speech       *audio.SpeechGenerator
 	talker       *audio.Talker
+	foreground   pixel.RGBA
+	style        DialogueStyle
 }
 
-func NewBasicDialogue(message string, dialogueId, completionId string, cfg TalkerConfig) Dialogue {
-	content := dialogueBox.NewComplexContent(message, textbox.WithTyping(0.0333))
+func NewDialogue(message string, dialogueId, completionId string, cfg TalkerConfig, style DialogueStyle) Dialogue {
+	var text *textbox.Instance
+	var frame *frames.Instance
+	var foreground pixel.RGBA
+	switch style {
+	case DialogueStyleSelf:
+		text = dialogueBoxSelf
+		frame = dialogueFrameSelf
+		foreground = dialogueSelfForeground
+	case DialogueStyleRegular:
+		text = dialogueBoxRegular
+		frame = dialogueFrameRegular
+		foreground = dialogueRegularForeground
+	default:
+		log.Fatal().Msgf("unknown dialogue style: %d", style)
+	}
 	return &basicDialogue{
+		style:        style,
+		frame:        frame,
 		dialogueId:   dialogueId,
 		completionId: completionId,
 		message:      message,
-		content:      content,
+		content:      text.NewComplexContent(message, textbox.WithTyping(0.0333)),
 		speech:       game.GetAudioSystem().CreateSpeechGenerator(),
 		talker:       game.GetAudioSystem().NewTalker(cfg.ToParams()),
+		foreground:   foreground,
 	}
 }
 
@@ -227,4 +282,16 @@ func (b basicDialogue) Speech() *audio.SpeechGenerator {
 
 func (b basicDialogue) Talker() *audio.Talker {
 	return b.talker
+}
+
+func (b basicDialogue) Frame() *frames.Instance {
+	return b.frame
+}
+
+func (b basicDialogue) Style() DialogueStyle {
+	return b.style
+}
+
+func (b basicDialogue) Foreground() pixel.RGBA {
+	return b.foreground
 }

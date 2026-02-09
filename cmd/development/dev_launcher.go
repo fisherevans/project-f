@@ -29,7 +29,7 @@ func createInitialIntent() any {
 		}
 	})
 
-	i = i.With("Training Combat One Hit", func() any {
+	i = i.With("Training Combat One Hit Win", func() any {
 		return game.CombatIntent{
 			Opponent: game.CombatOpponent{
 				Type:      rpg.Primortal_Dummy.Type,
@@ -43,6 +43,35 @@ func createInitialIntent() any {
 				InitialSync:   25,
 				MaxSync:       25,
 				InitialShield: 15,
+				MaxShield:     15,
+			},
+			Reward: game.CombatReward{
+				ExperiencePoints: 10,
+				ResearchPoints:   2,
+				ResearchType:     rpg.Primortal_Dummy.Type,
+			},
+			TrainingSequence: "none",
+			Background:       rpg.CombatBGSpaceBase,
+			OnComplete: func(_ game.State, r game.CombatIntentResult) {
+				game.SetActiveStateIntent(createInitialIntent())
+			},
+		}
+	})
+
+	i = i.With("Training Combat One Hit Loss", func() any {
+		return game.CombatIntent{
+			Opponent: game.CombatOpponent{
+				Type:      rpg.Primortal_Dummy.Type,
+				Archetype: "aggressive",
+			},
+			Player: game.CombatPlayer{
+				SkillSet: &rpg.SkillSet{
+					Skill1: rpg.Skill_Tackle.Id,
+					Skill2: rpg.Skill_Guard.Id,
+				},
+				InitialSync:   1,
+				MaxSync:       25,
+				InitialShield: 1,
 				MaxShield:     15,
 			},
 			Reward: game.CombatReward{

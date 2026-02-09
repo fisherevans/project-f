@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/commands"
 	"fisherevans.com/project/f/internal/game/input"
@@ -38,12 +37,11 @@ const (
 var (
 	cameraRenderDistanceX = int(math.Ceil(float64(game.GameWidth) / resources.MapTileSize.Float() / 2.0))
 	cameraRenderDistanceY = int(math.Ceil(float64(game.GameHeight) / resources.MapTileSize.Float() / 2.0))
-	atlas                 *resources.Atlas
+	atlas                 = resources.DefaultAtlas()
 )
 
 func init() {
 	resources.RunOnceInitialized(func() {
-		atlas = resources.DefaultAtlas()
 		chatterArrow = atlas.GetSprite("chatter/chatter_box_arrow")
 		chatterFrame = frames.New("chatter/chatter_box", atlas)
 		chatterBox = textbox.NewInstance(
@@ -51,14 +49,6 @@ func init() {
 			tbcfg.NewConfig(game.GameWidth/3, 0,
 				tbcfg.HAligned(tbcfg.HAlignCenter),
 				tbcfg.WithExpandMode(tbcfg.ExpandFit)))
-		dialogueDoneAnimation = anim.Load(atlas, "dialogue/done")
-		dialogueFrame = frames.New("dialogue/dialogue_frame", atlas)
-		dialogueBox = textbox.NewInstance(
-			atlas.GetFont(resources.FontNameM5x7),
-			tbcfg.NewConfig(game.GameWidth-dialogueFrameMargin*2-dialogueFrame.HorizontalPadding(), 0,
-				tbcfg.Paging(2, true),
-				tbcfg.Foreground(colors.HexString("#00164e")),
-				tbcfg.ExtraLineSpacing(4)))
 		elythiumBarFrame = frames.New("adventure/hud/elythium_frame", atlas)
 	})
 }

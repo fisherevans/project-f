@@ -1,0 +1,13 @@
+frame:
+  cutMargin:
+    top: 10
+    left: 10
+    right: 10
+    bottom: 10
+  padding:
+    top: 8
+    left: 8
+    right: 8
+    bottom: 8
+  defaults:
+    frameMode: stretch

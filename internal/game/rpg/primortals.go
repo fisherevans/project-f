@@ -99,6 +99,19 @@ var Primortal_Dummy = Primortal{
 				},
 			},
 		},
+		"aggressive": {
+			AdditionalSync: 10,
+			SkillPool: CombatSkillPool{
+				Random: &CombatSkillPoolRandom{
+					InitialOrderedSkills: []SkillId{
+						Skill_Guard.Id,
+					},
+					WeightedSkills: map[SkillId]int{
+						Skill_Jab.Id: 1,
+					},
+				},
+			},
+		},
 		"training.1": {
 			AdditionalSync: 40,
 			SkillPool: CombatSkillPool{

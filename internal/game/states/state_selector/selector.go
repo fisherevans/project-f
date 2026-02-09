@@ -74,7 +74,7 @@ func (s *Selector) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, t
 	}
 
 	titleContent := titleTextbox.NewSimpleContent("Select a state:")
-	titleContent.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-10)))
+	titleContent.Render(target, pixel.IM.Moved(pixel.V(10, targetBounds.H()-12)))
 
 	for index, option := range s.states {
 		str := fmt.Sprintf("%s", option.Name)
@@ -84,7 +84,7 @@ func (s *Selector) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, t
 			str = "   " + str
 		}
 		optionContent := optionTextbox.NewSimpleContent(str)
-		optionContent.Render(target, gfx.Moved(10, int(targetBounds.H())-35-12*index))
+		optionContent.Render(target, gfx.Moved(10, int(targetBounds.H())-25-12*index))
 	}
 
 	game.DebugBRf("enter: select")

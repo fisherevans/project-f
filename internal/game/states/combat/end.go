@@ -48,10 +48,31 @@ type endModal struct {
 	keyButton   *keyframe.Member
 }
 
-func newEndModal(opponentName string, reward game.CombatReward) *endModal {
+func newEndWonModal(opponentName string, reward game.CombatReward) *endModal {
+	title := opponentName + " was neutralized!"
+	var extraLines []string
+	if reward.ExperiencePoints > 0 {
+		extraLines = append(extraLines, "Your Animech gained experience")
+	}
+	if reward.ResearchPoints > 0 {
+		extraLines = append(extraLines, "Specimen research was captured")
+	}
+	return newEndModal(title, extraLines, "next")
+}
+
+func newEndLostModal() *endModal {
+	title := "You've been defeated!"
+	extraLines := []string{
+		"Your soul was de-synced with your Animech...",
+		"You've lost all progress from this run.",
+	}
+	return newEndModal(title, extraLines, "return to your ship")
+}
+
+func newEndModal(title string, extraLines []string, nextAction string) *endModal {
 	kg := keyframe.NewGroup(interp.Smoothstep)
 	contents := []*textbox.Content{
-		endTextTitle.NewSimpleContent(opponentName + " was neutralized!"),
+		endTextTitle.NewSimpleContent(title),
 	}
 	delay := 1.0
 	keySkip, keyDur := 0.25, 0.5
@@ -59,13 +80,8 @@ func newEndModal(opponentName string, reward game.CombatReward) *endModal {
 		kg.AddKeyFrame(delay, delay+keyDur),
 	}
 	nextFrom := delay + keySkip
-	if reward.ExperiencePoints > 0 {
-		contents = append(contents, endTextRewards.NewSimpleContent("Your Animech gained experience"))
-		keyContents = append(keyContents, kg.AddKeyFrame(nextFrom, nextFrom+keyDur))
-		nextFrom += keySkip
-	}
-	if reward.ResearchPoints > 0 {
-		contents = append(contents, endTextRewards.NewSimpleContent("Specimen research was captured"))
+	for _, line := range extraLines {
+		contents = append(contents, endTextRewards.NewSimpleContent(line))
 		keyContents = append(keyContents, kg.AddKeyFrame(nextFrom, nextFrom+keyDur))
 		nextFrom += keySkip
 	}
@@ -86,12 +102,13 @@ func newEndModal(opponentName string, reward game.CombatReward) *endModal {
 		keyContents: keyContents,
 		keyButton:   keyButton,
 		frameR:      gfx.R(width+endPadding*4, height+endPadding*2),
-		nextBadge:   badges.Using(atlas).ButtonAction("a", "next", badges.ButtonStyleStandard),
+		nextBadge:   badges.Using(atlas).ButtonAction("a", nextAction, badges.ButtonStyleStandard),
 	}
 }
 
 func (m *endModal) exit() {
 	m.kg.SetReverse(true)
+	m.kg.SetTimeScale(1.5)
 }
 
 func (m *endModal) render(target pixel.Target, middle pixel.Matrix, timeDelta float64, renderButton bool) {

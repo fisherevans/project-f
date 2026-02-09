@@ -2,10 +2,6 @@ package tick_bar
 
 import (
 	"math"
-	"time"
-
-	"github.com/gopxl/pixel/v2"
-	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
@@ -13,6 +9,7 @@ import (
 	"fisherevans.com/project/f/internal/util/frames"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"fisherevans.com/project/f/internal/util/sprites"
+	"github.com/gopxl/pixel/v2"
 )
 
 type Renderer struct {
@@ -131,18 +128,7 @@ func (r *Renderer) Draw(target pixel.Target, matrixTopMiddle pixel.Matrix, skill
 		frame = r.activeFrame
 	}
 
-	// Diagnostic: Time the frame draw specifically
-	frameStart := time.Now()
 	frame.Draw(target, rect, matrixBottomLeft, frames.WithColor(mask))
-	frameElapsed := time.Since(frameStart)
-	if frameElapsed > 50*time.Millisecond {
-		log.Warn().
-			Dur("frame_draw_ms", frameElapsed).
-			Float64("rect_w", rect.W()).
-			Float64("rect_h", rect.H()).
-			Int("skill_duration", skill.Duration()).
-			Msg("TICK_BAR_DRAW: Frame draw was slow")
-	}
 
 	var postRenders []func() // used to render on top of the tick bar, after the dots/lines are rendered - mostly for the stance box + icons
 	for i := 0; i <= skill.Duration(); i++ {
