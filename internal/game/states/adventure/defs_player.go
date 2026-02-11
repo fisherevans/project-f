@@ -20,7 +20,7 @@ func init() {
 		entity.AddSoundProvider(NewStepSoundProvider(entity, createStepSoundsHard(), FootstepFalloff))
 		// todo this seems gross
 		system.state.player = params.EntityId
-		system.state.camera = NewFollowCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium)
+		system.state.camera = NewSimpleEntityCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium, true)
 		system.state.globals.Set(globalVariableNamePlayerId, system.state.player)
 		return nil, nil
 	})

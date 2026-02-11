@@ -37,7 +37,7 @@ func init() {
 					}
 					game.CurrentSave().Animech.Upgrades.ShieldLevel = 0
 					game.CurrentSave().Animech.Upgrades.SyncLevel = 0
-					game.CurrentSave().Animech.AnimechExperience = 100
+					game.CurrentSave().Animech.Experience = 100
 					for _, p := range game.CurrentSave().Primortals {
 						p.ResearchPoints = 0
 					}
@@ -524,8 +524,7 @@ func init() {
 				}
 				return NewOutput().WithSerialPlan(
 					NewDialogueEffect("Annnnnnd, that's it for now. Hope to see you soon."),
-					NewDialogueEffect("Teleporting you to some other testing bed map..........."),
-					NewLoadMapEffect("map1"),
+					NewLoadMapEffect("hq"),
 				)
 			},
 		}.CreateHandler()

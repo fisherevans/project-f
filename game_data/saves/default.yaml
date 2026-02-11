@@ -4,49 +4,38 @@ animech:
     skill_set:
         "1": tackle
         "2": guard
-        "3": acid_string
+        "3": ""
         "4": ""
-    experience_points: 0
+    experience_points: 100
     upgrades:
-        shield_level: 2
+        shield_level: 0
         sync_level: 0
+    pending_experience: 0
+    current_sync: 0
+    current_shield: 0
 loadouts: []
 inventory: null
 primortals:
-    "":
-        visibility: defeated
-        research_points: 0
-        last_seen: 2026-02-08T14:11:33.247298-05:00
     dummy:
         visibility: defeated
         research_points: 0
         last_seen: 2026-02-07T19:48:21.633819-05:00
+        pending_research_points: 0
     toxmidge:
         visibility: defeated
-        research_points: 6
-        last_seen: 2026-02-08T14:04:32.440569-05:00
+        research_points: 5
+        last_seen: 0001-01-01T00:00:00Z
+        pending_research_points: 0
 unlocked_skills:
-    acid_string: {}
     guard: {}
+    jab: {}
     tackle: {}
 globals:
-    abilities.xenolog_access: true
-    abilities.xenolog_primortals: true
-    combat.training.opponent_attacks_while_player_defends: true
-    combat.training.player_attacks_while_opponent_defends: true
-    combat.training.player_status.poisoned: true
     control_id: controlled_npc
     elythium: 0
     elythium_goal: 12
-    intro.control.elythium: false
-    intro.training.5.xenolog: true
-    intro.training.6.door: true
-    intro.training.7.door: true
-    intro.training.7.elythium.done: true
-    intro.training.10.door: true
-    intro.training.enter.listener: a6c5121c-6775-4322-a0ae-3b74da0e37a2
-    player_id: tiled-16
-    tiled-363: a6c5121c-6775-4322-a0ae-3b74da0e37a2
+    player_id: tiled-12
+    tiled-363: 7e86a956-26ad-47c6-ae32-2a73db3dfdf8
 system_settings:
     lighting:
         lighting_composition: full

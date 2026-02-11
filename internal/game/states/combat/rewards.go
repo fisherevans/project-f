@@ -86,35 +86,37 @@ func newRewardModals(reward game.CombatReward) []*rewardModal {
 		if u := game.CurrentSave().Animech.Upgrades; u != nil {
 			nextLevel = u.GetLevel() + 1
 		}
+		current := game.CurrentSave().Animech.Experience + game.CurrentSave().Animech.PendingExperience
 		required := rpg.AnimechUpgradeExperienceRequiredToUpgrade(nextLevel)
-		modals = append(modals, newRewardExperience(game.CurrentSave().Animech.AnimechExperience, reward.ExperiencePoints, required))
+		modals = append(modals, newRewardExperience(current, reward.ExperiencePoints, required))
 	}
 	if reward.ExperiencePoints > 0 {
 		current := 0
 		if prog, ok := game.CurrentSave().Primortals[reward.ResearchType]; ok {
-			current = prog.ResearchPoints
+			current = prog.ResearchPoints + prog.PendingResearchPoints
 		}
 		required := -1
 		primortal, ok := rpg.Primortals[reward.ResearchType]
-		if !ok {
-			log.Fatal().Str("type", string(reward.ResearchType)).Msg("primortal not found")
-		}
-		for skillId, skillReqs := range primortal.UnlockableSkills {
-			if game.CurrentSave().IsSkillUnlocked(skillId) {
-				continue
-			}
-			available := true
-			for _, prereq := range skillReqs.Prerequisites {
-				if !game.CurrentSave().IsSkillUnlocked(prereq) {
-					available = false
-					break
+		if ok {
+			for skillId, skillReqs := range primortal.UnlockableSkills {
+				if game.CurrentSave().IsSkillUnlocked(skillId) {
+					continue
+				}
+				available := true
+				for _, prereq := range skillReqs.Prerequisites {
+					if !game.CurrentSave().IsSkillUnlocked(prereq) {
+						available = false
+						break
+					}
+				}
+				if available && required < skillReqs.Cost {
+					required = skillReqs.Cost
 				}
 			}
-			if available && required < skillReqs.Cost {
-				required = skillReqs.Cost
-			}
+			modals = append(modals, newRewardResearch(reward.ResearchType, current, reward.ResearchPoints, required))
+		} else {
+			log.Error().Str("type", string(reward.ResearchType)).Msg("primortal not found")
 		}
-		modals = append(modals, newRewardResearch(reward.ResearchType, current, reward.ResearchPoints, required))
 	}
 	return modals
 }

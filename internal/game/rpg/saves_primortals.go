@@ -16,4 +16,7 @@ type PrimortalProgress struct {
 	Visibility     PrimortalVisibility `yaml:"visibility"`
 	ResearchPoints int                 `yaml:"research_points"`
 	LastSeen       time.Time           `yaml:"last_seen"`
+
+	// current run details
+	PendingResearchPoints int `yaml:"pending_research_points"`
 }

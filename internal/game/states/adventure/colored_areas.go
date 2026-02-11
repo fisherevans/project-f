@@ -10,9 +10,9 @@ import (
 )
 
 // DrawColoredAreas renders all ambient zones as solid rects with outer glows.
-func (s *State) DrawColoredAreas(areas []resources.ColoredArea, target *opengl.Canvas, cameraDelta pixel.Vec, renderBounds MapBounds, imd *imdraw.IMDraw) {
+func (s *State) DrawColoredAreas(clear pixel.RGBA, areas []resources.ColoredArea, target *opengl.Canvas, cameraDelta pixel.Vec, renderBounds MapBounds, imd *imdraw.IMDraw) {
 	target.SetComposeMethod(pixel.ComposeOver)
-	target.Clear(s.lightClear)
+	target.Clear(clear)
 	imd.Clear()
 
 	imd.SetMatrix(pixel.IM.Moved(cameraDelta))

@@ -2,13 +2,20 @@ package setup
 
 import (
 	"bytes"
+	"fmt"
 	"os"
+	"runtime"
 	"runtime/debug"
 	"strings"
 
 	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+)
+
+var (
+	Version = "dev"
+	Commit  = "none"
 )
 
 type fatalStackHook struct{}
@@ -56,14 +63,26 @@ func trimFatalStack(b []byte) []byte {
 }
 
 func (h fatalStackHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-	if level == zerolog.FatalLevel {
+	if level >= zerolog.FatalLevel {
 		st := trimFatalStack(debug.Stack())
-		os.Stderr.WriteString("FATAL: " + msg)
-		os.Stderr.WriteString("\n--- STACK TRACE ---\n")
-		os.Stderr.Write(st)
-		os.Stderr.WriteString("\n")
-		e.Str("stack", string(st))
+		WriteFatalError(msg, st)
 	}
+}
+
+func WriteFatalError(msg string, stack []byte) {
+	os.Stderr.WriteString("FATAL: " + msg)
+	os.Stderr.WriteString("\n--- STACK TRACE ---\n")
+	os.Stderr.Write(stack)
+	os.Stderr.WriteString("\n")
+}
+
+func LogPanic(r any, stack []byte, msg string) {
+	st := trimFatalStack(stack)
+	log.Error().
+		Interface("panic", r).
+		Str("stack", string(st)).
+		Msg(msg)
+	WriteFatalError(fmt.Sprintf("%s: %v", msg, r), st)
 }
 
 type LoggingOptions struct {
@@ -86,7 +105,22 @@ func SetupLoggingWithOptions(opts LoggingOptions) {
 			NoColor:    noColor,
 			TimeFormat: "15:04:05.000",
 		},
-	).Hook(fatalStackHook{}).With().Timestamp().Logger()
+	).Hook(fatalStackHook{}).With().
+		Timestamp().
+		Logger()
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMicro
+}
+
+func LogMetadata() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	log.Info().
+		Str("version", Version).
+		Str("commit", Commit).
+		Str("os", runtime.GOOS).
+		Str("arch", runtime.GOARCH).
+		Int("cpus", runtime.NumCPU()).
+		Uint64("total_memory_mb", m.Sys/1024/1024).
+		Msg("Primortal starting up...")
 }

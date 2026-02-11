@@ -3,12 +3,15 @@ package adventure
 import (
 	"math"
 	"math/rand"
+	"slices"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
+	"fisherevans.com/project/f/internal/util/astar"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 )
@@ -20,24 +23,23 @@ type ShadowMobState string
 
 const ShadowMobStateWandering ShadowMobState = "wandering"
 const ShadowMobStateChasing ShadowMobState = "chasing"
+const ShadowMobStateTriggering ShadowMobState = "triggering"
 
 type ShadowMob struct {
 	Location pixel.Vec
 
 	animations map[ShadowMobState]*anim.AnimatedSprite
 
-	// Smooth wandering
-	vel         pixel.Vec // current velocity in tiles/sec
-	targetVel   pixel.Vec // where we're steering toward
-	changeTimer float64   // seconds until we pick a new targetVel
+	// Smooth movement
+	vel            pixel.Vec // current velocity in tiles/sec
+	accel          float64   // acceleration speed
+	friction       float64   // friction applied to velocity
+	targetLocation pixel.Vec // where we are heading
+	targetReached  float64   // threshold to consider target reached
 
 	// Tunables
-	minSpeed  float64 // tiles/sec
-	maxSpeed  float64 // tiles/sec
-	steerLerp float64 // 0..1 per second, how quickly vel chases targetVel
-	minChange float64 // min seconds between direction changes
-	maxChange float64 // max seconds between direction changes
-	radius    float64 // collision radius in tiles for movementRestrictions
+	maxSpeed float64 // tiles/sec
+	radius   float64 // collision radius in tiles for movementRestrictions
 
 	// Leash: keep wandering within a circle from spawn
 	origin      pixel.Vec
@@ -57,30 +59,45 @@ type ShadowMob struct {
 	senseChangeMax   float64
 
 	// Chasing behavior
-	chaseBias        float64 // 0..1: how much to bias heading toward player vs random
-	chaseSpeedMinMul float64 // scales minSpeed while chasing
-	chaseSpeedMaxMul float64 // scales maxSpeed while chasing
-	chaseSteerLerp   float64 // override steering while chasing (0..inf)
-	chaseExitFactor  float64 // hysteresis: exit when distance > senseCurrent*factor
-	chaseChangeMin   float64 // min seconds between chase retargets
-	chaseChangeMax   float64 // max seconds between chase retargets
+	chaseBias       float64 // 0..1: how much to bias heading toward player vs random
+	chaseExitFactor float64 // hysteresis: exit when distance > senseCurrent*factor
 
 	// Triggering: fire a hook when close to player (e.g., to start combat)
 	triggerRadius   float64                      // tiles; 0=disabled
 	triggerCooldown float64                      // seconds between triggers
 	triggerTimer    float64                      // counts down
+	triggerElapsed  float64                      // how long we've been in triggering state
 	OnTrigger       func(s *State, m *ShadowMob) // optional callback
+
+	// Visuals
+	spriteRow         int
+	colorMask         pixel.RGBA
+	footstepDistance  float64 // configured base distance
+	footstepCounter   float64
+	footstepOffset    float64
+	footstepGaitScale float64 // scaling factor for speed
+	footstepSide      bool    // false=left, true=right
+
+	// Pathfinding
+	currentPath    []MapLocation
+	pathTimer      float64
+	lastPathTarget MapLocation
 }
 
 // ShadowMobConfig exposes the high-level knobs you likely want to set at spawn time.
 // Everything else uses sensible internal defaults and can still be tweaked on the
 // instance after construction if needed.
 type ShadowMobConfig struct {
-	LeashRadius   float64
-	SenseMin      float64
-	SenseMax      float64
-	TriggerRadius float64
-	OnTrigger     func(s *State, m *ShadowMob)
+	LeashRadius       float64
+	SenseMin          float64
+	SenseMax          float64
+	TriggerRadius     float64
+	OnTrigger         func(s *State, m *ShadowMob)
+	SpriteRow         int
+	ColorMask         pixel.RGBA
+	FootstepDistance  float64
+	FootstepOffset    float64
+	FootstepGaitScale float64
 }
 
 type ShadowMobParams struct {
@@ -94,6 +111,12 @@ type ShadowMobParams struct {
 	OpponentPool      string            `yaml:"opponent_pool"`
 	Opponent          rpg.PrimortalType `yaml:"opponent"`
 	OpponentArchetype string            `yaml:"opponent_archetype"`
+
+	SpriteRow         int     `yaml:"sprite_row"`
+	ColorMask         string  `yaml:"color_mask"`
+	FootstepDistance  float64 `yaml:"footstep_distance"`
+	FootstepOffset    float64 `yaml:"footstep_offset"`
+	FootstepGaitScale float64 `yaml:"footstep_gait_scale"`
 }
 
 func NewShadowMobParamsFromProperties(props *util.Properties) ShadowMobParams {
@@ -123,21 +146,35 @@ func NewShadowMobParamsFromProperties(props *util.Properties) ShadowMobParams {
 
 func DefaultShadowMobParams() ShadowMobParams {
 	return ShadowMobParams{
-		LeashRadius:      5,
-		RespawnDelay:     15,
-		RespawnJitter:    0,
-		CombatBackground: "combat/background_sylvoria",
+		LeashRadius:       5,
+		RespawnDelay:      15,
+		RespawnJitter:     0,
+		CombatBackground:  "combat/background_sylvoria",
+		SpriteRow:         1,
+		ColorMask:         "#4d4d4d", // Greyscale(0.3) approx
+		FootstepDistance:  0.5,
+		FootstepOffset:    0.1,
+		FootstepGaitScale: 0.5,
 	}
 }
 
 // DefaultShadowMobConfig returns a config pre-populated with balanced defaults.
 func DefaultShadowMobConfig(params ShadowMobParams) ShadowMobConfig {
 	return ShadowMobConfig{
-		LeashRadius:   params.LeashRadius,
-		SenseMin:      3.5,
-		SenseMax:      4.5,
-		TriggerRadius: 0.8,
+		LeashRadius:       params.LeashRadius,
+		SenseMin:          3.5,
+		SenseMax:          4.5,
+		TriggerRadius:     0.8,
+		SpriteRow:         params.SpriteRow,
+		ColorMask:         colors.HexString(params.ColorMask),
+		FootstepDistance:  params.FootstepDistance,
+		FootstepOffset:    params.FootstepOffset,
+		FootstepGaitScale: params.FootstepGaitScale,
 		OnTrigger: func(s *State, m *ShadowMob) {
+			if game.DebugToggles().F4().ToggleState() {
+				game.DebugNotificationf("shadow mob trigger prevented due to f4 toggle")
+				return
+			}
 			var effects []Effect
 			if params.BroadcastId != "" {
 				effects = append(effects, NewSendBroadcastEffect(params.BroadcastId, nil))
@@ -186,17 +223,17 @@ func NewShadowMobWithConfig(entityId string, location MapLocation, c *ShadowMobC
 	m := &ShadowMob{
 		Location: pixel.V(float64(location.X), float64(location.Y)),
 		animations: map[ShadowMobState]*anim.AnimatedSprite{
-			ShadowMobStateWandering: anim.LoadTilesheetAnimation(atlas, "adventure/entities/shadow_mob/shadow_mob", "wandering"),
-			ShadowMobStateChasing:   anim.LoadTilesheetAnimation(atlas, "adventure/entities/shadow_mob/shadow_mob", "chasing"),
+			ShadowMobStateWandering:  anim.LoadTilesheetAnimation(atlas, "adventure/entities/shadow_mob/shadow_mob", "wandering"),
+			ShadowMobStateChasing:    anim.LoadTilesheetAnimation(atlas, "adventure/entities/shadow_mob/shadow_mob", "chasing"),
+			ShadowMobStateTriggering: anim.LoadTilesheetAnimation(atlas, "adventure/entities/shadow_mob/shadow_mob", "chasing"),
 		},
 
-		// --- Wandering movement tunables (internal defaults) ---
-		minSpeed:  0.4, // tiles/sec; lower bound for drift speed
-		maxSpeed:  1.9, // tiles/sec; upper bound for drift speed
-		steerLerp: 7.0, // how quickly `vel` eases toward `targetVel` (higher = snappier)
-		minChange: 0.7, // seconds; min time before picking a new wander heading
-		maxChange: 2.2, // seconds; max time before picking a new wander heading
-		radius:    0.5, // collision radius in tiles used by canTraverse
+		// --- Physics defaults ---
+		maxSpeed:      1.5,
+		accel:         12.0,
+		friction:      8.0,
+		radius:        0.4,
+		targetReached: 0.1,
 
 		// Leash / origin (keeps the mob near its spawn)
 		origin:      pixel.V(float64(location.X), float64(location.Y)),
@@ -213,24 +250,25 @@ func NewShadowMobWithConfig(entityId string, location MapLocation, c *ShadowMobC
 		senseChangeMax:  5.0,        // seconds; max time between sense target swaps
 
 		// --- Chase defaults (behavior when aggro'd) ---
-		chaseBias:        0.95, // 0..1; 0 = pure random, 1 = pure toward-player
-		chaseSpeedMinMul: 1.5,  // scales minSpeed while chasing
-		chaseSpeedMaxMul: 2,    // scales maxSpeed while chasing
-		chaseSteerLerp:   10.0, // steering rate while chasing (more responsive than wander)
-		chaseExitFactor:  1.25, // hysteresis; drop aggro when dist > senseCurrent*factor
-		chaseChangeMin:   0.15, // seconds; min time between chase retargets
-		chaseChangeMax:   0.35, // seconds; max time between chase retargets
+		chaseBias:       0.95, // 0..1; 0 = pure random, 1 = pure toward-player
+		chaseExitFactor: 1.25, // hysteresis; drop aggro when dist > senseCurrent*factor
 
 		// --- Trigger defaults (proximity/combat start) ---
 		triggerRadius:   c.TriggerRadius, // tiles; 0 disables triggers entirely
 		triggerCooldown: 1.5,             // seconds between successive triggers
 		OnTrigger:       c.OnTrigger,     // optional callback
+
+		// --- Visuals ---
+		spriteRow:         c.SpriteRow,
+		colorMask:         c.ColorMask,
+		footstepDistance:  c.FootstepDistance,
+		footstepOffset:    c.FootstepOffset,
+		footstepGaitScale: c.FootstepGaitScale,
 	}
 
 	// Timers and sense values are seeded to avoid any pop-in or awkward startup motion.
-	// Start with a random target velocity and zero actual velocity for a smooth ease-in.
-	m.pickNewTarget()
-	m.changeTimer = randRange(m.minChange, m.maxChange)
+	m.targetLocation = m.origin
+	m.pickNewTarget(nil)
 
 	// Initialize sensing band to a sane starting point (no pop-in on first frame)
 	m.senseTarget = randRange(m.senseMin, m.senseMax)
@@ -249,8 +287,7 @@ func NewShadowMob(entityId string, location MapLocation, params ShadowMobParams)
 
 // --- Internal helpers to keep Update() focused ---
 
-// playerPosFromState isolates how we fetch the player's movement.
-func playerPosFromState(s *State) pixel.Vec {
+func (m *ShadowMob) getPlayerPos(s *State) pixel.Vec {
 	entity, ok := s.entities.GetEntity(s.player)
 	if !ok {
 		log.Error().Str("player", string(s.player)).Msg("player not found in state")
@@ -260,87 +297,40 @@ func playerPosFromState(s *State) pixel.Vec {
 	return pixel.V(float64(ml.X), float64(ml.Y))
 }
 
-// resetRetargetTimer seeds the retarget timer based on current state.
-func (m *ShadowMob) resetRetargetTimer() {
-	if m.state == ShadowMobStateChasing {
-		m.changeTimer = randRange(m.chaseChangeMin, m.chaseChangeMax)
-	} else {
-		m.changeTimer = randRange(m.minChange, m.maxChange)
-	}
-}
+func (m *ShadowMob) updatePath(s *State, target pixel.Vec) {
+	targetLoc := MapLocation{X: int(math.Floor(target.X + 0.5)), Y: int(math.Floor(target.Y + 0.5))}
+	startLoc := MapLocation{X: int(math.Floor(m.Location.X + 0.5)), Y: int(math.Floor(m.Location.Y + 0.5))}
 
-// retarget chooses a new targetVel according to state.
-func (m *ShadowMob) retarget(toPlayer pixel.Vec) {
-	if m.state == ShadowMobStateChasing {
-		m.pickNewChaseTarget(toPlayer)
-	} else {
-		m.pickNewTarget()
-	}
-	m.resetRetargetTimer()
-}
-
-// steer advances velocity toward targetVel using state-appropriate steering.
-func (m *ShadowMob) steer(dt float64) {
-	steer := m.steerLerp
-	if m.state == ShadowMobStateChasing {
-		steer = m.chaseSteerLerp
-	}
-	// Exponential smoothing keeps motion framerate-independent and prevents jerkiness
-	t := 1 - math.Exp(-steer*dt)
-	m.vel = m.vel.Add(m.targetVel.Sub(m.vel).Scaled(t))
-}
-
-// proposeMove integrates movement using current velocity.
-func (m *ShadowMob) proposeMove(dt float64) pixel.Vec {
-	return m.Location.Add(m.vel.Scaled(dt))
-}
-
-// leashClamp optionally clamps the proposed movement to the leash, and updates targetVel to bias inward (or toward player while chasing).
-func (m *ShadowMob) leashClamp(proposed pixel.Vec, toPlayer pixel.Vec) (pixel.Vec, bool) {
-	if m.leashRadius <= 0 {
-		return proposed, false
-	}
-	d := proposed.Sub(m.origin)
-	dist := d.Len()
-	if dist <= m.leashRadius {
-		return proposed, false
-	}
-	// Snap to boundary and steer inward
-	if dist > 0 {
-		n := d.Scaled(1.0 / dist)
-		proposed = m.origin.Add(n.Scaled(m.leashRadius - epsilon))
-		inward := n.Scaled(-randRange(m.minSpeed, m.maxSpeed))
-		if m.state == ShadowMobStateChasing {
-			toward := toPlayer
-			if l := toward.Len(); l > 0 {
-				toward = toward.Scaled(1.0 / l)
-			}
-			blended := inward.Scaled(0.4).Add(toward.Scaled(0.6))
-			if l := blended.Len(); l > 0 {
-				m.targetVel = blended.Scaled(randRange(m.minSpeed*m.chaseSpeedMinMul, m.maxSpeed*m.chaseSpeedMaxMul))
-			} else {
-				m.targetVel = inward
-			}
-		} else {
-			m.targetVel = inward
-		}
-		m.resetRetargetTimer()
-	} else {
-		proposed = m.origin
-	}
-	return proposed, true
-}
-
-// moveOrBounce tries to move; on failure it retargets appropriately.
-func (m *ShadowMob) moveOrBounce(s *State, proposed pixel.Vec, toPlayer pixel.Vec) {
-	if m.canTraverse(s, m.Location, proposed, m.radius) {
-		m.Location = proposed
+	// Only recalculate if target has moved to a new tile, UNLESS we currently have no path
+	// or if we are stuck (caller should handle stuck timer, but we ensure we recalculate if needed)
+	if targetLoc == m.lastPathTarget && len(m.currentPath) > 0 && startLoc != m.lastPathTarget {
+		// If we still have a path and the player is in the same place, we can usually stick to it.
+		// However, check if our current target node is still valid if we've been blocked.
 		return
 	}
-	// blocked: pick a new heading based on state
-	m.retarget(toPlayer)
+
+	m.lastPathTarget = targetLoc
+
+	// ShadowMobs use a simpler pathfinding context than standard Entities.
+	// We use the common PathNeighbors/PathHeuristic implementations in pathfinding.go via this context.
+	ctx := shadowMobPathfindingContext{s: s}
+	path, _, found := astar.Path[MapLocation, any](startLoc, targetLoc, ctx, 1000)
+	if found && len(path) > 1 {
+		slices.Reverse(path)
+		m.currentPath = path[1:] // skip current tile
+	} else if found && len(path) == 1 {
+		// Already at the tile
+		m.currentPath = nil
+	} else {
+		m.currentPath = nil
+	}
 }
 
+type shadowMobPathfindingContext struct {
+	s *State
+}
+
+// resetRetargetTimer seeds the retarget timer based on current state.
 func (m *ShadowMob) Update(s *State, timeDelta float64) {
 	if timeDelta <= 0 {
 		return
@@ -356,7 +346,7 @@ func (m *ShadowMob) Update(s *State, timeDelta float64) {
 		}
 	}
 
-	playerPos := playerPosFromState(s)
+	playerPos := m.getPlayerPos(s)
 
 	if a, exists := m.animations[m.state]; exists {
 		a.Update(timeDelta)
@@ -365,68 +355,305 @@ func (m *ShadowMob) Update(s *State, timeDelta float64) {
 	// Update wandering detection radius drift
 	m.updateSenseRadius(timeDelta)
 
-	// Count down to the next direction change
-	m.changeTimer -= timeDelta
-
 	toPlayer := playerPos.Sub(m.Location)
 	distToPlayer := toPlayer.Len()
+	game.DebugTRf("dist: %.1f, path: %d, state: %s", distToPlayer, len(m.currentPath), m.state)
 
 	// Proximity trigger (independent of state)
-	if m.triggerRadius > 0 && distToPlayer <= m.triggerRadius && m.triggerTimer == 0 {
-		if m.OnTrigger != nil {
-			m.OnTrigger(s, m)
-		}
-		m.triggerTimer = m.triggerCooldown
+	if m.triggerRadius > 0 && distToPlayer <= m.triggerRadius && m.triggerTimer == 0 && !s.mobTriggering && m.state == ShadowMobStateChasing {
+		s.mobTriggering = true
+		m.state = ShadowMobStateTriggering
+		m.triggerElapsed = 0
 	}
 
-	// --- state transitions ---
+	// --- state transitions and logic ---
 	switch m.state {
 	case ShadowMobStateWandering:
 		if distToPlayer <= m.senseCurrent {
 			m.state = ShadowMobStateChasing
-			// seed a chase heading
-			m.pickNewChaseTarget(toPlayer)
-			// tighten steering while chasing
-			m.resetRetargetTimer()
+			m.pathTimer = 0 // force immediate pathfind
+		} else {
+			// If we reached our target, or somehow got blocked, pick a new one
+			distToTarget := m.targetLocation.Sub(m.Location).Len()
+			if distToTarget < m.targetReached {
+				m.pickNewTarget(s)
+			}
 		}
 	case ShadowMobStateChasing:
 		if distToPlayer > m.senseCurrent*m.chaseExitFactor {
 			m.state = ShadowMobStateWandering
-			m.pickNewTarget() // resume wandering target
-			m.resetRetargetTimer()
+			m.currentPath = nil
+			m.pickNewTarget(s)
+		}
+	case ShadowMobStateTriggering:
+		m.triggerElapsed += timeDelta
+		if distToPlayer < 0.05 {
+			m.Location = playerPos
+			if m.OnTrigger != nil {
+				m.OnTrigger(s, m)
+			}
+			s.mobTriggering = false
+			m.triggerTimer = m.triggerCooldown
+			m.state = ShadowMobStateWandering
+			m.currentPath = nil
+			return // Triggered!
 		}
 	}
 
-	if m.changeTimer <= 0 {
-		m.retarget(toPlayer)
+	// Pathfinding refresh for chasing/triggering
+	if m.state == ShadowMobStateChasing || m.state == ShadowMobStateTriggering {
+		m.pathTimer -= timeDelta
+		// Refresh path if timer expired OR if we are currently not moving but have a target
+		isStuck := m.vel.Len() < 0.2 && m.state != ShadowMobStateTriggering
+		if m.pathTimer <= 0 || (isStuck && m.pathTimer < 0.1) {
+			m.updatePath(s, playerPos)
+			m.pathTimer = 0.2 + rand.Float64()*0.2 // 200-400ms refresh
+		}
+
 	}
 
-	// Smoothly steer current velocity toward target velocity
-	m.steer(timeDelta)
+	// Determine desired direction and speed
+	var target pixel.Vec
+	speed := m.maxSpeed
 
-	// Integrate movement in floating space (not snapped to tiles), then leash clamp
-	proposed := m.proposeMove(timeDelta)
-	if clamped, hit := m.leashClamp(proposed, toPlayer); hit {
-		proposed = clamped
+	if m.state == ShadowMobStateTriggering {
+		speed = m.maxSpeed + m.triggerElapsed*4.0
+		target = playerPos // Ignore pathfinding for triggering
+	} else if m.state == ShadowMobStateChasing {
+		// Dynamic Path Shortcutting: If we have a path, and we reached a node, check if we can see the player
+		// directly from this new vantage point. If so, we can discard the rigid path.
+		// We only do this when a node is reached to avoid discarding paths prematurely near corners.
+		if len(m.currentPath) > 0 {
+			target = m.currentPath[0].ToVec()
+			// If we're close enough to the first node, pop it and head for the next
+			if m.Location.Sub(target).Len() < 0.3 {
+				m.currentPath = m.currentPath[1:]
+				if len(m.currentPath) > 0 {
+					target = m.currentPath[0].ToVec()
+					// Since we just cleared a node, check if we have LOS to the player now
+					if m.canTraverse(s, m.Location, playerPos, m.radius) {
+						m.currentPath = nil
+						target = playerPos
+					}
+				} else {
+					target = playerPos
+				}
+			}
+		} else {
+			target = playerPos
+		}
+	} else { // ShadowMobStateWandering
+		target = m.targetLocation
 	}
-	m.moveOrBounce(s, proposed, toPlayer)
+
+	diff := target.Sub(m.Location)
+	dist := diff.Len()
+	var desiredVel pixel.Vec
+	if dist > 0.01 {
+		desiredVel = diff.Scaled(1.0 / dist).Scaled(speed)
+	}
+
+	// Apply acceleration and friction for slippery movement
+	if desiredVel.Len() > 0 {
+		// Use a higher acceleration when chasing to feel more responsive and maintain speed
+		accel := m.accel
+		if m.state != ShadowMobStateWandering {
+			accel *= 2.0
+		}
+		m.vel = m.vel.Add(desiredVel.Sub(m.vel).Scaled(accel * timeDelta))
+	} else {
+		m.vel = m.vel.Add(m.vel.Scaled(-1).Scaled(m.friction * timeDelta))
+	}
+
+	// Clamp to current speed (which might be higher than m.maxSpeed in triggering)
+	if m.vel.Len() > speed {
+		m.vel = m.vel.Unit().Scaled(speed)
+	}
+
+	// Movement and Collision
+	proposed := m.Location.Add(m.vel.Scaled(timeDelta))
+	prevLocation := m.Location
+
+	if m.state == ShadowMobStateTriggering {
+		// Triggering ignores walls, leashes, and pathfinding
+		m.Location = proposed
+	} else {
+		// Leash check
+		if m.leashRadius > 0 {
+			d := proposed.Sub(m.origin)
+			if d.Len() > m.leashRadius {
+				proposed = m.origin.Add(d.Unit().Scaled(m.leashRadius - epsilon))
+				// Reflect velocity or just stop it? Let's just dampen it for now.
+				m.vel = m.vel.Scaled(0.5)
+				if m.state == ShadowMobStateWandering {
+					m.pickNewTarget(s)
+				}
+			}
+		}
+
+		// Tile collision
+		if m.canTraverse(s, m.Location, proposed, m.radius) {
+			m.Location = proposed
+		} else {
+			// Slide along walls: try X and Y separately
+			proposedX := m.Location.Add(pixel.V(m.vel.X, 0).Scaled(timeDelta))
+			canTraverseX := m.canTraverse(s, m.Location, proposedX, m.radius)
+			proposedY := m.Location.Add(pixel.V(0, m.vel.Y).Scaled(timeDelta))
+			canTraverseY := m.canTraverse(s, m.Location, proposedY, m.radius)
+
+			if canTraverseX {
+				m.Location = proposedX
+				m.vel.Y = 0
+			} else if canTraverseY {
+				m.Location = proposedY
+				m.vel.X = 0
+			} else {
+				// Completely blocked
+				m.vel = pixel.ZV
+				if m.state == ShadowMobStateWandering {
+					// If we're blocked during wandering, it might be because our target is unreachable
+					// or we're stuck in a corner. Let's pick a new target immediately.
+					m.pickNewTarget(s)
+				}
+			}
+		}
+	}
+
+	// Footsteps
+	if m.footstepDistance > 0 {
+		m.footstepCounter += m.Location.Sub(prevLocation).Len()
+		dynamicDistance := m.footstepDistance
+		if m.footstepGaitScale > 0 {
+			// scale distance based on current speed relative to max speed
+			// gait = base * (1 + (currentSpeed / maxSpeed - 1) * scale)
+			speedRatio := m.vel.Len() / m.maxSpeed
+			dynamicDistance *= 1.0 + (speedRatio-1.0)*m.footstepGaitScale
+		}
+		if m.footstepCounter >= dynamicDistance {
+			m.footstepCounter = 0 // reset rather than subtract to handle dynamic gait smoothly
+			m.addFootstepFx(s)
+		}
+	}
 }
 
-// pickNewTarget chooses a new random heading and speed for targetVel.
-func (m *ShadowMob) pickNewTarget() {
-	angle := randRange(0, 2*math.Pi)
-	speed := randRange(m.minSpeed, m.maxSpeed)
-	dir := pixel.V(math.Cos(angle), math.Sin(angle))
-	m.targetVel = dir.Scaled(speed)
+func (m *ShadowMob) addFootstepFx(s *State) {
+	if m.vel.Len() < 0.1 {
+		return
+	}
+	// 8 cardinal directions
+	angle := m.vel.Angle()
+	// Angle() returns radians in range [-Pi, Pi], starting from positive X axis (Right)
+	// We want to map this to 8 sectors, centered on 0, Pi/4, Pi/2, 3Pi/4, Pi, -3Pi/4, -Pi/2, -Pi/4
+	// normalize to [0, 2Pi)
+	if angle < 0 {
+		angle += 2 * math.Pi
+	}
+	// Shift by half a sector (Pi/8) so that sectors are centered on the cardinal directions
+	sector := int(math.Floor((angle+math.Pi/8)/(math.Pi/4))) % 8
+
+	// Sector mapping (assuming 1-based columns in tilesheet, 1=N, 2=NE, 3=E, 4=SE, 5=S, 6=SW, 7=W, 8=NW)
+	// Sector 0 is East (Right)
+	// Sector 1 is North-East
+	// Sector 2 is North
+	// Sector 3 is North-West
+	// Sector 4 is West
+	// Sector 5 is South-West
+	// Sector 6 is South
+	// Sector 7 is South-East
+
+	// colMap: sector -> column index
+	colMap := []int{3, 2, 1, 8, 7, 6, 5, 4}
+	col := colMap[sector]
+
+	sprite := atlas.GetTilesheetSprite("adventure/entities/shadow_mob/footsteps", col, m.spriteRow)
+
+	pos := m.Location
+	if m.footstepOffset > 0 {
+		// Calculate perpendicular offset
+		// Velocity vector: m.vel
+		// Perpendicular vector: (-m.vel.Y, m.vel.X) or (m.vel.Y, -m.vel.X)
+		perp := pixel.V(-m.vel.Y, m.vel.X).Unit()
+		offset := m.footstepOffset
+		if m.footstepSide {
+			offset = -offset
+		}
+		pos = pos.Add(perp.Scaled(offset))
+		m.footstepSide = !m.footstepSide
+	}
+
+	s.addForegroundFx(newFadingSpriteFx(pos, sprite, colors.LayerAlpha(m.colorMask, m.stateBasedAlpha()), 3.0))
+}
+
+func (m *ShadowMob) stateBasedAlpha() float64 {
+	switch m.state {
+	case ShadowMobStateWandering:
+		return 0.6
+	case ShadowMobStateChasing:
+		return 0.8
+	case ShadowMobStateTriggering:
+		return 1.0
+	}
+	return 1.0
+}
+
+// pickNewTarget chooses a new random target within the leash and legal area.
+func (m *ShadowMob) pickNewTarget(s *State) {
+	if m.leashRadius <= 0 {
+		// Just pick a random direction nearby if no leash
+		for i := 0; i < 20; i++ {
+			angle := rand.Float64() * 2 * math.Pi
+			dist := randRange(2, 5)
+			candidate := m.Location.Add(pixel.V(math.Cos(angle), math.Sin(angle)).Scaled(dist))
+			if s == nil || (m.canTraverse(s, candidate, candidate, m.radius) && m.canTraverse(s, m.Location, candidate, m.radius)) {
+				m.targetLocation = candidate
+				return
+			}
+		}
+		// If we couldn't find a reachable target, don't just pick something potentially invalid.
+		// We'll try again next update or just stay put.
+		return
+	}
+
+	// Try to find a valid tile within the leash
+	for i := 0; i < 20; i++ {
+		angle := rand.Float64() * 2 * math.Pi
+		dist := rand.Float64() * m.leashRadius
+		candidate := m.origin.Add(pixel.V(math.Cos(angle), math.Sin(angle)).Scaled(dist))
+
+		// Check if the candidate point is traversable AND we can reach it from where we are
+		if s == nil || (m.canTraverse(s, candidate, candidate, m.radius) && m.canTraverse(s, m.Location, candidate, m.radius)) {
+			m.targetLocation = candidate
+			return
+		}
+	}
+
+	// If we can't find anything reachable in the leash, try picking something very close to us that is reachable
+	for i := 0; i < 10; i++ {
+		angle := rand.Float64() * 2 * math.Pi
+		dist := randRange(0.5, 1.5)
+		candidate := m.Location.Add(pixel.V(math.Cos(angle), math.Sin(angle)).Scaled(dist))
+		// Still check leash
+		if m.origin.Sub(candidate).Len() > m.leashRadius {
+			continue
+		}
+		if s == nil || (m.canTraverse(s, candidate, candidate, m.radius) && m.canTraverse(s, m.Location, candidate, m.radius)) {
+			m.targetLocation = candidate
+			return
+		}
+	}
+
+	// Fallback to origin if it's reachable, otherwise just stay put
+	if s == nil || m.canTraverse(s, m.Location, m.origin, m.radius) {
+		m.targetLocation = m.origin
+	} else {
+		m.targetLocation = m.Location
+	}
 }
 
 func (m *ShadowMob) Render(batch *pixel.Batch, renderDelta pixel.Vec) {
-	alpha := 0.7
-	if m.state == ShadowMobStateChasing {
-		alpha = 0.9
-	}
 	if a, exists := m.animations[m.state]; exists {
-		a.Sprite().DrawColorMask(batch, pixel.IM.Moved(renderDelta), pixel.RGBA{alpha, alpha, alpha, alpha})
+		mask := colors.Alpha(m.stateBasedAlpha())
+		a.Sprite().DrawColorMask(batch, pixel.IM.Moved(renderDelta), mask)
 	}
 }
 
@@ -515,32 +742,6 @@ func randRange(min, max float64) float64 {
 	return min + rand.Float64()*(max-min)
 }
 
-// pickNewChaseTarget biases direction toward `toTarget` while keeping organic noise.
-func (m *ShadowMob) pickNewChaseTarget(toTarget pixel.Vec) {
-	// Random exploratory direction adds a bit of wobble so it doesn't bee-line perfectly
-	randAngle := randRange(0, 2*math.Pi)
-	randDir := pixel.V(math.Cos(randAngle), math.Sin(randAngle))
-
-	// Desired toward player
-	dir := toTarget
-	if dir.Len() > 0 {
-		dir = dir.Scaled(1.0 / dir.Len())
-	}
-	// Blend random with biased toward target
-	blended := randDir.Scaled(1.0 - m.chaseBias).Add(dir.Scaled(m.chaseBias))
-	if blended.Len() == 0 {
-		blended = randDir
-	}
-	blended = blended.Scaled(1.0 / blended.Len())
-
-	// Choose a slightly higher speed band while chasing
-	minS := m.minSpeed * m.chaseSpeedMinMul
-	maxS := m.maxSpeed * m.chaseSpeedMaxMul
-	speed := randRange(minS, maxS)
-	m.targetVel = blended.Scaled(speed)
-}
-
-// updateSenseRadius eases senseCurrent toward a drifting target within [senseMin, senseMax]
 func (m *ShadowMob) updateSenseRadius(dt float64) {
 	m.senseChangeTimer -= dt
 	if m.senseChangeTimer <= 0 {

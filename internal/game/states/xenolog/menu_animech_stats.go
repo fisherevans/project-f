@@ -87,7 +87,7 @@ func newAnimechStatsMenu(s *Screen) *animechStatsMenu {
 					from := game.CurrentSave().Animech.Upgrades.GetLevel()
 					for _, upgrade := range m.upgrades {
 						for l := 0; l < upgrade.uncommitedLevelIncrease; l++ {
-							game.CurrentSave().Animech.AnimechExperience -= rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
+							game.CurrentSave().Animech.Experience -= rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
 							*upgrade.level++
 						}
 						upgrade.uncommitedLevelIncrease = 0
@@ -121,7 +121,7 @@ func newAnimechStatsMenu(s *Screen) *animechStatsMenu {
 func (m *animechStatsMenu) Enter() {}
 
 func (m *animechStatsMenu) updateUncommitedUpgrades() {
-	m.availableExperience = game.CurrentSave().Animech.AnimechExperience
+	m.availableExperience = game.CurrentSave().Animech.Experience
 	m.uncommitedLevel = game.CurrentSave().Animech.Upgrades.GetLevel()
 	for _, upgrade := range m.upgrades {
 		for l := 0; l < upgrade.uncommitedLevelIncrease; l++ {

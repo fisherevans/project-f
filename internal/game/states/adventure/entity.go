@@ -1,9 +1,11 @@
 package adventure
 
 import (
+	"math"
 	"slices"
 
 	"fisherevans.com/project/f/internal/game/input"
+	"fisherevans.com/project/f/internal/resources"
 	"fisherevans.com/project/f/internal/util/interp"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
@@ -187,6 +189,8 @@ func (e *entityReference) GetPreciseLocation() pixel.Vec {
 		p = interp.EaseInToLinear(p, 2)
 	}
 	movementDelta := m.TargetLocation.ToVec().Sub(location).Scaled(p)
+	movementDelta.X = math.Floor(movementDelta.X*resources.MapTileSize.Float()) / resources.MapTileSize.Float()
+	movementDelta.Y = math.Floor(movementDelta.Y*resources.MapTileSize.Float()) / resources.MapTileSize.Float()
 	return location.Add(movementDelta)
 }
 

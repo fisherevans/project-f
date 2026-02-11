@@ -22,7 +22,7 @@ func (e *EffectOverrideCamera) Process(source EntityReader, s *State) bool {
 	if e.Follow.ResetPosition {
 		location = target.GetPreciseLocation()
 	}
-	camera := NewFollowCamera(target.GetId(), location, EntityCameraSpeedMedium)
+	camera := NewSimpleEntityCamera(target.GetId(), location, EntityCameraSpeedMedium, true)
 	s.OverrideCamera(camera)
 	return true
 }
@@ -48,16 +48,15 @@ func (e *EffectMutateFollowCamera) Process(source EntityReader, s *State) bool {
 	if override, ok := camera.(*CameraOverride); ok {
 		camera = override.newCamera
 	}
-	followCamera, ok := camera.(*EntityCamera)
-	if !ok {
-		logEffectWarnf(source, e, "camera is not a follow camera")
-		return false
-	}
 	if e.FollowEntityId != nil {
-		followCamera.target = *e.FollowEntityId
+		if ts, ok := camera.(TargetingCamera); ok {
+			ts.SetTarget(*e.FollowEntityId)
+		} else {
+			logEffectWarnf(source, e, "camera does not support setting target")
+		}
 	}
 	if e.ResetPosition != nil && *e.ResetPosition {
-		followCamera.ResetPosition(s)
+		camera.ResetPosition(s)
 	}
 	return true
 }

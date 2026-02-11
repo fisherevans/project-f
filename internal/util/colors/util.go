@@ -219,6 +219,16 @@ func Alpha(alpha float64) pixel.RGBA {
 		A: alpha,
 	}
 }
+
+func Greyscale(v float64) pixel.RGBA {
+	return pixel.RGBA{
+		R: v,
+		G: v,
+		B: v,
+		A: 1,
+	}
+}
+
 func Lerp(from, to pixel.RGBA, t float64) pixel.RGBA {
 	if t < 0 {
 		t = 0

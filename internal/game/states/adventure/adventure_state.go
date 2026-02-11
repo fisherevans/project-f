@@ -80,6 +80,8 @@ type State struct {
 
 	entities *EntitySystem
 
+	backgroundFxs, foregroundFxs []fx
+
 	teleports   map[TeleportReference]Teleport
 	chatters    *ChatterSystem
 	dialogues   *DialogueSystem
@@ -104,8 +106,9 @@ type State struct {
 
 	litSceneCanvas *opengl.Canvas
 
-	hudBatch *pixel.Batch
-	mobs     []*ShadowMob
+	hudBatch      *pixel.Batch
+	mobs          []*ShadowMob
+	mobTriggering bool
 
 	eventDispatcher *Dispatcher
 	planExecutor    *PlanExecutor
@@ -228,17 +231,24 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 	s.camera.Update(s, timeDelta)
 	renderBounds, cameraDelta := s.camera.ComputeRenderDetails(s, targetBounds)
 
-	// SCENE
+	// RESET & CLEAR
+
+	s.lightMapBatch.Clear()
+	s.DrawColoredAreas(s.lightClear, s.ambientLightAreas, s.lightMapCanvas, cameraDelta, renderBounds, imdraw.New(nil))
 
 	s.sceneBatch.Clear()
 	s.sceneCanvas.Clear(s.ClearColor())
-	s.DrawColoredAreas(s.backgroundColorAreas, s.sceneCanvas, cameraDelta, renderBounds, imdraw.New(nil))
+	s.DrawColoredAreas(s.sceneClear, s.backgroundColorAreas, s.sceneCanvas, cameraDelta, renderBounds, imdraw.New(nil))
 
-	s.lightMapBatch.Clear()
+	// SCENE
+
+	renderFx(s.sceneBatch, cameraDelta, timeDelta, s.backgroundFxs)
 
 	for _, thisRenderLayer := range s.underRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraDelta, renderBounds)
 	}
+
+	renderFx(s.sceneBatch, cameraDelta, timeDelta, s.foregroundFxs)
 
 	for _, mob := range s.mobs {
 		renderLocation := mob.Location.Scaled(resources.MapTileSize.Float())
@@ -270,7 +280,7 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 		// a little gross
 		s.lightMapBatch.Clear()
 	}
-	s.DrawColoredAreas(s.ambientLightAreas, s.lightMapCanvas, cameraDelta, renderBounds, imdraw.New(nil))
+
 	s.lightMapCanvas.SetComposeMethod(pixel.ComposeScreen)
 	s.lightMapBatch.Draw(s.lightMapCanvas)
 

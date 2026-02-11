@@ -246,10 +246,10 @@ func (m *animechMenu) renderStats(target pixel.Target, topCenter pixel.Matrix) {
 	y -= 13
 	smallTxt.render("Experience Points:", 0, y, colorText, tbcfg.RenderFrom(gfx.TopCenter))
 	y -= 7
-	regularTxt.render(comma(a.AnimechExperience), 0, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	regularTxt.render(comma(a.Experience), 0, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
 
 	y -= 19
-	xpNeeded := rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1) - a.AnimechExperience
+	xpNeeded := rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1) - a.Experience
 	if xpNeeded <= 0 {
 		w, _ := smallTxt.render("upgrade available", 0, y, flashingHighlight(), tbcfg.RenderFrom(gfx.Centered))
 		arrowMask := colors.Lerp(flashingHighlight(), colorClear, 0.5)
@@ -316,11 +316,11 @@ func (m *animechMenu) renderSkills(target pixel.Target, topCenter pixel.Matrix) 
 func respec() {
 	for game.CurrentSave().Animech.Upgrades.SyncLevel > 0 {
 		game.CurrentSave().Animech.Upgrades.SyncLevel--
-		game.CurrentSave().Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
+		game.CurrentSave().Animech.Experience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
 	}
 	for game.CurrentSave().Animech.Upgrades.ShieldLevel > 0 {
 		game.CurrentSave().Animech.Upgrades.ShieldLevel--
-		game.CurrentSave().Animech.AnimechExperience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
+		game.CurrentSave().Animech.Experience += rpg.AnimechUpgradeExperienceRequiredToUpgrade(game.CurrentSave().Animech.Upgrades.GetLevel())
 	}
 }
 

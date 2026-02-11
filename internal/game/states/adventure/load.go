@@ -15,8 +15,14 @@ import (
 
 func initializeMap(a *State, m *resources.Map) {
 	a.controls = m.Controls
-	a.sceneClear = colors.FromString(util.OrDefaultString(m.Controls.SceneClearColor, "#000"))
-	a.lightClear = colors.FromString(util.OrDefaultString(m.Controls.LightingClearColor, "#fff"))
+	sceneClearColor := util.OrDefaultString(m.Controls.SceneClearColor, "#000")
+	a.sceneClear = colors.FromString(sceneClearColor)
+	lightClearValue := util.OrDefaultString(m.Controls.LightingClearColor, "#fff")
+	a.lightClear = colors.FromString(lightClearValue)
+	log.Info().
+		Str("sceneClear", sceneClearColor).
+		Str("lightingClear", lightClearValue).
+		Msg("loading map from config")
 
 	// get world bounds first, in order to adjust movement of other object
 	var minX, maxX, minY, maxY int

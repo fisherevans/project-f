@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -139,8 +140,11 @@ func (p *Properties) LoadStructFromKey(key string, target any) bool {
 	decoder := yaml.NewDecoder(strings.NewReader(value))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(target); err != nil {
-		log.Fatal().Any("props", p).Str("key", key).Type("target", target).Err(err).
-			Msgf("failed to load struct from key: %v", err)
+		if err == io.EOF {
+			return false
+		}
+		log.Fatal().Any("props", p).Str("key", key).Type("target", target).Str("data", value).Err(err).
+			Msgf("failed to load struct from key")
 		return false
 	}
 	return true

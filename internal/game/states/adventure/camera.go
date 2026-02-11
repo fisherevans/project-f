@@ -15,6 +15,11 @@ import (
 // setting speed to 0 (instant follow), show none of this issue
 // unclear how to avoid this problem with a camera with "momentum"...
 
+type TargetingCamera interface {
+	Camera
+	SetTarget(target string)
+}
+
 type Camera interface {
 	SetLocation(location pixel.Vec)
 	CurrentLocation() pixel.Vec
@@ -88,7 +93,7 @@ type EntityCamera struct {
 	activeMean     pixel.Vec
 }
 
-func NewFollowCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
+func NewComplexEntityCamera(target string, initialLocation pixel.Vec, speed float64) *EntityCamera {
 	return &EntityCamera{
 		cameraLocation: cameraLocation{location: initialLocation},
 		ghostLocation:  initialLocation,
@@ -113,7 +118,8 @@ func (c *EntityCamera) Update(s *State, timeDelta float64) {
 		return
 	}
 
-	c.ghostLocation = c.ghostLocation.Add(targetLocation.Sub(c.ghostLocation).Scaled(timeDelta * c.speed))
+	t := 1.0 - math.Exp(-c.speed*timeDelta)
+	c.ghostLocation = c.ghostLocation.Add(targetLocation.Sub(c.ghostLocation).Scaled(t))
 
 	// if camera is directly on top, reset smoothing logic
 	if c.ghostLocation.Sub(targetLocation).Len() < entityCameraEpsilon && c.location.Sub(targetLocation).Len() < entityCameraEpsilon {
@@ -164,6 +170,10 @@ func (c *EntityCamera) SetLocation(location pixel.Vec) {
 	c.location = c.ghostLocation
 }
 
+func (c *EntityCamera) SetTarget(target string) {
+	c.target = target
+}
+
 func (c *EntityCamera) TargetLocation(s *State) pixel.Vec {
 	target, found := s.entities.GetEntity(c.target)
 	if !found {
@@ -187,6 +197,80 @@ func StdDev(vs []pixel.Vec) (pixel.Vec, pixel.Vec) {
 	}
 	variance := sum.Scaled(1.0 / float64(len(vs)))
 	return mean, pixel.V(math.Sqrt(variance.X), math.Sqrt(variance.Y))
+}
+
+type SimpleEntityCamera struct {
+	cameraLocation
+	target       string
+	speed        float64
+	snapToTarget bool
+
+	isSnapped bool
+}
+
+func NewSimpleEntityCamera(target string, initialLocation pixel.Vec, speed float64, snapToTarget bool) *SimpleEntityCamera {
+	return &SimpleEntityCamera{
+		cameraLocation: cameraLocation{location: initialLocation},
+		target:         target,
+		speed:          speed,
+		snapToTarget:   snapToTarget,
+	}
+}
+
+var cameraSnapDistanceThreshold = 1.0 / float64(resources.MapTileSize)
+var cameraUnsnapDistanceThreshold = cameraSnapDistanceThreshold * 2
+
+func (c *SimpleEntityCamera) Update(s *State, timeDelta float64) {
+	target, found := s.entities.GetEntity(c.target)
+	if !found {
+		return
+	}
+	targetLocation := target.GetPreciseLocation()
+	if c.speed == EntityCameraSpeedNoLag {
+		c.location = targetLocation
+		return
+	}
+
+	delta := targetLocation.Sub(c.location)
+	if c.snapToTarget && delta.Len() < cameraSnapDistanceThreshold && !c.isSnapped {
+		c.isSnapped = true
+	} else if c.isSnapped && delta.Len() > cameraUnsnapDistanceThreshold {
+		c.isSnapped = false
+	}
+
+	if c.isSnapped {
+		c.location = targetLocation
+	} else {
+		t := 1.0 - math.Exp(-c.speed*timeDelta)
+		c.location = c.location.Add(delta.Scaled(t))
+	}
+}
+
+func (c *SimpleEntityCamera) ResetPosition(s *State) {
+	target, found := s.entities.GetEntity(c.target)
+	if !found {
+		return
+	}
+	c.SetLocation(target.GetPreciseLocation())
+	c.isSnapped = false
+}
+
+func (c *SimpleEntityCamera) SetLocation(location pixel.Vec) {
+	c.location = location
+	c.isSnapped = false
+}
+
+func (c *SimpleEntityCamera) SetTarget(target string) {
+	c.target = target
+	c.isSnapped = false
+}
+
+func (c *SimpleEntityCamera) TargetLocation(s *State) pixel.Vec {
+	target, found := s.entities.GetEntity(c.target)
+	if !found {
+		return c.location
+	}
+	return target.GetPreciseLocation()
 }
 
 type CameraOverride struct {

@@ -242,6 +242,10 @@ func (s *State) ClearColor() pixel.RGBA {
 func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64) {
 	s.batch.Clear()
 
+	if game.DebugToggles().F1().JustPressed() {
+		s.AdjustHealth(-20, s.Opponent, nil)
+	}
+
 	s.visibilityBackground.Update(timeDelta)
 	s.visibilityPlayer.Update(timeDelta)
 	s.visibilityPlayerStats.Update(timeDelta)

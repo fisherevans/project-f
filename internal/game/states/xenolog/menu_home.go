@@ -62,7 +62,7 @@ func (s *homeMenu) Enter() {
 func isAnimechUpgradeAvailable() bool {
 	a := game.CurrentSave().Animech
 	level := a.Upgrades.GetLevel()
-	return a.AnimechExperience >= rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1)
+	return a.Experience >= rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1)
 }
 
 func isPrimortalUpgradeAvailable() bool {

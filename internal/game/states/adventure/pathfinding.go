@@ -27,23 +27,39 @@ type pathfindingContext struct {
 	entity Entity
 }
 
-func (l MapLocation) PathNeighbors(ctx pathfindingContext) []astar.WeightedNeighbor[MapLocation] {
-	var neighbors []astar.WeightedNeighbor[MapLocation]
-	for _, d := range input.Directions {
-		neighbor := l.Moved(d)
-		validEgress, egressImpedance := ctx.entity.GetSystem().isValidTransition(ctx.entity, l, d, false)
-		validIngress, ingressImpedance := ctx.entity.GetSystem().isValidTransition(ctx.entity, l, d, true)
-		cost := egressImpedance + ingressImpedance
-		if (!validIngress || !validEgress) && cost >= ImpedanceImpassable {
-			continue
+func (l MapLocation) PathNeighbors(ctx any) []astar.WeightedNeighbor[MapLocation] {
+	if pctx, ok := ctx.(pathfindingContext); ok {
+		var neighbors []astar.WeightedNeighbor[MapLocation]
+		for _, d := range input.Directions {
+			neighbor := l.Moved(d)
+			validEgress, egressImpedance := pctx.entity.GetSystem().isValidTransition(pctx.entity, l, d, false)
+			validIngress, ingressImpedance := pctx.entity.GetSystem().isValidTransition(pctx.entity, l, d, true)
+			cost := egressImpedance + ingressImpedance
+			if (!validIngress || !validEgress) && cost >= ImpedanceImpassable {
+				continue
+			}
+			cost += getPathJitter(pctx.entity.GetId(), neighbor)
+			neighbors = append(neighbors, astar.WeightedNeighbor[MapLocation]{
+				Neighbor: neighbor,
+				Cost:     cost,
+			})
 		}
-		cost += getPathJitter(ctx.entity.GetId(), neighbor)
-		neighbors = append(neighbors, astar.WeightedNeighbor[MapLocation]{
-			Neighbor: neighbor,
-			Cost:     cost,
-		})
+		return neighbors
 	}
-	return neighbors
+	if sctx, ok := ctx.(shadowMobPathfindingContext); ok {
+		var neighbors []astar.WeightedNeighbor[MapLocation]
+		for _, d := range input.Directions {
+			neighbor := l.Moved(d)
+			if sctx.s.canMobTraverse(neighbor.X, neighbor.Y) {
+				neighbors = append(neighbors, astar.WeightedNeighbor[MapLocation]{
+					Neighbor: neighbor,
+					Cost:     1.0,
+				})
+			}
+		}
+		return neighbors
+	}
+	return nil
 }
 
 // getPathJitter returns a deterministic jitter value in range [-PathJitterAmount, +PathJitterAmount]
@@ -58,10 +74,18 @@ func getPathJitter(entityId string, loc MapLocation) float64 {
 	return (normalized*2.0 - 1.0) * PathJitterAmount // [-PathJitterAmount, +PathJitterAmount]
 }
 
-func (l MapLocation) PathHeuristic(ctx pathfindingContext, to MapLocation) float64 {
-	dx := l.X - to.X
-	dy := l.Y - to.Y
-	return (math.Abs(float64(dx)) + math.Abs(float64(dy))) * ImpedanceBase
+func (l MapLocation) PathHeuristic(ctx any, to MapLocation) float64 {
+	if _, ok := ctx.(pathfindingContext); ok {
+		dx := l.X - to.X
+		dy := l.Y - to.Y
+		return (math.Abs(float64(dx)) + math.Abs(float64(dy))) * ImpedanceBase
+	}
+	if _, ok := ctx.(shadowMobPathfindingContext); ok {
+		dx := float64(l.X - to.X)
+		dy := float64(l.Y - to.Y)
+		return math.Abs(dx) + math.Abs(dy)
+	}
+	return 0
 }
 
 func (es *EntitySystem) FindPath(from, to MapLocation, entity Entity) Path {
@@ -70,8 +94,7 @@ func (es *EntitySystem) FindPath(from, to MapLocation, entity Entity) Path {
 	ctx := pathfindingContext{
 		entity: entity,
 	}
-
-	pathers, distance, found := astar.Path(from, to, ctx, MaxPathfindingNodes)
+	pathers, distance, found := astar.Path[MapLocation, any](from, to, ctx, MaxPathfindingNodes)
 	if !found {
 		return Path{
 			PathFound: false,

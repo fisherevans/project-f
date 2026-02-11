@@ -13,6 +13,7 @@ require (
 	github.com/gopxl/pixel/v2 v2.3.0
 	github.com/lafriks/go-tiled v0.14.0
 	github.com/mattn/go-isatty v0.0.19
+	github.com/ncruces/zenity v0.10.14
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.10.2
 	golang.design/x/clipboard v0.7.1
@@ -21,6 +22,8 @@ require (
 )
 
 require (
+	github.com/akavel/rsrc v0.10.2 // indirect
+	github.com/dchest/jsmin v0.0.0-20220218165748-59f39799265f // indirect
 	github.com/ebitengine/oto/v3 v3.3.2 // indirect
 	github.com/ebitengine/purego v0.8.0 // indirect
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
@@ -31,10 +34,12 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jfreymuth/oggvorbis v1.0.5 // indirect
 	github.com/jfreymuth/vorbis v1.0.2 // indirect
+	github.com/josephspurrier/goversioninfo v1.4.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mewkiz/flac v1.0.12 // indirect
 	github.com/mewkiz/pkg v0.0.0-20230226050401-4010bf0fec14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/randall77/makefat v0.0.0-20210315173500-7ddd0e42c844 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect
 	golang.org/x/exp/shiny v0.0.0-20250606033433-dcc06ee1d476 // indirect
 	golang.org/x/mobile v0.0.0-20250606033058-a2a15c67f36f // indirect

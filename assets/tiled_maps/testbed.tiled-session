@@ -15,26 +15,26 @@
         },
         "hq.tmx": {
             "expandedGroupLayers": [
-                3,
                 4,
-                2
+                2,
+                3
             ],
             "expandedObjectLayers": [
                 11,
                 4
             ],
-            "scale": 5.5,
+            "scale": 2.489,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 3873.727272727273,
-                "y": 3753.727272727273
+                "x": 3980.112494977903,
+                "y": 3749.8995580554447
             }
         },
         "intro.tmx": {
             "expandedGroupLayers": [
-                3,
                 4,
-                2
+                2,
+                3
             ],
             "expandedObjectLayers": [
                 11,
@@ -43,11 +43,11 @@
                 14,
                 13
             ],
-            "scale": 1.5,
+            "scale": 6.3658,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 967.6666666666665,
-                "y": 3129
+                "x": 1164.5826133400358,
+                "y": 3116.418988972321
             }
         },
         "map1.tmx": {
@@ -62,11 +62,11 @@
                 21,
                 18
             ],
-            "scale": 1.58,
-            "selectedLayer": 8,
+            "scale": 1.6421,
+            "selectedLayer": 10,
             "viewCenter": {
-                "x": 1323.73417721519,
-                "y": 1216.1392405063289
+                "x": 565.4345045977711,
+                "y": 2196.2730649777723
             }
         },
         "snowhex_base.tsx": {

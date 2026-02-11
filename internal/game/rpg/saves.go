@@ -130,11 +130,15 @@ func (g *GameSave) Save() error {
 }
 
 func (g *GameSave) GrantResearchPoints(p PrimortalType, points int) {
+	if _, ok := Primortals[p]; !ok {
+		log.Warn().Msgf("unknown primortal type, cannot grant RP: %v", p)
+		return
+	}
 	if _, ok := g.Primortals[p]; !ok {
 		g.Primortals[p] = &PrimortalProgress{}
 	}
 	g.Primortals[p].Visibility = PrimortalVisibilityDefeated
-	g.Primortals[p].ResearchPoints += points
+	g.Primortals[p].PendingResearchPoints += points
 	g.Primortals[p].LastSeen = time.Now()
 
 }
@@ -144,7 +148,7 @@ func (g *GameSave) GrantExperience(points int) {
 		g.Animech = &Animech{}
 		g.Animech.FillDefaults()
 	}
-	g.Animech.AnimechExperience += points
+	g.Animech.PendingExperience += points
 }
 
 func LoadGameSaves() (map[string]*GameSave, error) {

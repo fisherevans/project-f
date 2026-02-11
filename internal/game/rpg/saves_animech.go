@@ -4,9 +4,14 @@ const BaseAnimechShield = 25
 const BaseAnimechSync = 25
 
 type Animech struct {
-	SkillSet          *SkillSet        `yaml:"skill_set"`
-	AnimechExperience int              `yaml:"experience_points"`
-	Upgrades          *AnimechUpgrades `yaml:"upgrades"`
+	SkillSet   *SkillSet        `yaml:"skill_set"`
+	Experience int              `yaml:"experience_points"`
+	Upgrades   *AnimechUpgrades `yaml:"upgrades"`
+
+	// current run details
+	PendingExperience int `yaml:"pending_experience"`
+	CurrentSync       int `yaml:"current_sync"`
+	CurrentShield     int `yaml:"current_shield"`
 }
 
 func (a *Animech) GetMaxShield() int {
