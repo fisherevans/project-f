@@ -242,13 +242,13 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 
 	// SCENE
 
-	renderFx(s.sceneBatch, cameraDelta, timeDelta, s.backgroundFxs)
+	s.backgroundFxs = renderFx(s.sceneBatch, cameraDelta, timeDelta, s.backgroundFxs)
 
 	for _, thisRenderLayer := range s.underRenderLayers {
 		thisRenderLayer.Render(s.sceneBatch, cameraDelta, renderBounds)
 	}
 
-	renderFx(s.sceneBatch, cameraDelta, timeDelta, s.foregroundFxs)
+	s.foregroundFxs = renderFx(s.sceneBatch, cameraDelta, timeDelta, s.foregroundFxs)
 
 	for _, mob := range s.mobs {
 		renderLocation := mob.Location.Scaled(resources.MapTileSize.Float())

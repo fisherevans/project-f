@@ -1,6 +1,7 @@
 package xenolog
 
 import (
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -24,18 +25,18 @@ var (
 
 var (
 	skillSetBadgeStyle = badges.ButtonColorStyle{
-		Action:    colorHighlight,
-		Button:    colorDark,
-		Highlight: colorHighlight,
+		Action:    screenColors.Highlight,
+		Button:    screenColors.Dark,
+		Highlight: screenColors.Highlight,
 	}
 )
 
 type skillSetMenu struct {
-	screen               *Screen
+	screen               *screen.Instance
 	currentSkillSelected input.Direction
 }
 
-func newSkillSetMenu(screen *Screen) *skillSetMenu {
+func newSkillSetMenu(screen *screen.Instance) *skillSetMenu {
 	m := &skillSetMenu{
 		screen:               screen,
 		currentSkillSelected: input.Up,
@@ -83,7 +84,7 @@ func (m *skillSetMenu) render(target pixel.Target) {
 	x := screenWidth / 2
 	y := 123
 	titleTxt := newTextRenderer(target, titleTextbox)
-	titleTxt.render("Animech Skill Set", x, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	titleTxt.render("Animech Skill Set", x, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopCenter))
 
 	// render arrow skills delta'ed from center
 	y -= 36
@@ -122,14 +123,14 @@ func (m *skillSetMenu) renderSkill(direction input.Direction, width, x, y int, t
 	skillId := game.CurrentSave().Animech.SkillSet.DirectionalSkill(direction)
 	regularTxt := newTextRenderer(target, regularTextbox)
 
-	fgMask := colorText
-	bgMask := colorDark
-	borderMask := colorClear
+	fgMask := screenColors.Text
+	bgMask := screenColors.Dark
+	borderMask := screenColors.Clear
 	boldBorder := false
 	if m.currentSkillSelected == direction {
-		fgMask = colorDark
+		fgMask = screenColors.Dark
 		bgMask = flashingHighlight()
-		borderMask = colorDark
+		borderMask = screenColors.Dark
 		//boldBorder = true
 	}
 
@@ -157,20 +158,20 @@ func (m *skillSetMenu) renderSkillDetail(target pixel.Target, topCenter pixel.Ma
 	smallTxt := newTextRenderer(target, skillSetDetailSmallTextbox).withMatrix(topCenter)
 
 	frameR := pixel.R(0, 0, float64(skillSetCurrentSkillFrameWidth), float64(skillSetCurrentSkillFrameHeight))
-	frame4px.Draw(target, frameR, topCenter, frames.WithRenderOrigin(gfx.TopCenter), frames.WithColor(colorDark))
-	frame4pxBorder.Draw(target, frameR, topCenter, frames.WithRenderOrigin(gfx.TopCenter), frames.WithColor(colorText))
+	frame4px.Draw(target, frameR, topCenter, frames.WithRenderOrigin(gfx.TopCenter), frames.WithColor(screenColors.Dark))
+	frame4pxBorder.Draw(target, frameR, topCenter, frames.WithRenderOrigin(gfx.TopCenter), frames.WithColor(screenColors.Text))
 
 	dy := -3
 
 	skillId := game.CurrentSave().Animech.SkillSet.DirectionalSkill(m.currentSkillSelected)
 	if *skillId == rpg.UnsetSkillId {
-		regularTxt.render("Select a skill to edit it", 0, dy, colorText, tbcfg.RenderFrom(gfx.TopCenter))
+		regularTxt.render("Select a skill to edit it", 0, dy, screenColors.Text, tbcfg.RenderFrom(gfx.TopCenter))
 		return
 	}
 
-	regularTxt.render(skillId.Get().Name, 0, dy, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	regularTxt.render(skillId.Get().Name, 0, dy, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopCenter))
 	dy -= 15
-	smallTxt.render(skillId.Get().Description, 0, dy, colorText, tbcfg.RenderFrom(gfx.TopCenter))
+	smallTxt.render(skillId.Get().Description, 0, dy, screenColors.Text, tbcfg.RenderFrom(gfx.TopCenter))
 
 	dy -= 27
 	badgePadding := 11

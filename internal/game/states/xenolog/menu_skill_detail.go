@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -47,12 +48,12 @@ var statusLevels = []rpg.StatusLevel{
 }
 
 type skillDetailMenu struct {
-	screen    *Screen
+	screen    *screen.Instance
 	skillId   rpg.SkillId
 	selection int
 }
 
-func newSkillDetailMenu(screen *Screen, skillId rpg.SkillId) *skillDetailMenu {
+func newSkillDetailMenu(screen *screen.Instance, skillId rpg.SkillId) *skillDetailMenu {
 	return &skillDetailMenu{
 		screen:  screen,
 		skillId: skillId,
@@ -73,7 +74,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	tickBarX := 25
 	tickBarY := screenHeight - (screenHeight-tickBarHeight)/2
 	tickCenters := tickBarRenderer.Draw(
-		v.screen.spriteFilterBuffer.Target(),
+		v.screen.SpriteFilterBuffer().Target(),
 		pixel.IM.Moved(gfx.IVec(tickBarX, tickBarY)),
 		&skill,
 		tbOpt).TickDotCenterMatrices
@@ -81,18 +82,18 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	arrowLeft6px.DrawColorMask(target, tickCenters[v.selection].Moved(gfx.IVec(10, 0)), flashingHighlight())
 	for i := 0; i < len(tickCenters)-1; i++ {
 		leftCenter := tickCenters[i].Moved(gfx.IVec(8, -tickSpacing/2))
-		noneTickSprite.DrawColorMask(target, leftCenter, colorDark)
-		noneTickSprite.DrawColorMask(target, leftCenter.Moved(gfx.IVec(2, 0)), colorDark)
+		noneTickSprite.DrawColorMask(target, leftCenter, screenColors.Dark)
+		noneTickSprite.DrawColorMask(target, leftCenter.Moved(gfx.IVec(2, 0)), screenColors.Dark)
 	}
 
 	x := 51
 	y := screenHeight - 14
 
-	smallTxt.render("skill details", x, y, colorDark, tbcfg.RenderFrom(gfx.LeftCenter))
+	smallTxt.render("skill details", x, y, screenColors.Dark, tbcfg.RenderFrom(gfx.LeftCenter))
 	y -= 9
-	titleTxt.render(skill.Name, x, y, colorHighlight, tbcfg.RenderFrom(gfx.LeftCenter))
+	titleTxt.render(skill.Name, x, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.LeftCenter))
 	y -= 14
-	_, h := smallTxt.render(skill.Description, x, y, colorText, tbcfg.RenderFrom(gfx.LeftCenter))
+	_, h := smallTxt.render(skill.Description, x, y, screenColors.Text, tbcfg.RenderFrom(gfx.LeftCenter))
 
 	y -= h + 4
 
@@ -103,8 +104,8 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 
 	tickFrameR := pixel.R(0, 0, float64(tickFrameW), float64(tickFrameH))
 	tickFrameTopLeft := pixel.IM.Moved(gfx.IVec(x-4, y))
-	frame2px.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(colorDark), frames.WithRenderOrigin(gfx.TopLeft))
-	frame2pxBorder.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(colorText), frames.WithRenderOrigin(gfx.TopLeft))
+	frame2px.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(screenColors.Dark), frames.WithRenderOrigin(gfx.TopLeft))
+	frame2pxBorder.Draw(target, tickFrameR, tickFrameTopLeft, frames.WithColor(screenColors.Text), frames.WithRenderOrigin(gfx.TopLeft))
 
 	y -= 7
 	printTickDetail := func(pl printLine) {
@@ -151,7 +152,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 		if effects.stances[stance] {
 			c := []lineContents{
 				stringContent(fmt.Sprintf("{+c:xenolog_highlight}%s", stance.String())),
-				spriteContent(stanceIcons[stance]).mask(colorHighlight),
+				spriteContent(stanceIcons[stance]).mask(screenColors.Highlight),
 				stringContent("{+c:xenolog_clear}(stance)"),
 			}
 			printTickDetail(newPrintLine(c...))
@@ -161,7 +162,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 
 	for _, status := range statuses {
 		if effects.statuses[status] {
-			sprite := spriteContent(statusIcons[status]).mask(colorHighlight)
+			sprite := spriteContent(statusIcons[status]).mask(screenColors.Highlight)
 			if status == rpg.StatusMending {
 				sprite = sprite.moved(0, -1)
 			}
@@ -184,7 +185,7 @@ func (v *skillDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 func (v *skillDetailMenu) renderPrintLine(pl printLine, target pixel.Target, smallTxt *textRenderer, x int, yPtr *int) {
 	thisX := x
 	for _, c := range pl.contents {
-		mask := colorText
+		mask := screenColors.Text
 		if c.color != nil {
 			mask = *c.color
 		}
@@ -195,7 +196,7 @@ func (v *skillDetailMenu) renderPrintLine(pl printLine, target pixel.Target, sma
 		if c.image != nil {
 			imgDx := c.image.Bounds().W() / 2
 			imgDy := int((c.image.Bounds().H() - 5) / 2)
-			c.image.DrawColorMask(v.screen.spriteFilterBuffer.Target(), pixel.IM.Moved(gfx.IVec(thisX+int(imgDx)+c.dx, *yPtr+imgDy+c.dy)), mask)
+			c.image.DrawColorMask(v.screen.SpriteFilterBuffer().Target(), pixel.IM.Moved(gfx.IVec(thisX+int(imgDx)+c.dx, *yPtr+imgDy+c.dy)), mask)
 			thisX += int(c.image.Bounds().W()) + 2
 		}
 	}
@@ -346,7 +347,7 @@ func damageScaleByEffects(scalers map[rpg.StatusType]map[rpg.StatusLevel]float64
 				status.CurrentTense(),
 			))), false) // always false, since it's talking about modifying the last line
 			e.addDamageLine(newPrintLine(
-				spriteContent(arrowRight).mask(colorClear).moved(0, 1),
+				spriteContent(arrowRight).mask(screenColors.Clear).moved(0, 1),
 				stringContent(fmt.Sprintf("Deal %s more damage",
 					strings.Join(levelStrings, "/"),
 				)),

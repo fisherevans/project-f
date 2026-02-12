@@ -1,4 +1,4 @@
-package xenolog
+package screen
 
 import (
 	"github.com/gopxl/pixel/v2"
@@ -11,16 +11,16 @@ type spriteShader struct {
 	batch  *pixel.Batch
 }
 
-func newSpriteShader() *spriteShader {
+func newSpriteShader(renderContext RenderContext) *spriteShader {
 	s := &spriteShader{
-		canvas: shaders.NewCanvas(screenWidth, screenHeight),
-		batch:  atlas.NewBatch(),
+		canvas: shaders.NewCanvas(renderContext.Width, renderContext.Height),
+		batch:  renderContext.Atlas.NewBatch(),
 	}
 	s.canvas.SetXbitShaderWithThresholds(
-		colorClear,
+		renderContext.Colors.Clear,
 		[]shaders.ColorThreshold{
-			{Threshold: 0.15, Color: colorText},
-			{Threshold: 0.45, Color: colorHighlight},
+			{Threshold: 0.15, Color: renderContext.Colors.Text},
+			{Threshold: 0.45, Color: renderContext.Colors.Highlight},
 		},
 		0.01,
 	)

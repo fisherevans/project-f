@@ -3,6 +3,7 @@ package xenolog
 import (
 	"math"
 
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -28,13 +29,13 @@ var (
 )
 
 type homeMenu struct {
-	screen     *Screen
+	screen     *screen.Instance
 	selectLeft bool
 	left       *selectBox
 	right      *selectBox
 }
 
-func newHomeMenu(screen *Screen, primortalsEnabled bool) *homeMenu {
+func newHomeMenu(screen *screen.Instance, primortalsEnabled bool) *homeMenu {
 	home := &homeMenu{
 		screen:     screen,
 		selectLeft: true,
@@ -93,16 +94,16 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 
 	if game.Controls[*State]().ButtonB().JustPressed() {
-		s.screen.state.Close()
+		s.screen.Holder().Close()
 	}
 
-	center := pixel.IM.Moved(gfx.IVec(screenWidth/2, screenHeight/2+3))
+	center := pixel.IM.Moved(gfx.IVec(s.screen.Width()/2, s.screen.Height()/2+3))
 	dx := math.Floor(float64(selectBoxWidth) * 0.6)
 	s.left.render(center.Moved(pixel.V(-dx, 0)), target, s.selectLeft, timeDelta)
 	s.right.render(center.Moved(pixel.V(dx, 0)), target, !s.selectLeft, timeDelta)
 
 	badgeStartClose.Render(target, pixel.IM.Moved(gfx.IVec(2, 2)), gfx.BottomLeft)
-	badgeASelect.Render(target, pixel.IM.Moved(gfx.IVec(screenWidth-2, 2)), gfx.BottomRight)
+	badgeASelect.Render(target, pixel.IM.Moved(gfx.IVec(s.screen.Width()-2, 2)), gfx.BottomRight)
 }
 
 var (
@@ -134,13 +135,13 @@ func newSelectBox(sprite pixelutil.BoundedDrawable, label, subLabel string) *sel
 func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bool, timeDelta float64) {
 	b.elapsed += timeDelta
 
-	mask := colorText
+	mask := screenColors.Text
 	if selected {
-		mask = colorHighlight
+		mask = screenColors.Highlight
 	}
 
 	frameRect := pixel.R(0, 0, float64(selectBoxWidth), float64(selectBoxHeight))
-	frame4px.Draw(target, frameRect, center, frames.WithColor(colorDark))
+	frame4px.Draw(target, frameRect, center, frames.WithColor(screenColors.Dark))
 	frame4pxBorder.Draw(target, frameRect, center, frames.WithColor(mask))
 
 	bottomCenter := center.Moved(gfx.IVec(0, -selectBoxHeight/2))
@@ -153,7 +154,7 @@ func (b *selectBox) render(center pixel.Matrix, target pixel.Target, selected bo
 	}
 
 	if b.subLabel != "" {
-		subLabelMask := colors.Lerp(colorText, colorHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+		subLabelMask := colors.Lerp(screenColors.Text, screenColors.Highlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 		c := selectBoxSubLabelText.NewSimpleContent(b.subLabel)
 		c.Render(target,
 			center.Moved(gfx.IVec(0, -selectBoxHeight/2-selectBoxSubLabelMargin)),

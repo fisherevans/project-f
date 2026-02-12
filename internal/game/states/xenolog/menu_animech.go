@@ -3,6 +3,7 @@ package xenolog
 import (
 	"fmt"
 
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -23,14 +24,14 @@ var (
 )
 
 type animechMenu struct {
-	screen        *Screen
+	screen        *screen.Instance
 	nav           *navigtion.System[*animechMenu]
 	statsActions  []*animechMenuAction
 	skillsActions []*animechMenuAction
 	skillItems    map[input.Direction]*navigtion.SimpleItem[*animechMenu]
 }
 
-func newAnimechMenu(s *Screen) *animechMenu {
+func newAnimechMenu(s *screen.Instance) *animechMenu {
 	menu := &animechMenu{
 		screen: s,
 		statsActions: []*animechMenuAction{
@@ -196,16 +197,16 @@ func (m *animechMenu) drawActions(target pixel.Target, topCenter pixel.Matrix, a
 	topLeft := topCenter.Moved(gfx.IVec(-animechFrameWidth/2, -framePadding))
 	actionBottomLeft := topLeft.Moved(gfx.IVec(int((float64(animechFrameWidth)-totalWidth)/2), -actionHeight))
 	for _, b := range buttons {
-		bgMask, borderMask, textMask := colorDark, colorClear, colorText
+		bgMask, borderMask, textMask := screenColors.Dark, screenColors.Clear, screenColors.Text
 		if b.disabled {
-			bgMask = colorClear
-			borderMask, textMask = colorDark, colorDark
+			bgMask = screenColors.Clear
+			borderMask, textMask = screenColors.Dark, screenColors.Dark
 			if b.highlighted {
-				borderMask = colorText
+				borderMask = screenColors.Text
 			}
 		} else if b.highlighted {
 			bgMask = flashingHighlight()
-			borderMask, textMask = colorDark, colorDark
+			borderMask, textMask = screenColors.Dark, screenColors.Dark
 		}
 		frame2px.Draw(target, b.rect, actionBottomLeft,
 			frames.WithRenderOrigin(gfx.BottomLeft), frames.WithColor(bgMask))
@@ -220,7 +221,7 @@ func (m *animechMenu) drawActions(target pixel.Target, topCenter pixel.Matrix, a
 func (m *animechMenu) renderStats(target pixel.Target, topCenter pixel.Matrix) {
 	a := game.CurrentSave().Animech
 	level := a.Upgrades.GetLevel()
-	m.drawFrame(target, topCenter, fmt.Sprintf("Level %d", level), colorHighlight, colorText)
+	m.drawFrame(target, topCenter, fmt.Sprintf("Level %d", level), screenColors.Highlight, screenColors.Text)
 	m.drawActions(target, topCenter.Moved(gfx.IVec(0, -animechFrameHeight+3)), m.statsActions)
 
 	smallTxt := newTextRenderer(target, smallTextbox).withMatrix(topCenter)
@@ -229,13 +230,13 @@ func (m *animechMenu) renderStats(target pixel.Target, topCenter pixel.Matrix) {
 	y := -animechFrameTopPadding
 
 	y -= 7
-	smallTxt.render("Stats", 0, y, colorText, tbcfg.RenderFrom(gfx.TopCenter))
+	smallTxt.render("Stats", 0, y, screenColors.Text, tbcfg.RenderFrom(gfx.TopCenter))
 
 	renderStat := func(name string, value int) {
 		arrowDx := 0
-		arrowRight.DrawColorMask(target, topCenter.Moved(gfx.IVec(arrowDx, y+1)), colorDark)
-		smallTxt.render(name, arrowDx-7, y, colorText, tbcfg.RenderFrom(gfx.RightCenter))
-		regularTxt.render(fmt.Sprintf("%d", value), arrowDx+6, y, colorHighlight, tbcfg.RenderFrom(gfx.LeftCenter))
+		arrowRight.DrawColorMask(target, topCenter.Moved(gfx.IVec(arrowDx, y+1)), screenColors.Dark)
+		smallTxt.render(name, arrowDx-7, y, screenColors.Text, tbcfg.RenderFrom(gfx.RightCenter))
+		regularTxt.render(fmt.Sprintf("%d", value), arrowDx+6, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.LeftCenter))
 	}
 
 	y -= 14
@@ -244,27 +245,27 @@ func (m *animechMenu) renderStats(target pixel.Target, topCenter pixel.Matrix) {
 	renderStat("sync", a.GetMaxSync())
 
 	y -= 13
-	smallTxt.render("Experience Points:", 0, y, colorText, tbcfg.RenderFrom(gfx.TopCenter))
+	smallTxt.render("Experience Points:", 0, y, screenColors.Text, tbcfg.RenderFrom(gfx.TopCenter))
 	y -= 7
-	regularTxt.render(comma(a.Experience), 0, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	regularTxt.render(comma(a.Experience), 0, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopCenter))
 
 	y -= 19
 	xpNeeded := rpg.AnimechUpgradeExperienceRequiredToUpgrade(level+1) - a.Experience
 	if xpNeeded <= 0 {
 		w, _ := smallTxt.render("upgrade available", 0, y, flashingHighlight(), tbcfg.RenderFrom(gfx.Centered))
-		arrowMask := colors.Lerp(flashingHighlight(), colorClear, 0.5)
+		arrowMask := colors.Lerp(flashingHighlight(), screenColors.Clear, 0.5)
 		arrowX := w/2 + 5
 		// +1's due to odd sprite sizes + origin rendering
 		arrowRight.DrawColorMask(target, topCenter.Moved(gfx.IVec(-arrowX, y+1)), arrowMask)
 		arrowLeft.DrawColorMask(target, topCenter.Moved(gfx.IVec(arrowX+1, y+1)), arrowMask)
 	} else {
 		label := fmt.Sprintf("{+c:xenolog_highlight,+u}%d{+c:xenolog_text,-u} XP 'til level up", xpNeeded)
-		smallTxt.render(label, 0, y, colorText, tbcfg.RenderFrom(gfx.Centered))
+		smallTxt.render(label, 0, y, screenColors.Text, tbcfg.RenderFrom(gfx.Centered))
 	}
 }
 
 func (m *animechMenu) renderSkills(target pixel.Target, topCenter pixel.Matrix) {
-	m.drawFrame(target, topCenter, "Skill Set", colorHighlight, colorText)
+	m.drawFrame(target, topCenter, "Skill Set", screenColors.Highlight, screenColors.Text)
 	m.drawActions(target, topCenter.Moved(gfx.IVec(0, -animechFrameHeight+3)), m.skillsActions)
 	s := game.CurrentSave().Animech.SkillSet
 
@@ -282,15 +283,15 @@ func (m *animechMenu) renderSkills(target pixel.Target, topCenter pixel.Matrix) 
 
 	skillHeight := 15
 	renderSkill := func(dir input.Direction, name string) {
-		borderMask := colorClear
-		bgMask := colorDark
-		fgMask := colorText
-		arrowMask := colorHighlight
+		borderMask := screenColors.Clear
+		bgMask := screenColors.Dark
+		fgMask := screenColors.Text
+		arrowMask := screenColors.Highlight
 		if m.nav.IsHighlighted(m.skillItems[dir]) {
-			borderMask = colorDark
+			borderMask = screenColors.Dark
 			bgMask = flashingHighlight()
-			fgMask = colorDark
-			arrowMask = colorClear
+			fgMask = screenColors.Dark
+			arrowMask = screenColors.Clear
 		}
 		skillWidth := animechFrameWidth - 8
 		frameR := pixel.R(0, 0, float64(skillWidth), float64(skillHeight))

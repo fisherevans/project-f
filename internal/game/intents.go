@@ -99,6 +99,10 @@ type XenologIntent struct {
 	PrimortalsEnabled bool
 }
 
+type ComputerIntent struct {
+	Background State
+}
+
 type BaseTransitionIntent struct {
 	From     State
 	ToState  State

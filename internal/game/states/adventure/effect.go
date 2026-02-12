@@ -144,6 +144,16 @@ func (e *EffectWaitForCondition) Process(source EntityReader, s *State) bool {
 	return true
 }
 
+func NewWaitForAnimationComplete(entityId string) *EffectWaitForCondition {
+	return NewWaitForConditionEffect(func(s *State, td float64) bool {
+		e, r, ok := GetModeBasedRenderer(s, entityId)
+		if !ok {
+			log.Fatal().Msgf("failed to get renderer for %s", entityId)
+		}
+		return r.getBasicEntityRenderer(ModeMetadataKey.Get(e)).AreAnimationsComplete()
+	})
+}
+
 type EffectSendEvent struct {
 	instantEffect
 	Event any

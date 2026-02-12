@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -17,13 +18,13 @@ import (
 var badgeAContinue *badges.ButtonAction
 
 type animechLevelUpAnimation struct {
-	screen             *Screen
+	screen             *screen.Instance
 	fromLevel, toLevel int
 	elapsed            float64
 	totalDuration      float64
 }
 
-func newAnimechLevelUpAnimation(screen *Screen, fromLevel, toLevel int) *animechLevelUpAnimation {
+func newAnimechLevelUpAnimation(screen *screen.Instance, fromLevel, toLevel int) *animechLevelUpAnimation {
 	animation := &animechLevelUpAnimation{
 		screen:        screen,
 		fromLevel:     fromLevel,
@@ -44,9 +45,9 @@ func (s *animechLevelUpAnimation) OnTick(target pixel.Target, timeDelta float64)
 	smallText := newTextRenderer(target, smallTextbox)
 	titleText := newTextRenderer(target, titleTextbox)
 
-	titleText.render("Leveled Up!", screenWidth/2, screenHeight-12, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	titleText.render("Leveled Up!", screenWidth/2, screenHeight-12, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopCenter))
 	fromToText := fmt.Sprintf("From level {+c:xenolog_highlight}%d{-*} to {+c:xenolog_highlight}%d{-*}", s.fromLevel, s.toLevel)
-	smallText.render(fromToText, screenWidth/2, 12, colorText, tbcfg.RenderFrom(gfx.BottomCenter))
+	smallText.render(fromToText, screenWidth/2, 12, screenColors.Text, tbcfg.RenderFrom(gfx.BottomCenter))
 
 	// Base position
 	center := gfx.Moved(screenWidth/2, screenHeight/2)
@@ -65,7 +66,7 @@ func (s *animechLevelUpAnimation) OnTick(target pixel.Target, timeDelta float64)
 		scaleMultiplier = 0.5
 		verticalOffset = 0
 		rotation = 0
-		spriteColor = colorText
+		spriteColor = screenColors.Text
 
 	} else if s.elapsed < startDelay+transitionDur {
 		// Phase 2: Active evolution animation
@@ -98,8 +99,8 @@ func (s *animechLevelUpAnimation) OnTick(target pixel.Target, timeDelta float64)
 		flashSpeed := 5.0
 		flashPhase := transitionElapsed * flashSpeed * 2 * math.Pi
 		flashT := (math.Sin(flashPhase) + 1.0) / 2.0
-		baseColor := colors.Lerp(colorDark, colorHighlight, transitionProgress)
-		spriteColor = colors.Lerp(baseColor, colorHighlight, flashT*intensity*0.7)
+		baseColor := colors.Lerp(screenColors.Dark, screenColors.Highlight, transitionProgress)
+		spriteColor = colors.Lerp(baseColor, screenColors.Highlight, flashT*intensity*0.7)
 
 		// Opacity pulsing
 		opacitySpeed := 2.0
@@ -120,7 +121,7 @@ func (s *animechLevelUpAnimation) OnTick(target pixel.Target, timeDelta float64)
 		rotation = (1.0 - stabilizeProgress) * 0.05 * math.Sin(stabilizeElapsed*3.0*2*math.Pi)
 
 		// Color transitions to highlight
-		spriteColor = colors.Lerp(colorText, colorHighlight, stabilizeProgress)
+		spriteColor = colors.Lerp(screenColors.Text, screenColors.Highlight, stabilizeProgress)
 
 	} else {
 		// Phase 4: Final stable state - full scale, slow pulse

@@ -3,6 +3,7 @@ package xenolog
 import (
 	"fmt"
 
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -15,12 +16,12 @@ import (
 )
 
 type primortalDetailMenu struct {
-	screen    *Screen
+	screen    *screen.Instance
 	primortal rpg.PrimortalType
 	tree      *skillTree
 }
 
-func newPrimortalDetailMenu(screen *Screen, primortal rpg.PrimortalType) *primortalDetailMenu {
+func newPrimortalDetailMenu(screen *screen.Instance, primortal rpg.PrimortalType) *primortalDetailMenu {
 	m := &primortalDetailMenu{
 		screen:    screen,
 		primortal: primortal,
@@ -63,25 +64,25 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 	iconMatrix := pixel.IM.Moved(gfx.TopRight.Align(icon)).Moved(gfx.IVec(screenWidth-detailMargin-primortalIconMargin, screenHeight-detailMargin-primortalIconMargin))
 	w := int(icon.Bounds().W()) + primortalIconMargin*2
 	h := int(icon.Bounds().H()) + primortalIconMargin*2
-	frame4px.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colorDark))
-	frame4pxBorder.Draw(target, rect(w, h), iconMatrix, frames.WithColor(colorText))
-	icon.Draw(v.screen.spriteFilterBuffer.Target(), iconMatrix)
+	frame4px.Draw(target, rect(w, h), iconMatrix, frames.WithColor(screenColors.Dark))
+	frame4pxBorder.Draw(target, rect(w, h), iconMatrix, frames.WithColor(screenColors.Text))
+	icon.Draw(v.screen.SpriteFilterBuffer().Target(), iconMatrix)
 
 	// header
-	dx, _ := titleTxt.render(p.Name, 10, y, colorHighlight, tbcfg.RenderFrom(gfx.TopLeft))
+	dx, _ := titleTxt.render(p.Name, 10, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopLeft))
 	if isComplete {
-		smallTxt.render("[complete]", 10+dx+5, y-4, colorDark, tbcfg.RenderFrom(gfx.TopLeft))
+		smallTxt.render("[complete]", 10+dx+5, y-4, screenColors.Dark, tbcfg.RenderFrom(gfx.TopLeft))
 	}
 	y -= detailLineHeight
 
-	_, descHeight := descriptionText.render(p.Description, 10, y, colorText, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.HAligned(tbcfg.HAlignLeft))
+	_, descHeight := descriptionText.render(p.Description, 10, y, screenColors.Text, tbcfg.RenderFrom(gfx.TopLeft), tbcfg.HAligned(tbcfg.HAlignLeft))
 	y -= descHeight + detailLineHeight/2
 
-	titleTxt.render("Skills:", 10, y, colorHighlight, tbcfg.RenderFrom(gfx.TopLeft))
+	titleTxt.render("Skills:", 10, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopLeft))
 	y -= detailLineHeight
 
-	dx, _ = smallTxt.render("Research Points:", 10, y, colorText, tbcfg.RenderFrom(gfx.TopLeft))
-	smallTxt.render(fmt.Sprintf("%d", rp), 10+dx+3, y, colorHighlight, tbcfg.RenderFrom(gfx.TopLeft))
+	dx, _ = smallTxt.render("Research Points:", 10, y, screenColors.Text, tbcfg.RenderFrom(gfx.TopLeft))
+	smallTxt.render(fmt.Sprintf("%d", rp), 10+dx+3, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopLeft))
 	y -= detailLineHeight
 
 	// tree
@@ -100,7 +101,7 @@ func (v *primortalDetailMenu) OnTick(target pixel.Target, timeDelta float64) {
 		skillDetailsTopLeftY))
 	primortalSkillDetailHeight := skillDetailsTopLeftY - detailMargin
 	frame2pxBorder.Draw(target, rect(primortalSkillDetailWidth, primortalSkillDetailHeight), skillDetailsTopLeft,
-		frames.WithRenderOrigin(gfx.TopLeft), frames.WithColor(colorDark))
+		frames.WithRenderOrigin(gfx.TopLeft), frames.WithColor(screenColors.Dark))
 	v.renderSkillDetailsText(target, skillDetailsTopLeft, primortalSkillDetailWidth, primortalSkillDetailHeight)
 
 	// badges
@@ -130,10 +131,10 @@ func (v *primortalDetailMenu) renderSkillDetailsText(target pixel.Target, topLef
 		}
 	}
 
-	_, dy := txt.render("{+s:xenolog_dark,+u:xenolog_text}"+titleLabel, 0, y, colorHighlight)
+	_, dy := txt.render("{+s:xenolog_dark,+u:xenolog_text}"+titleLabel, 0, y, screenColors.Highlight)
 	y -= primortalSkillDetailTextMargin + dy + 2 // extra for underline
 
-	_, dy = txt.render(desc, 0, y, colorText)
+	_, dy = txt.render(desc, 0, y, screenColors.Text)
 	y -= primortalSkillDetailTextMargin + dy
 
 	var aBadge *badges.ButtonAction

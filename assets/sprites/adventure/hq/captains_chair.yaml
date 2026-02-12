@@ -12,13 +12,27 @@ animations:
     h_sequence:
       row: 1
       fromColumn: 2
+      toColumn: 11
+    framesPerSecond: 6
+    repeat: false
+  close_eyes:
+    h_sequence:
+      row: 1
+      fromColumn: 12
       toColumn: 14
+    framesPerSecond: 6
+    repeat: false
+  open_eyes:
+    h_sequence:
+      row: 1
+      fromColumn: 15
+      toColumn: 16
     framesPerSecond: 6
     repeat: false
   exit:
     h_sequence:
       row: 1
-      fromColumn: 15
+      fromColumn: 17
       toColumn: 21
     framesPerSecond: 6
     repeat: false

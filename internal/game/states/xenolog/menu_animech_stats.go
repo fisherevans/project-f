@@ -3,6 +3,7 @@ package xenolog
 import (
 	"fmt"
 
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -21,7 +22,7 @@ var (
 )
 
 type animechStatsMenu struct {
-	screen   *Screen
+	screen   *screen.Instance
 	upgrades []*upgradedState
 	actions  []*action
 	nav      *navigtion.System[*animechStatsMenu]
@@ -63,7 +64,7 @@ func (a *action) OnButtonAJustPressed(m *animechStatsMenu) {
 	a.handler(m)
 }
 
-func newAnimechStatsMenu(s *Screen) *animechStatsMenu {
+func newAnimechStatsMenu(s *screen.Instance) *animechStatsMenu {
 	menu := &animechStatsMenu{
 		screen: s,
 		upgrades: []*upgradedState{
@@ -152,7 +153,7 @@ func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 
 	// middle
 	x := screenWidth / 2
-	titleText.render("Level Up", x, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	titleText.render("Level Up", x, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopCenter))
 	y -= 16
 
 	for _, upgrade := range m.upgrades {
@@ -165,11 +166,11 @@ func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 			boostText = "---"
 		}
 
-		textMask, frameBg, frameBorder := colorText, colorDark, colorClear
+		textMask, frameBg, frameBorder := screenColors.Text, screenColors.Dark, screenColors.Clear
 		if m.nav.IsHighlighted(upgrade) {
-			textMask = colorDark
-			frameBorder = colorDark
-			frameBg = colorText
+			textMask = screenColors.Dark
+			frameBorder = screenColors.Dark
+			frameBg = screenColors.Text
 			if m.availableExperience >= m.requiredExperienceForNextLevel {
 				frameBg = flashingHighlight()
 			}
@@ -189,10 +190,10 @@ func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 
 	for _, a := range m.actions {
-		mask, frameBg, frameBorder := colorText, colorDark, colorClear
+		mask, frameBg, frameBorder := screenColors.Text, screenColors.Dark, screenColors.Clear
 		if m.nav.IsHighlighted(a) {
-			mask = colorDark
-			frameBg, frameBorder = flashingHighlight(), colorDark
+			mask = screenColors.Dark
+			frameBg, frameBorder = flashingHighlight(), screenColors.Dark
 		}
 		frameR := pixel.R(0, 0, 40, 13)
 		frame2px.Draw(target, frameR, gfx.Moved(x, y), frames.WithColor(frameBg), frames.WithRenderOrigin(gfx.TopCenter))
@@ -205,29 +206,29 @@ func (m *animechStatsMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 
 	y -= 3
-	smallText.render("experience", x, y, colorHighlight, tbcfg.RenderFrom(gfx.TopCenter))
+	smallText.render("experience", x, y, screenColors.Highlight, tbcfg.RenderFrom(gfx.TopCenter))
 	y -= 8
 	expText := fmt.Sprintf("%d{+c:xenolog_text} / %d", m.availableExperience, m.requiredExperienceForNextLevel)
-	expColor := colorHighlight
+	expColor := screenColors.Highlight
 	if m.availableExperience < m.requiredExperienceForNextLevel {
-		expColor = colorDark
+		expColor = screenColors.Dark
 	}
 	w, _ := regularTxt.render(expText, x, y, expColor, tbcfg.RenderFrom(gfx.TopCenter))
 
 	dx := w/2 + 6
 	y -= 3
-	smallText.render("available", x-dx, y, colorDark, tbcfg.RenderFrom(gfx.TopRight))
-	smallText.render("required", x+dx, y, colorDark, tbcfg.RenderFrom(gfx.TopLeft))
+	smallText.render("available", x-dx, y, screenColors.Dark, tbcfg.RenderFrom(gfx.TopRight))
+	smallText.render("required", x+dx, y, screenColors.Dark, tbcfg.RenderFrom(gfx.TopLeft))
 }
 
 func (m *animechStatsMenu) renderStats(target pixel.Target, topCenter pixel.Matrix, base bool) {
 	a := game.CurrentSave().Animech
 	level := a.Upgrades.GetLevel()
-	titleMask, borderMask := colorText, colorText
+	titleMask, borderMask := screenColors.Text, screenColors.Text
 	if !base {
 		if level != m.uncommitedLevel {
 			titleMask = flashingHighlight()
-			borderMask = colorHighlight
+			borderMask = screenColors.Highlight
 		}
 		level = m.uncommitedLevel
 	}
@@ -239,12 +240,12 @@ func (m *animechStatsMenu) renderStats(target pixel.Target, topCenter pixel.Matr
 	y := -animechFrameTopPadding
 
 	y -= 7
-	smallTxt.render("Stats", 0, y, colorText, tbcfg.RenderFrom(gfx.TopCenter))
+	smallTxt.render("Stats", 0, y, screenColors.Text, tbcfg.RenderFrom(gfx.TopCenter))
 
 	renderStat := func(name string, value int, upgraded bool) {
-		nameMask, arrowMask, statMask := colorText, colorClear, colorText
+		nameMask, arrowMask, statMask := screenColors.Text, screenColors.Clear, screenColors.Text
 		if upgraded {
-			nameMask, arrowMask, statMask = colorHighlight, colorHighlight, titleMask
+			nameMask, arrowMask, statMask = screenColors.Highlight, screenColors.Highlight, titleMask
 		}
 		arrowDx := 1
 		smallTxt.render(name, arrowDx-7, y, nameMask, tbcfg.RenderFrom(gfx.RightCenter))
@@ -270,7 +271,7 @@ func (m *animechStatsMenu) drawFrame(target pixel.Target, topCenter pixel.Matrix
 	frame4px.Draw(target, pixel.R(0, 0,
 		float64(animechStatePaneWidth), float64(animechStatePaneHeight)),
 		topCenter,
-		frames.WithColor(colorDark),
+		frames.WithColor(screenColors.Dark),
 		frames.WithRenderOrigin(gfx.TopCenter))
 	frame4pxBorder.Draw(target, pixel.R(0, 0,
 		float64(animechStatePaneWidth), float64(animechStatePaneHeight)),

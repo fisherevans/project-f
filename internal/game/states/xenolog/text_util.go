@@ -46,11 +46,11 @@ func (r *textRenderer) render(text string, x, y int, mask pixel.RGBA, opts ...tb
 }
 
 func flashingHighlight() pixel.RGBA {
-	return colors.Lerp(colorText, colorHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
+	return colors.Lerp(screenColors.Text, screenColors.Highlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed))
 }
 
 func flashingHighlightSlow() pixel.RGBA {
-	return colors.Lerp(colorText, colorHighlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed/2))
+	return colors.Lerp(screenColors.Text, screenColors.Highlight, game.Utils().TimeCycleSin(selectBoxSubLabelFlashSpeed/2))
 }
 
 func saveOrNotify() {

@@ -3575,6 +3575,10 @@ elythium:
     - name: adventure/hq/captains_chair
   &quot;enter&quot;:
     - name: adventure/hq/captains_chair:enter
+  &quot;close_eyes&quot;:
+    - name: adventure/hq/captains_chair:close_eyes
+  &quot;open_eyes&quot;:
+    - name: adventure/hq/captains_chair:open_eyes
   &quot;exit&quot;:
     - name: adventure/hq/captains_chair:exit</property>
      <property name="script_ref" value="hq.chair"/>

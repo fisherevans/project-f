@@ -8,7 +8,6 @@ import (
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/highlighter"
-	"github.com/rs/zerolog/log"
 )
 
 func init() {
@@ -139,13 +138,9 @@ func init() {
 					NewSelfDialogueEffect("Hesitantly, you climb into the chair..."),
 					NewChangePlayerRendererEffect("hidden"),
 					NewMutateModeBasedEntityEffect(chairId).WithMode("enter"),
-					NewWaitForConditionEffect(func(s *State, td float64) bool {
-						e, r, ok := GetModeBasedRenderer(s, chairId)
-						if !ok {
-							log.Fatal().Msgf("failed to get renderer for %s", chairId)
-						}
-						return r.getBasicEntityRenderer(ModeMetadataKey.Get(e)).AreAnimationsComplete()
-					}),
+					NewWaitForAnimationComplete(chairId),
+					NewMutateModeBasedEntityEffect(chairId).WithMode("close_eyes"),
+					NewWaitForAnimationComplete(chairId),
 					NewPlaySoundEffect("adventure/beeps/success"),
 					NewSelfDialogueEffect("Without any warning, you feel it. Your mind slips backwards. Not quite falling, but... floating?"),
 					NewTeleportPlayerEffect().
@@ -494,15 +489,11 @@ func init() {
 						}),
 					NewTimerEffect(1.5),
 					NewSelfDialogueEffect("You awake."),
+					NewMutateModeBasedEntityEffect(chairId).WithMode("open_eyes"),
+					NewWaitForAnimationComplete(chairId),
 					NewSelfDialogueEffect("It takes enormous effort to climb out of the chair."),
 					NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
-					NewWaitForConditionEffect(func(s *State, td float64) bool {
-						e, r, ok := GetModeBasedRenderer(s, chairId)
-						if !ok {
-							log.Fatal().Msgf("failed to get renderer for %s", chairId)
-						}
-						return r.getBasicEntityRenderer(ModeMetadataKey.Get(e)).AreAnimationsComplete()
-					}),
+					NewWaitForAnimationComplete(chairId),
 					NewChangePlayerRendererEffect("human"),
 					NewMutateModeBasedEntityEffect(chairId).WithMode(""),
 					NewTimerEffect(0.5),

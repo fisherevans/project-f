@@ -1,6 +1,7 @@
 package xenolog
 
 import (
+	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
 	"github.com/gopxl/pixel/v2"
 
 	"fisherevans.com/project/f/internal/game"
@@ -14,7 +15,7 @@ import (
 )
 
 type menuModal struct {
-	screen  *Screen
+	screen  *screen.Instance
 	title   string
 	text    string
 	options []modalOption
@@ -32,7 +33,7 @@ type modalOption struct {
 	onSelect func()
 }
 
-func newConfirmationModal(screen *Screen, title, text string, onSelect func()) *menuModal {
+func newConfirmationModal(screen *screen.Instance, title, text string, onSelect func()) *menuModal {
 	return newMenuModal(screen, title, text, modalOption{
 		label: "cancel",
 	}, modalOption{
@@ -41,7 +42,7 @@ func newConfirmationModal(screen *Screen, title, text string, onSelect func()) *
 	})
 }
 
-func newMenuModal(screen *Screen, title, text string, options ...modalOption) *menuModal {
+func newMenuModal(screen *screen.Instance, title, text string, options ...modalOption) *menuModal {
 	modal := &menuModal{
 		screen:    screen,
 		title:     title,
@@ -103,8 +104,8 @@ func (m *menuModal) OnTick(target pixel.Target, timeDelta float64) {
 		overlayAlpha = 0.75 * progress
 	}
 
-	m.screen.drawLastScreen()
-	gfx.DrawRect(atlas, target, gfx.Moved(screenWidth/2, screenHeight/2), gfx.Centered, screenWidth, screenHeight, colors.WithAlpha(colorDark, overlayAlpha))
+	m.screen.DrawLastScreen()
+	gfx.DrawRect(atlas, target, gfx.Moved(screenWidth/2, screenHeight/2), gfx.Centered, screenWidth, screenHeight, colors.WithAlpha(screenColors.Dark, overlayAlpha))
 
 	modalCenter := gfx.Moved(screenWidth/2, screenHeight/5*3+dy)
 	titleContent := titleTextbox.NewSimpleContent(m.title)
@@ -134,20 +135,20 @@ func (m *menuModal) OnTick(target pixel.Target, timeDelta float64) {
 	frameHeight := titleContent.Height() + textContent.Height() + buttons[0].content.Height() + buttonTextYPadding*2 + framePadding*4
 
 	frameR := pixel.R(0, 0, float64(frameWidth), float64(frameHeight))
-	frame4px.Draw(target, frameR, modalCenter, frames.WithColor(colorDark))
-	frame4pxBorder.Draw(target, frameR, modalCenter, frames.WithColor(colorText))
+	frame4px.Draw(target, frameR, modalCenter, frames.WithColor(screenColors.Dark))
+	frame4pxBorder.Draw(target, frameR, modalCenter, frames.WithColor(screenColors.Text))
 
 	topCenter := modalCenter.Moved(gfx.IVec(0, frameHeight/2-framePadding))
-	titleContent.Render(target, topCenter, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(colorHighlight))
+	titleContent.Render(target, topCenter, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(screenColors.Highlight))
 	topCenter = topCenter.Moved(gfx.IVec(0, -titleContent.Height()-framePadding))
-	textContent.Render(target, topCenter, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(colorText))
+	textContent.Render(target, topCenter, tbcfg.RenderFrom(gfx.TopCenter), tbcfg.Foreground(screenColors.Text))
 	topCenter = topCenter.Moved(gfx.IVec(0, -textContent.Height()-framePadding))
 
 	buttonTopLeft := topCenter.Moved(gfx.IVec(-totalButtonWidth/2, 0))
 	for id, b := range buttons {
-		borderMask, bgMask, fgMask := colorClear, colorDark, colorText
+		borderMask, bgMask, fgMask := screenColors.Clear, screenColors.Dark, screenColors.Text
 		if id == m.selection {
-			borderMask, bgMask, fgMask = colorDark, flashingHighlight(), colorDark
+			borderMask, bgMask, fgMask = screenColors.Dark, flashingHighlight(), screenColors.Dark
 		}
 		buttonFrameR := pixel.R(0, 0, float64(b.content.Width()+buttonTextXPadding*2), float64(b.content.Height()+buttonTextYPadding*2))
 		frame2px.Draw(target, buttonFrameR, buttonTopLeft, frames.WithColor(bgMask), frames.WithRenderOrigin(gfx.TopLeft))

@@ -33,19 +33,19 @@ var (
 
 // Sprites - menu and UI sprites
 var (
-	spriteAnimech          pixelutil.BoundedDrawable
-	spritePrimortal        pixelutil.BoundedDrawable
-	spriteUnknown          pixelutil.BoundedDrawable
-	selectBoxArrow         pixelutil.BoundedDrawable
-	scrollCursor           pixelutil.BoundedDrawable
-	noneTickSprite         pixelutil.BoundedDrawable
-	particleSprite         pixelutil.BoundedDrawable
-	arrowUp                pixelutil.BoundedDrawable
-	arrowRight             pixelutil.BoundedDrawable
-	arrowDown              pixelutil.BoundedDrawable
-	arrowLeft              pixelutil.BoundedDrawable
-	arrowLeft6px           pixelutil.BoundedDrawable
-	dot                    pixelutil.BoundedDrawable
+	spriteAnimech                        pixelutil.BoundedDrawable
+	spritePrimortal                      pixelutil.BoundedDrawable
+	spriteUnknown                        pixelutil.BoundedDrawable
+	selectBoxArrow                       pixelutil.BoundedDrawable
+	scrollCursor                         pixelutil.BoundedDrawable
+	noneTickSprite                       pixelutil.BoundedDrawable
+	particleSprite                       pixelutil.BoundedDrawable
+	arrowUp                              pixelutil.BoundedDrawable
+	arrowRight                           pixelutil.BoundedDrawable
+	arrowDown                            pixelutil.BoundedDrawable
+	arrowLeft                            pixelutil.BoundedDrawable
+	arrowLeft6px                         pixelutil.BoundedDrawable
+	dot                                  pixelutil.BoundedDrawable
 	skillNodeSpriteHidden                pixelutil.BoundedDrawable
 	skillNodeSpriteUnlockedHighlighted   pixelutil.BoundedDrawable
 	skillNodeSpriteUnlockableHighlighted pixelutil.BoundedDrawable
@@ -95,21 +95,21 @@ func initializeXenologVariables() {
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 	regularTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameM5x7),
 		tbcfg.NewConfig(screenWidth, 10,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 	titleTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard),
 		tbcfg.NewConfig(screenWidth, 10,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	// Shared frames (consolidated 3px/4px/5px into single 4px instance)
@@ -152,9 +152,9 @@ func initializeXenologVariables() {
 	badgeSelectDetails = badges.Using(atlas).ButtonAction("select", "view skill details", skillSetBadgeStyle)
 	badgeBCancelOnDark = badges.Using(atlas).ButtonAction("B", "cancel", onDarkStyle)
 	badgeSelectDetailsOnDark = badges.Using(atlas).ButtonAction("select", "details", onDarkStyle).Flipped()
-	badgeBack = badges.Using(atlas).Of("back", colorDark, colorText, 30)
-	badgeNextUnlock = badges.Using(atlas).Of("scroll to next unlock", colorDark, colorText, 80)
-	badgeBackToTop = badges.Using(atlas).Of("back to top", colorDark, colorText, 50)
+	badgeBack = badges.Using(atlas).Of("back", screenColors.Dark, screenColors.Text, 30)
+	badgeNextUnlock = badges.Using(atlas).Of("scroll to next unlock", screenColors.Dark, screenColors.Text, 80)
+	badgeBackToTop = badges.Using(atlas).Of("back to top", screenColors.Dark, screenColors.Text, 50)
 
 	// Specialized textboxes
 	selectBoxLabelText = textbox.NewInstance(atlas.GetFont(resources.FontNameAddStandard),
@@ -162,42 +162,42 @@ func initializeXenologVariables() {
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 	selectBoxSubLabelText = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(selectBoxWidth, 10,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 	skillSetDetailSmallTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(skillSetCurrentSkillFrameWidth-10, 10,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 	smallTextboxSkillDetail = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(140-4, 9,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignLeft),
 			tbcfg.VAligned(tbcfg.VAlignMiddle),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.LeftCenter)))
 	primortalDescriptionTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(screenWidth-primortalIconSize-detailMargin*2-primortalIconMargin*3, 8,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 	primortalSkillDescriptionTextbox = textbox.NewInstance(atlas.GetFont(resources.FontNameFF),
 		tbcfg.NewConfig(primortalSkillDetailWidth-primortalSkillDetailMargin*2, 10,
 			tbcfg.WithExpandMode(tbcfg.ExpandFit),
 			tbcfg.HAligned(tbcfg.HAlignCenter),
 			tbcfg.VAligned(tbcfg.VAlignTop),
-			tbcfg.Foreground(colorText),
+			tbcfg.Foreground(screenColors.Text),
 			tbcfg.RenderFrom(gfx.TopCenter)))
 
 	// Skill set arrows
@@ -211,4 +211,19 @@ func initializeXenologVariables() {
 	tickBarRenderer = tick_bar.NewRenderer(atlas)
 	stanceIcons = sprites.StanceIcons(atlas)
 	statusIcons = sprites.StatusIcons(atlas)
+}
+
+func arrowSprite(dir input.Direction) pixelutil.BoundedDrawable {
+	switch dir {
+	case input.Up:
+		return arrowUp
+	case input.Right:
+		return arrowRight
+	case input.Down:
+		return arrowDown
+	case input.Left:
+		return arrowLeft
+	default:
+		panic("invalid direction")
+	}
 }

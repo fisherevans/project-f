@@ -156,9 +156,9 @@ func buildSkillTreeNodes(t *skillTree, primortal rpg.Primortal) map[rpg.SkillId]
 			//timeInState: 1000, // skip animation on load
 			parents: make(map[rpg.SkillId]*skillNode),
 			animations: []*skillNodeAnimation{
-				newSkillNodeAnimation("slow", colorDark),
-				newSkillNodeAnimation("medium", colorHighlight),
-				newSkillNodeAnimation("fast", colorText),
+				newSkillNodeAnimation("slow", screenColors.Dark),
+				newSkillNodeAnimation("medium", screenColors.Highlight),
+				newSkillNodeAnimation("fast", screenColors.Text),
 			},
 		}
 		nodes[skillId] = n
@@ -215,7 +215,7 @@ func newSkillNodeAnimation(speed string, mask pixel.RGBA) *skillNodeAnimation {
 }
 
 func (n *skillNode) RenderEdges(target pixel.Target, treeOrigin pixel.Matrix) {
-	lineMask := colorDark
+	lineMask := screenColors.Dark
 	for _, parent := range n.parents {
 		from := treeOrigin.Project(pixel.V(float64(parent.x), float64(parent.y)))
 		to := treeOrigin.Project(pixel.V(float64(n.x), float64(n.y)))
@@ -234,7 +234,7 @@ func (n *skillNode) RenderNode(target pixel.Target, treeOrigin pixel.Matrix, tim
 
 	isHighlighted := n.tree.selectedSkill == n.id
 	matrix := treeOrigin.Moved(gfx.IVec(n.x, n.y))
-	mask := colorText
+	mask := screenColors.Text
 
 	us := n.tree.menu.primortal.Primortal().UnlockableSkills[n.id]
 	progress, hasProgress := game.CurrentSave().Primortals[n.tree.menu.primortal]
@@ -253,7 +253,7 @@ func (n *skillNode) RenderNode(target pixel.Target, treeOrigin pixel.Matrix, tim
 	}
 
 	if isHighlighted {
-		skillNodeSpriteHighlightCursor.DrawColorMask(target, matrix, colorHighlight)
+		skillNodeSpriteHighlightCursor.DrawColorMask(target, matrix, screenColors.Highlight)
 	}
 
 	skillNodeSprite(state, isHighlighted).DrawColorMask(target, matrix, mask)
@@ -348,9 +348,9 @@ type effectParticle struct {
 
 func newRandomEffectParticle() *effectParticle {
 	possibleStartColors := []pixel.RGBA{
-		colorDark,
-		colorHighlight,
-		colorText,
+		screenColors.Dark,
+		screenColors.Highlight,
+		screenColors.Text,
 	}
 	startColor := possibleStartColors[rand.Intn(len(possibleStartColors))]
 	speed := rand.Float64() * 15
@@ -361,7 +361,7 @@ func newRandomEffectParticle() *effectParticle {
 		age = 0
 	}
 	maxAge := 1.0 + rand.Float64()*2.0
-	return newEffectParticle(startColor, colors.WithAlpha(colorClear, 0), velocity, age, maxAge)
+	return newEffectParticle(startColor, colors.WithAlpha(screenColors.Clear, 0), velocity, age, maxAge)
 }
 
 func newEffectParticle(startColor, endColor pixel.RGBA, velocity pixel.Vec, age, maxAge float64) *effectParticle {

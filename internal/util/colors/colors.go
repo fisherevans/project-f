@@ -65,6 +65,11 @@ var (
 	XenoLogClear     = registerNamedColor(HexString("#0476d0"), "xenolog_clear")
 	XenoLogText      = registerNamedColor(HexString("#a6d8ff"), "xenolog_text")
 	XenoLogHighlight = registerNamedColor(HexString("#ffffff"), "xenolog_highlight")
+
+	MapComputerDark      = registerNamedColor(HexString("#7c00ad"), "map_computer_dark")
+	MapComputerClear     = registerNamedColor(HexString("#3a0d4c"), "map_computer_clear")
+	MapComputerText      = registerNamedColor(HexString("#e6a8ff"), "map_computer_text")
+	MapComputerHighlight = registerNamedColor(HexString("#ffffff"), "map_computer_highlight")
 )
 
 var (

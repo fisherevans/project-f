@@ -128,7 +128,11 @@ func (r *ModeBasedEntityRenderer) WithConfig(config *ModeBaseRenderConfig) *Mode
 		return r
 	}
 	if config.Mode != nil {
-		ModeMetadataKey.Set(r.entity, *config.Mode)
+		currentMode := ModeMetadataKey.Get(r.entity)
+		if currentMode != *config.Mode {
+			ModeMetadataKey.Set(r.entity, *config.Mode)
+			r.getBasicEntityRenderer(*config.Mode).Reset()
+		}
 	}
 	r.SetModeAnimations(config.Animations)
 	r.SetModeLights(config.Lights)

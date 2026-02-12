@@ -339,6 +339,7 @@ func (a *AnimatedSprite) progress() {
 func (a *AnimatedSprite) Reset() {
 	a.currentFrame = 0
 	a.progression = 0
+	a.complete = false
 }
 
 func (a *AnimatedSprite) SetProgress(p float64) {

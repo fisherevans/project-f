@@ -1,40 +1,42 @@
-package xenolog
+package screen
 
 import (
 	"math"
 
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util/colors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 
 	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/shaders"
 	"fisherevans.com/project/f/internal/game/shaders/bloom"
-	"fisherevans.com/project/f/internal/util/badges"
-	"fisherevans.com/project/f/internal/util/colors"
-	"fisherevans.com/project/f/internal/util/pixelutil"
 )
 
-var (
-	screenWidth  = 206
-	screenHeight = 128
+type ScreenHolder interface {
+	Close()
+}
 
-	badgeButtonStyle = badges.ButtonColorStyle{
-		Action:    colorText,
-		Button:    colorDark,
-		Highlight: colorHighlight,
-	}
+type RenderContext struct {
+	Atlas  *resources.Atlas
+	Width  int
+	Height int
+	Colors Colors
+}
 
-	colorDark      = colors.XenoLogDark.RGBA
-	colorClear     = colors.XenoLogClear.RGBA
-	colorText      = colors.XenoLogText.RGBA
-	colorHighlight = colors.XenoLogHighlight.RGBA
-)
+type Colors struct {
+	Clear     pixel.RGBA
+	Dark      pixel.RGBA
+	Text      pixel.RGBA
+	Highlight pixel.RGBA
+}
 
-type Screen struct {
-	state  *State
+type Instance struct {
+	holder        ScreenHolder
+	renderContext RenderContext
+
 	canvas *shaders.Canvas
 	batch  *pixel.Batch
 	bloom  *bloom.Helper
@@ -50,29 +52,54 @@ type Screen struct {
 	doDrawLastScreen bool
 }
 
-func NewScreen(state *State, primortalsEnabled bool) *Screen {
-	s := &Screen{
-		state:              state,
+func NewScreen(holder ScreenHolder, renderContext RenderContext, initialMenu func(instance *Instance) Menu) *Instance {
+	s := &Instance{
+		holder:             holder,
+		renderContext:      renderContext,
 		menuStack:          []Menu{},
-		canvas:             shaders.NewCanvas(screenWidth, screenHeight),
-		batch:              atlas.NewBatch(),
-		spriteFilterBuffer: newSpriteShader(),
+		canvas:             shaders.NewCanvas(renderContext.Width, renderContext.Height),
+		batch:              renderContext.Atlas.NewBatch(),
+		spriteFilterBuffer: newSpriteShader(renderContext),
 		bloom: bloom.NewHelper(
-			screenWidth, screenHeight,
+			renderContext.Width, renderContext.Height,
 			bloom.DefaultBrightnessConfig(),
 			bloom.DefaultBlurConfig(),
 			bloom.DefaultBlendConfig().WithIntensity(0.5)),
 	}
-	s.menuStack = append(s.menuStack, newHomeMenu(s, primortalsEnabled))
+	s.menuStack = append(s.menuStack, initialMenu(s))
 	s.CurrentMenu().Enter()
 	// setup screen transition
 	s.canvas.Clear(colors.Black.RGBA)
-	s.lastMenuImage = opengl.NewCanvas(pixel.R(0, 0, float64(screenWidth), float64(screenHeight)))
+	s.lastMenuImage = opengl.NewCanvas(pixel.R(0, 0, float64(renderContext.Width), float64(renderContext.Height)))
 	s.lastMenuImage.Clear(colors.Black.RGBA)
 	s.screenTransitionMiddleOut = true
-	s.screenEffectShader = shaders.NewCanvas(screenWidth, screenHeight)
+	s.screenEffectShader = shaders.NewCanvas(renderContext.Width, renderContext.Height)
 	s.screenEffectShader.SetupScreenTransition(s.lastMenuImage.Texture(), .175)
 	return s
+}
+
+func (s *Instance) Colors() Colors {
+	return s.renderContext.Colors
+}
+
+func (s *Instance) Width() int {
+	return s.renderContext.Width
+}
+
+func (s *Instance) Height() int {
+	return s.renderContext.Height
+}
+
+func (s *Instance) Center() pixel.Vec {
+	return pixel.V(s.WidthFloat()/2, s.HeightFloat()/2)
+}
+
+func (s *Instance) WidthFloat() float64 {
+	return float64(s.renderContext.Width)
+}
+
+func (s *Instance) HeightFloat() float64 {
+	return float64(s.renderContext.Height)
 }
 
 type Menu interface {
@@ -80,41 +107,41 @@ type Menu interface {
 	Enter()
 }
 
-func (s *Screen) onMenuChange(middleOut bool, doAnimate bool) {
+func (s *Instance) onMenuChange(middleOut bool, doAnimate bool) {
 	if doAnimate {
 		s.screenTransitionElapsed = 0
 	}
 	s.screenTransitionMiddleOut = middleOut
-	s.lastMenuImage.Clear(colorClear)
+	s.lastMenuImage.Clear(s.renderContext.Colors.Clear)
 	s.canvas.Draw(s.lastMenuImage, pixel.IM.Moved(s.canvas.Bounds().Center()))
 }
 
-func (s *Screen) CurrentMenu() Menu {
+func (s *Instance) CurrentMenu() Menu {
 	if len(s.menuStack) == 0 {
 		return nil
 	}
 	return s.menuStack[len(s.menuStack)-1]
 }
 
-func (s *Screen) PushMenuAnimated(menu Menu) {
+func (s *Instance) PushMenuAnimated(menu Menu) {
 	s.PushMenu(menu, true)
 }
 
-func (s *Screen) PopMenuAnimated() {
+func (s *Instance) PopMenuAnimated() {
 	s.PopMenu(true)
 }
 
-func (s *Screen) SwapActiveMenuAnimated(menu Menu) {
+func (s *Instance) SwapActiveMenuAnimated(menu Menu) {
 	s.SwapActiveMenu(menu, true)
 }
 
-func (s *Screen) PushMenu(menu Menu, doAnimate bool) {
+func (s *Instance) PushMenu(menu Menu, doAnimate bool) {
 	s.onMenuChange(true, doAnimate)
 	s.menuStack = append(s.menuStack, menu)
 	s.CurrentMenu().Enter()
 }
 
-func (s *Screen) PopMenu(doAnimate bool) {
+func (s *Instance) PopMenu(doAnimate bool) {
 	if s.menuStack == nil || len(s.menuStack) == 1 {
 		log.Warn().Msgf("Tried to go back to parent menu, but there was none")
 		return
@@ -124,17 +151,17 @@ func (s *Screen) PopMenu(doAnimate bool) {
 	s.CurrentMenu().Enter()
 }
 
-func (s *Screen) SwapActiveMenu(menu Menu, doAnimate bool) {
+func (s *Instance) SwapActiveMenu(menu Menu, doAnimate bool) {
 	s.onMenuChange(true, doAnimate)
 	s.menuStack[len(s.menuStack)-1] = menu
 	s.CurrentMenu().Enter()
 }
 
-func (s *Screen) Bounds() pixel.Rect {
-	return pixel.R(0, 0, float64(screenWidth), float64(screenHeight))
+func (s *Instance) Bounds() pixel.Rect {
+	return pixel.R(0, 0, float64(s.renderContext.Width), float64(s.renderContext.Height))
 }
 
-func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
+func (s *Instance) OnTick(targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
 	s.screenTransitionElapsed += timeDelta
 	s.screenEffectShader.UpdateScreenTransition(
 		float32(game.TimeElapsed()),
@@ -148,7 +175,7 @@ func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Ta
 	s.menuStack[len(s.menuStack)-1].OnTick(s.batch, timeDelta)
 
 	// canvas clear after OnTick so that snapshotLastScreen can grab the last image
-	s.canvas.Clear(colorClear)
+	s.canvas.Clear(s.renderContext.Colors.Clear)
 
 	if s.doDrawLastScreen {
 		s.doDrawLastScreen = false
@@ -164,21 +191,14 @@ func (s *Screen) OnTick(state *State, targetMatrix pixel.Matrix, target pixel.Ta
 	bloomed.Draw(target, targetMatrix)
 }
 
-func (s *Screen) drawLastScreen() {
+func (s *Instance) SpriteFilterBuffer() *spriteShader {
+	return s.spriteFilterBuffer
+}
+
+func (s *Instance) DrawLastScreen() {
 	s.doDrawLastScreen = true
 }
 
-func arrowSprite(dir input.Direction) pixelutil.BoundedDrawable {
-	switch dir {
-	case input.Up:
-		return arrowUp
-	case input.Right:
-		return arrowRight
-	case input.Down:
-		return arrowDown
-	case input.Left:
-		return arrowLeft
-	default:
-		panic("invalid direction")
-	}
+func (s *Instance) Holder() ScreenHolder {
+	return s.holder
 }

@@ -28,15 +28,22 @@ func init() {
 					NewEntityFaceDirectionEffect(event.SourceId).WithDirection(input.Down),
 					NewChangePlayerRendererEffect("hidden"),
 					NewMutateModeBasedEntityEffect(chairId).WithMode("enter"),
-					NewWaitForConditionEffect(func(s *State, td float64) bool {
-						e, r, ok := GetModeBasedRenderer(s, chairId)
-						if !ok {
-							log.Fatal().Msgf("failed to get renderer for %s", chairId)
-						}
-						return r.getBasicEntityRenderer(ModeMetadataKey.Get(e)).AreAnimationsComplete()
+					NewWaitForAnimationComplete(chairId),
+					NewTimerEffect(0.25),
+					NewFunctionEffect(func(s *State) {
+						game.SetActiveStateIntent(game.ComputerIntent{
+							Background: s,
+						})
 					}),
+					NewTimerEffect(1.0),
+					NewMutateModeBasedEntityEffect(chairId).WithMode("close_eyes"),
+					NewWaitForAnimationComplete(chairId),
+					NewSelfDialogueEffect("now wake up.."),
+					NewMutateModeBasedEntityEffect(chairId).WithMode("open_eyes"),
+					NewWaitForAnimationComplete(chairId),
+					NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
+					NewWaitForAnimationComplete(chairId),
 					NewPlaySoundEffect("adventure/beeps/success"),
-					NewSelfDialogueEffect("Annnnnd, todo.."),
 					// get back out
 					NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
 					NewWaitForConditionEffect(func(s *State, td float64) bool {
@@ -90,7 +97,7 @@ func init() {
 				}
 				return NewOutput().WithEffects(
 					NewSelfDialogueEffect("SAVING... DON'T TURN OFF THE POWER."),
-					NewSelfDialogueEffect("YOU saved the game."),
+					NewSelfDialogueEffect("You saved the game."),
 				)
 			},
 		}.CreateHandler()

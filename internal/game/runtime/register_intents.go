@@ -4,6 +4,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/states/adventure"
 	"fisherevans.com/project/f/internal/game/states/combat"
+	"fisherevans.com/project/f/internal/game/states/computer"
 	"fisherevans.com/project/f/internal/game/states/menu"
 	"fisherevans.com/project/f/internal/game/states/startup"
 	"fisherevans.com/project/f/internal/game/states/state_selector"
@@ -17,6 +18,7 @@ func registerIntents() {
 	game.RegisterStateFactory(combat.New)
 	game.RegisterStateFactory(menu.New)
 	game.RegisterStateFactory(xenolog.New)
+	game.RegisterStateFactory(computer.New)
 	game.RegisterStateFactory(state_selector.New)
 	game.RegisterStateFactory(title.New)
 	game.RegisterStateFactory(startup.NewDevice)

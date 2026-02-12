@@ -1,4 +1,4 @@
-package xenolog
+package computer
 
 import (
 	"fisherevans.com/project/f/internal/game/states/xenolog/screen"
@@ -6,7 +6,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/badges"
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/gfx"
 	"fisherevans.com/project/f/internal/util/interp"
@@ -14,32 +13,24 @@ import (
 )
 
 var (
-	screenWidth  = 206
-	screenHeight = 128
-
 	atlas                  = resources.DefaultAtlas()
 	deviceBackgroundSprite pixelutil.BoundedDrawable
 	moveDuration           = 0.4
 
-	screenColors = screen.Colors{
-		Dark:      colors.XenoLogDark.RGBA,
-		Clear:     colors.XenoLogClear.RGBA,
-		Text:      colors.XenoLogText.RGBA,
-		Highlight: colors.XenoLogHighlight.RGBA,
-	}
+	screenWidth  = 220
+	screenHeight = 140
 
-	badgeButtonStyle = badges.ButtonColorStyle{
-		Action:    screenColors.Text,
-		Button:    screenColors.Dark,
-		Highlight: screenColors.Highlight,
+	screenColors = screen.Colors{
+		Dark:      colors.MapComputerDark.RGBA,
+		Clear:     colors.MapComputerClear.RGBA,
+		Text:      colors.MapComputerText.RGBA,
+		Highlight: colors.MapComputerHighlight.RGBA,
 	}
 )
 
 func init() {
 	resources.RunOnceInitialized(func() {
-		deviceBackgroundSprite = atlas.GetSprite("xenolog/device")
-		initializeXenologVariables()
-		badgeAContinue = badges.Using(atlas).ButtonAction("A", "continue", badgeButtonStyle).Flipped()
+		deviceBackgroundSprite = atlas.GetSprite("computer/monitor")
 	})
 }
 
@@ -52,7 +43,7 @@ type State struct {
 	screen *screen.Instance
 }
 
-func New(i game.XenologIntent) game.State {
+func New(i game.ComputerIntent) game.State {
 	s := &State{
 		background: i.Background,
 		transition: interp.NewTimedProgress(moveDuration, interp.Smootherstep),
@@ -63,10 +54,7 @@ func New(i game.XenologIntent) game.State {
 		Height: screenHeight,
 		Colors: screenColors,
 	}
-	s.screen = screen.NewScreen(s, renderContext, func(s *screen.Instance) screen.Menu {
-		return newHomeMenu(s, i.PrimortalsEnabled)
-	})
-	s.screen.PushMenu(newHomeMenu(s.screen, i.PrimortalsEnabled), false)
+	s.screen = screen.NewScreen(s, renderContext, newMapMenu)
 	return s
 }
 
@@ -87,21 +75,21 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 		})
 	}
 
-	fullDeltaY := deviceBackgroundSprite.Bounds().H()
-	dy := (1.0 - s.transition.Progress()) * fullDeltaY
+	fullDeltaX := deviceBackgroundSprite.Bounds().W()
+	dx := (1.0 - s.transition.Progress()) * fullDeltaX
 
 	game.DebugBLf("transition: %f", s.transition.Progress())
-	game.DebugBLf("dy: %f", dy)
+	game.DebugBLf("dx: %f", dx)
 
 	bgMatrix := pixel.IM.Moved(gfx.BottomLeft.Align(deviceBackgroundSprite)).
-		Moved(pixel.V(0, -dy))
+		Moved(pixel.V(-dx, 0))
 	deviceBackgroundSprite.Draw(target, bgMatrix)
 
 	paddingX := float64(game.GameWidth-screenWidth) / 2.0
 	paddingY := float64(game.GameHeight-screenHeight) / 2.0
 	screenMatrix := pixel.IM.Moved(gfx.BottomLeft.Align(s.screen)).
 		Moved(pixel.V(paddingX, paddingY)).
-		Moved(pixel.V(0, -dy))
+		Moved(pixel.V(-dx, 0))
 	s.screen.OnTick(screenMatrix, target, timeDelta)
 
 	if game.Controls[*State]().ButtonStart().JustPressed() {

@@ -179,7 +179,7 @@ func (s *scrollList[T]) calcYs(index int) (float64, float64) {
 		for i := 0; i < index; i++ {
 			rowHeightAbove += s.items[i].Height() + s.verticalItemMargin
 		}
-		topY := screenHeight - s.verticalListPaddingTop - rowHeightAbove
+		topY := s.targetHeight - s.verticalListPaddingTop - rowHeightAbove
 		bottomY := topY - s.items[index].Height()
 		targetCy := float64(topY+bottomY) / 2.0
 		return 0, targetCy
@@ -190,13 +190,13 @@ func (s *scrollList[T]) calcYs(index int) (float64, float64) {
 	for i := 0; i < index; i++ {
 		rowHeightAbove += s.items[i].Height() + s.verticalItemMargin
 	}
-	topY := int(math.Round(s.currentDy)) + screenHeight - s.verticalListPaddingTop - rowHeightAbove
+	topY := int(math.Round(s.currentDy)) + s.targetHeight - s.verticalListPaddingTop - rowHeightAbove
 	bottomY := topY - s.items[index].Height()
 	halfRowHeight := float64(topY-bottomY) / 2.0
 
 	targetDy := s.currentDy
 	var targetCy float64
-	topBound := screenHeight - s.verticalListPaddingTop
+	topBound := s.targetHeight - s.verticalListPaddingTop
 	lowerBound := s.verticalListPaddingBottom
 	if tooHigh := topY - topBound; tooHigh > 0 {
 		targetDy -= float64(tooHigh)

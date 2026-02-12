@@ -20,7 +20,7 @@ func (s *State) addForegroundFx(f fx) {
 	s.foregroundFxs = append(s.foregroundFxs, f)
 }
 
-func renderFx(target pixel.Target, cameraDelta pixel.Vec, timeDelta float64, fxs []fx) {
+func renderFx(target pixel.Target, cameraDelta pixel.Vec, timeDelta float64, fxs []fx) []fx {
 	game.DebugTLf("rendering %d fxs", len(fxs))
 	for idx := 0; idx < len(fxs); idx++ {
 		fxs[idx].Update(timeDelta)
@@ -34,6 +34,7 @@ func renderFx(target pixel.Target, cameraDelta pixel.Vec, timeDelta float64, fxs
 			fxs[idx].Render(target, renderMatrix)
 		}
 	}
+	return fxs
 }
 
 type fx interface {
@@ -120,7 +121,7 @@ func newStarFx(location pixel.Vec, startX, endX float64) *starFx {
 		mask:        colors.HSLToRGBA(maskHue, 1, 1),
 		sprite:      atlas.GetTilesheetSprite("adventure/hud/elythium_sparkle", rand.Intn(5)+1, 1),
 		speed:       0.5 + 2*rand.Float64(),
-		baseAlpha:   0.25 + rand.Float64()*0.75,
+		baseAlpha:   0.5 + rand.Float64()*0.5,
 		flashAmount: rand.Float64(),
 		flashSpeed:  4 + 16*rand.Float64(),
 	}
