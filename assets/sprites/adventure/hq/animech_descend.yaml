@@ -1,0 +1,9 @@
+tilesheet:
+  tileWidth: 48
+  tileHeight: 48
+animations:
+  default:
+    h_sequence:
+      row: 1
+    framesPerSecond: 10
+    repeat: false

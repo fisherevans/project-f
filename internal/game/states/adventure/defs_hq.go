@@ -64,12 +64,31 @@ func init() {
 						NewMutateEntityBehaviorEffect(pId).WithEnableBy("computer"),
 					)
 				}
+				fadeId := "hq.chair_fade"
+				fadeDuration := 0.75
+				animechId := "hq.animech"
 				// planet chosen, time to launch!
 				return NewOutput().WithSerialPlan(
 					NewMutateModeBasedEntityEffect(chairId).WithMode("close_eyes"),
 					NewWaitForAnimationComplete(chairId),
-					// todo custom fade?
-					NewLoadMapEffect(data.PlanetName).WithWaypoint(data.Waypoint),
+					NewFadeEffect(fadeDuration, 1).
+						WithFadeId(fadeId).
+						WithAutoDeactivate(false).
+						WithFromColor("#00000000").
+						WithToColor("#000000FF"),
+					NewMutateFollowCameraEffect().
+						WithFollowEntityId(animechId).
+						WithResetPosition(true),
+					NewParallelPlan(
+						NewFadeEffect(fadeDuration, 1).
+							WithAutoDeactivate(true).
+							WithFromColor("#000000FF").
+							WithToColor("#00000000"),
+						NewDeactivateFadeEffect(fadeId),
+					),
+					NewMutateModeBasedEntityEffect(animechId).WithMode("descend"),
+					NewWaitForAnimationComplete(animechId),
+					NewLoadMapEffect(data.PlanetName).WithWaypoint(data.Waypoint).WithTravelPlanetName(data.PlanetSpriteName),
 				)
 			},
 		}.CreateHandler()
@@ -121,7 +140,6 @@ func init() {
 		return BasicHandlerBuilder[None]{
 			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
 				return NewOutput().WithEffects(NewFunctionEffect(func(s *State) {
-					log.Info().Msg("adding stars")
 					topLeft, _ := s.entities.GetEntity("hq.stars.top_left")
 					bottomLeft, _ := s.entities.GetEntity("hq.stars.bottom_left")
 					topRight, _ := s.entities.GetEntity("hq.stars.top_right")
@@ -133,7 +151,6 @@ func init() {
 						x := rand.Float64()*(endX-startX) + startX
 						y := rand.Float64()*(endY-startY) + startY
 						s.addBackgroundFx(newStarFx(pixel.V(x, y), startX, endX))
-						log.Info().Msgf("added star at %v", pixel.V(x, y))
 					}
 				}))
 			},

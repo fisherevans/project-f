@@ -23,6 +23,15 @@ func main() {
 
 func createInitialIntent() any {
 	i := game.SelectIntent{}
+	i = i.With("Travel: Sylvoria", func() any {
+		return game.TravelIntent{
+			ToIntent: game.AdventureIntent{
+				MapName:  "sylvoria",
+				Waypoint: "new_beginnings",
+			},
+			PlanetSpriteName: "computer/planet_1",
+		}
+	})
 	i = i.With("Adventure: Intro", func() any {
 		return game.AdventureIntent{
 			MapName: "intro",

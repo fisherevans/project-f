@@ -1,5 +1,5 @@
 // AUTO-GENERATED - DO NOT EDIT
-// Generated at 2026-02-14T22:30:19-05:00 by go generate
+// Generated at 2026-02-15T11:16:04-05:00 by go generate
 // Source: internal/game/adventure/effect.go
 
 package adventure
@@ -436,6 +436,11 @@ func NewLoadMapEffect(mapName string) *EffectLoadMap {
 
 func (e *EffectLoadMap) WithWaypoint(waypoint string) *EffectLoadMap {
 	e.Waypoint = &waypoint
+	return e
+}
+
+func (e *EffectLoadMap) WithTravelPlanetName(travelPlanetName string) *EffectLoadMap {
+	e.TravelPlanetName = &travelPlanetName
 	return e
 }
 

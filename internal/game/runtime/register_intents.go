@@ -10,6 +10,7 @@ import (
 	"fisherevans.com/project/f/internal/game/states/state_selector"
 	"fisherevans.com/project/f/internal/game/states/title"
 	"fisherevans.com/project/f/internal/game/states/transition"
+	"fisherevans.com/project/f/internal/game/states/travel"
 	"fisherevans.com/project/f/internal/game/states/xenolog"
 )
 
@@ -30,4 +31,5 @@ func registerIntents() {
 	game.RegisterStateFactory(transition.NewSwirlTransition)
 	game.RegisterStateFactory(transition.NewGlitchTransition)
 	game.RegisterStateFactory(transition.NewFlushTransition)
+	game.RegisterStateFactory(travel.NewTravelState)
 }

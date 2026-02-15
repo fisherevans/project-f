@@ -3603,7 +3603,8 @@ animations:
     - name: adventure/entities/animech/cybermonkey_robot:frozen_down
       offset:
         y: 0.25
-  &quot;hidden&quot;:
+  &quot;descend&quot;:
+    - name: &quot;adventure/hq/animech_descend&quot;
 </property>
      <property name="script_ref" value="hq.animech"/>
     </properties>

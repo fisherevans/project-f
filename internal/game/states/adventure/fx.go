@@ -123,7 +123,7 @@ func newStarFx(location pixel.Vec, startX, endX float64) *starFx {
 		speed:       0.5 + 2*rand.Float64(),
 		baseAlpha:   0.5 + rand.Float64()*0.5,
 		flashAmount: rand.Float64(),
-		flashSpeed:  4 + 16*rand.Float64(),
+		flashSpeed:  0.25 + 2*rand.Float64(),
 	}
 }
 
@@ -144,6 +144,6 @@ func (fx *starFx) Update(timeDelta float64) {
 }
 
 func (fx *starFx) Render(target pixel.Target, matrix pixel.Matrix) {
-	alpha := fx.baseAlpha - (math.Sin(fx.age*fx.flashAmount)+1.0)/2.0*fx.flashAmount
+	alpha := fx.baseAlpha - (math.Sin(fx.age*fx.flashSpeed)+1.0)/2.0*fx.flashAmount
 	fx.sprite.DrawColorMask(target, matrix, colors.LayerAlpha(fx.mask, alpha))
 }

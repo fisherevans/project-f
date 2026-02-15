@@ -141,8 +141,9 @@ func (m *goodbyeMenu) handleInputs() {
 
 func (m *goodbyeMenu) triggerLaunch() {
 	m.screen.Holder().CloseWithData(game.ComputerReturnData{
-		PlanetName: m.planet.mapName,
-		Waypoint:   m.planet.waypoints[m.waypointId].loadName,
+		PlanetName:       m.planet.mapName,
+		PlanetSpriteName: m.planet.spriteName,
+		Waypoint:         m.planet.waypoints[m.waypointId].loadName,
 	})
 }
 

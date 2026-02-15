@@ -111,8 +111,9 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 
 type EffectLoadMap struct {
 	instantEffect
-	MapName  string
-	Waypoint *string
+	MapName          string
+	Waypoint         *string
+	TravelPlanetName *string
 }
 
 func (e *EffectLoadMap) Process(source EntityReader, s *State) bool {
@@ -133,10 +134,17 @@ func (e *EffectLoadMap) Process(source EntityReader, s *State) bool {
 			if e.Waypoint != nil {
 				waypoint = *e.Waypoint
 			}
-			game.SetActiveStateIntent(game.AdventureIntent{
+			var intent any = game.AdventureIntent{
 				MapName:  e.MapName,
 				Waypoint: waypoint,
-			})
+			}
+			if e.TravelPlanetName != nil {
+				intent = game.TravelIntent{
+					ToIntent:         intent,
+					PlanetSpriteName: *e.TravelPlanetName,
+				}
+			}
+			game.SetActiveStateIntent(intent)
 		}),
 	)
 	return true

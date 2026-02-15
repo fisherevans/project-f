@@ -105,8 +105,14 @@ type ComputerIntent struct {
 }
 
 type ComputerReturnData struct {
-	PlanetName string
-	Waypoint   string
+	PlanetName       string
+	Waypoint         string
+	PlanetSpriteName string
+}
+
+type TravelIntent struct {
+	ToIntent         any
+	PlanetSpriteName string
 }
 
 type BaseTransitionIntent struct {
