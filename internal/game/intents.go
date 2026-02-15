@@ -87,7 +87,8 @@ type CombatIntent struct {
 }
 
 type AdventureIntent struct {
-	MapName string
+	MapName  string
+	Waypoint string
 }
 
 type SwapStateIntent struct {
@@ -101,6 +102,11 @@ type XenologIntent struct {
 
 type ComputerIntent struct {
 	Background State
+}
+
+type ComputerReturnData struct {
+	PlanetName string
+	Waypoint   string
 }
 
 type BaseTransitionIntent struct {

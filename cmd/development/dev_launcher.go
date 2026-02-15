@@ -23,9 +23,19 @@ func main() {
 
 func createInitialIntent() any {
 	i := game.SelectIntent{}
-	i = i.With("Adventure", func() any {
+	i = i.With("Adventure: Intro", func() any {
 		return game.AdventureIntent{
-			MapName: "intro", // map1
+			MapName: "intro",
+		}
+	})
+	i = i.With("Adventure: HQ", func() any {
+		return game.AdventureIntent{
+			MapName: "hq",
+		}
+	})
+	i = i.With("Adventure: Map 1", func() any {
+		return game.AdventureIntent{
+			MapName: "map1",
 		}
 	})
 

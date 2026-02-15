@@ -169,7 +169,7 @@ func New(i game.AdventureIntent) game.State {
 	a.eventDispatcher = NewDispatcher(a.globals, a.processEffects)
 	a.eventDispatcher.Register(a.entities.RegisterEntity("system", MapLocation{}), newSystemEventHandler(a))
 
-	initializeMap(a, m)
+	initializeMap(a, m, i.Waypoint)
 
 	a.initCommands()
 
@@ -194,7 +194,7 @@ func (s *State) ClearColor() pixel.RGBA {
 	return s.sceneClear
 }
 
-func (s *State) OnEnter() {
+func (s *State) OnEnter(data any) {
 	s.entities.resumeAllSounds()
 	if s.activeSong == nil {
 		s.activeSong = game.GetAudioSystem().PlayMusic(audio.SongTraining, &audio.PlaybackOptions{
@@ -204,7 +204,9 @@ func (s *State) OnEnter() {
 	} else {
 		s.activeSong.ResumeAndFadeIn(3 * time.Second)
 	}
-	s.eventDispatcher.Dispatch(EventOnStateEnter{})
+	s.eventDispatcher.Dispatch(EventOnStateEnter{
+		Data: data,
+	})
 }
 
 func (s *State) OnExit() {

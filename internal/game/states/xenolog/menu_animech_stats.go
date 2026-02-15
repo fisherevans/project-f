@@ -22,7 +22,7 @@ var (
 )
 
 type animechStatsMenu struct {
-	screen   *screen.Instance
+	screen   *screen.Instance[*State]
 	upgrades []*upgradedState
 	actions  []*action
 	nav      *navigtion.System[*animechStatsMenu]
@@ -64,7 +64,7 @@ func (a *action) OnButtonAJustPressed(m *animechStatsMenu) {
 	a.handler(m)
 }
 
-func newAnimechStatsMenu(s *screen.Instance) *animechStatsMenu {
+func newAnimechStatsMenu(s *screen.Instance[*State]) *animechStatsMenu {
 	menu := &animechStatsMenu{
 		screen: s,
 		upgrades: []*upgradedState{

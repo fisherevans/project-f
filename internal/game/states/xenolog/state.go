@@ -48,8 +48,9 @@ type State struct {
 	background game.State
 	transition *interp.TimedProgress
 	exiting    bool
+	exitData   any
 
-	screen *screen.Instance
+	screen *screen.Instance[*State]
 }
 
 func New(i game.XenologIntent) game.State {
@@ -63,7 +64,7 @@ func New(i game.XenologIntent) game.State {
 		Height: screenHeight,
 		Colors: screenColors,
 	}
-	s.screen = screen.NewScreen(s, renderContext, func(s *screen.Instance) screen.Menu {
+	s.screen = screen.NewScreen(s, renderContext, func(s *screen.Instance[*State]) screen.Menu {
 		return newHomeMenu(s, i.PrimortalsEnabled)
 	})
 	s.screen.PushMenu(newHomeMenu(s.screen, i.PrimortalsEnabled), false)
@@ -82,9 +83,9 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 	}
 
 	if s.exiting && s.transition.IsComplete() {
-		game.SetActiveStateIntent(game.SwapStateIntent{
+		game.SetActiveStateIntentWithData(game.SwapStateIntent{
 			State: s.background,
-		})
+		}, s.exitData)
 	}
 
 	fullDeltaY := deviceBackgroundSprite.Bounds().H()
@@ -105,11 +106,21 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 	s.screen.OnTick(screenMatrix, target, timeDelta)
 
 	if game.Controls[*State]().ButtonStart().JustPressed() {
-		s.Close()
+		s.ToggleOpenState()
 	}
 }
 
-func (s *State) Close() {
+func (s *State) ToggleOpenState() {
 	s.exiting = !s.exiting
+	s.exitData = nil
+	s.transition.Reverse()
+}
+
+func (s *State) CloseWithData(data any) {
+	s.exitData = data
+	if s.exiting {
+		return
+	}
+	s.exiting = true
 	s.transition.Reverse()
 }

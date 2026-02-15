@@ -10,7 +10,7 @@ animech:
     upgrades:
         shield_level: 0
         sync_level: 0
-    pending_experience: 0
+    pending_experience: 25
     current_sync: 0
     current_shield: 0
 loadouts: []
@@ -35,7 +35,7 @@ globals:
     elythium: 0
     elythium_goal: 12
     player_id: tiled-12
-    tiled-363: 2eacada4-f476-4e43-be9c-a9874c9f57df
+    tiled-363: 2af7da88-3704-42df-aa5d-0ceca22d3498
 system_settings:
     lighting:
         lighting_composition: full

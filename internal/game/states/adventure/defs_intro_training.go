@@ -515,7 +515,7 @@ func init() {
 				}
 				return NewOutput().WithSerialPlan(
 					NewDialogueEffect("Annnnnnd, that's it for now. Hope to see you soon."),
-					NewLoadMapEffect("hq"),
+					NewLoadMapEffect("hq").WithWaypoint("default"),
 				)
 			},
 		}.CreateHandler()

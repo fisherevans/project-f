@@ -24,14 +24,14 @@ var (
 )
 
 type animechMenu struct {
-	screen        *screen.Instance
+	screen        *screen.Instance[*State]
 	nav           *navigtion.System[*animechMenu]
 	statsActions  []*animechMenuAction
 	skillsActions []*animechMenuAction
 	skillItems    map[input.Direction]*navigtion.SimpleItem[*animechMenu]
 }
 
-func newAnimechMenu(s *screen.Instance) *animechMenu {
+func newAnimechMenu(s *screen.Instance[*State]) *animechMenu {
 	menu := &animechMenu{
 		screen: s,
 		statsActions: []*animechMenuAction{

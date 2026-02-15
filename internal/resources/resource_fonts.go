@@ -88,7 +88,7 @@ var fontMetadata = map[string]FontMetadata{
 	FontNameFF57i: {
 		RenderSize:   10,
 		LetterHeight: 7,
-		LineSpacing:  1,
+		LineSpacing:  2,
 		TailHeight:   0,
 	},
 }

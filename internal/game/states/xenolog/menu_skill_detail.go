@@ -48,12 +48,12 @@ var statusLevels = []rpg.StatusLevel{
 }
 
 type skillDetailMenu struct {
-	screen    *screen.Instance
+	screen    *screen.Instance[*State]
 	skillId   rpg.SkillId
 	selection int
 }
 
-func newSkillDetailMenu(screen *screen.Instance, skillId rpg.SkillId) *skillDetailMenu {
+func newSkillDetailMenu(screen *screen.Instance[*State], skillId rpg.SkillId) *skillDetailMenu {
 	return &skillDetailMenu{
 		screen:  screen,
 		skillId: skillId,

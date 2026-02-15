@@ -32,11 +32,11 @@ var (
 )
 
 type skillSetMenu struct {
-	screen               *screen.Instance
+	screen               *screen.Instance[*State]
 	currentSkillSelected input.Direction
 }
 
-func newSkillSetMenu(screen *screen.Instance) *skillSetMenu {
+func newSkillSetMenu(screen *screen.Instance[*State]) *skillSetMenu {
 	m := &skillSetMenu{
 		screen:               screen,
 		currentSkillSelected: input.Up,

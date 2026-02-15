@@ -35,15 +35,20 @@ func (s *State) newTeleportCommand() *cobra.Command {
 		Aliases: []string{"teleport"},
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			entityId := args[0]
-			_, ok := s.entities.GetEntity(entityId)
-			if !ok {
-				game.Console().WriteLines("entity not found")
+			target := args[0]
+			if _, ok := s.entities.GetEntity(target); ok {
+				s.ExecuteSystemEffectsInOrder(NewTeleportPlayerEffect().
+					WithToEntityId(target))
+				game.Console().WriteLines("teleporting to entity")
 				return
 			}
-			s.ExecuteSystemEffectsInOrder(NewTeleportPlayerEffect().
-				WithToEntityId(entityId))
-			game.Console().WriteLines("teleport complete")
+			if ref, ok := s.teleports[TeleportReference("teleport:"+target)]; ok {
+				s.ExecuteSystemEffectsInOrder(NewTeleportPlayerEffect().
+					WithToLocation(ref.Location))
+				game.Console().WriteLines("teleporting to reference")
+			}
+			game.Console().WriteLines("invalid target")
+			return
 		},
 	}
 }
@@ -98,7 +103,11 @@ func (s *State) newMapCommand() *cobra.Command {
 		Short: "Load another map",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			s.ExecuteSystemEffects(NewLoadMapEffect(args[0]))
+			waypoint := ""
+			if len(args) >= 2 {
+				waypoint = args[1]
+			}
+			s.ExecuteSystemEffects(NewLoadMapEffect(args[0]).WithWaypoint(waypoint))
 			game.Console().Writef("loading map: %s", args[0])
 		},
 	}

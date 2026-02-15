@@ -214,11 +214,12 @@ func NewSimpleEntityCamera(target string, initialLocation pixel.Vec, speed float
 		target:         target,
 		speed:          speed,
 		snapToTarget:   snapToTarget,
+		isSnapped:      true,
 	}
 }
 
 var cameraSnapDistanceThreshold = 1.0 / float64(resources.MapTileSize)
-var cameraUnsnapDistanceThreshold = cameraSnapDistanceThreshold * 2
+var cameraUnsnapDistanceThreshold = float64(resources.MapTileSize) / 2.0
 
 func (c *SimpleEntityCamera) Update(s *State, timeDelta float64) {
 	target, found := s.entities.GetEntity(c.target)

@@ -26,8 +26,8 @@
             "scale": 2.489,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 3955.604660506228,
-                "y": 3781.237444756931
+                "x": 4289.473684210527,
+                "y": 3907.9951787866617
             }
         },
         "intro.tmx": {
@@ -43,11 +43,11 @@
                 14,
                 13
             ],
-            "scale": 4.5321,
-            "selectedLayer": 9,
+            "scale": 3,
+            "selectedLayer": 10,
             "viewCenter": {
-                "x": 1162.7060303170715,
-                "y": 3155.3805079323056
+                "x": 3973.166666666666,
+                "y": 3191
             }
         },
         "map1.tmx": {
@@ -62,11 +62,27 @@
                 21,
                 18
             ],
-            "scale": 1.6421,
-            "selectedLayer": 10,
+            "scale": 5.8991,
+            "selectedLayer": 8,
             "viewCenter": {
-                "x": 565.4345045977711,
-                "y": 2196.2730649777723
+                "x": 719.6860538048177,
+                "y": 1334.9493990608737
+            }
+        },
+        "rules/ruin_valley_autotile.tmx": {
+            "scale": 0.757625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 799.8680085794424,
+                "y": 799.8680085794423
+            }
+        },
+        "rules/valley_ruin_autotile.tmx": {
+            "scale": 2,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 252.5,
+                "y": 400.5
             }
         },
         "snowhex_base.tsx": {
@@ -77,8 +93,41 @@
             "scaleInDock": 1.5955,
             "scaleInEditor": 1
         },
+        "sylvoria.tmx": {
+            "expandedGroupLayers": [
+                2,
+                4
+            ],
+            "expandedObjectLayers": [
+                11,
+                4
+            ],
+            "scale": 0.75,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 16219.999999999998,
+                "y": 16449.333333333332
+            }
+        },
         "sylvoria.tsx": {
             "scaleInDock": 2.12
+        },
+        "template.tmx": {
+            "expandedGroupLayers": [
+                2,
+                4,
+                3
+            ],
+            "expandedObjectLayers": [
+                11,
+                4
+            ],
+            "scale": 1.5,
+            "selectedLayer": 9,
+            "viewCenter": {
+                "x": 16262,
+                "y": 16137.333333333332
+            }
         },
         "testing.tmx": {
             "expandedObjectLayers": [
@@ -90,20 +139,25 @@
                 "x": 64.04435058078141,
                 "y": 63.41077085533263
             }
+        },
+        "valley_ruin.tsx": {
+            "scaleInEditor": 1
         }
     },
     "last.imagePath": "/Users/fisher/dev/project-f/assets/sprites",
     "map.fixedSize": true,
-    "map.height": 500,
+    "map.height": 100,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
-    "map.width": 500,
+    "map.width": 100,
     "openFiles": [
     ],
     "project": "testbed.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "valley_ruin.tsx",
+        "rules/ruin_valley_autotile.tmx",
         "snowhex_base.tsx",
         "space_base.tsx",
         "map1.tmx",

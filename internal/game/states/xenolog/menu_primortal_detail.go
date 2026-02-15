@@ -16,12 +16,12 @@ import (
 )
 
 type primortalDetailMenu struct {
-	screen    *screen.Instance
+	screen    *screen.Instance[*State]
 	primortal rpg.PrimortalType
 	tree      *skillTree
 }
 
-func newPrimortalDetailMenu(screen *screen.Instance, primortal rpg.PrimortalType) *primortalDetailMenu {
+func newPrimortalDetailMenu(screen *screen.Instance[*State], primortal rpg.PrimortalType) *primortalDetailMenu {
 	m := &primortalDetailMenu{
 		screen:    screen,
 		primortal: primortal,

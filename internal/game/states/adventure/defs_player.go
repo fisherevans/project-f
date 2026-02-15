@@ -4,26 +4,31 @@ import (
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util/colors"
-	"fisherevans.com/project/f/internal/util/tiles"
 	"github.com/gopxl/pixel/v2"
+	"github.com/rs/zerolog/log"
 )
 
-func init() {
-	newRegistrarBuilder().byTile(tiles.Player).registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
-		entity := system.RegisterEntity(params.EntityId, params.Location)
+func loadPlayerEntity(params NewEntityParams, system *EntitySystem, defaultPlayerMode string) (Entity, EventHandler) {
+	entity := system.RegisterEntity(params.EntityId, params.Location)
+	switch defaultPlayerMode {
+	case "human":
 		playerHumanRenderer(entity)
-		AttachBlockIngressPresence(entity, false, NewStaticImpedance(ImpedanceHigh))
-		AttachPlayerBehavior(entity, system.state.Controls)
-		entity.SetMovementSpeed(MoveStateWalking, characterSpeed)
-		entity.SetMovementSpeed(MoveStateRunning, characterSpeed*1.75)
-		entity.SetMovementSpeed(MoveStateDashing, characterSpeed*3)
-		entity.AddSoundProvider(NewStepSoundProvider(entity, createStepSoundsHard(), FootstepFalloff))
-		// todo this seems gross
-		system.state.player = params.EntityId
-		system.state.camera = NewSimpleEntityCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium, true)
-		system.state.globals.Set(globalVariableNamePlayerId, system.state.player)
-		return nil, nil
-	})
+	case "animech":
+		playerAnimechRenderer(entity)
+	default:
+		log.Fatal().Msgf("invalid player mode: %s", defaultPlayerMode)
+	}
+	AttachBlockIngressPresence(entity, false, NewStaticImpedance(ImpedanceHigh))
+	AttachPlayerBehavior(entity, system.state.Controls)
+	entity.SetMovementSpeed(MoveStateWalking, characterSpeed)
+	entity.SetMovementSpeed(MoveStateRunning, characterSpeed*1.75)
+	entity.SetMovementSpeed(MoveStateDashing, characterSpeed*3)
+	entity.AddSoundProvider(NewStepSoundProvider(entity, createStepSoundsHard(), FootstepFalloff))
+	// todo this seems gross
+	system.state.player = params.EntityId
+	system.state.camera = NewSimpleEntityCamera(params.EntityId, params.Location.ToVec(), EntityCameraSpeedMedium, true)
+	system.state.globals.Set(globalVariableNamePlayerId, system.state.player)
+	return nil, nil
 }
 
 func playerHumanRenderer(entity Entity) *MovementBasedEntityRenderer {

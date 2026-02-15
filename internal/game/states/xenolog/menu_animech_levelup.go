@@ -18,13 +18,13 @@ import (
 var badgeAContinue *badges.ButtonAction
 
 type animechLevelUpAnimation struct {
-	screen             *screen.Instance
+	screen             *screen.Instance[*State]
 	fromLevel, toLevel int
 	elapsed            float64
 	totalDuration      float64
 }
 
-func newAnimechLevelUpAnimation(screen *screen.Instance, fromLevel, toLevel int) *animechLevelUpAnimation {
+func newAnimechLevelUpAnimation(screen *screen.Instance[*State], fromLevel, toLevel int) *animechLevelUpAnimation {
 	animation := &animechLevelUpAnimation{
 		screen:        screen,
 		fromLevel:     fromLevel,

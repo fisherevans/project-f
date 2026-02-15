@@ -29,13 +29,13 @@ var (
 )
 
 type homeMenu struct {
-	screen     *screen.Instance
+	screen     *screen.Instance[*State]
 	selectLeft bool
 	left       *selectBox
 	right      *selectBox
 }
 
-func newHomeMenu(screen *screen.Instance, primortalsEnabled bool) *homeMenu {
+func newHomeMenu(screen *screen.Instance[*State], primortalsEnabled bool) *homeMenu {
 	home := &homeMenu{
 		screen:     screen,
 		selectLeft: true,
@@ -94,7 +94,7 @@ func (s *homeMenu) OnTick(target pixel.Target, timeDelta float64) {
 	}
 
 	if game.Controls[*State]().ButtonB().JustPressed() {
-		s.screen.Holder().Close()
+		s.screen.Holder().ToggleOpenState()
 	}
 
 	center := pixel.IM.Moved(gfx.IVec(s.screen.Width()/2, s.screen.Height()/2+3))

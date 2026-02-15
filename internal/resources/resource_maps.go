@@ -42,6 +42,7 @@ type MapControls struct {
 	Elythium           ElythiumControls `yaml:"elythium"`
 	SceneClearColor    string           `yaml:"scene_clear_color"`
 	LightingClearColor string           `yaml:"lighting_clear_color"`
+	DefaultPlayerMode  string           `yaml:"default_player_mode"`
 }
 
 type Map struct {

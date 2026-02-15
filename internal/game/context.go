@@ -40,6 +40,7 @@ type context struct {
 	activeState State
 
 	stateIntent any
+	stateData   any
 
 	save *rpg.GameSave
 
@@ -94,10 +95,15 @@ func GetActiveState() State {
 }
 
 func SetActiveStateIntent(intent any) {
+	SetActiveStateIntentWithData(intent, nil)
+}
+
+func SetActiveStateIntentWithData(intent, data any) {
 	if ctx.stateIntent != nil {
 		log.Warn().Msgf("something is overriding an existing state intent")
 	}
 	ctx.stateIntent = intent
+	ctx.stateData = data
 }
 
 func ApplyIntent() {
@@ -113,7 +119,9 @@ func ApplyIntent() {
 	}
 	ctx.activeState = s
 	ctx.stateIntent = nil
-	ctx.activeState.OnEnter()
+	data := ctx.stateData
+	ctx.stateData = nil
+	ctx.activeState.OnEnter(data)
 }
 
 type AppliedShader interface {

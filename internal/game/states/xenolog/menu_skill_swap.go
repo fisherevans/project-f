@@ -24,7 +24,7 @@ var (
 )
 
 type skillSwapMenu struct {
-	screen     *screen.Instance
+	screen     *screen.Instance[*State]
 	original   rpg.SkillId
 	swapWith   rpg.SkillId
 	list       *scrollList[*skillSwapMenu]
@@ -33,7 +33,7 @@ type skillSwapMenu struct {
 	cursorStartIndex int
 }
 
-func newSkillSwapMenu(screen *screen.Instance, original rpg.SkillId, onComplete func(id rpg.SkillId)) *skillSwapMenu {
+func newSkillSwapMenu(screen *screen.Instance[*State], original rpg.SkillId, onComplete func(id rpg.SkillId)) *skillSwapMenu {
 	menu := &skillSwapMenu{
 		screen:     screen,
 		original:   original,

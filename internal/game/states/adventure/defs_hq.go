@@ -13,19 +13,20 @@ import (
 
 func init() {
 	registerEventHandler("hq.chair", func(_ *util.Properties) EventHandler {
+		chairId := "hq.chair"
+		chairFrontId := "hq.chair_front"
 		return BasicHandlerBuilder[None]{
 			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 				if event.TargetId != thisEntity.GetId() {
 					return nil
 				}
-				chairId := "hq.chair"
-				chairFrontId := "hq.chair_front"
 				pId := globals.Player().GetId()
 				return NewOutput().WithSerialPlan(
 					NewPushEntityBehaviorEffect(pId).WithScriptedMotion(EntityBehaviorScriptedMotion{}),
 					NewStartScriptedMotionEffect(pId).WithToEntityId(chairFrontId),
 					NewPopEntityBehaviorEffect(pId),
 					NewEntityFaceDirectionEffect(event.SourceId).WithDirection(input.Down),
+					NewMutateEntityBehaviorEffect(pId).WithDisableBy("computer"),
 					NewChangePlayerRendererEffect("hidden"),
 					NewMutateModeBasedEntityEffect(chairId).WithMode("enter"),
 					NewWaitForAnimationComplete(chairId),
@@ -35,26 +36,40 @@ func init() {
 							Background: s,
 						})
 					}),
-					NewTimerEffect(1.0),
+				)
+			},
+			OnStateEnter: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnStateEnter) *HandlerOutput {
+				data, ok := event.Data.(game.ComputerReturnData)
+				if !ok {
+					return nil
+				}
+				pId := globals.Player().GetId()
+				// just exiting, not lanching
+				if data.PlanetName == "" || data.Waypoint == "" {
+					return NewOutput().WithSerialPlan(
+						NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
+						NewWaitForAnimationComplete(chairId),
+						NewPlaySoundEffect("adventure/beeps/success"),
+						// get back out
+						NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
+						NewWaitForConditionEffect(func(s *State, td float64) bool {
+							e, r, ok := GetModeBasedRenderer(s, chairId)
+							if !ok {
+								log.Fatal().Msgf("failed to get renderer for %s", chairId)
+							}
+							return r.getBasicEntityRenderer(ModeMetadataKey.Get(e)).AreAnimationsComplete()
+						}),
+						NewChangePlayerRendererEffect("human"),
+						NewMutateModeBasedEntityEffect(chairId).WithMode(""),
+						NewMutateEntityBehaviorEffect(pId).WithEnableBy("computer"),
+					)
+				}
+				// planet chosen, time to launch!
+				return NewOutput().WithSerialPlan(
 					NewMutateModeBasedEntityEffect(chairId).WithMode("close_eyes"),
 					NewWaitForAnimationComplete(chairId),
-					NewSelfDialogueEffect("now wake up.."),
-					NewMutateModeBasedEntityEffect(chairId).WithMode("open_eyes"),
-					NewWaitForAnimationComplete(chairId),
-					NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
-					NewWaitForAnimationComplete(chairId),
-					NewPlaySoundEffect("adventure/beeps/success"),
-					// get back out
-					NewMutateModeBasedEntityEffect(chairId).WithMode("exit"),
-					NewWaitForConditionEffect(func(s *State, td float64) bool {
-						e, r, ok := GetModeBasedRenderer(s, chairId)
-						if !ok {
-							log.Fatal().Msgf("failed to get renderer for %s", chairId)
-						}
-						return r.getBasicEntityRenderer(ModeMetadataKey.Get(e)).AreAnimationsComplete()
-					}),
-					NewChangePlayerRendererEffect("human"),
-					NewMutateModeBasedEntityEffect(chairId).WithMode(""),
+					// todo custom fade?
+					NewLoadMapEffect(data.PlanetName).WithWaypoint(data.Waypoint),
 				)
 			},
 		}.CreateHandler()

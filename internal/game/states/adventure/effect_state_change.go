@@ -111,7 +111,8 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 
 type EffectLoadMap struct {
 	instantEffect
-	MapName string
+	MapName  string
+	Waypoint *string
 }
 
 func (e *EffectLoadMap) Process(source EntityReader, s *State) bool {
@@ -128,8 +129,13 @@ func (e *EffectLoadMap) Process(source EntityReader, s *State) bool {
 			WithFromColor("#0000").
 			WithToColor("#000f"),
 		NewFunctionEffect(func(*State) {
+			waypoint := "default"
+			if e.Waypoint != nil {
+				waypoint = *e.Waypoint
+			}
 			game.SetActiveStateIntent(game.AdventureIntent{
-				MapName: e.MapName,
+				MapName:  e.MapName,
+				Waypoint: waypoint,
 			})
 		}),
 	)

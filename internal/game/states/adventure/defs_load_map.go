@@ -15,8 +15,10 @@ func init() {
 					if thisEntity.GetId() != event.TargetId {
 						return nil
 					}
+					mapName := params.Properties.GetString("map_name", "")
+					waypoint := params.Properties.GetString("waypoint", "")
 					return NewOutput().WithEffects(
-						NewLoadMapEffect(params.Properties.GetString("map_name", "")),
+						NewLoadMapEffect(mapName).WithWaypoint(waypoint),
 					)
 				},
 			}.CreateHandler()

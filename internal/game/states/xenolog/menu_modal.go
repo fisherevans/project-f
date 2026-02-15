@@ -15,7 +15,7 @@ import (
 )
 
 type menuModal struct {
-	screen  *screen.Instance
+	screen  *screen.Instance[*State]
 	title   string
 	text    string
 	options []modalOption
@@ -33,7 +33,7 @@ type modalOption struct {
 	onSelect func()
 }
 
-func newConfirmationModal(screen *screen.Instance, title, text string, onSelect func()) *menuModal {
+func newConfirmationModal(screen *screen.Instance[*State], title, text string, onSelect func()) *menuModal {
 	return newMenuModal(screen, title, text, modalOption{
 		label: "cancel",
 	}, modalOption{
@@ -42,7 +42,7 @@ func newConfirmationModal(screen *screen.Instance, title, text string, onSelect 
 	})
 }
 
-func newMenuModal(screen *screen.Instance, title, text string, options ...modalOption) *menuModal {
+func newMenuModal(screen *screen.Instance[*State], title, text string, options ...modalOption) *menuModal {
 	modal := &menuModal{
 		screen:    screen,
 		title:     title,

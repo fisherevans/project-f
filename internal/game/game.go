@@ -30,7 +30,7 @@ const (
 type State interface {
 	ClearColor() pixel.RGBA
 	OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, timeDelta float64)
-	OnEnter()
+	OnEnter(data any)
 	OnExit()
 	HandleConsoleInput(string) bool
 }
@@ -41,7 +41,7 @@ func (s BaseState) ClearColor() pixel.RGBA {
 	return colors.Black.RGBA
 }
 
-func (s BaseState) OnEnter() {}
+func (s BaseState) OnEnter(any) {}
 
 func (s BaseState) OnExit() {}
 

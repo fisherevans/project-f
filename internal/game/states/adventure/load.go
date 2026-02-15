@@ -13,16 +13,25 @@ import (
 	"fisherevans.com/project/f/internal/util/tiles"
 )
 
-func initializeMap(a *State, m *resources.Map) {
+var DefaultWaypointName = "default"
+
+func initializeMap(a *State, m *resources.Map, waypoint string) {
 	a.controls = m.Controls
 	sceneClearColor := util.OrDefaultString(m.Controls.SceneClearColor, "#000")
 	a.sceneClear = colors.FromString(sceneClearColor)
 	lightClearValue := util.OrDefaultString(m.Controls.LightingClearColor, "#fff")
 	a.lightClear = colors.FromString(lightClearValue)
+	defaultPlayerMode := util.OrDefaultString(m.Controls.DefaultPlayerMode, "human")
 	log.Info().
 		Str("sceneClear", sceneClearColor).
 		Str("lightingClear", lightClearValue).
+		Str("defaultPlayerMode", defaultPlayerMode).
 		Msg("loading map from config")
+
+	playerLoaded := false
+	if waypoint == "" {
+		waypoint = DefaultWaypointName
+	}
 
 	// get world bounds first, in order to adjust movement of other object
 	var minX, maxX, minY, maxY int
@@ -138,6 +147,18 @@ func initializeMap(a *State, m *resources.Map) {
 			log.Debug().Msgf("added parameterized entity '%s'", entityId)
 			continue
 		}
+		if mapEntity.SpriteId != nil && *mapEntity.SpriteId == tiles.Player {
+			thisName := mapEntity.Properties.GetString("waypoint_name", DefaultWaypointName)
+			a.teleports[TeleportReference("teleport:"+thisName)] = Teleport{
+				Location: location,
+			}
+			if waypoint != thisName {
+				continue
+			}
+			loadPlayerEntity(newEntityParams, a.entities, defaultPlayerMode)
+			playerLoaded = true
+			continue
+		}
 		if mapEntity.Class == "ShadowMob" {
 			a.AddMob(NewShadowMob(entityId, location, NewShadowMobParamsFromProperties(newEntityParams.Properties)))
 			log.Debug().Msgf("added shadow mob '%s'", entityId)
@@ -169,6 +190,9 @@ func initializeMap(a *State, m *resources.Map) {
 		default:
 			log.Warn().Msgf("Unknown entity type: %s / %s", entityId, entityType)
 		}
+	}
+	if !playerLoaded {
+		log.Fatal().Msg("no waypoint found for player to load into, looking for " + waypoint)
 	}
 	a.eventDispatcher.Init()
 }

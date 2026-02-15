@@ -16,7 +16,7 @@ import (
 )
 
 type ScreenHolder interface {
-	Close()
+	ToggleOpenState()
 }
 
 type RenderContext struct {
@@ -33,8 +33,8 @@ type Colors struct {
 	Highlight pixel.RGBA
 }
 
-type Instance struct {
-	holder        ScreenHolder
+type Instance[H ScreenHolder] struct {
+	holder        H
 	renderContext RenderContext
 
 	canvas *shaders.Canvas
@@ -52,8 +52,8 @@ type Instance struct {
 	doDrawLastScreen bool
 }
 
-func NewScreen(holder ScreenHolder, renderContext RenderContext, initialMenu func(instance *Instance) Menu) *Instance {
-	s := &Instance{
+func NewScreen[H ScreenHolder](holder H, renderContext RenderContext, initialMenu func(instance *Instance[H]) Menu) *Instance[H] {
+	s := &Instance[H]{
 		holder:             holder,
 		renderContext:      renderContext,
 		menuStack:          []Menu{},
@@ -78,27 +78,27 @@ func NewScreen(holder ScreenHolder, renderContext RenderContext, initialMenu fun
 	return s
 }
 
-func (s *Instance) Colors() Colors {
+func (s *Instance[H]) Colors() Colors {
 	return s.renderContext.Colors
 }
 
-func (s *Instance) Width() int {
+func (s *Instance[H]) Width() int {
 	return s.renderContext.Width
 }
 
-func (s *Instance) Height() int {
+func (s *Instance[H]) Height() int {
 	return s.renderContext.Height
 }
 
-func (s *Instance) Center() pixel.Vec {
+func (s *Instance[H]) Center() pixel.Vec {
 	return pixel.V(s.WidthFloat()/2, s.HeightFloat()/2)
 }
 
-func (s *Instance) WidthFloat() float64 {
+func (s *Instance[H]) WidthFloat() float64 {
 	return float64(s.renderContext.Width)
 }
 
-func (s *Instance) HeightFloat() float64 {
+func (s *Instance[H]) HeightFloat() float64 {
 	return float64(s.renderContext.Height)
 }
 
@@ -107,7 +107,7 @@ type Menu interface {
 	Enter()
 }
 
-func (s *Instance) onMenuChange(middleOut bool, doAnimate bool) {
+func (s *Instance[H]) onMenuChange(middleOut bool, doAnimate bool) {
 	if doAnimate {
 		s.screenTransitionElapsed = 0
 	}
@@ -116,32 +116,32 @@ func (s *Instance) onMenuChange(middleOut bool, doAnimate bool) {
 	s.canvas.Draw(s.lastMenuImage, pixel.IM.Moved(s.canvas.Bounds().Center()))
 }
 
-func (s *Instance) CurrentMenu() Menu {
+func (s *Instance[H]) CurrentMenu() Menu {
 	if len(s.menuStack) == 0 {
 		return nil
 	}
 	return s.menuStack[len(s.menuStack)-1]
 }
 
-func (s *Instance) PushMenuAnimated(menu Menu) {
+func (s *Instance[H]) PushMenuAnimated(menu Menu) {
 	s.PushMenu(menu, true)
 }
 
-func (s *Instance) PopMenuAnimated() {
+func (s *Instance[H]) PopMenuAnimated() {
 	s.PopMenu(true)
 }
 
-func (s *Instance) SwapActiveMenuAnimated(menu Menu) {
+func (s *Instance[H]) SwapActiveMenuAnimated(menu Menu) {
 	s.SwapActiveMenu(menu, true)
 }
 
-func (s *Instance) PushMenu(menu Menu, doAnimate bool) {
+func (s *Instance[H]) PushMenu(menu Menu, doAnimate bool) {
 	s.onMenuChange(true, doAnimate)
 	s.menuStack = append(s.menuStack, menu)
 	s.CurrentMenu().Enter()
 }
 
-func (s *Instance) PopMenu(doAnimate bool) {
+func (s *Instance[H]) PopMenu(doAnimate bool) {
 	if s.menuStack == nil || len(s.menuStack) == 1 {
 		log.Warn().Msgf("Tried to go back to parent menu, but there was none")
 		return
@@ -151,17 +151,17 @@ func (s *Instance) PopMenu(doAnimate bool) {
 	s.CurrentMenu().Enter()
 }
 
-func (s *Instance) SwapActiveMenu(menu Menu, doAnimate bool) {
+func (s *Instance[H]) SwapActiveMenu(menu Menu, doAnimate bool) {
 	s.onMenuChange(true, doAnimate)
 	s.menuStack[len(s.menuStack)-1] = menu
 	s.CurrentMenu().Enter()
 }
 
-func (s *Instance) Bounds() pixel.Rect {
+func (s *Instance[H]) Bounds() pixel.Rect {
 	return pixel.R(0, 0, float64(s.renderContext.Width), float64(s.renderContext.Height))
 }
 
-func (s *Instance) OnTick(targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
+func (s *Instance[H]) OnTick(targetMatrix pixel.Matrix, target pixel.Target, timeDelta float64) {
 	s.screenTransitionElapsed += timeDelta
 	s.screenEffectShader.UpdateScreenTransition(
 		float32(game.TimeElapsed()),
@@ -191,14 +191,14 @@ func (s *Instance) OnTick(targetMatrix pixel.Matrix, target pixel.Target, timeDe
 	bloomed.Draw(target, targetMatrix)
 }
 
-func (s *Instance) SpriteFilterBuffer() *spriteShader {
+func (s *Instance[H]) SpriteFilterBuffer() *spriteShader {
 	return s.spriteFilterBuffer
 }
 
-func (s *Instance) DrawLastScreen() {
+func (s *Instance[H]) DrawLastScreen() {
 	s.doDrawLastScreen = true
 }
 
-func (s *Instance) Holder() ScreenHolder {
+func (s *Instance[H]) Holder() H {
 	return s.holder
 }

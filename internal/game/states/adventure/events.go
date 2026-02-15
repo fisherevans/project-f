@@ -73,7 +73,9 @@ type EventScriptedMotionComplete struct {
 	WasCanceled bool
 }
 
-type EventOnStateEnter struct{}
+type EventOnStateEnter struct {
+	Data any
+}
 
 type EventBroadcast struct {
 	Id   string

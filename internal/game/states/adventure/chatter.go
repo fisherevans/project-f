@@ -34,12 +34,14 @@ type Chatter interface {
 }
 
 type ChatterSystem struct {
-	chatters []Chatter
+	chatters map[string]Chatter
 	toAdd    []Chatter
 }
 
 func NewChatterSystem() *ChatterSystem {
-	return &ChatterSystem{}
+	return &ChatterSystem{
+		chatters: make(map[string]Chatter),
+	}
 }
 
 func (c *ChatterSystem) Add(chatter Chatter) {
@@ -53,7 +55,7 @@ var chatterBox *textbox.Instance
 func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.Vec, bounds MapBounds, timeDelta float64) {
 	if len(c.toAdd) > 0 {
 		for _, add := range c.toAdd {
-			c.chatters = append(c.chatters, add)
+			c.chatters[add.ChatterId()] = add
 			entity, exist := s.entities.GetEntity(add.EntityId())
 			distance := math.MaxFloat64
 			if exist {
@@ -65,11 +67,11 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.
 		}
 		c.toAdd = nil
 	}
-	c.sortChatters()
-	incompleteChatters := c.chatters[:0] // Reuse the same slice memory
-	for _, chatter := range c.chatters {
+	sortedChatters := c.getSortedChatters()
+	for _, chatter := range sortedChatters {
 		chatter.Update(s, timeDelta)
 		if chatter.State() == ChatterComplete {
+			delete(c.chatters, chatter.ChatterId())
 			e := EventChatterComplete{
 				ChatterId: chatter.CompletionId(),
 				EntityId:  chatter.EntityId(),
@@ -79,7 +81,6 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.
 			s.planExecutor.MarkComplete(chatter.CompletionId())
 			continue
 		}
-		incompleteChatters = append(incompleteChatters, chatter)
 
 		moveDelta := chatter.RenderAbove().Scaled(resources.MapTileSize.Float())
 		renderMatrix := pixel.IM.Moved(cameraDelta).Moved(moveDelta.Add(gfx.IVec(0, resources.MapTileSize.Int())))
@@ -94,10 +95,9 @@ func (c *ChatterSystem) OnTick(s *State, target pixel.Target, cameraDelta pixel.
 		chatter.Content().Update(timeDelta, nil)
 		chatter.Content().Render(target, renderMatrix.Moved(pixel.V(float64(-1*chatter.Content().Width()/2), float64(chatterFrame.BottomPadding()))))
 	}
-	c.chatters = incompleteChatters
 }
 
-func (c *ChatterSystem) sortChatters() {
+func (c *ChatterSystem) getSortedChatters() []Chatter {
 	sortedChatters := make([]Chatter, 0, len(c.chatters))
 	for _, chatter := range c.chatters {
 		sortedChatters = append(sortedChatters, chatter)
@@ -109,7 +109,7 @@ func (c *ChatterSystem) sortChatters() {
 		}
 		return iL.X < jL.X
 	})
-	c.chatters = sortedChatters
+	return sortedChatters
 }
 
 type basicEntityChatter struct {

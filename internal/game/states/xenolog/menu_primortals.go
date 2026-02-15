@@ -26,14 +26,14 @@ var (
 )
 
 type primortalsMenu struct {
-	screen                                 *screen.Instance
+	screen                                 *screen.Instance[*State]
 	list                                   *scrollList[*primortalsMenu]
 	upgradeAbove, upgradeBelow, wasSkipped bool
 	title                                  *primortalListTitle
 	footer                                 *primortalListFooter
 }
 
-func newPrimortalsMenu(screen *screen.Instance) *primortalsMenu {
+func newPrimortalsMenu(screen *screen.Instance[*State]) *primortalsMenu {
 	menu := &primortalsMenu{
 		screen: screen,
 		title:  newPrimortalListTitle(),

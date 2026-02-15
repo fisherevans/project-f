@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="200" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="22" nextobjectid="241">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="200" height="200" tilewidth="16" tileheight="16" infinite="0" nextlayerid="22" nextobjectid="242">
  <properties>
   <property name="controls">lighting_clear_color: &quot;#5a5f8b&quot;
 scene_clear_color: &quot;#20212f&quot;
 elythium:
   default: true
-</property>
+default_player_mode: human</property>
  </properties>
  <tileset firstgid="1" source="snowhex_base.tsx"/>
  <tileset firstgid="5538" source="space_base.tsx"/>
@@ -1667,6 +1667,12 @@ respawn_delay: 15
 respawn_jitter: 5
 combat_background: combat/background_space_base
 opponent_pool: intro.training.8.pool</property>
+    </properties>
+    <point/>
+   </object>
+   <object id="241" type="ModeBasedEntity" x="632" y="1256">
+    <properties>
+     <property name="script_ref" value="debug_button.hq"/>
     </properties>
     <point/>
    </object>

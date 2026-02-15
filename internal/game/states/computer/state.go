@@ -39,8 +39,9 @@ type State struct {
 	background game.State
 	transition *interp.TimedProgress
 	exiting    bool
+	exitData   *game.ComputerReturnData
 
-	screen *screen.Instance
+	screen *screen.Instance[*State]
 }
 
 func New(i game.ComputerIntent) game.State {
@@ -70,9 +71,13 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 	}
 
 	if s.exiting && s.transition.IsComplete() {
-		game.SetActiveStateIntent(game.SwapStateIntent{
+		var data game.ComputerReturnData
+		if s.exitData != nil {
+			data = *s.exitData
+		}
+		game.SetActiveStateIntentWithData(game.SwapStateIntent{
 			State: s.background,
-		})
+		}, data)
 	}
 
 	fullDeltaX := deviceBackgroundSprite.Bounds().W()
@@ -93,11 +98,21 @@ func (s *State) OnTick(target pixel.ComposeTarget, targetBounds pixel.Rect, time
 	s.screen.OnTick(screenMatrix, target, timeDelta)
 
 	if game.Controls[*State]().ButtonStart().JustPressed() {
-		s.Close()
+		s.ToggleOpenState()
 	}
 }
 
-func (s *State) Close() {
+func (s *State) ToggleOpenState() {
 	s.exiting = !s.exiting
+	s.exitData = nil
+	s.transition.Reverse()
+}
+
+func (s *State) CloseWithData(data game.ComputerReturnData) {
+	s.exitData = &data
+	if s.exiting {
+		return
+	}
+	s.exiting = true
 	s.transition.Reverse()
 }
