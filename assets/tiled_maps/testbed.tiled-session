@@ -3,10 +3,13 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "tilesets/valley_ruin.tsx",
     "codeEditor.globalTypings": "// AUTO-GENERATED - DO NOT EDIT\n// Generated at 2025-10-23T10:26:43-04:00 by go generate\n// Source: internal/game/events/handler.go, internal/game/events/effect.go\n\ndeclare global {\n  // ============================================================================\n  // LOGGING\n  // ============================================================================\n\n  interface Logger {\n    Debug(message: string): void;\n    Info(message: string): void;\n    Warn(message: string): void;\n    Error(message: string): void;\n  }\n\n  const log: Logger;\n\n  // ============================================================================\n  // CONTEXT\n  // ============================================================================\n\n  interface EntityContext {\n    Id(): string;\n  }\n\n  interface WorldStateReader {\n    // Add world state methods as needed\n  }\n\n  // ============================================================================\n  // EVENT TYPES\n  // ============================================================================\n\n  interface EventOnInteract {\n    sourceId: string;\n    targetId: string;\n    sourceDirection: any;\n  }\n\n  interface EventDialogueComplete {\n    dialogueId: string;\n  }\n\n  interface EventChatterComplete {\n    chatterId: string;\n    entityId: string;\n  }\n\n  interface EventTimerComplete {\n    createdBy: string;\n    timerId: string;\n    durationSeconds: number;\n    triggerCount: number;\n  }\n\n  interface EventEntityZoneActivity {\n    entityId: string;\n    zoneId: string;\n    isEntering: boolean;\n  }\n\n  interface EventWorldStateUpdated {\n    key: string;\n    newValue: any;\n    oldValue: any;\n    setBy: string;\n  }\n\n  interface EventCombatComplete {\n    combatId: string;\n    result: any;\n  }\n\n  // ============================================================================\n  // EFFECT TYPES\n  // ============================================================================\n\n  interface DynamicAnimationReference {\n    tilesheet: string;\n    name: string;\n  }\n\n  interface LightConfig {\n    color: string;\n    size: number;\n    modifier: string;\n  }\n\n  interface EffectFunction {\n    fn: any;\n  }\n\n  interface EffectDialogue {\n    dialogueId: string;\n    text: string;\n  }\n\n  interface EffectChatter {\n    chatterId: string;\n    entityId: string;\n    durationSeconds: number;\n    message: string;\n  }\n\n  interface EffectYieldElythium {\n    amount: number;\n  }\n\n  interface EffectTimer {\n    timerId: string;\n    durationSeconds: number;\n  }\n\n  interface EffectMutateEntity {\n    entityId: string;\n    mode: string | undefined;\n    isPassable: boolean | undefined;\n    dynamicAnimations: Record<string, DynamicAnimationReference[]>;\n    dynamicLights: Record<string, LightConfig[]>;\n  }\n\n  interface EffectSetWorldState {\n    key: string;\n    value: any;\n  }\n\n  interface EffectSetEntityLocation {\n    entityId: string;\n    toReference: string | undefined;\n    toLocation: any | undefined;\n    toEntityId: string | undefined;\n  }\n\n  interface EffectTeleportPlayer {\n    toReference: string | undefined;\n    toLocation: any | undefined;\n    toEntityId: string | undefined;\n    exitDirection: any | undefined;\n    transitionStyle: string | undefined;\n  }\n\n  interface EffectPlan {\n    planId: string;\n    steps: any[];\n  }\n\n  interface EffectBlockInput {\n    blocked: boolean;\n  }\n\n  interface EffectFade {\n    fadeId: string;\n    durationSeconds: number;\n    autoDeactivate: boolean | undefined;\n    fromColor: string | undefined;\n    toColor: string | undefined;\n    transitions: number;\n  }\n\n  interface EffectDeactivateFade {\n    fadeId: string;\n  }\n\n  interface EffectTriggerMovement {\n    entityId: string;\n    direction: any;\n  }\n\n  interface EffectSetFollowCamera {\n    entityId: string | undefined;\n    resetPosition: boolean;\n  }\n\n  interface EffectMutateNPC {\n    entityId: string;\n    talkingAtEntityId: string | undefined;\n    isTalking: boolean | undefined;\n  }\n\n  interface EffectTriggerCombat {\n    combatId: string;\n    opponent: any | undefined;\n    background: string;\n  }\n\n  interface Effect {\n    function?: EffectFunction;\n    dialogue?: EffectDialogue;\n    chatter?: EffectChatter;\n    yieldElythium?: EffectYieldElythium;\n    timer?: EffectTimer;\n    mutateEntity?: EffectMutateEntity;\n    setWorldState?: EffectSetWorldState;\n    setEntityLocation?: EffectSetEntityLocation;\n    teleportPlayer?: EffectTeleportPlayer;\n    plan?: EffectPlan;\n    blockInput?: EffectBlockInput;\n    fade?: EffectFade;\n    deactivateFade?: EffectDeactivateFade;\n    triggerMovement?: EffectTriggerMovement;\n    setFollowCamera?: EffectSetFollowCamera;\n    mutateNPC?: EffectMutateNPC;\n    triggerCombat?: EffectTriggerCombat;\n  }\n\n  interface HandlerOutput {\n    state?: any;\n    effects?: Effect[];\n  }\n\n  // ============================================================================\n  // ENTITY HANDLER\n  // ============================================================================\n\n  interface EntityHandler {\n    Init?: (self: EntityContext, world: WorldStateReader, state: any) => HandlerOutput | null;\n    OnInteract?: (self: EntityContext, world: WorldStateReader, state: any, event: EventOnInteract) => HandlerOutput | null;\n    OnDialogueComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventDialogueComplete) => HandlerOutput | null;\n    OnChatterComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventChatterComplete) => HandlerOutput | null;\n    OnTimerComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventTimerComplete) => HandlerOutput | null;\n    OnEntityZoneActivity?: (self: EntityContext, world: WorldStateReader, state: any, event: EventEntityZoneActivity) => HandlerOutput | null;\n    OnWorldStateUpdated?: (self: EntityContext, world: WorldStateReader, state: any, event: EventWorldStateUpdated) => HandlerOutput | null;\n    OnCombatComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventCombatComplete) => HandlerOutput | null;\n  }\n\n  const handler: EntityHandler;\n}\n\nexport {};\n",
     "expandedProjectPaths": [
-        "."
+        "tilesets",
+        "plugins",
+        ".",
+        "rules"
     ],
     "fileStates": {
         "asha_idle-32x32.tsx": {
@@ -15,45 +18,45 @@
         },
         "hq.tmx": {
             "expandedGroupLayers": [
-                4,
                 2,
-                3
+                3,
+                4
             ],
             "expandedObjectLayers": [
-                11,
-                4
+                4,
+                11
             ],
             "scale": 2.489,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 4004.4194455604666,
-                "y": 3781.237444756931
+                "x": 4000.2008838891124,
+                "y": 4000
             }
         },
         "intro.tmx": {
             "expandedGroupLayers": [
                 4,
-                2,
-                3
+                3,
+                2
             ],
             "expandedObjectLayers": [
                 11,
+                13,
                 4,
                 12,
-                14,
-                13
+                14
             ],
-            "scale": 3,
-            "selectedLayer": 10,
+            "scale": 7.877,
+            "selectedLayer": 9,
             "viewCenter": {
-                "x": 3973.166666666666,
-                "y": 3191
+                "x": 4000.0634759426175,
+                "y": 4000
             }
         },
         "map1.tmx": {
             "expandedGroupLayers": [
-                20,
                 21,
+                20,
                 19
             ],
             "expandedObjectLayers": [
@@ -62,12 +65,16 @@
                 21,
                 18
             ],
-            "scale": 5.8991,
+            "scale": 0.25,
             "selectedLayer": 8,
             "viewCenter": {
-                "x": 719.6860538048177,
-                "y": 1334.9493990608737
+                "x": 1898,
+                "y": 2380
             }
+        },
+        "rules/intro.tmx.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
         },
         "rules/ruin_valley_autotile.tmx": {
             "scale": 0.757625,
@@ -79,10 +86,21 @@
         },
         "rules/valley_ruin_autotile.tmx": {
             "scale": 2,
-            "selectedLayer": 4,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 252.5,
-                "y": 400.5
+                "x": 762.25,
+                "y": 896
+            }
+        },
+        "rules/valley_ruin_autotile_variations.tmx": {
+            "expandedGroupLayers": [
+                14
+            ],
+            "scale": 3,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 166.49999999999997,
+                "y": 89.33333333333333
             }
         },
         "snowhex_base.tsx": {
@@ -90,7 +108,7 @@
             "scaleInEditor": 1
         },
         "space_base.tsx": {
-            "scaleInDock": 1.5955,
+            "scaleInDock": 2.6659,
             "scaleInEditor": 1
         },
         "sylvoria.tmx": {
@@ -99,34 +117,34 @@
                 4
             ],
             "expandedObjectLayers": [
-                11,
                 4
             ],
-            "scale": 3.8991,
-            "selectedLayer": 1,
+            "scale": 2,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 15888.794850093615,
-                "y": 16470.595778512994
+                "x": 4755.25,
+                "y": 5577.5
             }
         },
         "sylvoria.tsx": {
-            "scaleInDock": 2.12
+            "scaleInDock": 2.12,
+            "scaleInEditor": 1
         },
         "template.tmx": {
             "expandedGroupLayers": [
-                2,
                 4,
-                3
+                3,
+                2
             ],
             "expandedObjectLayers": [
                 11,
                 4
             ],
-            "scale": 0.03125,
+            "scale": 0.5,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 23168,
-                "y": 14944
+                "x": 799,
+                "y": 800
             }
         },
         "testing.tmx": {
@@ -140,11 +158,33 @@
                 "y": 63.41077085533263
             }
         },
+        "tilesets/asha_idle-32x32.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
+        },
+        "tilesets/snowhex_base.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
+        },
+        "tilesets/space_base.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
+        },
+        "tilesets/sylvoria.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
+        },
+        "tilesets/valley_ruin.tsx": {
+            "scaleInDock": 4,
+            "scaleInEditor": 5.5
+        },
         "valley_ruin.tsx": {
+            "scaleInDock": 2,
             "scaleInEditor": 1
         }
     },
-    "last.imagePath": "/Users/fisher/dev/project-f/assets/sprites",
+    "last.externalTilesetPath": "/Users/fisher/dev/project-f/assets/tiled_maps/tilesets",
+    "last.imagePath": "/Users/fisher/dev/project-f/assets/sprites/adventure/entities/asha",
     "map.fixedSize": true,
     "map.height": 100,
     "map.lastUsedFormat": "tmx",
@@ -152,19 +192,26 @@
     "map.tileWidth": 16,
     "map.width": 100,
     "openFiles": [
+        "tilesets/valley_ruin.tsx",
+        "hq.tmx",
+        "sylvoria.tmx",
+        "rules/valley_ruin_autotile_variations.tmx"
     ],
     "project": "testbed.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "valley_ruin.tsx",
-        "rules/ruin_valley_autotile.tmx",
-        "snowhex_base.tsx",
-        "space_base.tsx",
-        "map1.tmx",
+        "rules/valley_ruin_autotile_variations.tmx",
+        "sylvoria.tmx",
         "hq.tmx",
+        "tilesets/valley_ruin.tsx",
+        "rules/intro.tmx.tsx",
+        "template.tmx",
         "intro.tmx",
-        "testing.tmx",
-        "asha_idle-32x32.tsx"
+        "map1.tmx",
+        "tilesets/sylvoria.tsx",
+        "tilesets/space_base.tsx",
+        "tilesets/snowhex_base.tsx",
+        "tilesets/asha_idle-32x32.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

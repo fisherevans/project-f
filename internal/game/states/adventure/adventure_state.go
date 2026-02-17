@@ -151,6 +151,9 @@ func New(i game.AdventureIntent) game.State {
 
 					colors.HexString("#ed3579"), // red led
 					colors.HexString("#4CC9F0"), // blue led
+
+					colors.HexString("#aad620"), // animech led
+					colors.HexString("#c2fef5"), // animech visor reflection
 				)),
 			bloom.DefaultBlurConfig(),
 			bloom.DefaultBlendConfig()),

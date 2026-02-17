@@ -1,1 +1,2 @@
+rules/valley_ruin_autotile_variations.tmx
 rules/valley_ruin_autotile.tmx

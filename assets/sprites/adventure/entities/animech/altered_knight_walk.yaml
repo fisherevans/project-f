@@ -1,0 +1,21 @@
+tilesheet:
+  tileWidth: 16
+  tileHeight: 18
+
+animations:
+  walk_down:
+    h_sequence:
+      row: 1
+    framesPerSecond: 3
+  walk_up:
+    h_sequence:
+      row: 3
+    framesPerSecond: 3
+  walk_right:
+    h_sequence:
+      row: 2
+    framesPerSecond: 3
+  walk_left:
+    h_sequence:
+      row: 4
+    framesPerSecond: 3

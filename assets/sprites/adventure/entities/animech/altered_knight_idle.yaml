@@ -1,0 +1,27 @@
+tilesheet:
+  tileWidth: 16
+  tileHeight: 18
+
+animations:
+  frozen_down:
+    h_sequence:
+      row: 1
+      fromColumn: 1
+      toColumn: 1
+    framesPerSecond: 2
+  idle_down:
+    h_sequence:
+      row: 1
+    framesPerSecond: 2
+  idle_up:
+    h_sequence:
+      row: 3
+    framesPerSecond: 2
+  idle_right:
+    h_sequence:
+      row: 2
+    framesPerSecond: 2
+  idle_left:
+    h_sequence:
+      row: 4
+    framesPerSecond: 2

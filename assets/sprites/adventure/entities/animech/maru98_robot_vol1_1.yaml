@@ -1,0 +1,67 @@
+tilesheet:
+  tileWidth: 16
+  tileHeight: 32
+
+animations:
+  frozen_down:
+    h_sequence:
+      row: 1
+      fromColumn: 1
+      toColumn: 1
+    framesPerSecond: 2
+  idle_down:
+    h_sequence:
+      row: 1
+      fromColumn: 1
+      toColumn: 1
+    framesPerSecond: 2
+  idle_up:
+    h_sequence:
+      row: 4
+      fromColumn: 1
+      toColumn: 1
+    framesPerSecond: 2
+  idle_right:
+    h_sequence:
+      row: 3
+      fromColumn: 1
+      toColumn: 1
+    framesPerSecond: 2
+  idle_left:
+    h_sequence:
+      row: 2
+      fromColumn: 1
+      toColumn: 1
+    framesPerSecond: 2
+  walk_down:
+    h_sequence:
+      row: 1
+    framesPerSecond: 2
+  walk_up:
+    h_sequence:
+      row: 4
+    framesPerSecond: 2
+  walk_right:
+    h_sequence:
+      row: 3
+    framesPerSecond: 2
+  walk_left:
+    h_sequence:
+      row: 2
+    framesPerSecond: 2
+  run_down:
+    h_sequence:
+      row: 1
+    framesPerSecond: 3
+  run_up:
+    h_sequence:
+      row: 4
+    framesPerSecond: 3
+  run_right:
+    h_sequence:
+      row: 3
+    framesPerSecond: 3
+  run_left:
+    h_sequence:
+      row: 2
+    framesPerSecond: 3

@@ -7,9 +7,9 @@ elythium:
   default: true
 default_player_mode: human</property>
  </properties>
- <tileset firstgid="1" source="snowhex_base.tsx"/>
- <tileset firstgid="5538" source="space_base.tsx"/>
- <tileset firstgid="6738" source="sylvoria.tsx"/>
+ <tileset firstgid="1" source="tilesets/snowhex_base.tsx"/>
+ <tileset firstgid="5538" source="tilesets/space_base.tsx"/>
+ <tileset firstgid="6738" source="tilesets/sylvoria.tsx"/>
  <group id="20" name="under">
   <layer id="1" name="under_1" width="200" height="200">
    <data encoding="csv">
