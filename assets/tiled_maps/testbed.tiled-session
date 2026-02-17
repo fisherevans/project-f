@@ -35,22 +35,22 @@
         },
         "intro.tmx": {
             "expandedGroupLayers": [
-                4,
+                2,
                 3,
-                2
+                4
             ],
             "expandedObjectLayers": [
-                11,
-                13,
-                4,
+                14,
                 12,
-                14
+                4,
+                11,
+                13
             ],
-            "scale": 7.877,
+            "scale": 4,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 4000.0634759426175,
-                "y": 4000
+                "x": 1586.875,
+                "y": 3474.5
             }
         },
         "map1.tmx": {
@@ -120,10 +120,10 @@
                 4
             ],
             "scale": 2,
-            "selectedLayer": 3,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 4755.25,
-                "y": 5577.5
+                "x": 4745.25,
+                "y": 5569
             }
         },
         "sylvoria.tsx": {

@@ -3600,9 +3600,10 @@ default_player_mode: human</property>
      <property name="render_config">mode: visible
 animations:
   &quot;visible&quot;:
-    - name: adventure/entities/animech/cybermonkey_robot:frozen_down
+    - name: adventure/entities/animech/altered_knight_idle:frozen_down
       offset:
-        y: 0.25
+        y: 0.375
+  &quot;hidden&quot;:
   &quot;descend&quot;:
     - name: &quot;adventure/hq/animech_descend&quot;
 </property>

@@ -69,7 +69,7 @@ func playerAnimechRenderer(entity Entity) *MovementBasedEntityRenderer {
 		for direction, animation := range animations {
 			moveStateRenderer := NewBasicEntityRenderer(entity).WithAnimations(animation).
 				WithAnimationSpeedScaler(NewMoveAnimationSpeedScaler(entity)).
-				WithAnimationOriginOffset(pixel.V(0, 0.25))
+				WithAnimationOriginOffset(pixel.V(0, 0.375))
 			if moveState == MoveStateDashing {
 				moveStateRenderer.WithLights(dashPlayerLight)
 			} else {

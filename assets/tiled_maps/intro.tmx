@@ -4503,9 +4503,9 @@ opponent_pool: intro.training.8.pool</property>
      <property name="render_config">mode: hidden
 animations:
   &quot;visible&quot;:
-    - name: adventure/entities/animech/cybermonkey_robot:frozen_down
+    - name: adventure/entities/animech/altered_knight_idle:frozen_down
       offset:
-        y: 0.25
+        y: 0.375
   &quot;hidden&quot;:
 </property>
     </properties>
@@ -4518,9 +4518,9 @@ animations:
      <property name="render_config">mode: visible
 animations:
   &quot;visible&quot;:
-    - name: adventure/entities/animech/cybermonkey_robot:frozen_down
+    - name: adventure/entities/animech/altered_knight_idle:frozen_down
       offset:
-        y: 0.25
+        y: 0.375
   &quot;hidden&quot;:</property>
     </properties>
     <point/>
