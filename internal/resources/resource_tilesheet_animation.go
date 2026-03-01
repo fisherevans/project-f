@@ -14,6 +14,7 @@ type SpriteTilesheetAnimation struct {
 	VSequence       *SpriteTilesheetAnimationVSequence `yaml:"v_sequence"`
 	Tiles           []SpriteTilesheetAnimationTile     `yaml:"tiles"`
 	FramesPerSecond float64                            `yaml:"framesPerSecond"`
+	JitterPercent   float64                            `yaml:"jitterPercent"`
 	Randomize       *bool                              `yaml:"randomize"`
 	PingPong        *bool                              `yaml:"pingPong"`
 	Repeat          *bool                              `yaml:"repeat"`

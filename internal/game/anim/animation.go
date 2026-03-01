@@ -14,6 +14,7 @@ type AnimatedSprite struct {
 	frames          []frame
 	totalWeight     float64
 	framesPerSecond float64
+	jitterPercent   float64
 	randomized      bool
 	repeat          bool
 	progression     float64
@@ -21,7 +22,8 @@ type AnimatedSprite struct {
 	timeScale       float64
 
 	// complete is true when a non-repeated animation is done progressing
-	complete bool
+	complete   bool
+	nextJitter float64
 }
 
 type frame struct {
@@ -94,12 +96,13 @@ func FromTilesheetRowPartial(atlas *resources.Atlas, tilesheet string, row, colF
 			Weight: 1,
 		})
 	}
-	return FromTilesheetTiles(atlas, tilesheet, framesPerSecond, false, true, tiles)
+	return FromTilesheetTiles(atlas, tilesheet, framesPerSecond, 0, false, true, tiles)
 }
 
-func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecond float64, randomized, repeat bool, tiles []*resources.SpriteTilesheetAnimationTile) *AnimatedSprite {
+func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecond, jitterPercent float64, randomized, repeat bool, tiles []*resources.SpriteTilesheetAnimationTile) *AnimatedSprite {
 	animated := &AnimatedSprite{
 		framesPerSecond: framesPerSecond,
+		jitterPercent:   jitterPercent,
 		randomized:      randomized,
 		repeat:          repeat,
 		timeScale:       1.0,
@@ -280,6 +283,9 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 	if metadata.FramesPerSecond == 0 {
 		metadata.FramesPerSecond = 1
 	}
+	if metadata.JitterPercent < 0 || metadata.JitterPercent > 1 {
+		panic(msgf("invalid jitter percent %f", metadata.JitterPercent))
+	}
 	//j, _ := json.MarshalIndent(tiles, "", "  ")
 	//fmt.Printf("tilesheet animation: %s/%s:\n%s\n", tilesheetName, animationName, j)
 	randomize := false
@@ -290,7 +296,7 @@ func LoadTilesheetAnimation(atlas *resources.Atlas, tilesheetName string, animat
 	if metadata.Repeat != nil {
 		repeat = *metadata.Repeat
 	}
-	a := FromTilesheetTiles(atlas, tilesheetName, metadata.FramesPerSecond, randomize, repeat, tiles)
+	a := FromTilesheetTiles(atlas, tilesheetName, metadata.FramesPerSecond, metadata.JitterPercent, randomize, repeat, tiles)
 	if metadata.Reverse != nil && *metadata.Reverse {
 		a = a.Reverse()
 	}
@@ -315,7 +321,7 @@ func (a *AnimatedSprite) progress() {
 		if w <= 0 {
 			w = 1
 		}
-		dur := w / a.framesPerSecond // secondsPerFrame * weight
+		dur := (w + a.nextJitter) / a.framesPerSecond
 		if a.progression < dur {
 			break
 		}
@@ -333,6 +339,9 @@ func (a *AnimatedSprite) progress() {
 			}
 		}
 		a.currentFrame = nextFrame
+		// update next jitter based on new frames weight
+		maxNextJitter := a.frames[a.currentFrame].weight * a.jitterPercent
+		a.nextJitter = maxNextJitter*rand.Float64() - maxNextJitter/2
 	}
 }
 
