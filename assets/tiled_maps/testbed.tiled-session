@@ -3,13 +3,13 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "tilesets/valley_ruin.tsx",
+    "activeFile": "hq.tmx",
     "codeEditor.globalTypings": "// AUTO-GENERATED - DO NOT EDIT\n// Generated at 2025-10-23T10:26:43-04:00 by go generate\n// Source: internal/game/events/handler.go, internal/game/events/effect.go\n\ndeclare global {\n  // ============================================================================\n  // LOGGING\n  // ============================================================================\n\n  interface Logger {\n    Debug(message: string): void;\n    Info(message: string): void;\n    Warn(message: string): void;\n    Error(message: string): void;\n  }\n\n  const log: Logger;\n\n  // ============================================================================\n  // CONTEXT\n  // ============================================================================\n\n  interface EntityContext {\n    Id(): string;\n  }\n\n  interface WorldStateReader {\n    // Add world state methods as needed\n  }\n\n  // ============================================================================\n  // EVENT TYPES\n  // ============================================================================\n\n  interface EventOnInteract {\n    sourceId: string;\n    targetId: string;\n    sourceDirection: any;\n  }\n\n  interface EventDialogueComplete {\n    dialogueId: string;\n  }\n\n  interface EventChatterComplete {\n    chatterId: string;\n    entityId: string;\n  }\n\n  interface EventTimerComplete {\n    createdBy: string;\n    timerId: string;\n    durationSeconds: number;\n    triggerCount: number;\n  }\n\n  interface EventEntityZoneActivity {\n    entityId: string;\n    zoneId: string;\n    isEntering: boolean;\n  }\n\n  interface EventWorldStateUpdated {\n    key: string;\n    newValue: any;\n    oldValue: any;\n    setBy: string;\n  }\n\n  interface EventCombatComplete {\n    combatId: string;\n    result: any;\n  }\n\n  // ============================================================================\n  // EFFECT TYPES\n  // ============================================================================\n\n  interface DynamicAnimationReference {\n    tilesheet: string;\n    name: string;\n  }\n\n  interface LightConfig {\n    color: string;\n    size: number;\n    modifier: string;\n  }\n\n  interface EffectFunction {\n    fn: any;\n  }\n\n  interface EffectDialogue {\n    dialogueId: string;\n    text: string;\n  }\n\n  interface EffectChatter {\n    chatterId: string;\n    entityId: string;\n    durationSeconds: number;\n    message: string;\n  }\n\n  interface EffectYieldElythium {\n    amount: number;\n  }\n\n  interface EffectTimer {\n    timerId: string;\n    durationSeconds: number;\n  }\n\n  interface EffectMutateEntity {\n    entityId: string;\n    mode: string | undefined;\n    isPassable: boolean | undefined;\n    dynamicAnimations: Record<string, DynamicAnimationReference[]>;\n    dynamicLights: Record<string, LightConfig[]>;\n  }\n\n  interface EffectSetWorldState {\n    key: string;\n    value: any;\n  }\n\n  interface EffectSetEntityLocation {\n    entityId: string;\n    toReference: string | undefined;\n    toLocation: any | undefined;\n    toEntityId: string | undefined;\n  }\n\n  interface EffectTeleportPlayer {\n    toReference: string | undefined;\n    toLocation: any | undefined;\n    toEntityId: string | undefined;\n    exitDirection: any | undefined;\n    transitionStyle: string | undefined;\n  }\n\n  interface EffectPlan {\n    planId: string;\n    steps: any[];\n  }\n\n  interface EffectBlockInput {\n    blocked: boolean;\n  }\n\n  interface EffectFade {\n    fadeId: string;\n    durationSeconds: number;\n    autoDeactivate: boolean | undefined;\n    fromColor: string | undefined;\n    toColor: string | undefined;\n    transitions: number;\n  }\n\n  interface EffectDeactivateFade {\n    fadeId: string;\n  }\n\n  interface EffectTriggerMovement {\n    entityId: string;\n    direction: any;\n  }\n\n  interface EffectSetFollowCamera {\n    entityId: string | undefined;\n    resetPosition: boolean;\n  }\n\n  interface EffectMutateNPC {\n    entityId: string;\n    talkingAtEntityId: string | undefined;\n    isTalking: boolean | undefined;\n  }\n\n  interface EffectTriggerCombat {\n    combatId: string;\n    opponent: any | undefined;\n    background: string;\n  }\n\n  interface Effect {\n    function?: EffectFunction;\n    dialogue?: EffectDialogue;\n    chatter?: EffectChatter;\n    yieldElythium?: EffectYieldElythium;\n    timer?: EffectTimer;\n    mutateEntity?: EffectMutateEntity;\n    setWorldState?: EffectSetWorldState;\n    setEntityLocation?: EffectSetEntityLocation;\n    teleportPlayer?: EffectTeleportPlayer;\n    plan?: EffectPlan;\n    blockInput?: EffectBlockInput;\n    fade?: EffectFade;\n    deactivateFade?: EffectDeactivateFade;\n    triggerMovement?: EffectTriggerMovement;\n    setFollowCamera?: EffectSetFollowCamera;\n    mutateNPC?: EffectMutateNPC;\n    triggerCombat?: EffectTriggerCombat;\n  }\n\n  interface HandlerOutput {\n    state?: any;\n    effects?: Effect[];\n  }\n\n  // ============================================================================\n  // ENTITY HANDLER\n  // ============================================================================\n\n  interface EntityHandler {\n    Init?: (self: EntityContext, world: WorldStateReader, state: any) => HandlerOutput | null;\n    OnInteract?: (self: EntityContext, world: WorldStateReader, state: any, event: EventOnInteract) => HandlerOutput | null;\n    OnDialogueComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventDialogueComplete) => HandlerOutput | null;\n    OnChatterComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventChatterComplete) => HandlerOutput | null;\n    OnTimerComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventTimerComplete) => HandlerOutput | null;\n    OnEntityZoneActivity?: (self: EntityContext, world: WorldStateReader, state: any, event: EventEntityZoneActivity) => HandlerOutput | null;\n    OnWorldStateUpdated?: (self: EntityContext, world: WorldStateReader, state: any, event: EventWorldStateUpdated) => HandlerOutput | null;\n    OnCombatComplete?: (self: EntityContext, world: WorldStateReader, state: any, event: EventCombatComplete) => HandlerOutput | null;\n  }\n\n  const handler: EntityHandler;\n}\n\nexport {};\n",
     "expandedProjectPaths": [
-        "tilesets",
         "plugins",
-        ".",
-        "rules"
+        "rules",
+        "tilesets",
+        "."
     ],
     "fileStates": {
         "asha_idle-32x32.tsx": {
@@ -29,8 +29,8 @@
             "scale": 2.489,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 4000.2008838891124,
-                "y": 4000
+                "x": 4013.0574527922863,
+                "y": 3735.837685817598
             }
         },
         "intro.tmx": {
@@ -176,7 +176,7 @@
         },
         "tilesets/valley_ruin.tsx": {
             "scaleInDock": 4,
-            "scaleInEditor": 5.5
+            "scaleInEditor": 8
         },
         "valley_ruin.tsx": {
             "scaleInDock": 2,
@@ -195,18 +195,19 @@
         "tilesets/valley_ruin.tsx",
         "hq.tmx",
         "sylvoria.tmx",
-        "rules/valley_ruin_autotile_variations.tmx"
+        "rules/valley_ruin_autotile_variations.tmx",
+        "intro.tmx"
     ],
     "project": "testbed.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "tilesets/valley_ruin.tsx",
+        "intro.tmx",
         "rules/valley_ruin_autotile_variations.tmx",
         "sylvoria.tmx",
         "hq.tmx",
-        "tilesets/valley_ruin.tsx",
         "rules/intro.tmx.tsx",
         "template.tmx",
-        "intro.tmx",
         "map1.tmx",
         "tilesets/sylvoria.tsx",
         "tilesets/space_base.tsx",

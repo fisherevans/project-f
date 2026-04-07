@@ -1,3 +1,28 @@
 tilesheet:
   tileWidth: 16
   tileHeight: 16
+animations:
+  torch:
+    h_sequence:
+      row: 36
+      fromColumn: 96
+      toColumn: 103
+    framesPerSecond: 8
+  torch_left:
+    h_sequence:
+      row: 40
+      fromColumn: 96
+      toColumn: 103
+    framesPerSecond: 8
+  torch_right:
+    h_sequence:
+      row: 40
+      fromColumn: 104
+      toColumn: 111
+    framesPerSecond: 8
+  red_coin:
+    h_sequence:
+      row: 48
+      fromColumn: 46
+      toColumn: 53
+    framesPerSecond: 8

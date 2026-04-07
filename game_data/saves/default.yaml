@@ -6,10 +6,10 @@ animech:
         "2": guard
         "3": ""
         "4": ""
-    experience_points: 100
+    experience_points: 50
     upgrades:
         shield_level: 0
-        sync_level: 0
+        sync_level: 1
     pending_experience: 25
     current_sync: 0
     current_shield: 0
@@ -35,7 +35,7 @@ globals:
     elythium: 0
     elythium_goal: 12
     player_id: tiled-12
-    tiled-363: 81b26649-4258-4bad-bf92-f9549aa89507
+    tiled-363: e92ead3c-434b-4568-8d8c-3f044ef7092f
 system_settings:
     lighting:
         lighting_composition: full

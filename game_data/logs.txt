@@ -1,227 +1,521 @@
-21:19:11.593 INF Primortal starting up... arch=arm64 commit=none cpus=10 os=darwin total_memory_mb=11 version=dev
-21:19:11.815 INF loaded maps resource: dummy
-21:19:11.815 INF loaded fonts resource: 3-by-5-pixel-font
-21:19:11.815 INF loaded fonts resource: addstandard
-21:19:11.815 INF loaded fonts resource: dogica
-21:19:11.815 INF loaded fonts resource: dogica_bold
-21:19:11.815 INF loaded fonts resource: ff57i.patched
-21:19:11.815 INF loaded fonts resource: ff57i
-21:19:11.816 INF loaded fonts resource: ffont
-21:19:11.816 INF loaded fonts resource: m3x6
-21:19:11.816 INF loaded fonts resource: m5x7
-21:19:11.816 INF loaded fonts resource: munro
-21:19:11.816 INF loaded fonts resource: munro_narrow
-21:19:11.816 INF loaded fonts resource: munro_small
-21:19:11.816 INF loaded sprites resource: 1x1
-21:19:11.816 INF loaded sprites resource: 2x2
-21:19:11.816 INF loaded sprites resource: adventure/doors/button
-21:19:11.816 INF loaded sprites resource: adventure/doors/lever_horizontal
-21:19:11.816 INF loaded sprites resource: adventure/doors/shield_front_1
-21:19:11.816 INF loaded sprites resource: adventure/doors/sliding_steel
-21:19:11.816 INF loaded sprites resource: adventure/entities/animech/asha_idle
-21:19:11.817 INF loaded sprites resource: adventure/entities/animech/asha_run
-21:19:11.817 INF loaded sprites resource: adventure/entities/animech/asha_walk
-21:19:11.818 INF loaded sprites resource: adventure/entities/animech/cybermonkey_robot
-21:19:11.818 INF loaded sprites resource: adventure/entities/animech/dash_anim
-21:19:11.818 INF loaded sprites resource: adventure/entities/animech/maru98_robot_vol1_1
-21:19:11.818 INF loaded sprites resource: adventure/entities/asha/asha_idle
-21:19:11.818 INF loaded sprites resource: adventure/entities/asha/asha_run
-21:19:11.819 INF loaded sprites resource: adventure/entities/asha/asha_walk
-21:19:11.819 INF loaded sprites resource: adventure/entities/asha/dash_anim
-21:19:11.819 INF loaded sprites resource: adventure/entities/asha_space/asha_idle
-21:19:11.819 INF loaded sprites resource: adventure/entities/asha_space/asha_run
-21:19:11.820 INF loaded sprites resource: adventure/entities/asha_space/asha_walk
-21:19:11.820 INF loaded sprites resource: adventure/entities/asha_space/dash_anim
-21:19:11.820 INF loaded sprites resource: adventure/entities/elythium/crystals
-21:19:11.820 INF loaded sprites resource: adventure/entities/elythium/crystals_rock
-21:19:11.820 INF loaded sprites resource: adventure/entities/elythium/crystals_sparkle
-21:19:11.820 INF loaded sprites resource: adventure/entities/redknight/redknight_idle.tilesheet-16x17
-21:19:11.820 INF loaded sprites resource: adventure/entities/redknight/redknight_run.tilesheet-16x17
-21:19:11.820 INF loaded sprites resource: adventure/entities/shadow_mob/footsteps
-21:19:11.821 INF loaded sprites resource: adventure/entities/shadow_mob/shadow_mob
-21:19:11.821 INF loaded sprites resource: adventure/hq/animech_descend
-21:19:11.821 INF loaded sprites resource: adventure/hq/captains_chair
-21:19:11.821 INF loaded sprites resource: adventure/hq/monitors
-21:19:11.821 INF loaded sprites resource: adventure/hud/elythium
-21:19:11.821 INF loaded sprites resource: adventure/hud/elythium_frame
-21:19:11.821 INF loaded sprites resource: adventure/hud/elythium_sparkle
-21:19:11.821 INF loaded sprites resource: adventure/hud/research
-21:19:11.821 INF loaded sprites resource: adventure/props/button
-21:19:11.821 INF loaded sprites resource: adventure/tooltip_frame
-21:19:11.822 INF loaded sprites resource: animech/combat_animech
-21:19:11.822 INF loaded sprites resource: animech/icon_animech
-21:19:11.822 INF loaded sprites resource: chatter/chatter_box
-21:19:11.822 INF loaded sprites resource: chatter/chatter_box_arrow-export
-21:19:11.822 INF loaded sprites resource: chatter/chatter_box_arrow
-21:19:11.822 INF loaded sprites resource: combat/background_sample
-21:19:11.823 INF loaded sprites resource: combat/background_space_base
-21:19:11.823 INF loaded sprites resource: combat/background_sylvoria
-21:19:11.824 INF loaded sprites resource: combat/background_vignette_mask
-21:19:11.824 INF loaded sprites resource: combat/combatant_stats/background
-21:19:11.824 INF loaded sprites resource: combat/combatant_stats/bar
-21:19:11.824 INF loaded sprites resource: combat/combatant_stats/box
-21:19:11.824 INF loaded sprites resource: combat/combatant_stats/tempo
-21:19:11.824 INF loaded sprites resource: combat/combatant_stats/tempo_bar
-21:19:11.825 INF loaded sprites resource: combat/combatants/destroyer_robot_idle
-21:19:11.825 INF loaded sprites resource: combat/combatants/plent_idle
-21:19:11.825 INF loaded sprites resource: combat/menu/skill_arrows
-21:19:11.825 INF loaded sprites resource: combat/menu/skill_frame
-21:19:11.825 INF loaded sprites resource: combat/menu/skill_pending_frame
-21:19:11.825 INF loaded sprites resource: combat/menu/skill_pending_progress
-21:19:11.825 INF loaded sprites resource: combat/rewards/frame
-21:19:11.825 INF loaded sprites resource: combat/status_border
-21:19:11.825 INF loaded sprites resource: combat/status_change
-21:19:11.825 INF loaded sprites resource: combat/status_frame
-21:19:11.826 INF loaded sprites resource: combat/status_icons
-21:19:11.826 INF loaded sprites resource: combat/status_level
-21:19:11.826 INF loaded sprites resource: combat/status_timer
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/bubbles
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/bubbles_overlay
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/skill_active_frame
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/skill_active_stance_box
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/skill_eater
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/skill_none_selected
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/skill_pending_frame
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/skill_pending_stance_box
-21:19:11.826 INF loaded sprites resource: combat/tick_bar/stance_icons
-21:19:11.826 INF loaded sprites resource: common/arrows_5px
-21:19:11.826 INF loaded sprites resource: common/arrows_6px
-21:19:11.826 INF loaded sprites resource: common/arrows_7px
-21:19:11.826 INF loaded sprites resource: common/highlight_bg
-21:19:11.826 INF loaded sprites resource: common/highlight_frame
-21:19:11.827 INF loaded sprites resource: common/rounded_border_frame_1px
-21:19:11.827 INF loaded sprites resource: common/rounded_border_frame_2px
-21:19:11.827 INF loaded sprites resource: common/rounded_border_frame_3px
-21:19:11.827 INF loaded sprites resource: common/rounded_border_frame_4px
-21:19:11.827 INF loaded sprites resource: common/rounded_border_frame_5px
-21:19:11.827 INF loaded sprites resource: common/rounded_frame_1px
-21:19:11.827 INF loaded sprites resource: common/rounded_frame_2px
-21:19:11.827 INF loaded sprites resource: common/rounded_frame_3px
-21:19:11.827 INF loaded sprites resource: common/rounded_frame_4px
-21:19:11.827 INF loaded sprites resource: common/rounded_frame_5px
-21:19:11.827 INF loaded sprites resource: common/symbols_5px
-21:19:11.827 INF loaded sprites resource: computer/crosshair
-21:19:11.827 INF loaded sprites resource: computer/monitor
-21:19:11.827 INF loaded sprites resource: computer/planet_1
-21:19:11.827 INF loaded sprites resource: computer/planet_2
-21:19:11.827 INF loaded sprites resource: computer/planet_3
-21:19:11.827 INF loaded sprites resource: computer/planet_4
-21:19:11.827 INF loaded sprites resource: computer/planet_select_frame
-21:19:11.827 INF loaded sprites resource: computer/ship
-21:19:11.828 INF loaded sprites resource: dialogue/dialogue_frame
-21:19:11.828 INF loaded sprites resource: dialogue/dialogue_self_frame
-21:19:11.828 INF loaded sprites resource: dialogue/done
-21:19:11.828 INF loaded sprites resource: lights/amber_linear
-21:19:11.828 INF loaded sprites resource: lights/dash_glow
-21:19:11.828 INF loaded sprites resource: lights/white_5x5
-21:19:11.828 INF loaded sprites resource: lights/white_hard_5x5
-21:19:11.828 INF loaded sprites resource: menu/background
-21:19:11.828 INF loaded sprites resource: primortals/dummy
-21:19:11.828 INF loaded sprites resource: primortals/dummy_entity
-21:19:11.828 INF loaded sprites resource: primortals/myceli
-21:19:11.828 INF loaded sprites resource: primortals/myceli_icon
-21:19:11.828 INF loaded sprites resource: primortals/mystery
-21:19:11.828 INF loaded sprites resource: primortals/mystery_icon
-21:19:11.828 INF loaded sprites resource: primortals/pumbl
-21:19:11.828 INF loaded sprites resource: primortals/pumbl_icon
-21:19:11.829 INF loaded sprites resource: primortals/scintail
-21:19:11.829 INF loaded sprites resource: primortals/scintail_icon
-21:19:11.829 INF loaded sprites resource: primortals/toxmidge
-21:19:11.829 INF loaded sprites resource: primortals/toxmidge_icon
-21:19:11.829 INF loaded sprites resource: primortals/volteel
-21:19:11.829 INF loaded sprites resource: primortals/volteel_icon
-21:19:11.846 INF loaded sprites resource: snowhex_base
-21:19:11.849 INF loaded sprites resource: space_base
-21:19:11.849 INF loaded sprites resource: space_base_pillar
-21:19:11.849 INF loaded sprites resource: startup/controls
-21:19:11.849 INF loaded sprites resource: startup/copyright
-21:19:11.849 INF loaded sprites resource: startup/developer_effects
-21:19:11.849 INF loaded sprites resource: startup/developer_logo
-21:19:11.849 INF loaded sprites resource: startup/developer_name
-21:19:11.850 INF loaded sprites resource: startup/developer_presents
-21:19:11.850 INF loaded sprites resource: startup/device_letters
-21:19:11.850 INF loaded sprites resource: startup/device_thanadox
-21:19:11.851 INF loaded sprites resource: sylvoria
-21:19:11.851 INF loaded sprites resource: tilesets/maru98_ambient
-21:19:11.852 INF loaded sprites resource: title/bg
-21:19:11.852 INF loaded sprites resource: title/city
-21:19:11.852 INF loaded sprites resource: title/clouds
-21:19:11.852 INF loaded sprites resource: title/moon
-21:19:11.852 INF loaded sprites resource: title/mtn_back
-21:19:11.852 INF loaded sprites resource: title/mtn_front
-21:19:11.853 INF loaded sprites resource: title/ship
-21:19:11.853 INF loaded sprites resource: title/star
-21:19:11.853 INF loaded sprites resource: title/stars
-21:19:11.853 INF loaded sprites resource: title/subtitle
-21:19:11.861 INF loaded sprites resource: title/title
-21:19:11.861 INF loaded sprites resource: travel/pod
-21:19:11.861 INF loaded sprites resource: travel/ship
-21:19:11.861 INF loaded sprites resource: ui/ab_button_icons
-21:19:11.865 INF loaded sprites resource: valley_ruin
-21:19:11.866 INF loaded sprites resource: xenolog/device
-21:19:11.866 INF loaded sprites resource: xenolog/scroll_cursor
-21:19:11.866 INF loaded sprites resource: xenolog/select_animech
-21:19:11.866 INF loaded sprites resource: xenolog/select_arrow_down
-21:19:11.866 INF loaded sprites resource: xenolog/select_primortal
-21:19:11.866 INF loaded sprites resource: xenolog/select_unknown
-21:19:11.866 INF loaded sprites resource: xenolog/skill_set_arrows
-21:19:11.866 INF loaded sprites resource: xenolog/skill_tree/dotted_line
-21:19:11.866 INF loaded sprites resource: xenolog/skill_tree/dotted_line_diag_bl
-21:19:11.866 INF loaded sprites resource: xenolog/skill_tree/dotted_line_diag_tl
-21:19:11.866 INF loaded sprites resource: xenolog/skill_tree/nodes
-21:19:11.866 INF loaded sprites resource: xenolog/wide_frame
-21:19:11.957 INF loaded tiled_maps resource: hq
-21:19:12.048 INF loaded tiled_maps resource: intro
-21:19:12.063 INF loaded tiled_maps resource: map1
-21:19:12.066 ERR Unknown ungrouped tiledLayer: regions path=tiled_maps/rules/valley_ruin_autotile.tmx
-21:19:12.066 ERR Unknown ungrouped tiledLayer: input_prototype_under_1 path=tiled_maps/rules/valley_ruin_autotile.tmx
-21:19:12.066 ERR Unknown ungrouped tiledLayer: output_under_1 path=tiled_maps/rules/valley_ruin_autotile.tmx
-21:19:12.066 ERR Unknown ungrouped tiledLayer: output_under_2 path=tiled_maps/rules/valley_ruin_autotile.tmx
-21:19:12.066 ERR Unknown ungrouped tiledLayer: output_collision path=tiled_maps/rules/valley_ruin_autotile.tmx
-21:19:12.066 INF loaded tiled_maps resource: rules/valley_ruin_autotile
-21:19:12.070 ERR Unknown tiledGroup: under_1 path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
-21:19:12.070 ERR Unknown ungrouped tiledLayer: regions path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
-21:19:12.070 ERR Unknown ungrouped tiledLayer: input_prototype_under_1 path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
-21:19:12.070 ERR Unknown ungrouped tiledLayer: output_under_2 path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
-21:19:12.070 ERR Unknown ungrouped tiledLayer: output_collision path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
-21:19:12.070 INF loaded tiled_maps resource: rules/valley_ruin_autotile_variations
-21:19:12.483 INF loaded tiled_maps resource: sylvoria
-21:19:12.486 INF loaded tiled_maps resource: template
-21:19:12.487 INF loaded audio/sounds resource: adventure/beeps/error
-21:19:12.488 INF loaded audio/sounds resource: adventure/beeps/success
-21:19:12.490 INF loaded audio/sounds resource: adventure/elythium_breaking
-21:19:12.514 INF loaded audio/sounds resource: adventure/energy_hum
-21:19:12.515 INF loaded audio/sounds resource: adventure/energy_on
-21:19:12.523 INF loaded audio/sounds resource: adventure/props/energy_door_hum
-21:19:12.576 INF loaded audio/sounds resource: adventure/props/energy_door_off
-21:19:12.630 INF loaded audio/sounds resource: adventure/props/energy_door_on
-21:19:12.631 INF loaded audio/sounds resource: adventure/sealed_door_opens
-21:19:12.635 INF loaded audio/sounds resource: adventure/transition
-21:19:12.635 INF loaded audio/sounds resource: dialogue_complete
-21:19:12.737 INF loaded audio/sounds resource: song_sample
-21:19:12.737 INF loaded audio/sounds resource: speech/chatter
-21:19:12.737 INF loaded audio/sounds resource: speech/end
-21:19:12.737 INF loaded audio/sounds resource: speech/exclaim
-21:19:12.737 INF loaded audio/sounds resource: speech/letter
-21:19:12.738 INF loaded audio/sounds resource: speech/question
-21:19:12.771 INF loaded audio/sounds resource: startup/developer
-21:19:12.790 INF loaded audio/sounds resource: startup/device
-21:19:12.791 INF loaded audio/sounds resource: steps/hard/heavy_1
-21:19:12.792 INF loaded audio/sounds resource: steps/hard/heavy_2
-21:19:12.794 INF loaded audio/sounds resource: steps/hard/heavy_3
-21:19:12.796 INF loaded audio/sounds resource: steps/hard/soft_1
-21:19:12.797 INF loaded audio/sounds resource: steps/hard/soft_2
-21:19:12.799 INF loaded audio/sounds resource: steps/hard/soft_3
-21:19:12.800 INF loaded audio/sounds resource: steps/soft/1
-21:19:12.800 INF loaded audio/sounds resource: steps/soft/2
-21:19:12.801 INF loaded audio/sounds resource: steps/soft/3
-21:19:12.802 INF loaded audio/sounds resource: steps/soft/4
-21:19:12.803 INF loaded audio/sounds resource: steps/soft/5
-21:19:12.804 INF loaded audio/sounds resource: steps/soft/6
-21:19:12.804 INF loaded audio/sounds resource: ui/click
-21:19:12.805 INF loaded audio/sounds resource: xenolog/bad_beep
-21:19:12.806 INF loaded audio/sounds resource: xenolog/good_beep
-21:19:12.806 INF Running 17 deferred initializers
-21:19:12.834 INF Atlas packed 145 images, using 20.9% of available pixels.
-21:19:13.059 INF Atlas packed 28 images, using 0.5% of available pixels.
-21:19:13.325 INF Atlas packed 12 images, using 10.5% of available pixels.
+17:18:49.316 INF Primortal starting up... arch=arm64 commit=none cpus=10 os=darwin total_memory_mb=11 version=dev
+17:18:49.717 INF loaded maps resource: dummy
+17:18:49.717 INF loaded fonts resource: 3-by-5-pixel-font
+17:18:49.717 INF loaded fonts resource: addstandard
+17:18:49.717 INF loaded fonts resource: dogica
+17:18:49.717 INF loaded fonts resource: dogica_bold
+17:18:49.717 INF loaded fonts resource: ff57i.patched
+17:18:49.717 INF loaded fonts resource: ff57i
+17:18:49.717 INF loaded fonts resource: ffont
+17:18:49.717 INF loaded fonts resource: m3x6
+17:18:49.717 INF loaded fonts resource: m5x7
+17:18:49.717 INF loaded fonts resource: munro
+17:18:49.717 INF loaded fonts resource: munro_narrow
+17:18:49.717 INF loaded fonts resource: munro_small
+17:18:49.717 INF loaded sprites resource: 1x1
+17:18:49.717 INF loaded sprites resource: 2x2
+17:18:49.718 INF loaded sprites resource: adventure/doors/button
+17:18:49.718 INF loaded sprites resource: adventure/doors/lever_horizontal
+17:18:49.718 INF loaded sprites resource: adventure/doors/shield_front_1
+17:18:49.718 INF loaded sprites resource: adventure/doors/sliding_steel
+17:18:49.718 INF loaded sprites resource: adventure/entities/animech/altered_knight_idle
+17:18:49.718 INF loaded sprites resource: adventure/entities/animech/altered_knight_run
+17:18:49.719 INF loaded sprites resource: adventure/entities/animech/altered_knight_walk
+17:18:49.719 INF loaded sprites resource: adventure/entities/animech/asha_idle
+17:18:49.719 INF loaded sprites resource: adventure/entities/animech/asha_run
+17:18:49.720 INF loaded sprites resource: adventure/entities/animech/asha_walk
+17:18:49.720 INF loaded sprites resource: adventure/entities/animech/cybermonkey_robot
+17:18:49.720 INF loaded sprites resource: adventure/entities/animech/dash_anim
+17:18:49.721 INF loaded sprites resource: adventure/entities/animech/maru98_robot_vol1_1
+17:18:49.721 INF loaded sprites resource: adventure/entities/asha/asha_idle
+17:18:49.721 INF loaded sprites resource: adventure/entities/asha/asha_run
+17:18:49.721 INF loaded sprites resource: adventure/entities/asha/asha_walk
+17:18:49.722 INF loaded sprites resource: adventure/entities/asha/dash_anim
+17:18:49.722 INF loaded sprites resource: adventure/entities/asha_space/asha_idle
+17:18:49.723 INF loaded sprites resource: adventure/entities/asha_space/asha_run
+17:18:49.723 INF loaded sprites resource: adventure/entities/asha_space/asha_walk
+17:18:49.723 INF loaded sprites resource: adventure/entities/asha_space/dash_anim
+17:18:49.723 INF loaded sprites resource: adventure/entities/elythium/crystals
+17:18:49.723 INF loaded sprites resource: adventure/entities/elythium/crystals_rock
+17:18:49.723 INF loaded sprites resource: adventure/entities/elythium/crystals_sparkle
+17:18:49.723 INF loaded sprites resource: adventure/entities/redknight/redknight_idle.tilesheet-16x17
+17:18:49.724 INF loaded sprites resource: adventure/entities/redknight/redknight_run.tilesheet-16x17
+17:18:49.724 INF loaded sprites resource: adventure/entities/shadow_mob/footsteps
+17:18:49.724 INF loaded sprites resource: adventure/entities/shadow_mob/shadow_mob
+17:18:49.724 INF loaded sprites resource: adventure/hq/animech_descend
+17:18:49.725 INF loaded sprites resource: adventure/hq/captains_chair
+17:18:49.725 INF loaded sprites resource: adventure/hq/monitors
+17:18:49.725 INF loaded sprites resource: adventure/hud/elythium
+17:18:49.725 INF loaded sprites resource: adventure/hud/elythium_frame
+17:18:49.725 INF loaded sprites resource: adventure/hud/elythium_sparkle
+17:18:49.725 INF loaded sprites resource: adventure/hud/research
+17:18:49.725 INF loaded sprites resource: adventure/props/button
+17:18:49.725 INF loaded sprites resource: adventure/tooltip_frame
+17:18:49.725 INF loaded sprites resource: animech/combat_animech
+17:18:49.726 INF loaded sprites resource: animech/combat_animech_new
+17:18:49.726 INF loaded sprites resource: animech/icon_animech
+17:18:49.726 INF loaded sprites resource: chatter/chatter_box
+17:18:49.726 INF loaded sprites resource: chatter/chatter_box_arrow-export
+17:18:49.726 INF loaded sprites resource: chatter/chatter_box_arrow
+17:18:49.726 INF loaded sprites resource: combat/background_sample
+17:18:49.727 INF loaded sprites resource: combat/background_space_base
+17:18:49.727 INF loaded sprites resource: combat/background_sylvoria
+17:18:49.728 INF loaded sprites resource: combat/background_vignette_mask
+17:18:49.728 INF loaded sprites resource: combat/combatant_stats/background
+17:18:49.728 INF loaded sprites resource: combat/combatant_stats/bar
+17:18:49.728 INF loaded sprites resource: combat/combatant_stats/box
+17:18:49.728 INF loaded sprites resource: combat/combatant_stats/tempo
+17:18:49.728 INF loaded sprites resource: combat/combatant_stats/tempo_bar
+17:18:49.729 INF loaded sprites resource: combat/combatants/destroyer_robot_idle
+17:18:49.730 INF loaded sprites resource: combat/combatants/plent_idle
+17:18:49.730 INF loaded sprites resource: combat/menu/skill_arrows
+17:18:49.730 INF loaded sprites resource: combat/menu/skill_frame
+17:18:49.730 INF loaded sprites resource: combat/menu/skill_pending_frame
+17:18:49.730 INF loaded sprites resource: combat/menu/skill_pending_progress
+17:18:49.730 INF loaded sprites resource: combat/rewards/frame
+17:18:49.730 INF loaded sprites resource: combat/status_border
+17:18:49.730 INF loaded sprites resource: combat/status_change
+17:18:49.730 INF loaded sprites resource: combat/status_frame
+17:18:49.730 INF loaded sprites resource: combat/status_icons
+17:18:49.730 INF loaded sprites resource: combat/status_level
+17:18:49.731 INF loaded sprites resource: combat/status_timer
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/bubbles
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/bubbles_overlay
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/skill_active_frame
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/skill_active_stance_box
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/skill_eater
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/skill_none_selected
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/skill_pending_frame
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/skill_pending_stance_box
+17:18:49.731 INF loaded sprites resource: combat/tick_bar/stance_icons
+17:18:49.731 INF loaded sprites resource: common/arrows_5px
+17:18:49.731 INF loaded sprites resource: common/arrows_6px
+17:18:49.731 INF loaded sprites resource: common/arrows_7px
+17:18:49.731 INF loaded sprites resource: common/highlight_bg
+17:18:49.731 INF loaded sprites resource: common/highlight_frame
+17:18:49.731 INF loaded sprites resource: common/rounded_border_frame_1px
+17:18:49.731 INF loaded sprites resource: common/rounded_border_frame_2px
+17:18:49.731 INF loaded sprites resource: common/rounded_border_frame_3px
+17:18:49.731 INF loaded sprites resource: common/rounded_border_frame_4px
+17:18:49.731 INF loaded sprites resource: common/rounded_border_frame_5px
+17:18:49.731 INF loaded sprites resource: common/rounded_frame_1px
+17:18:49.731 INF loaded sprites resource: common/rounded_frame_2px
+17:18:49.731 INF loaded sprites resource: common/rounded_frame_3px
+17:18:49.731 INF loaded sprites resource: common/rounded_frame_4px
+17:18:49.731 INF loaded sprites resource: common/rounded_frame_5px
+17:18:49.731 INF loaded sprites resource: common/symbols_5px
+17:18:49.731 INF loaded sprites resource: computer/crosshair
+17:18:49.732 INF loaded sprites resource: computer/monitor
+17:18:49.732 INF loaded sprites resource: computer/planet_1
+17:18:49.732 INF loaded sprites resource: computer/planet_2
+17:18:49.732 INF loaded sprites resource: computer/planet_3
+17:18:49.732 INF loaded sprites resource: computer/planet_4
+17:18:49.732 INF loaded sprites resource: computer/planet_select_frame
+17:18:49.732 INF loaded sprites resource: computer/ship
+17:18:49.732 INF loaded sprites resource: dialogue/dialogue_frame
+17:18:49.732 INF loaded sprites resource: dialogue/dialogue_self_frame
+17:18:49.732 INF loaded sprites resource: dialogue/done
+17:18:49.732 INF loaded sprites resource: lights/amber_linear
+17:18:49.732 INF loaded sprites resource: lights/dash_glow
+17:18:49.733 INF loaded sprites resource: lights/white_5x5
+17:18:49.733 INF loaded sprites resource: lights/white_hard_5x5
+17:18:49.733 INF loaded sprites resource: menu/background
+17:18:49.733 INF loaded sprites resource: primortals/dummy
+17:18:49.733 INF loaded sprites resource: primortals/dummy_entity
+17:18:49.733 INF loaded sprites resource: primortals/myceli
+17:18:49.733 INF loaded sprites resource: primortals/myceli_icon
+17:18:49.733 INF loaded sprites resource: primortals/mystery
+17:18:49.733 INF loaded sprites resource: primortals/mystery_icon
+17:18:49.734 INF loaded sprites resource: primortals/pumbl
+17:18:49.734 INF loaded sprites resource: primortals/pumbl_icon
+17:18:49.734 INF loaded sprites resource: primortals/scintail
+17:18:49.734 INF loaded sprites resource: primortals/scintail_icon
+17:18:49.734 INF loaded sprites resource: primortals/toxmidge
+17:18:49.734 INF loaded sprites resource: primortals/toxmidge_icon
+17:18:49.734 INF loaded sprites resource: primortals/volteel
+17:18:49.734 INF loaded sprites resource: primortals/volteel_icon
+17:18:49.756 INF loaded sprites resource: snowhex_base
+17:18:49.760 INF loaded sprites resource: space_base
+17:18:49.760 INF loaded sprites resource: space_base_pillar
+17:18:49.761 INF loaded sprites resource: startup/controls
+17:18:49.761 INF loaded sprites resource: startup/copyright
+17:18:49.761 INF loaded sprites resource: startup/developer_effects
+17:18:49.761 INF loaded sprites resource: startup/developer_logo
+17:18:49.761 INF loaded sprites resource: startup/developer_name
+17:18:49.761 INF loaded sprites resource: startup/developer_presents
+17:18:49.761 INF loaded sprites resource: startup/device_letters
+17:18:49.761 INF loaded sprites resource: startup/device_thanadox
+17:18:49.763 INF loaded sprites resource: sylvoria
+17:18:49.763 INF loaded sprites resource: tilesets/maru98_ambient
+17:18:49.764 INF loaded sprites resource: title/bg
+17:18:49.764 INF loaded sprites resource: title/city
+17:18:49.764 INF loaded sprites resource: title/clouds
+17:18:49.764 INF loaded sprites resource: title/moon
+17:18:49.765 INF loaded sprites resource: title/mtn_back
+17:18:49.765 INF loaded sprites resource: title/mtn_front
+17:18:49.765 INF loaded sprites resource: title/ship
+17:18:49.765 INF loaded sprites resource: title/star
+17:18:49.765 INF loaded sprites resource: title/stars
+17:18:49.766 INF loaded sprites resource: title/subtitle
+17:18:49.775 INF loaded sprites resource: title/title
+17:18:49.775 INF loaded sprites resource: travel/pod
+17:18:49.775 INF loaded sprites resource: travel/ship
+17:18:49.775 INF loaded sprites resource: ui/ab_button_icons
+17:18:49.781 INF loaded sprites resource: valley_ruin
+17:18:49.781 INF loaded sprites resource: xenolog/device
+17:18:49.781 INF loaded sprites resource: xenolog/scroll_cursor
+17:18:49.781 INF loaded sprites resource: xenolog/select_animech
+17:18:49.781 INF loaded sprites resource: xenolog/select_arrow_down
+17:18:49.781 INF loaded sprites resource: xenolog/select_primortal
+17:18:49.781 INF loaded sprites resource: xenolog/select_unknown
+17:18:49.781 INF loaded sprites resource: xenolog/skill_set_arrows
+17:18:49.781 INF loaded sprites resource: xenolog/skill_tree/dotted_line
+17:18:49.781 INF loaded sprites resource: xenolog/skill_tree/dotted_line_diag_bl
+17:18:49.781 INF loaded sprites resource: xenolog/skill_tree/dotted_line_diag_tl
+17:18:49.781 INF loaded sprites resource: xenolog/skill_tree/nodes
+17:18:49.781 INF loaded sprites resource: xenolog/wide_frame
+17:18:49.902 INF loaded tiled_maps resource: hq
+17:18:50.020 INF loaded tiled_maps resource: intro
+17:18:50.041 INF loaded tiled_maps resource: map1
+17:18:50.045 ERR Unknown ungrouped tiledLayer: regions path=tiled_maps/rules/valley_ruin_autotile.tmx
+17:18:50.045 ERR Unknown ungrouped tiledLayer: input_prototype_under_1 path=tiled_maps/rules/valley_ruin_autotile.tmx
+17:18:50.045 ERR Unknown ungrouped tiledLayer: output_under_1 path=tiled_maps/rules/valley_ruin_autotile.tmx
+17:18:50.045 ERR Unknown ungrouped tiledLayer: output_under_2 path=tiled_maps/rules/valley_ruin_autotile.tmx
+17:18:50.045 ERR Unknown ungrouped tiledLayer: output_collision path=tiled_maps/rules/valley_ruin_autotile.tmx
+17:18:50.045 INF loaded tiled_maps resource: rules/valley_ruin_autotile
+17:18:50.050 ERR Unknown tiledGroup: under_1 path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
+17:18:50.050 ERR Unknown ungrouped tiledLayer: regions path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
+17:18:50.050 ERR Unknown ungrouped tiledLayer: input_prototype_under_1 path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
+17:18:50.050 ERR Unknown ungrouped tiledLayer: output_under_2 path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
+17:18:50.050 ERR Unknown ungrouped tiledLayer: output_collision path=tiled_maps/rules/valley_ruin_autotile_variations.tmx
+17:18:50.050 INF loaded tiled_maps resource: rules/valley_ruin_autotile_variations
+17:18:50.585 INF loaded tiled_maps resource: sylvoria
+17:18:50.590 INF loaded tiled_maps resource: template
+17:18:50.591 INF loaded audio/sounds resource: adventure/beeps/error
+17:18:50.593 INF loaded audio/sounds resource: adventure/beeps/success
+17:18:50.595 INF loaded audio/sounds resource: adventure/elythium_breaking
+17:18:50.623 INF loaded audio/sounds resource: adventure/energy_hum
+17:18:50.624 INF loaded audio/sounds resource: adventure/energy_on
+17:18:50.635 INF loaded audio/sounds resource: adventure/props/energy_door_hum
+17:18:50.705 INF loaded audio/sounds resource: adventure/props/energy_door_off
+17:18:50.774 INF loaded audio/sounds resource: adventure/props/energy_door_on
+17:18:50.776 INF loaded audio/sounds resource: adventure/sealed_door_opens
+17:18:50.781 INF loaded audio/sounds resource: adventure/transition
+17:18:50.782 INF loaded audio/sounds resource: dialogue_complete
+17:18:50.926 INF loaded audio/sounds resource: song_sample
+17:18:50.927 INF loaded audio/sounds resource: speech/chatter
+17:18:50.927 INF loaded audio/sounds resource: speech/end
+17:18:50.927 INF loaded audio/sounds resource: speech/exclaim
+17:18:50.928 INF loaded audio/sounds resource: speech/letter
+17:18:50.928 INF loaded audio/sounds resource: speech/question
+17:18:50.971 INF loaded audio/sounds resource: startup/developer
+17:18:50.995 INF loaded audio/sounds resource: startup/device
+17:18:50.997 INF loaded audio/sounds resource: steps/hard/heavy_1
+17:18:50.999 INF loaded audio/sounds resource: steps/hard/heavy_2
+17:18:51.001 INF loaded audio/sounds resource: steps/hard/heavy_3
+17:18:51.003 INF loaded audio/sounds resource: steps/hard/soft_1
+17:18:51.005 INF loaded audio/sounds resource: steps/hard/soft_2
+17:18:51.007 INF loaded audio/sounds resource: steps/hard/soft_3
+17:18:51.008 INF loaded audio/sounds resource: steps/soft/1
+17:18:51.009 INF loaded audio/sounds resource: steps/soft/2
+17:18:51.010 INF loaded audio/sounds resource: steps/soft/3
+17:18:51.012 INF loaded audio/sounds resource: steps/soft/4
+17:18:51.013 INF loaded audio/sounds resource: steps/soft/5
+17:18:51.014 INF loaded audio/sounds resource: steps/soft/6
+17:18:51.014 INF loaded audio/sounds resource: ui/click
+17:18:51.015 INF loaded audio/sounds resource: xenolog/bad_beep
+17:18:51.016 INF loaded audio/sounds resource: xenolog/good_beep
+17:18:51.016 INF Running 17 deferred initializers
+17:18:51.052 INF Atlas packed 149 images, using 21.1% of available pixels.
+17:18:51.345 INF Atlas packed 28 images, using 0.5% of available pixels.
+17:18:51.691 INF Atlas packed 12 images, using 10.5% of available pixels.
+17:18:59.430 INF loading map from config defaultPlayerMode=human lightingClear=#9baeae sceneClear=#1d2a2a
+17:18:59.435 ERR color name not found: 
+17:18:59.435 WRN Unknown entity type: tiled-252 / 
+17:18:59.436 ERR color name not found: 
+17:18:59.436 WRN Unknown entity type: tiled-284 / 
+17:18:59.437 WRN Unknown entity type: tiled-253 / 
+17:18:59.437 WRN Unknown entity type: tiled-250 / 
+17:18:59.437 WRN Unknown entity type: tiled-251 / 
+17:18:59.438 WRN Unknown entity type: tiled-254 / 
+17:18:59.438 INF tiled-122 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-122","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.438 INF tiled-122 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-122","Location":null,"MotionId":"start-scripted-motion-00001","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:18:59.438 INF intro.training.0.door > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.training.0.door","IsBlockingIngress":true}
+17:18:59.438 INF intro.training.0.door > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:closed","Offset":null},{"ColorMask":null,"Name":"adventure/doors/shield_front_1:waves","Offset":null}],"open":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:open","Offset":null}]},"EntityId":"intro.training.0.door","Lights":{"closed":[{"Color":"#127fd7","Modifier":"pulse_slow","Size":1.5}]},"Mode":"closed"}
+17:18:59.439 INF intro.training.0.door > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"intro.training.0.door","ModeBase":{}}
+17:18:59.439 INF intro.equipment_door_state > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.equipment_door_state","IsBlockingIngress":true}
+17:18:59.439 INF intro.equipment_door_state > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"adventure/doors/sliding_steel:closed","Offset":null}],"open":[{"ColorMask":null,"Name":"adventure/doors/sliding_steel:open","Offset":null}]},"EntityId":"intro.equipment_door_state","Lights":{},"Mode":"closed"}
+17:18:59.439 INF intro.equipment_door_state > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"intro.equipment_door_state","ModeBase":{}}
+17:18:59.439 INF tiled-129 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-129","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.439 INF tiled-129 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-129","Location":null,"MotionId":"start-scripted-motion-00002","Relative":null,"ToEntityId":"intro.hall_way_end.north"}
+17:18:59.439 INF tiled-123 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-123","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.439 INF tiled-123 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-123","Location":null,"MotionId":"start-scripted-motion-00003","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:18:59.439 INF tiled-141 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-141","IsBlockingIngress":true}
+17:18:59.439 INF tiled-141 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"tiled-141","Lights":null,"Mode":"closed"}
+17:18:59.439 INF system > event processed true: *adventure.EffectFade e={"AutoDeactivate":null,"DurationSeconds":1,"FadeId":"fade-00001","FromColor":"#000f","ToColor":"#0000","Transitions":1}
+17:18:59.439 INF intro.training.10.door > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.training.10.door","IsBlockingIngress":true}
+17:18:59.439 INF intro.training.10.door > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"intro.training.10.door","Lights":null,"Mode":"closed"}
+17:18:59.439 INF tiled-125 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-125","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.439 INF tiled-125 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-125","Location":null,"MotionId":"start-scripted-motion-00004","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:18:59.439 INF tiled-139 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-139","IsBlockingIngress":true}
+17:18:59.439 INF tiled-139 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"tiled-139","Lights":null,"Mode":"closed"}
+17:18:59.439 INF tiled-120 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-120","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.439 INF tiled-120 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-120","Location":null,"MotionId":"start-scripted-motion-00005","Relative":null,"ToEntityId":"intro.hall_way_end.north"}
+17:18:59.439 INF tiled-128 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-128","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.439 INF tiled-128 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-128","Location":null,"MotionId":"start-scripted-motion-00006","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:18:59.439 INF tiled-118 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-118","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.439 INF tiled-118 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-118","Location":null,"MotionId":"start-scripted-motion-00007","Relative":null,"ToEntityId":"intro.hall_way_end.north"}
+17:18:59.439 INF tiled-300 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-300","IsBlockingIngress":true}
+17:18:59.439 INF tiled-300 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:closed","Offset":null},{"ColorMask":null,"Name":"adventure/doors/shield_front_1:waves","Offset":null}],"open":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:open","Offset":null}]},"EntityId":"tiled-300","Lights":{"closed":[{"Color":"#127fd7","Modifier":"pulse_slow","Size":1.5}]},"Mode":"closed"}
+17:18:59.439 INF tiled-300 > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"tiled-300","ModeBase":{}}
+17:18:59.439 INF tiled-121 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-121","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.439 INF tiled-121 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-121","Location":null,"MotionId":"start-scripted-motion-00008","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:18:59.439 INF intro.training.6.door > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.training.6.door","IsBlockingIngress":true}
+17:18:59.439 INF intro.training.6.door > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"space_base_pillar:down","Offset":null}],"open":[{"ColorMask":null,"Name":"space_base_pillar:up","Offset":null}]},"EntityId":"intro.training.6.door","Lights":{},"Mode":"closed"}
+17:18:59.439 INF intro.training.6.door > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"intro.training.6.door","ModeBase":{}}
+17:18:59.439 INF intro.door.training.x > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.door.training.x","IsBlockingIngress":true}
+17:18:59.439 INF intro.door.training.x > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:closed","Offset":null},{"ColorMask":null,"Name":"adventure/doors/shield_front_1:waves","Offset":null}],"open":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:open","Offset":null}]},"EntityId":"intro.door.training.x","Lights":{"closed":[{"Color":"#127fd7","Modifier":"pulse_slow","Size":1.5}]},"Mode":"closed"}
+17:18:59.439 INF intro.door.training.x > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"intro.door.training.x","ModeBase":{}}
+17:18:59.439 INF intro.training.7.door > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.training.7.door","IsBlockingIngress":true}
+17:18:59.439 INF intro.training.7.door > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"space_base_pillar:down","Offset":null}],"open":[{"ColorMask":null,"Name":"space_base_pillar:up","Offset":null}]},"EntityId":"intro.training.7.door","Lights":{},"Mode":"closed"}
+17:18:59.439 INF intro.training.7.door > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"intro.training.7.door","ModeBase":{}}
+17:18:59.440 INF intro.papers_door > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.papers_door","IsBlockingIngress":true}
+17:18:59.440 INF intro.papers_door > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:closed","Offset":null},{"ColorMask":null,"Name":"adventure/doors/shield_front_1:waves","Offset":null}],"open":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:open","Offset":null}]},"EntityId":"intro.papers_door","Lights":{"closed":[{"Color":"#127fd7","Modifier":"pulse_slow","Size":1.5}]},"Mode":"closed"}
+17:18:59.440 INF intro.papers_door > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"intro.papers_door","ModeBase":{}}
+17:18:59.440 INF tiled-126 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-126","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.440 INF tiled-126 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-126","Location":null,"MotionId":"start-scripted-motion-00009","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:18:59.440 INF intro.training.5.door > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"intro.training.5.door","IsBlockingIngress":true}
+17:18:59.440 INF intro.training.5.door > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"space_base_pillar:down","Offset":null}],"open":[{"ColorMask":null,"Name":"space_base_pillar:up","Offset":null}]},"EntityId":"intro.training.5.door","Lights":{},"Mode":"closed"}
+17:18:59.440 INF intro.training.5.door > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"intro.training.5.door","ModeBase":{}}
+17:18:59.440 INF tiled-299 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-299","IsBlockingIngress":true}
+17:18:59.440 INF tiled-299 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:closed","Offset":null},{"ColorMask":null,"Name":"adventure/doors/shield_front_1:waves","Offset":null}],"open":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:open","Offset":null}]},"EntityId":"tiled-299","Lights":{"closed":[{"Color":"#127fd7","Modifier":"pulse_slow","Size":1.5}]},"Mode":"closed"}
+17:18:59.440 INF tiled-299 > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"tiled-299","ModeBase":{}}
+17:18:59.440 INF tiled-140 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-140","IsBlockingIngress":true}
+17:18:59.440 INF tiled-140 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"tiled-140","Lights":null,"Mode":"closed"}
+17:18:59.440 INF tiled-115 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-115","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.440 INF tiled-115 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-115","Location":null,"MotionId":"start-scripted-motion-00010","Relative":null,"ToEntityId":"intro.hall_way_end.west"}
+17:18:59.440 INF tiled-124 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-124","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.440 INF tiled-124 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-124","Location":null,"MotionId":"start-scripted-motion-00011","Relative":null,"ToEntityId":"intro.hall_way_end.north"}
+17:18:59.440 INF tiled-138 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-138","IsBlockingIngress":true}
+17:18:59.440 INF tiled-138 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"tiled-138","Lights":null,"Mode":"closed"}
+17:18:59.440 INF tiled-117 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-117","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.440 INF tiled-117 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-117","Location":null,"MotionId":"start-scripted-motion-00012","Relative":null,"ToEntityId":"intro.hall_way_end.north"}
+17:18:59.440 INF tiled-127 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-127","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.440 INF tiled-127 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-127","Location":null,"MotionId":"start-scripted-motion-00013","Relative":null,"ToEntityId":"intro.hall_way_end.west"}
+17:18:59.440 INF tiled-119 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-119","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.440 INF tiled-119 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-119","Location":null,"MotionId":"start-scripted-motion-00014","Relative":null,"ToEntityId":"intro.hall_way_end.north"}
+17:18:59.440 INF Executing batch immediately batchId=batch-00001
+17:18:59.440 INF Executing serial effect batchId=batch-00001 completionId=0 effectIndex=0 effectType=*adventure.EffectSetWorldState totalEffects=3
+17:18:59.440 INF Executing serial effect batchId=batch-00001 completionId=17 effectIndex=1 effectType=*adventure.EffectTimer totalEffects=3
+17:18:59.440 INF waiting for completion batchId=batch-00001 completionId=timer:timer-00001
+17:18:59.440 INF Stopping serial execution - waiting for completion batchId=batch-00001
+17:18:59.440 INF hint.listener > event processed true: *adventure.EffectSetWorldState e={"Key":"intro.hints.hint.interact","Value":"e92ead3c-434b-4568-8d8c-3f044ef7092f"}
+17:18:59.440 INF Adding timer: &adventure.timer{createdBy:"hint.listener", timerId:"timer-00001", completionId:"timer:timer-00001", elapsed:0, duration:3, repeatCount:1, triggerCount:0}
+17:18:59.440 INF hint.listener > event processed true: *adventure.EffectTimer e={"DurationSeconds":3,"TimerId":"timer-00001"}
+17:18:59.440 INF hint.listener > event processed true: *adventure.EffectBatch e={"BatchId":"batch-00001","Effects":[{"Key":"intro.hints.hint.interact","Value":"e92ead3c-434b-4568-8d8c-3f044ef7092f"},{"DurationSeconds":3,"TimerId":"timer-00001"},{"Message":"Press A to interact"}],"ExecuteInParallel":null}
+17:18:59.441 INF tiled-301 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-301","IsBlockingIngress":true}
+17:18:59.441 INF tiled-301 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"closed":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:closed","Offset":null},{"ColorMask":null,"Name":"adventure/doors/shield_front_1:waves","Offset":null}],"open":[{"ColorMask":null,"Name":"adventure/doors/shield_front_1:open","Offset":null}]},"EntityId":"tiled-301","Lights":{"closed":[{"Color":"#127fd7","Modifier":"pulse_slow","Size":1.5}]},"Mode":"closed"}
+17:18:59.441 INF tiled-301 > event processed true: *adventure.EffectAddSoundProvider e={"EntityId":"tiled-301","ModeBase":{}}
+17:18:59.441 INF tiled-142 > event processed true: *adventure.EffectMutateBlockingPresence e={"EntityId":"tiled-142","IsBlockingIngress":true}
+17:18:59.441 INF tiled-142 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"tiled-142","Lights":null,"Mode":"closed"}
+17:18:59.441 INF tiled-130 > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-130","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":"intro.hallway"}}
+17:18:59.441 INF tiled-130 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-130","Location":null,"MotionId":"start-scripted-motion-00015","Relative":null,"ToEntityId":"intro.hall_way_end.west"}
+17:18:59.441 INF tiled-405 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"":[{"ColorMask":"#fff","Name":"adventure/doors/button","Offset":null}]},"EntityId":"tiled-405","Lights":null,"Mode":null}
+resetting!
+17:18:59.443 INF system > event processed true: *adventure.EffectSetWorldState e={"Key":"intro.hints.hint.interact","Value":null}
+17:18:59.443 INF system > event processed true: *adventure.EffectSetWorldState e={"Key":"elythium","Value":0}
+17:18:59.443 INF system > event processed true: *adventure.EffectSetWorldState e={"Key":"tiled-363","Value":"e92ead3c-434b-4568-8d8c-3f044ef7092f"}
+17:18:59.443 INF tiled-363 > event processed true: *adventure.EffectFunction e="marshaling error: json: unsupported type: adventure.RunnableFunction"
+17:18:59.443 INF playing sound on mode change entity=tiled-300 mode=closed sound={"FadeInSeconds":0,"Falloff":{"FarDistance":4,"NearDistance":2},"Loop":false,"Name":"adventure/props/energy_door_on","Volume":1} volume=0
+17:18:59.443 INF playing sound on mode change entity=tiled-300 mode=closed sound={"FadeInSeconds":1,"Falloff":{"FarDistance":8,"NearDistance":3},"Loop":true,"Name":"adventure/props/energy_door_hum","Volume":0.5} volume=0
+17:18:59.443 INF playing sound on mode change entity=intro.door.training.x mode=closed sound={"FadeInSeconds":0,"Falloff":{"FarDistance":4,"NearDistance":2},"Loop":false,"Name":"adventure/props/energy_door_on","Volume":1} volume=0
+17:18:59.443 INF playing sound on mode change entity=intro.door.training.x mode=closed sound={"FadeInSeconds":1,"Falloff":{"FarDistance":8,"NearDistance":3},"Loop":true,"Name":"adventure/props/energy_door_hum","Volume":0.5} volume=0
+17:18:59.445 INF playing sound on mode change entity=tiled-301 mode=closed sound={"FadeInSeconds":0,"Falloff":{"FarDistance":4,"NearDistance":2},"Loop":false,"Name":"adventure/props/energy_door_on","Volume":1} volume=0
+17:18:59.445 INF playing sound on mode change entity=tiled-301 mode=closed sound={"FadeInSeconds":1,"Falloff":{"FarDistance":8,"NearDistance":3},"Loop":true,"Name":"adventure/props/energy_door_hum","Volume":0.5} volume=0
+17:18:59.445 INF playing sound on mode change entity=intro.equipment_door_state mode=closed sound={"FadeInSeconds":0,"Falloff":{"FarDistance":4,"NearDistance":2},"Loop":false,"Name":"adventure/sealed_door_opens","Volume":1} volume=0
+17:18:59.445 INF playing sound on mode change entity=intro.training.0.door mode=closed sound={"FadeInSeconds":0,"Falloff":{"FarDistance":4,"NearDistance":2},"Loop":false,"Name":"adventure/props/energy_door_on","Volume":1} volume=0
+17:18:59.445 INF playing sound on mode change entity=intro.training.0.door mode=closed sound={"FadeInSeconds":1,"Falloff":{"FarDistance":8,"NearDistance":3},"Loop":true,"Name":"adventure/props/energy_door_hum","Volume":0.5} volume=0
+17:18:59.445 INF playing sound on mode change entity=tiled-299 mode=closed sound={"FadeInSeconds":0,"Falloff":{"FarDistance":4,"NearDistance":2},"Loop":false,"Name":"adventure/props/energy_door_on","Volume":1} volume=0
+17:18:59.445 INF playing sound on mode change entity=tiled-299 mode=closed sound={"FadeInSeconds":1,"Falloff":{"FarDistance":8,"NearDistance":3},"Loop":true,"Name":"adventure/props/energy_door_hum","Volume":0.5} volume=0
+17:18:59.447 WRN pathfinding took a long time approx_direct_distance=85 direct_cost=85000 elapsed=1097us found=true from={"X":223,"Y":333} path_cost=177998 to={"X":289,"Y":314}
+17:18:59.450 INF playing sound on mode change entity=intro.papers_door mode=closed sound={"FadeInSeconds":0,"Falloff":{"FarDistance":4,"NearDistance":2},"Loop":false,"Name":"adventure/props/energy_door_on","Volume":1} volume=0
+17:18:59.450 INF playing sound on mode change entity=intro.papers_door mode=closed sound={"FadeInSeconds":1,"Falloff":{"FarDistance":8,"NearDistance":3},"Loop":true,"Name":"adventure/props/energy_door_hum","Volume":0.5} volume=0.09289321881345247
+17:19:00.415 INF Effect marked complete completionId=fade:fade-00001
+17:19:00.415 INF overlay deactivated overlay=fade-00001
+17:19:00.432 INF Effect marked complete completionId=motion:start-scripted-motion-00005
+17:19:00.432 INF Executing batch immediately batchId=batch-00002
+17:19:00.432 INF Executing serial effect batchId=batch-00002 completionId=34 effectIndex=0 effectType=*adventure.EffectStartScriptedMotion totalEffects=1
+17:19:00.432 INF waiting for completion batchId=batch-00002 completionId=motion:start-scripted-motion-00016
+17:19:00.432 INF Stopping serial execution - waiting for completion batchId=batch-00002
+17:19:00.432 INF tiled-120 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-120","Location":null,"MotionId":"start-scripted-motion-00016","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:19:00.432 INF tiled-120 > event processed true: *adventure.EffectBatch e={"BatchId":"batch-00002","Effects":[{"EntityId":"tiled-120","Location":null,"MotionId":"start-scripted-motion-00016","Relative":null,"ToEntityId":"intro.hall_way_end.east"}],"ExecuteInParallel":null}
+17:19:01.965 INF Effect marked complete completionId=motion:start-scripted-motion-00009
+17:19:01.965 INF Executing batch immediately batchId=batch-00003
+17:19:01.965 INF Executing serial effect batchId=batch-00003 completionId=34 effectIndex=0 effectType=*adventure.EffectStartScriptedMotion totalEffects=1
+17:19:01.965 INF waiting for completion batchId=batch-00003 completionId=motion:start-scripted-motion-00017
+17:19:01.965 INF Stopping serial execution - waiting for completion batchId=batch-00003
+17:19:01.965 INF tiled-126 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-126","Location":null,"MotionId":"start-scripted-motion-00017","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:19:01.965 INF tiled-126 > event processed true: *adventure.EffectBatch e={"BatchId":"batch-00003","Effects":[{"EntityId":"tiled-126","Location":null,"MotionId":"start-scripted-motion-00017","Relative":null,"ToEntityId":"intro.hall_way_end.east"}],"ExecuteInParallel":null}
+17:19:01.965 INF Effect marked complete completionId=motion:start-scripted-motion-00017
+17:19:01.965 INF Effect completed in batch batchId=batch-00003 completionId=motion:start-scripted-motion-00017 remaining=0
+17:19:01.965 INF Executing batch immediately batchId=batch-00004
+17:19:01.965 INF Executing serial effect batchId=batch-00004 completionId=34 effectIndex=0 effectType=*adventure.EffectStartScriptedMotion totalEffects=1
+17:19:01.965 INF waiting for completion batchId=batch-00004 completionId=motion:start-scripted-motion-00018
+17:19:01.965 INF Stopping serial execution - waiting for completion batchId=batch-00004
+17:19:01.965 INF tiled-126 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-126","Location":null,"MotionId":"start-scripted-motion-00018","Relative":null,"ToEntityId":"intro.hall_way_end.north"}
+17:19:01.965 INF tiled-126 > event processed true: *adventure.EffectBatch e={"BatchId":"batch-00004","Effects":[{"EntityId":"tiled-126","Location":null,"MotionId":"start-scripted-motion-00018","Relative":null,"ToEntityId":"intro.hall_way_end.north"}],"ExecuteInParallel":null}
+17:19:01.967 WRN pathfinding took a long time approx_direct_distance=83 direct_cost=83000 elapsed=1382us found=true from={"X":221,"Y":329} path_cost=169999 to={"X":289,"Y":314}
+17:19:01.967 INF Batch completed batchId=batch-00003
+17:19:01.967 INF Effect marked complete completionId=batch:batch-00003
+17:19:01.982 WRN pathfinding took a long time approx_direct_distance=86 direct_cost=86000 elapsed=1112us found=true from={"X":289,"Y":314} path_cost=176999 to={"X":221,"Y":332}
+17:19:02.414 INF Timer triggered: &adventure.timer{createdBy:"hint.listener", timerId:"timer-00001", completionId:"timer:timer-00001", elapsed:3.0151891249999987, duration:3, repeatCount:1, triggerCount:0}
+17:19:02.414 INF Removing timer: hint.listener/timer-00001
+17:19:02.414 INF Effect marked complete completionId=timer:timer-00001
+17:19:02.414 INF Effect completed in batch batchId=batch-00001 completionId=timer:timer-00001 remaining=0
+17:19:02.414 INF Executing serial effect batchId=batch-00001 completionId=0 effectIndex=2 effectType=*adventure.EffectPushTooltip totalEffects=3
+17:19:02.414 INF Batch completed batchId=batch-00001
+17:19:02.414 INF Effect marked complete completionId=batch:batch-00001
+17:19:02.414 INF hint.listener > event processed true: *adventure.EffectPushTooltip e={"Message":"Press A to interact"}
+17:19:03.150 INF tiled-405 > event processed true: *adventure.EffectResetModeBasedEntityAnimation e={"EntityId":"tiled-405"}
+17:19:03.150 INF tiled-405 > event processed true: *adventure.EffectChatter e={"ChatterId":"chatter-00001","DurationSeconds":3,"EntityId":"tiled-405","Message":"Double-press to travel to HQ"}
+17:19:03.153 INF playing chatter distance=1 entity_id=tiled-405 volume=0.75
+17:19:03.782 INF tiled-405 > event processed true: *adventure.EffectResetModeBasedEntityAnimation e={"EntityId":"tiled-405"}
+17:19:03.782 INF tiled-405 > event processed true: *adventure.EffectChatter e={"ChatterId":"chatter-00002","DurationSeconds":3,"EntityId":"tiled-405","Message":"Double-press to travel to HQ"}
+17:19:03.784 INF playing chatter distance=1 entity_id=tiled-405 volume=0.75
+17:19:03.948 INF tiled-405 > event processed true: *adventure.EffectResetModeBasedEntityAnimation e={"EntityId":"tiled-405"}
+17:19:03.951 INF Saved game to game_data/saves/default.yaml (no changes)
+17:19:03.951 INF Executing batch immediately batchId=batch-00005
+17:19:03.951 INF Executing serial effect batchId=batch-00005 completionId=0 effectIndex=0 effectType=*adventure.EffectMutateEntityBehavior totalEffects=3
+17:19:03.951 INF Executing serial effect batchId=batch-00005 completionId=15 effectIndex=1 effectType=*adventure.EffectFade totalEffects=3
+17:19:03.951 INF waiting for completion batchId=batch-00005 completionId=fade:fade-00002
+17:19:03.951 INF Stopping serial execution - waiting for completion batchId=batch-00005
+17:19:03.951 INF system > event processed true: *adventure.EffectMutateEntityBehavior e={"DisableBy":"map_load","EnableBy":null,"EntityId":"tiled-16","Reset":null}
+17:19:03.951 INF system > event processed true: *adventure.EffectFade e={"AutoDeactivate":false,"DurationSeconds":1,"FadeId":"fade-00002","FromColor":"#0000","ToColor":"#000f","Transitions":1}
+17:19:03.951 INF system > event processed true: *adventure.EffectBatch e="marshaling error: json: unsupported type: adventure.RunnableFunction"
+17:19:03.951 INF tiled-405 > event processed true: *adventure.EffectLoadMap e={"MapName":"hq","TravelPlanetName":null,"Waypoint":"default"}
+17:19:04.515 WRN pathfinding took a long time approx_direct_distance=77 direct_cost=77000 elapsed=1329us found=true from={"X":222,"Y":324} path_cost=158000 to={"X":289,"Y":314}
+17:19:04.547 INF Effect marked complete completionId=motion:start-scripted-motion-00014
+17:19:04.547 INF Executing batch immediately batchId=batch-00006
+17:19:04.547 INF Executing serial effect batchId=batch-00006 completionId=34 effectIndex=0 effectType=*adventure.EffectStartScriptedMotion totalEffects=1
+17:19:04.547 INF waiting for completion batchId=batch-00006 completionId=motion:start-scripted-motion-00019
+17:19:04.547 INF Stopping serial execution - waiting for completion batchId=batch-00006
+17:19:04.547 INF tiled-119 > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-119","Location":null,"MotionId":"start-scripted-motion-00019","Relative":null,"ToEntityId":"intro.hall_way_end.east"}
+17:19:04.547 INF tiled-119 > event processed true: *adventure.EffectBatch e={"BatchId":"batch-00006","Effects":[{"EntityId":"tiled-119","Location":null,"MotionId":"start-scripted-motion-00019","Relative":null,"ToEntityId":"intro.hall_way_end.east"}],"ExecuteInParallel":null}
+17:19:04.549 WRN pathfinding took a long time approx_direct_distance=86 direct_cost=86000 elapsed=1240us found=true from={"X":221,"Y":332} path_cost=171998 to={"X":289,"Y":314}
+17:19:04.949 INF Effect marked complete completionId=fade:fade-00002
+17:19:04.950 INF Effect completed in batch batchId=batch-00005 completionId=fade:fade-00002 remaining=0
+17:19:04.965 INF Executing serial effect batchId=batch-00005 completionId=0 effectIndex=2 effectType=*adventure.EffectFunction totalEffects=3
+17:19:04.965 INF Batch completed batchId=batch-00005
+17:19:04.965 INF Effect marked complete completionId=batch:batch-00005
+17:19:04.965 INF system > event processed true: *adventure.EffectFunction e="marshaling error: json: unsupported type: adventure.RunnableFunction"
+17:19:04.991 INF loading map from config defaultPlayerMode=human lightingClear=#232f5d sceneClear=#20212f
+17:19:04.992 ERR color name not found: 
+17:19:04.992 INF system > event processed true: *adventure.EffectFade e={"AutoDeactivate":null,"DurationSeconds":1,"FadeId":"fade-00003","FromColor":"#000f","ToColor":"#0000","Transitions":1}
+17:19:04.992 INF tiled-34 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"":[{"ColorMask":"#fff","Name":"adventure/doors/button","Offset":null}]},"EntityId":"tiled-34","Lights":null,"Mode":null}
+17:19:04.992 INF tiled-37 > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":{"":[{"ColorMask":"#fff","Name":"adventure/doors/button","Offset":null}]},"EntityId":"tiled-37","Lights":null,"Mode":null}
+17:19:04.992 INF hq.stars.top_left > event processed true: *adventure.EffectFunction e="marshaling error: json: unsupported type: adventure.RunnableFunction"
+17:19:05.981 INF Effect marked complete completionId=fade:fade-00003
+17:19:05.981 INF overlay deactivated overlay=fade-00003
+17:19:06.448 INF Executing batch immediately batchId=batch-00007
+17:19:06.448 INF Executing serial effect batchId=batch-00007 completionId=0 effectIndex=0 effectType=*adventure.EffectPushEntityBehavior totalEffects=10
+17:19:06.448 INF Executing serial effect batchId=batch-00007 completionId=34 effectIndex=1 effectType=*adventure.EffectStartScriptedMotion totalEffects=10
+17:19:06.448 INF waiting for completion batchId=batch-00007 completionId=motion:start-scripted-motion-00020
+17:19:06.448 INF Stopping serial execution - waiting for completion batchId=batch-00007
+17:19:06.448 INF hq.chair > event processed true: *adventure.EffectPushEntityBehavior e={"EntityId":"tiled-12","FacingEntity":null,"ScriptedMotion":{"ActivePlayerZone":""}}
+17:19:06.448 INF hq.chair > event processed true: *adventure.EffectStartScriptedMotion e={"EntityId":"tiled-12","Location":null,"MotionId":"start-scripted-motion-00020","Relative":null,"ToEntityId":"hq.chair_front"}
+17:19:06.448 INF hq.chair > event processed true: *adventure.EffectBatch e="marshaling error: json: unsupported type: adventure.ConditionCheck"
+17:19:06.449 INF tiled-21 > event processed true: *adventure.EffectSendEvent e={"Event":{"SourceFacingDirection":3,"SourceId":"tiled-12","TargetId":"hq.chair"}}
+17:19:07.481 INF Effect marked complete completionId=motion:start-scripted-motion-00020
+17:19:07.482 INF Effect completed in batch batchId=batch-00007 completionId=motion:start-scripted-motion-00020 remaining=0
+17:19:07.482 INF Executing serial effect batchId=batch-00007 completionId=0 effectIndex=2 effectType=*adventure.EffectPopEntityBehavior totalEffects=10
+17:19:07.482 INF Executing serial effect batchId=batch-00007 completionId=0 effectIndex=3 effectType=*adventure.EffectEntityFaceDirection totalEffects=10
+17:19:07.482 INF Executing serial effect batchId=batch-00007 completionId=0 effectIndex=4 effectType=*adventure.EffectMutateEntityBehavior totalEffects=10
+17:19:07.482 INF Executing serial effect batchId=batch-00007 completionId=0 effectIndex=5 effectType=*adventure.EffectChangePlayerRenderer totalEffects=10
+17:19:07.482 INF Executing serial effect batchId=batch-00007 completionId=0 effectIndex=6 effectType=*adventure.EffectMutateModeBasedEntity totalEffects=10
+17:19:07.482 INF Executing serial effect batchId=batch-00007 completionId=34 effectIndex=7 effectType=*adventure.EffectWaitForCondition totalEffects=10
+17:19:07.482 INF waiting for completion batchId=batch-00007 completionId=condition:wait-for-condition-00001
+17:19:07.482 INF Stopping serial execution - waiting for completion batchId=batch-00007
+17:19:07.482 INF hq.chair > event processed true: *adventure.EffectPopEntityBehavior e={"EntityId":"tiled-12"}
+17:19:07.483 INF hq.chair > event processed true: *adventure.EffectMutateEntityBehavior e={"DisableBy":"computer","EnableBy":null,"EntityId":"tiled-12","Reset":null}
+17:19:07.483 INF hq.chair > event processed true: *adventure.EffectChangePlayerRenderer e={"Style":"hidden"}
+17:19:07.483 INF hq.chair > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"hq.chair","Lights":null,"Mode":"enter"}
+17:19:07.483 INF hq.chair > event processed true: *adventure.EffectWaitForCondition e="marshaling error: json: unsupported type: adventure.ConditionCheck"
+17:19:09.166 INF Effect marked complete completionId=condition:wait-for-condition-00001
+17:19:09.166 INF Effect completed in batch batchId=batch-00007 completionId=condition:wait-for-condition-00001 remaining=0
+17:19:09.166 INF Executing serial effect batchId=batch-00007 completionId=17 effectIndex=8 effectType=*adventure.EffectTimer totalEffects=10
+17:19:09.166 INF waiting for completion batchId=batch-00007 completionId=timer:timer-00002
+17:19:09.166 INF Stopping serial execution - waiting for completion batchId=batch-00007
+17:19:09.166 INF Adding timer: &adventure.timer{createdBy:"hq.chair", timerId:"timer-00002", completionId:"timer:timer-00002", elapsed:0, duration:0.25, repeatCount:1, triggerCount:0}
+17:19:09.166 INF hq.chair > event processed true: *adventure.EffectTimer e={"DurationSeconds":0.25,"TimerId":"timer-00002"}
+17:19:09.433 INF Timer triggered: &adventure.timer{createdBy:"hq.chair", timerId:"timer-00002", completionId:"timer:timer-00002", elapsed:0.26711316700000004, duration:0.25, repeatCount:1, triggerCount:0}
+17:19:09.433 INF Removing timer: hq.chair/timer-00002
+17:19:09.433 INF Effect marked complete completionId=timer:timer-00002
+17:19:09.433 INF Effect completed in batch batchId=batch-00007 completionId=timer:timer-00002 remaining=0
+17:19:09.433 INF Executing serial effect batchId=batch-00007 completionId=0 effectIndex=9 effectType=*adventure.EffectFunction totalEffects=10
+17:19:09.433 INF Batch completed batchId=batch-00007
+17:19:09.433 INF Effect marked complete completionId=batch:batch-00007
+17:19:09.433 INF hq.chair > event processed true: *adventure.EffectFunction e="marshaling error: json: unsupported type: adventure.RunnableFunction"
+17:19:13.965 INF Executing batch immediately batchId=batch-00008
+17:19:13.965 INF Executing serial effect batchId=batch-00008 completionId=0 effectIndex=0 effectType=*adventure.EffectMutateModeBasedEntity totalEffects=8
+17:19:13.965 INF Executing serial effect batchId=batch-00008 completionId=34 effectIndex=1 effectType=*adventure.EffectWaitForCondition totalEffects=8
+17:19:13.965 INF waiting for completion batchId=batch-00008 completionId=condition:wait-for-condition-00002
+17:19:13.965 INF Stopping serial execution - waiting for completion batchId=batch-00008
+17:19:13.965 INF hq.chair > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"hq.chair","Lights":null,"Mode":"close_eyes"}
+17:19:13.965 INF hq.chair > event processed true: *adventure.EffectWaitForCondition e="marshaling error: json: unsupported type: adventure.ConditionCheck"
+17:19:13.966 INF hq.chair > event processed true: *adventure.EffectBatch e="marshaling error: json: unsupported type: adventure.ConditionCheck"
+17:19:14.481 INF Effect marked complete completionId=condition:wait-for-condition-00002
+17:19:14.482 INF Effect completed in batch batchId=batch-00008 completionId=condition:wait-for-condition-00002 remaining=0
+17:19:14.482 INF Executing serial effect batchId=batch-00008 completionId=18 effectIndex=2 effectType=*adventure.EffectFade totalEffects=8
+17:19:14.482 INF waiting for completion batchId=batch-00008 completionId=fade:hq.chair_fade
+17:19:14.482 INF Stopping serial execution - waiting for completion batchId=batch-00008
+17:19:14.482 INF hq.chair > event processed true: *adventure.EffectFade e={"AutoDeactivate":false,"DurationSeconds":0.75,"FadeId":"hq.chair_fade","FromColor":"#00000000","ToColor":"#000000FF","Transitions":1}
+17:19:15.217 INF Effect marked complete completionId=fade:hq.chair_fade
+17:19:15.217 INF Effect completed in batch batchId=batch-00008 completionId=fade:hq.chair_fade remaining=0
+17:19:15.232 INF Executing serial effect batchId=batch-00008 completionId=0 effectIndex=3 effectType=*adventure.EffectMutateFollowCamera totalEffects=8
+17:19:15.232 INF Executing serial effect batchId=batch-00008 completionId=17 effectIndex=4 effectType=*adventure.EffectBatch totalEffects=8
+17:19:15.232 INF waiting for completion batchId=batch-00008 completionId=batch:batch-00009
+17:19:15.232 INF Stopping serial execution - waiting for completion batchId=batch-00008
+17:19:15.232 INF hq.chair > event processed true: *adventure.EffectMutateFollowCamera e={"FollowEntityId":"hq.animech","ResetPosition":true}
+17:19:15.233 INF Executing batch immediately batchId=batch-00009
+17:19:15.233 INF waiting for completion batchId=batch-00009 completionId=fade:fade-00004
+17:19:15.233 INF hq.chair > event processed true: *adventure.EffectFade e={"AutoDeactivate":true,"DurationSeconds":0.75,"FadeId":"fade-00004","FromColor":"#000000FF","ToColor":"#00000000","Transitions":1}
+17:19:15.233 INF hq.chair > event processed true: *adventure.EffectDeactivateFade e={"FadeId":"hq.chair_fade"}
+17:19:15.233 INF hq.chair > event processed true: *adventure.EffectBatch e={"BatchId":"batch-00009","Effects":[{"AutoDeactivate":true,"DurationSeconds":0.75,"FadeId":"fade-00004","FromColor":"#000000FF","ToColor":"#00000000","Transitions":1},{"FadeId":"hq.chair_fade"}],"ExecuteInParallel":true}
+17:19:15.235 INF overlay deactivated overlay=hq.chair_fade
+17:19:15.981 INF Effect marked complete completionId=fade:fade-00004
+17:19:15.982 INF Effect completed in batch batchId=batch-00009 completionId=fade:fade-00004 remaining=0
+17:19:15.982 INF overlay deactivated overlay=fade-00004
+17:19:15.999 INF Batch completed batchId=batch-00009
+17:19:15.999 INF Effect marked complete completionId=batch:batch-00009
+17:19:15.999 INF Effect completed in batch batchId=batch-00008 completionId=batch:batch-00009 remaining=0
+17:19:16.014 INF Executing serial effect batchId=batch-00008 completionId=0 effectIndex=5 effectType=*adventure.EffectMutateModeBasedEntity totalEffects=8
+17:19:16.014 INF Executing serial effect batchId=batch-00008 completionId=34 effectIndex=6 effectType=*adventure.EffectWaitForCondition totalEffects=8
+17:19:16.014 INF waiting for completion batchId=batch-00008 completionId=condition:wait-for-condition-00003
+17:19:16.014 INF Stopping serial execution - waiting for completion batchId=batch-00008
+17:19:16.014 INF hq.chair > event processed true: *adventure.EffectMutateModeBasedEntity e={"Animations":null,"EntityId":"hq.animech","Lights":null,"Mode":"descend"}
+17:19:16.014 INF hq.chair > event processed true: *adventure.EffectWaitForCondition e="marshaling error: json: unsupported type: adventure.ConditionCheck"
+17:19:17.315 INF Effect marked complete completionId=condition:wait-for-condition-00003
+17:19:17.315 INF Effect completed in batch batchId=batch-00008 completionId=condition:wait-for-condition-00003 remaining=0
+17:19:17.315 INF Executing serial effect batchId=batch-00008 completionId=0 effectIndex=7 effectType=*adventure.EffectLoadMap totalEffects=8
+17:19:17.315 INF Batch completed batchId=batch-00008
+17:19:17.315 INF Effect marked complete completionId=batch:batch-00008
+17:19:17.316 INF Saved game to game_data/saves/default.yaml (no changes)
+17:19:17.316 INF Executing batch immediately batchId=batch-00010
+17:19:17.316 INF Executing serial effect batchId=batch-00010 completionId=0 effectIndex=0 effectType=*adventure.EffectMutateEntityBehavior totalEffects=3
+17:19:17.316 INF Executing serial effect batchId=batch-00010 completionId=15 effectIndex=1 effectType=*adventure.EffectFade totalEffects=3
+17:19:17.316 INF waiting for completion batchId=batch-00010 completionId=fade:fade-00005
+17:19:17.316 INF Stopping serial execution - waiting for completion batchId=batch-00010
+17:19:17.316 INF system > event processed true: *adventure.EffectMutateEntityBehavior e={"DisableBy":"map_load","EnableBy":null,"EntityId":"tiled-12","Reset":null}
+17:19:17.316 INF system > event processed true: *adventure.EffectFade e={"AutoDeactivate":false,"DurationSeconds":1,"FadeId":"fade-00005","FromColor":"#0000","ToColor":"#000f","Transitions":1}
+17:19:17.316 INF system > event processed true: *adventure.EffectBatch e="marshaling error: json: unsupported type: adventure.RunnableFunction"
+17:19:17.316 INF hq.chair > event processed true: *adventure.EffectLoadMap e={"MapName":"sylvoria","TravelPlanetName":"computer/planet_1","Waypoint":"new_beginnings"}
+17:19:18.299 INF Effect marked complete completionId=fade:fade-00005
+17:19:18.299 INF Effect completed in batch batchId=batch-00010 completionId=fade:fade-00005 remaining=0
+17:19:18.315 INF Executing serial effect batchId=batch-00010 completionId=0 effectIndex=2 effectType=*adventure.EffectFunction totalEffects=3
+17:19:18.315 INF Batch completed batchId=batch-00010
+17:19:18.315 INF Effect marked complete completionId=batch:batch-00010
+17:19:18.315 INF system > event processed true: *adventure.EffectFunction e="marshaling error: json: unsupported type: adventure.RunnableFunction"
+17:19:25.345 INF loading map from config defaultPlayerMode=animech lightingClear=#ece4b3 sceneClear=#20212f
+17:19:25.351 INF system > event processed true: *adventure.EffectFade e={"AutoDeactivate":null,"DurationSeconds":1,"FadeId":"fade-00006","FromColor":"#000f","ToColor":"#0000","Transitions":1}
+17:19:26.331 INF Effect marked complete completionId=fade:fade-00006
+17:19:26.331 INF overlay deactivated overlay=fade-00006

@@ -1,3 +1,20 @@
 tilesheet:
   tileWidth: 32
   tileHeight: 32
+animations:
+  run_down:
+    h_sequence:
+      row: 1
+    framesPerSecond: 2.5
+  run_right:
+    h_sequence:
+      row: 2
+    framesPerSecond: 2.5
+  run_up:
+    h_sequence:
+      row: 3
+    framesPerSecond: 2.5
+  run_left:
+    h_sequence:
+      row: 4
+    framesPerSecond: 2.5

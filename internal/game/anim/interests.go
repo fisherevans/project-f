@@ -6,7 +6,7 @@ import (
 )
 
 func PDA(atlas *resources.Atlas) *AnimatedSprite {
-	return FromTilesheetRowPartial(atlas, "space_base", 29, 1, 8, 6)
+	return Load(atlas, "space_base:pda")
 }
 
 func PDADisabled(atlas *resources.Atlas) *AnimatedSprite {

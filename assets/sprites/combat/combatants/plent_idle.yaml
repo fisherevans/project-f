@@ -1,3 +1,8 @@
 tilesheet:
   tileWidth: 128
   tileHeight: 128
+animations:
+  default:
+    h_sequence:
+      row: 1
+    framesPerSecond: 5

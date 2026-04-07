@@ -82,23 +82,6 @@ func (a *AnimatedSprite) WithDuration(dur float64) *AnimatedSprite {
 	return a
 }
 
-func FromTilesheetRow(atlas *resources.Atlas, tilesheet string, row int, framesPerSecond float64) *AnimatedSprite {
-	ts := resources.GetTilesheet(tilesheet)
-	return FromTilesheetRowPartial(atlas, tilesheet, row, 1, ts.Columns, framesPerSecond)
-}
-
-func FromTilesheetRowPartial(atlas *resources.Atlas, tilesheet string, row, colFrom, columns int, framesPerSecond float64) *AnimatedSprite {
-	var tiles []*resources.SpriteTilesheetAnimationTile
-	for i := colFrom; i < colFrom+columns; i++ {
-		tiles = append(tiles, &resources.SpriteTilesheetAnimationTile{
-			Column: i,
-			Row:    row,
-			Weight: 1,
-		})
-	}
-	return FromTilesheetTiles(atlas, tilesheet, framesPerSecond, 0, false, true, tiles)
-}
-
 func FromTilesheetTiles(atlas *resources.Atlas, tilesheet string, framesPerSecond, jitterPercent float64, randomized, repeat bool, tiles []*resources.SpriteTilesheetAnimationTile) *AnimatedSprite {
 	animated := &AnimatedSprite{
 		framesPerSecond: framesPerSecond,

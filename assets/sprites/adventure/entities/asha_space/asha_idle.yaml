@@ -1,3 +1,24 @@
 tilesheet:
   tileWidth: 32
   tileHeight: 32
+animations:
+  idle_down:
+    h_sequence:
+      row: 1
+    framesPerSecond: 4
+    jitterPercent: 0.2
+  idle_right:
+    h_sequence:
+      row: 2
+    framesPerSecond: 4
+    jitterPercent: 0.2
+  idle_up:
+    h_sequence:
+      row: 3
+    framesPerSecond: 4
+    jitterPercent: 0.2
+  idle_left:
+    h_sequence:
+      row: 4
+    framesPerSecond: 4
+    jitterPercent: 0.2

@@ -1,3 +1,9 @@
 tilesheet:
   tileWidth: 9
   tileHeight: 5
+animations:
+  default:
+    h_sequence:
+      row: 1
+    framesPerSecond: 20
+    pingPong: true

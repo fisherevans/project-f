@@ -5,5 +5,5 @@ import (
 )
 
 func RedCoin(atlas *resources.Atlas) *AnimatedSprite {
-	return FromTilesheetRowPartial(atlas, "snowhex_base", 48, 46, 8, 8)
+	return Load(atlas, "snowhex_base:red_coin")
 }

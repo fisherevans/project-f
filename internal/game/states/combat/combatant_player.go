@@ -46,7 +46,7 @@ func NewPlayer(cfg game.CombatPlayer) *Player {
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),
 		Statuses:               NewAppliedStatuses(),
 		HealthFlash:            NewDamageFlashMask(),
-		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "animech/combat_animech", "default"), false),
+		Renderer:               NewCombatantRenderer(anim.LoadTilesheetAnimation(atlas, "animech/combat_animech_new", "default"), false),
 	}
 	if cfg.HasTempo {
 		p.Tempo = &Tempo{}

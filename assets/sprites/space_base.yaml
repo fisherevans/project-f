@@ -14,3 +14,9 @@ animations:
       fromColumn: 10
       toColumn: 15
     framesPerSecond: 1
+  pda:
+    h_sequence:
+      row: 29
+      fromColumn: 1
+      toColumn: 8
+    framesPerSecond: 6
