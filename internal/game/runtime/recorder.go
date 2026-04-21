@@ -1,3 +1,5 @@
+//go:build !js
+
 package runtime
 
 import (
@@ -97,7 +99,7 @@ func (r *Recorder) Start() error {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	baseFilename := fmt.Sprintf("project-f_%s_%s", r.name, timestamp)
+	baseFilename := fmt.Sprintf("primortal_%s_%s", r.name, timestamp)
 	r.videoFilePath = filepath.Join(desktopPath, baseFilename+"_video.mp4")
 	r.audioFilePath = filepath.Join(desktopPath, baseFilename+"_audio.wav")
 	r.finalFilePath = filepath.Join(desktopPath, baseFilename+".mp4")

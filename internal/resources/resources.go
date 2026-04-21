@@ -93,10 +93,39 @@ func Initialize() {
 	}
 	initMu.Unlock()
 
+	// Count total files across all resource categories so we can report a
+	// meaningful progress percentage.
+	totalFiles := 0
+	for _, lr := range resources {
+		_ = fs.WalkDir(assets.FS, lr.FileRoot, func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d == nil {
+				return nil
+			}
+			if load, _ := doLoadFile(d, lr); load {
+				totalFiles++
+			}
+			return nil
+		})
+	}
+
+	SetProgress(Progress{Stage: "Loading assets", Current: 0, Total: totalFiles})
+	loaded := 0
+
 	// Load all resource files
 	for _, localResource := range resources {
+		stage := stageLabel(localResource.FileRoot)
 		handler := fsFileHandler(localResource)
-		err := fs.WalkDir(assets.FS, localResource.FileRoot, handler)
+		wrapped := func(path string, d fs.DirEntry, err error) error {
+			herr := handler(path, d, err)
+			if d != nil {
+				if load, _ := doLoadFile(d, localResource); load {
+					loaded++
+					SetProgress(Progress{Stage: stage, Current: loaded, Total: totalFiles})
+				}
+			}
+			return herr
+		}
+		err := fs.WalkDir(assets.FS, localResource.FileRoot, wrapped)
 		if err != nil {
 			panic(fmt.Sprintf("failed load load %s resources: %v", localResource.FileRoot, err))
 		}
@@ -116,8 +145,27 @@ func Initialize() {
 	initMu.Unlock()
 
 	log.Info().Msgf("Running %d deferred initializers", len(callbacks))
-	for _, fn := range callbacks {
+	for i, fn := range callbacks {
+		SetProgress(Progress{Stage: "Initializing", Current: i, Total: len(callbacks)})
 		fn()
+	}
+	SetProgress(Progress{Stage: "Initializing", Current: len(callbacks), Total: len(callbacks)})
+}
+
+func stageLabel(root string) string {
+	switch root {
+	case "maps":
+		return "Loading maps"
+	case "fonts":
+		return "Loading fonts"
+	case "sprites":
+		return "Loading sprites"
+	case "tiled_maps":
+		return "Loading tiled maps"
+	case "audio/sounds":
+		return "Loading audio"
+	default:
+		return "Loading " + root
 	}
 }
 

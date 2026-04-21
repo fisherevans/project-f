@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 	"os"
@@ -9,7 +10,6 @@ import (
 
 	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/resources"
-	"fisherevans.com/project/f/internal/util/gfx"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -50,8 +50,11 @@ func (i *Instance) initialize() {
 		panic(err)
 	}
 
-	loading := text.New(pixel.V(20, 20), text.Atlas7x13)
-	loading.Color = pixel.RGB(1, 1, 1)
+	title := text.New(pixel.V(20, 20), text.Atlas7x13)
+	title.Color = pixel.RGB(0.67, 0.84, 0.13) // #aad620
+	status := text.New(pixel.V(20, 20), text.Atlas7x13)
+	status.Color = pixel.RGB(0.53, 0.53, 0.53)
+
 	initDone := make(chan error, 1)
 	go func() {
 		// Load all resources (fonts, sprites, audio, etc.)
@@ -60,10 +63,12 @@ func (i *Instance) initialize() {
 
 		registerIntents()
 
+		resources.SetProgress(resources.Progress{Stage: "Starting game"})
 		game.Initialize(i.saveId, i.resetIntentFactory())
 
 		// Wait for audio speaker to start streaming before game loop begins
 		// This prevents the first ~1-2 seconds of audio from being clipped
+		resources.SetProgress(resources.Progress{Stage: "Finalizing audio"})
 		audio.WaitUntilReady()
 
 		initDone <- nil
@@ -71,6 +76,7 @@ func (i *Instance) initialize() {
 
 	lastDotTick := time.Now()
 	dotCount := 0
+	lastEmitted := resources.Progress{Current: -1}
 	for {
 		select {
 		case err := <-initDone:
@@ -90,21 +96,49 @@ func (i *Instance) initialize() {
 			lastDotTick = time.Now()
 		}
 
-		loading.Clear()
-		loading.WriteString("Loading")
-		for j := 0; j < dotCount; j++ {
-			loading.WriteString(".")
+		p := resources.CurrentProgress()
+		if p != lastEmitted {
+			emitProgress(p.Stage, p.Current, p.Total)
+			lastEmitted = p
 		}
+
+		title.Clear()
+		title.WriteString("Primortal")
+
+		status.Clear()
+		stage := p.Stage
+		if stage == "" {
+			stage = "Loading"
+		}
+		if p.Total > 0 {
+			pct := int(float64(p.Current) / float64(p.Total) * 100)
+			status.WriteString(fmt.Sprintf("%s %d%% (%d/%d)", stage, pct, p.Current, p.Total))
+		} else {
+			status.WriteString(stage)
+			for j := 0; j < dotCount; j++ {
+				status.WriteString(".")
+			}
+		}
+
 		i.window.Clear(pixel.RGB(0, 0, 0))
-		loading.Draw(i.window, gfx.Moved(20, 20))
+		wb := i.window.Bounds()
+		titleScale := 3.0
+		statusScale := 2.0
+		titleW := title.Bounds().W() * titleScale
+		statusW := status.Bounds().W() * statusScale
+		cx, cy := wb.Center().X, wb.Center().Y
+		title.Draw(i.window, pixel.IM.Scaled(pixel.ZV, titleScale).Moved(pixel.V(cx-titleW/2, cy+16)))
+		status.Draw(i.window, pixel.IM.Scaled(pixel.ZV, statusScale).Moved(pixel.V(cx-statusW/2, cy-24)))
 		i.window.Update()
 		time.Sleep(16 * time.Millisecond)
 	}
 
 }
 
+
 func (i *Instance) Run() {
 	i.initialize()
+	signalReady()
 
 	// Setup rendering canvases
 	sceneCanvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)

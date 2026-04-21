@@ -36,7 +36,7 @@ void main() {
 
     vec4 src = sampleSource();
     vec4 mask = sampleMask();
-    if (src.a == 0) {
+    if (src.a == 0.0) {
         discard;
     }
     vec3 color = src.rgb + mask.rgb;

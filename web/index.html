@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Primortal</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: #ddd;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #stage {
+            position: relative;
+            display: inline-block;
+            line-height: 0;
+        }
+        #stage:fullscreen {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+        #game {
+            display: block;
+            background: #111;
+            image-rendering: pixelated;
+            outline: none;
+        }
+        #game.fill {
+            width: 100%;
+            height: 100%;
+        }
+        #controls {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 400ms ease-out;
+        }
+        #controls.active {
+            opacity: 0.55;
+            pointer-events: auto;
+        }
+        #controls.active:hover, #controls.active:focus-within {
+            opacity: 1;
+        }
+        #controls button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(0,0,0,0.45);
+            color: #aad620;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #controls button svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            display: block;
+        }
+        #controls button:focus { outline: none; }
+        #vol-wrap {
+            position: relative;
+        }
+        #vol-popover {
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.55);
+            border-radius: 4px;
+            padding: 10px 6px;
+            display: none;
+        }
+        #vol-wrap:hover #vol-popover,
+        #vol-wrap:focus-within #vol-popover {
+            display: block;
+        }
+        #vol-slider {
+            -webkit-appearance: slider-vertical;
+            appearance: slider-vertical;
+            writing-mode: bt-lr;
+            width: 20px;
+            height: 100px;
+            accent-color: #aad620;
+            cursor: pointer;
+            margin: 0;
+        }
+        #vol-slider:focus { outline: none; }
+        #scale-wrap { position: relative; }
+        #scale-btn {
+            font: 600 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            letter-spacing: 0.5px;
+        }
+        #scale-popover {
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.55);
+            border-radius: 4px;
+            padding: 4px;
+            display: none;
+            max-height: 220px;
+            overflow-y: auto;
+            flex-direction: column;
+            gap: 2px;
+        }
+        #scale-wrap.open #scale-popover { display: flex; }
+        #scale-popover button {
+            width: 40px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            color: #ddd;
+            font: 600 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #scale-popover button:hover { background: rgba(170,214,32,0.15); color: #aad620; }
+        #scale-popover button.selected { background: #aad620; color: #000; }
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            z-index: 10;
+            transition: opacity 400ms ease-out;
+        }
+        #loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #loader .title {
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #aad620;
+            text-transform: uppercase;
+        }
+        #loader .status {
+            font-size: 13px;
+            color: #888;
+            min-height: 1em;
+        }
+        #loader .bar {
+            width: 280px;
+            height: 4px;
+            background: #222;
+            overflow: hidden;
+        }
+        #loader .bar-fill {
+            height: 100%;
+            background: #aad620;
+            width: 0%;
+            transition: width 120ms linear;
+        }
+        #loader.indeterminate .bar-fill {
+            width: 40% !important;
+            animation: slide 1.2s ease-in-out infinite;
+            transition: none;
+        }
+        @keyframes slide {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(350%); }
+        }
+        #loader.indeterminate .status::after {
+            content: "";
+            display: inline-block;
+            width: 1.2em;
+            text-align: left;
+            animation: dots 1.2s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0%   { content: ""; }
+            25%  { content: "."; }
+            50%  { content: ".."; }
+            75%  { content: "..."; }
+            100% { content: ""; }
+        }
+        #loader .hint {
+            font-size: 11px;
+            color: #555;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="stage">
+    <canvas id="game" tabindex="0"></canvas>
+    <div id="controls">
+        <div id="vol-wrap">
+            <div id="vol-popover">
+                <input id="vol-slider" type="range" min="0" max="100" value="100" title="Volume" aria-label="Volume" orient="vertical">
+            </div>
+            <button id="mute-btn" title="Volume" aria-label="Volume">
+                <svg id="icon-vol-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4.03v8.05A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06A7 7 0 0 1 19 12a7 7 0 0 1-5 6.71v2.06A9 9 0 0 0 21 12 9 9 0 0 0 14 3.23z"/></svg>
+                <svg id="icon-vol-off" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path d="M3 10v4h4l5 4V6L7 10H3zm13.59 2L19 9.41 17.59 8 15 10.59 12.41 8 11 9.41 13.59 12 11 14.59 12.41 16 15 13.41 17.59 16 19 14.59 16.59 12z"/></svg>
+            </button>
+        </div>
+        <div id="scale-wrap">
+            <div id="scale-popover"></div>
+            <button id="scale-btn" title="Render scale" aria-label="Render scale">x1</button>
+        </div>
+        <button id="fs-btn" title="Fullscreen (Alt+Enter)" aria-label="Fullscreen">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        </button>
+    </div>
+    </div>
+    <div id="loader">
+        <div class="title">Primortal</div>
+        <div class="bar"><div class="bar-fill" id="loader-bar"></div></div>
+        <div class="status" id="loader-status">Starting&hellip;</div>
+        <div class="hint">Click or press any key once loaded to enable audio</div>
+    </div>
+    <script src="build_info.js"></script>
+    <script src="wasm_exec.js"></script>
+    <script>
+        // Fullscreen toggle wired to both the corner button and Alt+Enter.
+        // Uses the canvas element so the browser fullscreen matches the game view.
+        (function () {
+            const stage = document.getElementById("stage");
+            const btn = document.getElementById("fs-btn");
+            const toggle = () => {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    stage.requestFullscreen().catch(err => console.warn("fullscreen failed:", err));
+                }
+            };
+            btn.addEventListener("click", toggle);
+            window.addEventListener("keydown", (e) => {
+                if (e.altKey && e.key === "Enter") {
+                    e.preventDefault();
+                    toggle();
+                }
+            });
+        })();
+
+        // Volume slider + mute, persisted to localStorage. Applies to the Go
+        // audio system's master gain via window.primortalSetMasterVolume,
+        // registered from Go once the audio system comes up.
+        (function () {
+            const slider = document.getElementById("vol-slider");
+            const muteBtn = document.getElementById("mute-btn");
+            const iconOn = document.getElementById("icon-vol-on");
+            const iconOff = document.getElementById("icon-vol-off");
+            const STORAGE_KEY = "primortal:volume";
+            const MUTE_KEY = "primortal:muted";
+
+            let volume = 100;
+            try {
+                const v = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+                if (!Number.isNaN(v) && v >= 0 && v <= 100) volume = v;
+            } catch (e) {}
+            let muted = false;
+            try { muted = localStorage.getItem(MUTE_KEY) === "1"; } catch (e) {}
+
+            slider.value = volume;
+            const renderIcon = () => {
+                const off = muted || volume === 0;
+                iconOn.style.display = off ? "none" : "block";
+                iconOff.style.display = off ? "block" : "none";
+            };
+            renderIcon();
+
+            const apply = () => {
+                const linear = muted ? 0 : (volume / 100);
+                if (typeof window.primortalSetMasterVolume === "function") {
+                    window.primortalSetMasterVolume(linear);
+                }
+            };
+
+            // Apply pending volume as soon as Go registers the setter.
+            let poll = setInterval(() => {
+                if (typeof window.primortalSetMasterVolume === "function") {
+                    apply();
+                    clearInterval(poll);
+                }
+            }, 100);
+
+            slider.addEventListener("input", () => {
+                volume = parseInt(slider.value, 10) || 0;
+                try { localStorage.setItem(STORAGE_KEY, String(volume)); } catch (e) {}
+                if (muted && volume > 0) {
+                    muted = false;
+                    try { localStorage.setItem(MUTE_KEY, "0"); } catch (e) {}
+                }
+                renderIcon();
+                apply();
+            });
+            muteBtn.addEventListener("click", () => {
+                muted = !muted;
+                try { localStorage.setItem(MUTE_KEY, muted ? "1" : "0"); } catch (e) {}
+                renderIcon();
+                apply();
+            });
+        })();
+
+        // Render-scale picker. Sets explicit CSS pixel dimensions on the
+        // canvas; pixel's WASM backend reads clientWidth/Height each frame
+        // via syncCanvasSize so Go picks up the change without notification.
+        // Default on first load is min(maxFit, 6); users can pick higher
+        // manually. Clamped back down if the viewport shrinks below the
+        // stored choice.
+        (function () {
+            const BASE_W = 240, BASE_H = 160;
+            const DEFAULT_CAP = 6;
+            const STORAGE_KEY = "primortal:scale";
+            const canvas = document.getElementById("game");
+            const btn = document.getElementById("scale-btn");
+            const wrap = document.getElementById("scale-wrap");
+            const popover = document.getElementById("scale-popover");
+
+            const maxFit = () => Math.max(1, Math.min(
+                Math.floor(window.innerWidth / BASE_W),
+                Math.floor(window.innerHeight / BASE_H)
+            ));
+
+            let scale;
+            try {
+                const v = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+                if (!Number.isNaN(v) && v >= 1) scale = v;
+            } catch (e) {}
+            if (!scale) scale = Math.min(maxFit(), DEFAULT_CAP);
+
+            const stage = document.getElementById("stage");
+            const apply = () => {
+                btn.textContent = "x" + scale;
+                // Don't override the canvas when the stage is in fullscreen —
+                // that mode fills the viewport via the .fill class.
+                if (document.fullscreenElement === stage) return;
+                canvas.classList.remove("fill");
+                canvas.style.width = (scale * BASE_W) + "px";
+                canvas.style.height = (scale * BASE_H) + "px";
+            };
+            const renderPopover = () => {
+                const max = Math.max(maxFit(), scale);
+                popover.innerHTML = "";
+                for (let i = 1; i <= max; i++) {
+                    const b = document.createElement("button");
+                    b.textContent = "x" + i;
+                    if (i === scale) b.classList.add("selected");
+                    b.addEventListener("click", () => {
+                        scale = i;
+                        try { localStorage.setItem(STORAGE_KEY, String(i)); } catch (e) {}
+                        apply();
+                        renderPopover();
+                        wrap.classList.remove("open");
+                    });
+                    popover.appendChild(b);
+                }
+            };
+
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                wrap.classList.toggle("open");
+                renderPopover();
+            });
+            document.addEventListener("click", () => wrap.classList.remove("open"));
+
+            window.addEventListener("resize", () => {
+                const fit = maxFit();
+                if (scale > fit) {
+                    scale = fit;
+                    apply();
+                }
+                if (wrap.classList.contains("open")) renderPopover();
+            });
+            document.addEventListener("fullscreenchange", () => {
+                if (document.fullscreenElement === stage) {
+                    canvas.classList.add("fill");
+                    canvas.style.width = "";
+                    canvas.style.height = "";
+                } else {
+                    apply();
+                }
+            });
+
+            apply();
+        })();
+
+        // Reveal the corner controls on mouse activity; fade them out after a
+        // short idle so they don't linger over the game.
+        (function () {
+            const controls = document.getElementById("controls");
+            let timer = null;
+            const show = () => {
+                controls.classList.add("active");
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => controls.classList.remove("active"), 1800);
+            };
+            window.addEventListener("mousemove", show);
+            window.addEventListener("touchstart", show, { passive: true });
+            controls.addEventListener("mouseenter", show);
+            controls.addEventListener("focusin", show);
+        })();
+
+        (async () => {
+            const loader = document.getElementById("loader");
+            const bar = document.getElementById("loader-bar");
+            const status = document.getElementById("loader-status");
+
+            const setStatus = (text) => { status.textContent = text; };
+            const setProgress = (pct) => { bar.style.width = Math.max(0, Math.min(100, pct)) + "%"; };
+            const setIndeterminate = (on) => {
+                loader.classList.toggle("indeterminate", on);
+            };
+
+            window.primortalOnReady = () => {
+                setIndeterminate(false);
+                setProgress(100);
+                setStatus("Ready");
+                loader.classList.add("hidden");
+                setTimeout(() => loader.remove(), 500);
+                document.getElementById("game").focus();
+            };
+
+            // Called from Go during resources.Initialize(). Maps the asset-loading
+            // phase onto the last 10% of the progress bar so the earlier download
+            // % we already showed stays monotonically increasing.
+            window.primortalOnProgress = (stage, current, total) => {
+                setIndeterminate(false);
+                if (total > 0) {
+                    const frac = current / total;
+                    setProgress(90 + frac * 10);
+                    setStatus(stage + " " + current + "/" + total);
+                } else {
+                    setIndeterminate(true);
+                    setStatus(stage || "Loading");
+                }
+            };
+
+            try {
+                setStatus("Downloading\u2026");
+                const resp = await fetch("main.wasm");
+                if (!resp.ok) throw new Error("fetch failed: " + resp.status);
+
+                // Content-Length is often missing or reflects the compressed
+                // payload when a CDN/itch serves with gzip/brotli. Fall back
+                // to the uncompressed size baked into build_info.js so the
+                // bar still shows a real %.
+                const headerLen = Number(resp.headers.get("Content-Length")) || 0;
+                const bakedLen = (window.primortalBuildInfo && window.primortalBuildInfo.wasmSize) || 0;
+                const total = headerLen || bakedLen;
+
+                let received = 0;
+                const reader = resp.body.getReader();
+                const chunks = [];
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    received += value.length;
+                    if (total > 0) {
+                        const frac = Math.min(1, received / total);
+                        setProgress(frac * 90); // leave final 10% for decode+init
+                        setStatus("Downloading " + Math.floor(frac * 100) + "%");
+                    } else {
+                        setStatus("Downloading " + (received / (1024 * 1024)).toFixed(1) + " MB");
+                    }
+                }
+
+                const bytes = new Uint8Array(received);
+                let offset = 0;
+                for (const c of chunks) { bytes.set(c, offset); offset += c.length; }
+
+                setStatus("Compiling");
+                setIndeterminate(true);
+                const go = new Go();
+                // Yield so the browser paints the indeterminate state before the
+                // synchronous compile blocks the main thread.
+                await new Promise(r => setTimeout(r, 0));
+                const result = await WebAssembly.instantiate(bytes, go.importObject);
+
+                // Progress from here is driven by window.primortalOnProgress
+                // callbacks originating from Go's resources.Initialize().
+                setStatus("Loading assets");
+                go.run(result.instance);
+            } catch (err) {
+                console.error(err);
+                setStatus("Error: " + err.message);
+            }
+        })();
+    </script>
+</body>
+</html>
