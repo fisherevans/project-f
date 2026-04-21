@@ -80,7 +80,7 @@ jobs:
       - name: Install butler
         shell: bash
         run: |
-          curl -L -o butler.zip "https://broth.itch.ovh/butler/${{ matrix.butler_platform }}/LATEST/archive/default"
+          curl -L -o butler.zip "https://broth.itch.zone/butler/${{ matrix.butler_platform }}/LATEST/archive/default"
           unzip -o butler.zip
           chmod +x butler || true
 
