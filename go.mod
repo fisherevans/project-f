@@ -1,8 +1,6 @@
 module fisherevans.com/project/f
 
-go 1.24
-
-toolchain go1.24.8
+go 1.25.0
 
 require (
 	github.com/go-gl/mathgl v1.1.0
@@ -17,7 +15,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.10.2
 	golang.design/x/clipboard v0.7.1
-	golang.org/x/image v0.28.0
+	golang.org/x/image v0.38.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
