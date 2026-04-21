@@ -242,7 +242,8 @@
     <script src="wasm_exec.js"></script>
     <script>
         // Fullscreen toggle wired to both the corner button and Alt+Enter.
-        // Uses the canvas element so the browser fullscreen matches the game view.
+        // Also registered as window.primortalToggleFullscreen so the in-game
+        // overlay can drive it directly.
         (function () {
             const stage = document.getElementById("stage");
             const btn = document.getElementById("fs-btn");
@@ -253,6 +254,7 @@
                     stage.requestFullscreen().catch(err => console.warn("fullscreen failed:", err));
                 }
             };
+            window.primortalToggleFullscreen = toggle;
             btn.addEventListener("click", toggle);
             window.addEventListener("keydown", (e) => {
                 if (e.altKey && e.key === "Enter") {
@@ -260,6 +262,26 @@
                     toggle();
                 }
             });
+        })();
+
+        // Scale bridge: called from Go overlay to set a fixed canvas size.
+        // n=0 means auto (remove explicit dimensions and let CSS fit).
+        (function () {
+            const BASE_W = 240, BASE_H = 160;
+            const canvas = document.getElementById("game");
+            const stage = document.getElementById("stage");
+            window.primortalSetScale = (n) => {
+                if (document.fullscreenElement === stage) return; // fullscreen owns sizing
+                if (n <= 0) {
+                    canvas.classList.remove("fill");
+                    canvas.style.width = "";
+                    canvas.style.height = "";
+                } else {
+                    canvas.classList.remove("fill");
+                    canvas.style.width = (n * BASE_W) + "px";
+                    canvas.style.height = (n * BASE_H) + "px";
+                }
+            };
         })();
 
         // Volume slider + mute, persisted to localStorage. Applies to the Go

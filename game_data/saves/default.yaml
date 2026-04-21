@@ -32,15 +32,15 @@ unlocked_skills:
     tackle: {}
 globals:
     control_id: controlled_npc
-    elythium: 0
+    elythium: 3
     elythium_goal: 12
-    player_id: tiled-12
+    player_id: tiled-7
     tiled-363: e92ead3c-434b-4568-8d8c-3f044ef7092f
 system_settings:
     lighting:
         lighting_composition: full
         lighting_mode: Blended
-        bloom_mode: Blended
+        bloom_mode: "Off"
     combat:
         combat_speed: 1
     retro_frame:
@@ -51,3 +51,11 @@ system_settings:
         subpixel_tint: 0.05
     debugging:
         show_pathfinding_debugging: false
+    audio:
+        muted: false
+        master_volume: 1
+    display:
+        scale_mode: auto
+        fixed_scale: 0
+        fullscreen: false
+        virtual_gamepad: auto

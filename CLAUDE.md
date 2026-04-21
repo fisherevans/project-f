@@ -2,6 +2,25 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Maintaining these docs
+
+There are scoped CLAUDE.md files that agents inherit automatically:
+
+- `internal/CLAUDE.md` - rendering, asset, gfx, text, frames, color, shader, and atlas conventions. The source of truth for "what tool do I use to draw X".
+- `internal/game/CLAUDE.md` - state/intent/context/controls patterns.
+- `assets/CLAUDE.md` - YAML sidecar formats for sprite, frame, and tilesheet assets.
+
+Treat these as living docs. When you introduce or change a shared pattern that other code should follow, update the relevant CLAUDE.md in the same change:
+
+- New internal helper that should supplant a raw pixel call (new drawing util, new textbox option, new frame utility, new anim loader) - add or update the "what to use for what" guidance.
+- Rename or remove an existing helper referenced in a CLAUDE.md - update the reference.
+- New asset sidecar key or convention - document it in `assets/CLAUDE.md`.
+- New state lifecycle hook, intent pattern, or context singleton - document it in `internal/game/CLAUDE.md`.
+
+If a recommendation in one of these files turns out to be wrong or outdated while you're working, fix it before finishing the task. Don't leave stale guidance in place for the next agent. Conversely, don't churn the docs for one-off changes - these files exist to codify *shared* patterns, not track every edit.
+
+When adding a new shared pattern that doesn't fit any existing CLAUDE.md, decide whether it deserves its own scoped file (new subsystem with enough surface area) or a section in an existing one. Prefer extending an existing file unless the new scope is clearly distinct.
+
 ## Commands
 
 **Run (development):**
@@ -20,6 +39,19 @@ Starts from the title screen with log output to `game_data/logs.txt`.
 ```
 go build -ldflags="-s -w" ./cmd/release
 ```
+
+**Scaffold a new sprite sheet (PNG + YAML sidecar + .aseprite):**
+```
+go run ./cmd/sprite_new \
+    -name assets/sprites/overlay/icons \
+    -tile-width 16 -tile-height 16 \
+    -cols 8 -rows 2 \
+    -sprites volume_on,volume_off,gear,fullscreen,fullscreen_exit,scale,reset,-
+```
+Sprite aliases are positional, row-major. Use `-` or blank to skip a cell. Pass
+`-force` to overwrite existing files. The `.aseprite` step runs automatically
+if the Aseprite CLI is on PATH or at `/Applications/Aseprite.app`. See
+`assets/CLAUDE.md` for what the generated YAML means.
 
 **Tests:**
 ```
@@ -75,6 +107,31 @@ Sprites are configured in YAML sidecar files (e.g. `assets/sprites/.../foo.yaml`
 3. Pixel-grid GLSL shader overlaid (`internal/game/shaders/`)
 4. Optional bloom/effect shaders
 5. Debug overlay drawn last
+
+### Pixel alignment in hi-res UI
+
+Hi-res layers (settings overlay, debug HUD, corner chrome) render at window
+resolution with bitmap fonts and sprite primitives. Every draw position must
+be on an integer pixel - subpixel placement makes bitmap text and small
+sprites render blurry or drift by a fraction of a pixel, which reads as
+jitter. Game-canvas (240×160) code is safe because `gfx.IVec` / `gfx.Moved`
+already force integer positions; window-space UI code composes in raw floats
+and has to stay disciplined.
+
+The common mistake is dividing an odd value by 2. A few examples:
+
+```go
+// basicfont.Face7x13 has LineHeight = 13 (odd).
+y := r.Center().Y - txt.LineHeight/2   // off by 0.5 whenever r.H() is even
+y := r.Min.Y + (r.H()-13)/2            // off by 0.5 whenever r.H() is odd
+dx := 3.0 / 2.0                        // 1.5 — any offset using this inherits the drift
+```
+
+Floor or round the final draw position before passing it to `txt.Draw` /
+`DrawRect`. In the overlay package, `DrawCtx.drawText(txt, pos)` wraps
+`text.Text.Draw` and floors both axes; prefer it over calling `Draw`
+directly. When constructing a rect whose `Center()` feeds into a draw
+position, prefer even dimensions so `Center()` lands on an integer.
 
 ### Animation system
 

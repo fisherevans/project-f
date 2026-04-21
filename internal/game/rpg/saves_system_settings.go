@@ -5,6 +5,8 @@ type SystemSettings struct {
 	Combat     *SystemSettingsCombat     `yaml:"combat"`
 	RetroFrame *SystemSettingsRetroFrame `yaml:"retro_frame"`
 	Debugging  *SystemSettingsDebugging  `yaml:"debugging"`
+	Audio      *SystemSettingsAudio      `yaml:"audio"`
+	Display    *SystemSettingsDisplay    `yaml:"display"`
 }
 
 func (s *SystemSettings) FillDefaults() {
@@ -24,6 +26,14 @@ func (s *SystemSettings) FillDefaults() {
 	}
 	s.Debugging.FillDefaults()
 	s.RetroFrame.FillDefaults()
+	if s.Audio == nil {
+		s.Audio = &SystemSettingsAudio{}
+	}
+	s.Audio.FillDefaults()
+	if s.Display == nil {
+		s.Display = &SystemSettingsDisplay{}
+	}
+	s.Display.FillDefaults()
 }
 
 type SystemSettingsLighting struct {
@@ -125,4 +135,46 @@ type SystemSettingsDebugging struct {
 }
 
 func (s *SystemSettingsDebugging) FillDefaults() {
+}
+
+type SystemSettingsAudio struct {
+	Muted        bool    `yaml:"muted"`
+	MasterVolume float64 `yaml:"master_volume"` // linear 0..1
+}
+
+func (s *SystemSettingsAudio) FillDefaults() {
+	if s.MasterVolume == 0 {
+		s.MasterVolume = 1.0
+	}
+}
+
+// ScaleModeAuto lets the runtime pick the largest integer scale that fits.
+// ScaleModeFixed locks to FixedScale (letterboxed if window is larger).
+const (
+	ScaleModeAuto  = "auto"
+	ScaleModeFixed = "fixed"
+)
+
+// VirtualGamepadAuto shows the on-screen pad the first time a touch event
+// is seen. On and Off force it regardless.
+const (
+	VirtualGamepadAuto = "auto"
+	VirtualGamepadOn   = "on"
+	VirtualGamepadOff  = "off"
+)
+
+type SystemSettingsDisplay struct {
+	ScaleMode      string `yaml:"scale_mode"`      // "auto" | "fixed"
+	FixedScale     int    `yaml:"fixed_scale"`
+	Fullscreen     bool   `yaml:"fullscreen"`
+	VirtualGamepad string `yaml:"virtual_gamepad"` // "auto" | "on" | "off"
+}
+
+func (s *SystemSettingsDisplay) FillDefaults() {
+	if s.ScaleMode == "" {
+		s.ScaleMode = ScaleModeAuto
+	}
+	if s.VirtualGamepad == "" {
+		s.VirtualGamepad = VirtualGamepadAuto
+	}
 }

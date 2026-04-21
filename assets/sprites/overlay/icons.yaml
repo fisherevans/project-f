@@ -1,0 +1,13 @@
+tilesheet:
+    tileWidth: 16
+    tileHeight: 16
+sprites:
+    settings:        {row: 1, column: 1}
+    fullscreen:      {row: 1, column: 2}
+    fullscreen_exit: {row: 1, column: 3}
+    scale:           {row: 1, column: 4}
+    reset:           {row: 1, column: 5}
+    volume_muted:    {row: 2, column: 1}
+    volume_low:      {row: 2, column: 2}
+    volume_med:      {row: 2, column: 3}
+    volume_high:     {row: 2, column: 4}

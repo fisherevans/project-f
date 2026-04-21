@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"fisherevans.com/project/f/internal/game/audio"
+	"fisherevans.com/project/f/internal/game/overlay"
+	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/resources"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
@@ -20,9 +22,14 @@ import (
 	"fisherevans.com/project/f/internal/util"
 )
 
+// DevScene is a named entry point exposed to the overlay's scene-select panel.
+// Only populated in development builds; empty in release.
+type DevScene = overlay.DevScene
+
 type Instance struct {
 	saveId             string
 	resetIntentFactory func() any
+	devScenes          []DevScene
 	window             *opengl.Window
 }
 
@@ -31,6 +38,13 @@ func NewInstance(saveId string, resetIntentFactory func() any) *Instance {
 		saveId:             saveId,
 		resetIntentFactory: resetIntentFactory,
 	}
+}
+
+// WithDevScenes attaches a list of named dev entry points to the instance.
+// The overlay's scene-select panel lists these; clicking one calls Factory().
+func (i *Instance) WithDevScenes(scenes []DevScene) *Instance {
+	i.devScenes = scenes
+	return i
 }
 
 func (i *Instance) initialize() {
@@ -140,6 +154,60 @@ func (i *Instance) Run() {
 	i.initialize()
 	signalReady()
 
+	// Setup overlay
+	ov := overlay.New(overlay.Hooks{
+		Reset: func() {
+			game.SetActiveStateIntent(i.resetIntentFactory())
+		},
+		SetAudio: func(muted bool, linearVolume float64) {
+			s := game.CurrentSave().SystemSettings.Audio
+			s.Muted = muted
+			s.MasterVolume = linearVolume
+			var dB float64
+			if muted || linearVolume <= 0 {
+				dB = -60
+			} else {
+				dB = 20 * math.Log10(linearVolume)
+			}
+			audio.GetSystem().SetMaster(dB)
+		},
+		SetScale: func(mode string, fixedN int) {
+			d := game.CurrentSave().SystemSettings.Display
+			d.ScaleMode = mode
+			d.FixedScale = fixedN
+		},
+		ToggleFullscreen: func() {
+			d := game.CurrentSave().SystemSettings.Display
+			d.Fullscreen = !d.Fullscreen
+			overlay.ApplyFullscreen(i.window, d.Fullscreen)
+		},
+		SaveSettings: func() {
+			if err := game.CurrentSave().Save(); err != nil {
+				log.Warn().Err(err).Msg("overlay: failed to persist settings")
+			}
+		},
+		DevScenes: i.devScenes,
+	})
+
+	// Seed overlay and apply persisted settings
+	audioS := game.CurrentSave().SystemSettings.Audio
+	ov.InitAudio(audioS.Muted, audioS.MasterVolume)
+	if audioS.Muted || audioS.MasterVolume <= 0 {
+		audio.GetSystem().SetMaster(-60)
+	} else {
+		audio.GetSystem().SetMaster(20 * math.Log10(audioS.MasterVolume))
+	}
+
+	displayS := game.CurrentSave().SystemSettings.Display
+	fixedScale := 0
+	if displayS.ScaleMode == rpg.ScaleModeFixed {
+		fixedScale = displayS.FixedScale
+	}
+	ov.InitDisplay(fixedScale, displayS.Fullscreen)
+	if displayS.Fullscreen {
+		overlay.ApplyFullscreen(i.window, true)
+	}
+
 	// Setup rendering canvases
 	sceneCanvas := shaders.NewCanvas(game.GameWidth, game.GameHeight)
 	sceneCanvas.SetSmooth(false)
@@ -174,6 +242,9 @@ func (i *Instance) Run() {
 			log.Info().Msg("----------------------------------------------------------------------------------------------")
 		}
 
+		// Update overlay input first — it gets first pick on pointer events
+		ov.UpdateInput(i.window, deltaTime)
+
 		// Update game state
 		game.ApplyIntent()
 		game.UpdateControls(i.window)
@@ -193,6 +264,9 @@ func (i *Instance) Run() {
 
 		// Composite and draw to i.window
 		i.compositeToWindow(sceneCanvas, pixelGridCanvas, canvasScale)
+
+		// Overlay UI (rendered at window resolution, above game canvas)
+		ov.Render(i.window, deltaTime)
 
 		// Debug info
 		i.renderDebugInfo(&m, frameStats, gameLogicStats, deltaTime)
@@ -227,20 +301,28 @@ func (i *Instance) createPixelGridCanvas(scale float64) *shaders.Canvas {
 
 func (i *Instance) calculateCanvasScale() float64 {
 	windowWidth, windowHeight := i.window.Bounds().Size().XY()
-	scaleX := math.Floor(windowWidth / game.GameWidth)
-	scaleY := math.Floor(windowHeight / game.GameHeight)
-	scale := math.Min(scaleX, scaleY)
-
-	if scale < 0.5 {
-		return 0.5
-	} else if scale < 1.0 {
-		return 1.0
+	maxFit := math.Min(
+		math.Floor(windowWidth/game.GameWidth),
+		math.Floor(windowHeight/game.GameHeight),
+	)
+	if maxFit < 1 {
+		maxFit = 1
 	}
-	return scale
+
+	d := game.CurrentSave().SystemSettings.Display
+	if d.ScaleMode == rpg.ScaleModeFixed && d.FixedScale > 0 {
+		fixed := float64(d.FixedScale)
+		if fixed > maxFit {
+			fixed = maxFit // clamp to what fits
+		}
+		return fixed
+	}
+
+	return maxFit
 }
 
 func (i *Instance) renderScene(sceneCanvas *shaders.Canvas, deltaTime float64) {
-	i.window.Clear(color.RGBA{R: 40, G: 40, B: 40, A: 255})
+	i.window.Clear(color.RGBA{A: 255})
 	sceneCanvas.Clear(game.GetActiveState().ClearColor())
 }
 

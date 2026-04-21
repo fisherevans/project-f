@@ -15,6 +15,7 @@ temp/**
 /launcher
 /release
 /development
+/sprite_new
 
 # transient game files
 game_data/logs.txt
