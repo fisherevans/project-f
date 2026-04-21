@@ -91,3 +91,26 @@ jobs:
         run: |
           ARCHIVE="primortal_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.${{ matrix.goos == 'windows' && 'zip' || 'tar.gz' }}"
           ./butler push "$ARCHIVE" fisherevans/primortal:${{ matrix.itchio_channel }} --userversion ${{ github.ref_name }}
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [release]
+    if: always()
+    steps:
+      - name: Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          STATUS="${{ needs.release.result }}"
+          REF="${{ github.ref_name }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ "$STATUS" = "success" ]; then
+            COLOR=5763719
+            TITLE="Native release passed - $REF"
+          else
+            COLOR=15548485
+            TITLE="Native release FAILED - $REF"
+          fi
+          curl -s -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"$TITLE\",\"color\":$COLOR,\"url\":\"$RUN_URL\",\"fields\":[{\"name\":\"run\",\"value\":\"[view logs]($RUN_URL)\",\"inline\":true},{\"name\":\"itch.io\",\"value\":\"[downloads](https://fisherevans.itch.io/primortal)\",\"inline\":true}]}]}"
