@@ -16,8 +16,8 @@ github.com/fisherevans/glhf/v2 v2.0.0-20260421020347-b30f28d254ab h1:MXWXDILB6G7
 github.com/fisherevans/glhf/v2 v2.0.0-20260421020347-b30f28d254ab/go.mod h1:9Q8UspSmdMkcS2ki3kpYiBBA7QwRYzgav7BYbCGb1kw=
 github.com/fisherevans/mainthread/v2 v2.0.0-20260421020339-08fc034e56e9 h1:jOWXZFwFU7a4aiQT9fH9tD0U7kKyMIfXoFMaQzlsCdk=
 github.com/fisherevans/mainthread/v2 v2.0.0-20260421020339-08fc034e56e9/go.mod h1:RLdqSRamocAGPzK9P4HsZf+WXL5bfHHtX78O6GkKaUw=
-github.com/fisherevans/pixel/v2 v2.0.0-20260421151711-963c64d1fa2a h1:Cngx6c8km3AGlzF78dKcm1TTN2EgF+MG9o2PyLww3Gk=
-github.com/fisherevans/pixel/v2 v2.0.0-20260421151711-963c64d1fa2a/go.mod h1:4x2fUMpvunt+VFiBqd/5grkXCYTPoNwryqDWKnarFrs=
+github.com/fisherevans/pixel/v2 v2.0.0-20260421160723-2839b1c8783f h1:TTKUaGx242fmeE28YwclayUB9nQ3oYMYXUdJikz7WqQ=
+github.com/fisherevans/pixel/v2 v2.0.0-20260421160723-2839b1c8783f/go.mod h1:4x2fUMpvunt+VFiBqd/5grkXCYTPoNwryqDWKnarFrs=
 github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 h1:5BVwOaUSBTlVZowGO6VZGw2H/zl9nrd3eCZfYV+NfQA=
 github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a h1:vxnBhFDDT+xzxf1jTJKMKZw3H0swfWk9RpWbBbDK5+0=
@@ -93,8 +93,6 @@ golang.org/x/exp/shiny v0.0.0-20250606033433-dcc06ee1d476 h1:Wdx0vgH5Wgsw+lF//LJ
 golang.org/x/exp/shiny v0.0.0-20250606033433-dcc06ee1d476/go.mod h1:ygj7T6vSGhhm/9yTpOQQNvuAUFziTH7RUiH74EoE2C8=
 golang.org/x/image v0.0.0-20190321063152-3fc05d484e9f/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.5.0/go.mod h1:FVC7BI/5Ym8R25iw5OLsgshdUBbT1h5jZTpA+mvAdZ4=
-golang.org/x/image v0.28.0 h1:gdem5JW1OLS4FbkWgLO+7ZeFzYtL3xClb97GaUzYMFE=
-golang.org/x/image v0.28.0/go.mod h1:GUJYXtnGKEUgggyzh+Vxt+AviiCcyiwpsl8iQ8MvwGY=
 golang.org/x/image v0.38.0 h1:5l+q+Y9JDC7mBOMjo4/aPhMDcxEptsX+Tt3GgRQRPuE=
 golang.org/x/image v0.38.0/go.mod h1:/3f6vaXC+6CEanU4KJxbcUZyEePbyKbaLoDOe4ehFYY=
 golang.org/x/mobile v0.0.0-20250606033058-a2a15c67f36f h1:/n+PL2HlfqeSiDCuhdBbRNlGS/g2fM4OHufalHaTVG8=
