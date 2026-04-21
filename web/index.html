@@ -183,6 +183,37 @@
             }
         });
 
+        // Crash diagnostics via localStorage heartbeat.
+        // If iOS kills the tab (OOM), no JS runs on exit so pixelOnContextLost
+        // never fires. Instead we write a heartbeat every 5s and check for a
+        // stale one on the next load to detect tab kills vs clean exits.
+        const CRASH_KEY = "primortal_heartbeat";
+        (() => {
+            let prev = null;
+            try { prev = JSON.parse(localStorage.getItem(CRASH_KEY)); } catch(e) {}
+            if (prev && prev.running) {
+                // Previous session was killed without a clean exit.
+                const age = ((Date.now() - prev.ts) / 1000).toFixed(0);
+                const parts = [
+                    "Previous session ended unexpectedly",
+                    prev.renderer ? `GPU: ${prev.renderer}` : null,
+                    prev.canvasW ? `canvas: ${prev.canvasW}x${prev.canvasH}` : null,
+                    prev.dpr ? `DPR: ${prev.dpr}` : null,
+                    prev.uptime ? `uptime: ${prev.uptime}s` : null,
+                    `(${age}s ago)`,
+                ].filter(Boolean).join(" - ");
+                console.warn("crash detected:", prev);
+                // Show the diagnostic in the context-lost overlay if it appears,
+                // or log it for devtools inspection.
+                window._lastCrashDiag = parts;
+            }
+            // Clear on each fresh load so we start clean.
+            localStorage.removeItem(CRASH_KEY);
+        })();
+
+        // Called by Go once the game loop is running; starts the heartbeat.
+        window.primortalOnReady = null; // redefined below after loader refs are captured
+
         (async () => {
             const loader = document.getElementById("loader");
             const bar    = document.getElementById("loader-bar");
@@ -199,6 +230,32 @@
                 loader.classList.add("hidden");
                 setTimeout(() => loader.remove(), 500);
                 document.getElementById("game").focus();
+
+                // Start heartbeat. Writes canvas size + DPR + uptime every 5s
+                // so an OOM tab-kill leaves readable state in localStorage.
+                const startTs = Date.now();
+                const canvas = document.getElementById("game");
+                const writeHb = () => {
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                    const rec = {
+                        running:  true,
+                        ts:       Date.now(),
+                        uptime:   ((Date.now() - startTs) / 1000).toFixed(0),
+                        canvasW:  canvas.width,
+                        canvasH:  canvas.height,
+                        dpr:      dpr,
+                        renderer: window._gpuRenderer || null,
+                    };
+                    try { localStorage.setItem(CRASH_KEY, JSON.stringify(rec)); } catch(e) {}
+                };
+                writeHb();
+                setInterval(writeHb, 5000);
+
+                // Expose last crash diag in the ctx-lost overlay if it fires.
+                if (window._lastCrashDiag) {
+                    const el = document.getElementById("ctx-lost-diag");
+                    if (el) el.textContent = window._lastCrashDiag;
+                }
             };
 
             window.primortalOnProgress = (stage, current, total) => {
