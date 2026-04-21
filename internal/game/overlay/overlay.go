@@ -78,6 +78,15 @@ type Overlay struct {
 	dropdownOnSel       func(int)
 	dropdownJustOpened  bool // true for the one frame the dropdown was opened; skips same-frame close
 
+	// content drag-scroll state (touch drag anywhere in content area)
+	contentDragging     bool
+	contentScrolling    bool
+	contentDragStartY   float64
+	contentDragStartOff float64
+
+	// fn keys section expand state
+	fnKeysOpen bool
+
 	// virtual gamepad state; computed in UpdateInput, consumed by runtime before UpdateControls
 	virtualState input.VirtualState
 }

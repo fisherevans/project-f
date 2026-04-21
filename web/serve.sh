@@ -24,7 +24,10 @@ port = int(sys.argv[1])
 os.chdir(sys.argv[2])
 class H(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
-        self.send_header('Cache-Control', 'no-store')
+        # no-cache: allow browser to cache but always revalidate (sends
+        # If-Modified-Since; gets 304 if unchanged - no re-download).
+        # no-store would force a full re-download every time.
+        self.send_header('Cache-Control', 'no-cache')
         super().end_headers()
     def log_message(self, fmt, *args):
         pass  # suppress per-request noise

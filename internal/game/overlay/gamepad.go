@@ -32,7 +32,7 @@ const (
 
 	labelGap    = 6.0  // px between button bottom and top of label text
 	pillBtnDrop = 14.0 // how many px lower the pill buttons sit relative to their label anchor
-	dpadHitPad  = 28.0 // extra px beyond sprite edge added to dpad hit rect on each side
+	dpadHitPad  = 48.0 // extra px beyond sprite edge added to dpad hit rect on each side
 )
 
 // gamepadLabelFont is the m3x6 font atlas used for START/SELECT labels.
@@ -66,7 +66,7 @@ func (o *Overlay) gamepadOpacity() float64 {
 type gamepadCenters struct {
 	dpad, btnA, btnB, start, sel pixel.Vec
 	startLabelY, selLabelY       float64
-	dpadSize, btnSize            float64
+	dpadSize, btnSize, dpadPad   float64
 }
 
 // isGamepadVisible returns whether the virtual gamepad should be shown.
@@ -129,7 +129,7 @@ func landscapeLayout(wb pixel.Rect) gamepadCenters {
 	return gamepadCenters{
 		dpad: dpadC, btnA: aCenter, btnB: bCenter, start: startC, sel: selC,
 		startLabelY: labelY, selLabelY: labelY,
-		dpadSize: dpadRendered, btnSize: btnRendered,
+		dpadSize: dpadRendered, btnSize: btnRendered, dpadPad: dpadHitPad,
 	}
 }
 
@@ -178,7 +178,7 @@ func portraitLayout(wb pixel.Rect, scale float64) gamepadCenters {
 	return gamepadCenters{
 		dpad: dpadC, btnA: aCenter, btnB: bCenter, start: startC, sel: selC,
 		startLabelY: menuY, selLabelY: menuY,
-		dpadSize: dpad, btnSize: btn,
+		dpadSize: dpad, btnSize: btn, dpadPad: math.Floor(dpadHitPad * uiScale),
 	}
 }
 
@@ -213,7 +213,7 @@ func (o *Overlay) computeGamepadInput(win *opengl.Window) input.VirtualState {
 	for _, ptr := range ptrs {
 		// D-pad: dominant-axis quadrant, first touch in the zone wins.
 		if vs.Dir == input.NotPressed {
-			if contains(squareHitRect(pos.dpad, pos.dpadSize+dpadHitPad*2), ptr) {
+			if contains(squareHitRect(pos.dpad, pos.dpadSize+pos.dpadPad*2), ptr) {
 				off := ptr.Sub(pos.dpad)
 				if math.Abs(off.X) >= math.Abs(off.Y) {
 					if off.X >= 0 {

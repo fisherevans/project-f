@@ -62,29 +62,39 @@ func portraitGap(wb pixel.Rect, canvasH float64) float64 {
 	return math.Max(0, (wb.H()-canvasH-GamepadAreaH(wb)-portraitChromeH(wb))/3)
 }
 
-// GameCanvasScale returns the integer pixel scale for the 240x160 game canvas.
+// GameCanvasScale returns the physical-pixel scale for the 240x160 game canvas.
+//
+// "Auto" picks the largest integer physical scale that fits. On a DPR=3 phone
+// with 1206 physical pixels wide: floor(1206/240)=5, so "auto" renders at
+// physScale=5 (1200px wide, filling nearly the full screen) rather than the
+// CSS-floor approach of floor(402/240)*3=3. This maximises the resolution
+// available to the pixel-grid shader while keeping each game pixel at an
+// integer number of physical pixels.
+//
+// FixedScale (settings "x1", "x2"...) is stored in physical-pixel units, so
+// "x1" = 1 physical px per game px (tiny on high-DPR screens) and "x5" = 5
+// physical px per game px (fills a 1206px-wide phone at scale 5).
 func GameCanvasScale(wb pixel.Rect) float64 {
 	availH := wb.H()
 	if IsPortrait(wb) {
-		// Reserve space for gamepad block + chrome clearance.
 		availH -= GamepadAreaH(wb) + portraitChromeH(wb)
 	}
-	maxFit := math.Min(
+	physFit := math.Min(
 		math.Floor(wb.W()/game.GameWidth),
 		math.Floor(availH/game.GameHeight),
 	)
-	if maxFit < 1 {
-		maxFit = 1
+	if physFit < 1 {
+		physFit = 1
 	}
 	d := game.CurrentSave().SystemSettings.Display
 	if d != nil && d.ScaleMode == rpg.ScaleModeFixed && d.FixedScale > 0 {
 		fixed := float64(d.FixedScale)
-		if fixed > maxFit {
-			fixed = maxFit
+		if fixed > physFit {
+			fixed = physFit
 		}
 		return fixed
 	}
-	return maxFit
+	return physFit
 }
 
 // CanvasCenter returns the window-space center for compositing the game canvas.

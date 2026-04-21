@@ -44,7 +44,7 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 )
 
-replace github.com/gopxl/pixel/v2 => github.com/fisherevans/pixel/v2 v2.0.0-20260421165723-3f81195b5035
+replace github.com/gopxl/pixel/v2 => github.com/fisherevans/pixel/v2 v2.0.0-20260421181638-ceba20e3b06f
 
 replace github.com/gopxl/glhf/v2 => github.com/fisherevans/glhf/v2 v2.0.0-20260421020347-b30f28d254ab
 

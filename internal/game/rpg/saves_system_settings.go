@@ -66,26 +66,66 @@ func (s *SystemSettingsCombat) FillDefaults() {
 }
 
 type SystemSettingsRetroFrame struct {
-	DisablePixelGrid bool    `yaml:"disable_pixel_grid"`
-	ScanlineDarken   float64 `yaml:"scanline_darken"`
-	GridDarkenX      float64 `yaml:"grid_darken_x"`
-	GridDarkenY      float64 `yaml:"grid_darken_y"`
-	SubpixelTint     float64 `yaml:"subpixel_tint"`
+	DisablePixelGrid    bool    `yaml:"disable_pixel_grid"`
+	OverrideRetroOverlay bool   `yaml:"override_retro_overlay"` // false = derive from render scale
+	ScanlineDarken    float64 `yaml:"scanline_darken"`
+	GridDarkenX       float64 `yaml:"grid_darken_x"`
+	GridDarkenY       float64 `yaml:"grid_darken_y"`
+	SubpixelTint      float64 `yaml:"subpixel_tint"`
+}
+
+// EffectiveGridValues returns the grid darken and subpixel tint to pass to the
+// shader. When OverrideRetroOverlay is false, values are derived from physScale so
+// the grid stays visually consistent as the window resizes. When true, the
+// stored values are used as-is.
+func (s *SystemSettingsRetroFrame) EffectiveGridValues(physScale int) (darkenX, darkenY, subpixel float64) {
+	if s.OverrideRetroOverlay {
+		return s.GridDarkenX, s.GridDarkenY, s.SubpixelTint
+	}
+	t := clampF(float64(physScale-2)/4.0, 0, 1) // 0 at scale=2, 1 at scale=6
+	darkenX = 0.08 + 0.12*t
+	darkenY = 0.08 + 0.12*t
+	subpixel = 0.048 + (0.0666-0.048)*t
+	return
 }
 
 func (s *SystemSettingsRetroFrame) FillDefaults() {
+	s.FillDefaultsForScale(0)
+}
+
+// FillDefaultsForScale fills zero fields with scale-aware defaults.
+// physScale is the physical pixels per game pixel (e.g. 2 on desktop, 5 on
+// iPhone 16 Pro). Pass 0 to use a mid-range default (physScale=3).
+// Grid darken values scale up with physScale because at higher scales each
+// grid line covers a smaller fraction of the screen, requiring stronger
+// darkening to remain visible.
+func (s *SystemSettingsRetroFrame) FillDefaultsForScale(physScale int) {
+	if physScale <= 0 {
+		physScale = 3
+	}
 	if s.ScanlineDarken == 0 {
 		s.ScanlineDarken = 0.015
 	}
+	t := clampF(float64(physScale-2)/4.0, 0, 1) // 0 at scale=2, 1 at scale=6
 	if s.GridDarkenX == 0 {
-		s.GridDarkenX = 0.05
+		s.GridDarkenX = 0.08 + 0.12*t
 	}
 	if s.GridDarkenY == 0 {
-		s.GridDarkenY = 0.05
+		s.GridDarkenY = 0.08 + 0.12*t
 	}
 	if s.SubpixelTint == 0 {
-		s.SubpixelTint = 0.05
+		s.SubpixelTint = 0.048 + (0.0666-0.048)*t
 	}
+}
+
+func clampF(v, lo, hi float64) float64 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
 }
 
 type LightingComposition string

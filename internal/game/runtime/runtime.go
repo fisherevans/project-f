@@ -259,10 +259,12 @@ func (i *Instance) Run() {
 
 		// Update canvas scale and pixel grid canvas
 		canvasScale = overlay.GameCanvasScale(i.window.Bounds())
-		if lastSceneCanvasScale != canvasScale || game.Flags().JustChanged("retro_frame_reset") {
+		if lastSceneCanvasScale != canvasScale {
 			lastSceneCanvasScale = canvasScale
 			pixelGridCanvas = i.createPixelGridCanvas(canvasScale)
 			pixelGridRecorder.UpdateCanvas(pixelGridCanvas.Canvas)
+		} else if game.Flags().JustChanged("retro_frame_reset") {
+			i.applyPixelGridShader(pixelGridCanvas, canvasScale)
 		}
 
 		// Composite and draw to i.window
@@ -290,16 +292,24 @@ func (i *Instance) Run() {
 
 func (i *Instance) createPixelGridCanvas(scale float64) *shaders.Canvas {
 	c := shaders.NewCanvas(int(game.GameWidth*scale), int(game.GameHeight*scale))
-	if !game.CurrentSave().SystemSettings.RetroFrame.DisablePixelGrid {
-		c.SetPixelGridOverlayShader(
-			float32(scale),
-			float32(game.CurrentSave().SystemSettings.RetroFrame.ScanlineDarken),
-			float32(game.CurrentSave().SystemSettings.RetroFrame.GridDarkenX),
-			float32(game.CurrentSave().SystemSettings.RetroFrame.GridDarkenY),
-			float32(game.CurrentSave().SystemSettings.RetroFrame.SubpixelTint),
-		)
-	}
+	i.applyPixelGridShader(c, scale)
 	return c
+}
+
+func (i *Instance) applyPixelGridShader(c *shaders.Canvas, scale float64) {
+	rf := game.CurrentSave().SystemSettings.RetroFrame
+	if rf.DisablePixelGrid {
+		c.Reset()
+		return
+	}
+	darkenX, darkenY, subpixel := rf.EffectiveGridValues(int(scale))
+	c.SetPixelGridOverlayShader(
+		float32(scale),
+		float32(rf.ScanlineDarken),
+		float32(darkenX),
+		float32(darkenY),
+		float32(subpixel),
+	)
 }
 
 

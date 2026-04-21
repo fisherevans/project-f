@@ -44,7 +44,7 @@
         #loader .title {
             font-size: 18px;
             letter-spacing: 2px;
-            color: #aad620;
+            color: #ccc;
             text-transform: uppercase;
         }
         #loader .status {
@@ -60,7 +60,7 @@
         }
         #loader .bar-fill {
             height: 100%;
-            background: #aad620;
+            background: #888;
             width: 0%;
             transition: width 120ms linear;
         }
@@ -87,10 +87,38 @@
             75%  { content: "..."; }
             100% { content: ""; }
         }
-        #loader .hint {
-            font-size: 11px;
-            color: #555;
-            margin-top: 16px;
+        #start-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 10;
+            cursor: pointer;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            transition: opacity 400ms ease-out;
+        }
+        #start-screen.visible { display: flex; }
+        #start-screen.hidden { opacity: 0; pointer-events: none; }
+        #start-screen .title {
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: #ccc;
+            text-transform: uppercase;
+        }
+        #start-screen .prompt {
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: #999;
+            text-transform: uppercase;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50%       { opacity: 1.0; }
         }
         #ctx-lost {
             display: none;
@@ -112,8 +140,8 @@
         #ctx-lost button {
             font-family: inherit;
             font-size: 13px;
-            background: #aad620;
-            color: #000;
+            background: #555;
+            color: #ddd;
             border: none;
             padding: 10px 28px;
             cursor: pointer;
@@ -133,7 +161,10 @@
         <div class="title">Primortal</div>
         <div class="bar"><div class="bar-fill" id="loader-bar"></div></div>
         <div class="status" id="loader-status">Starting&hellip;</div>
-        <div class="hint">Tap or press any key once loaded to enable audio</div>
+    </div>
+    <div id="start-screen">
+        <div class="title">Primortal</div>
+        <div class="prompt">Press to play</div>
     </div>
     <script src="build_info.js"></script>
     <script src="wasm_exec.js"></script>
@@ -166,18 +197,26 @@
 
         // Fullscreen bridge called from the Go overlay with the desired state.
         // Requesting on the document element covers the full viewport on mobile.
+        // Guard with document.fullscreenEnabled: on iOS Safari requestFullscreen
+        // is undefined, and calling it throws a TypeError that propagates back
+        // through syscall/js and panics the game goroutine (audio survives).
         window.primortalToggleFullscreen = (wantFullscreen) => {
-            if (wantFullscreen && !document.fullscreenElement) {
-                document.documentElement.requestFullscreen({ navigationUI: "hide" })
-                    .catch(e => console.warn("fullscreen:", e));
-            } else if (!wantFullscreen && document.fullscreenElement) {
-                document.exitFullscreen();
+            if (!document.fullscreenEnabled) return;
+            try {
+                if (wantFullscreen && !document.fullscreenElement) {
+                    document.documentElement.requestFullscreen({ navigationUI: "hide" })
+                        .catch(e => console.warn("fullscreen:", e));
+                } else if (!wantFullscreen && document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            } catch (e) {
+                console.warn("fullscreen:", e);
             }
         };
 
         // Alt+Enter shortcut for desktop convenience.
         window.addEventListener("keydown", (e) => {
-            if (e.altKey && e.key === "Enter") {
+            if (e.altKey && e.key === "Enter" && document.fullscreenEnabled) {
                 e.preventDefault();
                 window.primortalToggleFullscreen(!document.fullscreenElement);
             }
@@ -216,30 +255,60 @@
             localStorage.removeItem(CRASH_KEY);
         })();
 
-        // Called by Go once the game loop is running; starts the heartbeat.
-        window.primortalOnReady = null; // redefined below after loader refs are captured
+        // Called by Go once assets are loaded and the game is ready to start.
+        // Go blocks on primortalStart() being called, so we show the start screen
+        // here and let the user gesture unblock the game loop (and audio).
+        window.primortalOnReady = null; // redefined below after DOM refs are captured
 
         (async () => {
-            const loader = document.getElementById("loader");
-            const bar    = document.getElementById("loader-bar");
-            const status = document.getElementById("loader-status");
+            const loader      = document.getElementById("loader");
+            const bar         = document.getElementById("loader-bar");
+            const status      = document.getElementById("loader-status");
+            const startScreen = document.getElementById("start-screen");
 
-            const setStatus      = (t) => { status.textContent = t; };
-            const setProgress    = (p) => { bar.style.width = Math.max(0, Math.min(100, p)) + "%"; };
+            const setStatus        = (t) => { status.textContent = t; };
+            const setProgress      = (p) => { bar.style.width = Math.max(0, Math.min(100, p)) + "%"; };
             const setIndeterminate = (on) => { loader.classList.toggle("indeterminate", on); };
 
             window.primortalOnReady = () => {
+                // Hide the loader and show the start screen. Go is blocking on
+                // primortalStart(), so the game loop hasn't started yet.
                 setIndeterminate(false);
                 setProgress(100);
-                setStatus("Ready");
                 loader.classList.add("hidden");
                 setTimeout(() => loader.remove(), 500);
-                document.getElementById("game").focus();
+                startScreen.classList.add("visible");
+
+                // Expose last crash diag in the ctx-lost overlay if it fires.
+                if (window._lastCrashDiag) {
+                    const el = document.getElementById("ctx-lost-diag");
+                    if (el) el.textContent = window._lastCrashDiag;
+                }
+            };
+
+            // Any tap or keypress on the start screen unblocks Go and starts the game.
+            const startGame = () => {
+                if (!startScreen.classList.contains("visible")) return;
+                startScreen.classList.add("hidden");
+                setTimeout(() => startScreen.remove(), 500);
+
+                const canvas = document.getElementById("game");
+                canvas.focus();
+
+                // Call the bridge registered by Go's signalReady to unblock the game loop.
+                if (typeof window.primortalStart === "function") {
+                    window.primortalStart();
+                }
+
+                // Warn before navigating away so players don't lose progress.
+                window.addEventListener("beforeunload", (e) => {
+                    e.preventDefault();
+                    return "";
+                });
 
                 // Start heartbeat. Writes canvas size + DPR + uptime every 5s
                 // so an OOM tab-kill leaves readable state in localStorage.
                 const startTs = Date.now();
-                const canvas = document.getElementById("game");
                 const writeHb = () => {
                     const dpr = Math.min(window.devicePixelRatio || 1, 2);
                     const rec = {
@@ -255,13 +324,17 @@
                 };
                 writeHb();
                 setInterval(writeHb, 5000);
-
-                // Expose last crash diag in the ctx-lost overlay if it fires.
-                if (window._lastCrashDiag) {
-                    const el = document.getElementById("ctx-lost-diag");
-                    if (el) el.textContent = window._lastCrashDiag;
-                }
             };
+
+            startScreen.addEventListener("click",   startGame);
+            startScreen.addEventListener("touchend", (e) => { e.preventDefault(); startGame(); });
+            window.addEventListener("keydown", (e) => {
+                // Only trigger on Enter or Space; ignore anything with modifier keys
+                // held so alt-tab / cmd-tab switching doesn't accidentally start.
+                if ((e.key === "Enter" || e.key === " ") && !e.altKey && !e.metaKey && !e.ctrlKey) {
+                    startGame();
+                }
+            });
 
             window.primortalOnProgress = (stage, current, total) => {
                 setIndeterminate(false);

@@ -14,6 +14,7 @@ type DebugToggle struct {
 	pressed     bool
 	justPressed bool
 	presses     int
+	simulated   bool
 }
 
 func (dt *DebugToggle) ToggleState() bool {
@@ -32,19 +33,23 @@ func (dt *DebugToggle) Presses() int {
 	return dt.presses
 }
 
+// Simulate fires the toggle as if the key was just pressed. Consumed on the
+// next call to update(), which is driven by the game loop.
+func (dt *DebugToggle) Simulate() {
+	dt.simulated = true
+}
+
 func (dt *DebugToggle) update(key pixel.Button, win *opengl.Window) {
-	if win.JustPressed(key) {
+	physPressed := win.JustPressed(key) || dt.simulated
+	dt.simulated = false
+	if physPressed {
 		dt.justPressed = true
 		dt.presses++
 		dt.toggleState = !dt.toggleState
 	} else {
 		dt.justPressed = false
 	}
-	if win.Pressed(key) {
-		dt.pressed = true
-	} else {
-		dt.pressed = false
-	}
+	dt.pressed = win.Pressed(key)
 }
 
 func newToggles() *DebugToggleSystem {
@@ -73,27 +78,23 @@ func (dt *DebugToggleSystem) update(win *opengl.Window) {
 	}
 }
 
-func (dt *DebugToggleSystem) F1() *DebugToggle {
-	return dt.toggles[pixel.KeyF1]
-}
-func (dt *DebugToggleSystem) F2() *DebugToggle {
-	return dt.toggles[pixel.KeyF2]
-}
-func (dt *DebugToggleSystem) F3() *DebugToggle {
-	return dt.toggles[pixel.KeyF3]
-}
-func (dt *DebugToggleSystem) F4() *DebugToggle {
-	return dt.toggles[pixel.KeyF4]
-}
-func (dt *DebugToggleSystem) F5() *DebugToggle {
-	return dt.toggles[pixel.KeyF5]
-}
-func (dt *DebugToggleSystem) F6() *DebugToggle {
-	return dt.toggles[pixel.KeyF6]
-}
-func (dt *DebugToggleSystem) F7() *DebugToggle {
-	return dt.toggles[pixel.KeyF7]
-}
-func (dt *DebugToggleSystem) F8() *DebugToggle {
-	return dt.toggles[pixel.KeyF8]
+func (dt *DebugToggleSystem) F1() *DebugToggle { return dt.toggles[pixel.KeyF1] }
+func (dt *DebugToggleSystem) F2() *DebugToggle { return dt.toggles[pixel.KeyF2] }
+func (dt *DebugToggleSystem) F3() *DebugToggle { return dt.toggles[pixel.KeyF3] }
+func (dt *DebugToggleSystem) F4() *DebugToggle { return dt.toggles[pixel.KeyF4] }
+func (dt *DebugToggleSystem) F5() *DebugToggle { return dt.toggles[pixel.KeyF5] }
+func (dt *DebugToggleSystem) F6() *DebugToggle { return dt.toggles[pixel.KeyF6] }
+func (dt *DebugToggleSystem) F7() *DebugToggle { return dt.toggles[pixel.KeyF7] }
+func (dt *DebugToggleSystem) F8() *DebugToggle { return dt.toggles[pixel.KeyF8] }
+
+// FN returns the toggle for F1-F8 (n=1..8). Returns nil for out-of-range n.
+func (dt *DebugToggleSystem) FN(n int) *DebugToggle {
+	keys := []pixel.Button{
+		pixel.KeyF1, pixel.KeyF2, pixel.KeyF3, pixel.KeyF4,
+		pixel.KeyF5, pixel.KeyF6, pixel.KeyF7, pixel.KeyF8,
+	}
+	if n < 1 || n > len(keys) {
+		return nil
+	}
+	return dt.toggles[keys[n-1]]
 }

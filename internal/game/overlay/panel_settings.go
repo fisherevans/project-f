@@ -26,6 +26,8 @@ const (
 	baseDropdownItemH = 24.0
 	baseDropdownPad   = 4.0
 	baseDropdownGap   = 4.0
+
+	contentScrollThreshold = 8.0 // px vertical movement before content drag-scroll activates
 )
 
 // pl holds all panel geometry pre-scaled for the current frame.
@@ -140,6 +142,30 @@ func (o *Overlay) renderSettingsPanel(win *opengl.Window) {
 		}
 	}
 
+	// Content drag-scroll: touch/click anywhere in the content area and drag
+	// vertically. Only activates after the threshold to avoid interfering with
+	// horizontal slider drags.
+	if o.pointer.JustDown && contains(contentRect, o.pointer.Pos) && !o.scrollDragging && o.dropdownID == "" {
+		o.contentDragStartY = o.pointer.Pos.Y
+		o.contentDragStartOff = o.scrollOffset
+		o.contentDragging = true
+		o.contentScrolling = false
+	}
+	if o.contentDragging {
+		if !o.pointer.Down {
+			o.contentDragging = false
+			o.contentScrolling = false
+		} else {
+			dy := o.contentDragStartY - o.pointer.Pos.Y
+			if !o.contentScrolling && math.Abs(dy) > contentScrollThreshold {
+				o.contentScrolling = true
+			}
+			if o.contentScrolling {
+				o.scrollOffset = o.contentDragStartOff + dy
+			}
+		}
+	}
+
 	if o.scrollOffset > o.scrollMax {
 		o.scrollOffset = o.scrollMax
 	}
@@ -163,7 +189,7 @@ func (o *Overlay) renderSettingsPanel(win *opengl.Window) {
 	// Suppress clicks outside the visible content area, during scrollbar drag, or
 	// while a dropdown popover is open (the popover handles its own clicks in
 	// window space via outerDC).
-	if o.scrollDragging || !contains(contentRect, o.pointer.Pos) || o.dropdownID != "" {
+	if o.scrollDragging || o.contentScrolling || !contains(contentRect, o.pointer.Pos) || o.dropdownID != "" {
 		innerPtr.Down = false
 		innerPtr.JustDown = false
 		innerPtr.JustUp = false
@@ -184,8 +210,9 @@ func (o *Overlay) renderSettingsPanel(win *opengl.Window) {
 	cursor := startCursor
 	cursor = o.renderAudioSection(innerDC, bounds, cursor, layout)
 	cursor = o.renderDisplaySection(innerDC, bounds, cursor, win, contentRect, layout)
-	cursor = o.renderScenesSection(innerDC, bounds, cursor, layout)
-	cursor = o.renderDebugSection(innerDC, bounds, cursor, contentRect, layout)
+	cursor = o.renderRetroOverlaySection(innerDC, bounds, cursor, win, layout)
+	cursor = o.renderScenesSection(innerDC, bounds, cursor, contentRect, layout)
+	cursor = o.renderDebugSection(innerDC, bounds, cursor, contentRect, layout, win)
 	cursor = o.renderSystemSection(innerDC, bounds, cursor, layout)
 
 	// Measure intrinsic content height for next-frame clamping. startCursor and
@@ -356,7 +383,7 @@ func (o *Overlay) renderDisplaySection(dc *DrawCtx, panel pixel.Rect, cursorY fl
 
 // ---- SCENES -----------------------------------------------------------------
 
-func (o *Overlay) renderScenesSection(dc *DrawCtx, panel pixel.Rect, cursorY float64, l pl) float64 {
+func (o *Overlay) renderScenesSection(dc *DrawCtx, panel pixel.Rect, cursorY float64, contentRect pixel.Rect, l pl) float64 {
 	if len(o.hooks.DevScenes) == 0 {
 		return cursorY
 	}
@@ -365,21 +392,26 @@ func (o *Overlay) renderScenesSection(dc *DrawCtx, panel pixel.Rect, cursorY flo
 	dc.SectionHeader(pixel.R(x0, cursorY-l.HeaderH, x0+w, cursorY), "SCENES")
 	cursorY -= l.HeaderH + l.RowGap
 
-	for _, scene := range o.hooks.DevScenes {
-		r := pixel.R(x0, cursorY-l.ScenesRowH, x0+w, cursorY)
-		if dc.Button(r, scene.Name) {
-			game.SetActiveStateIntent(scene.Factory())
-			o.panelOpen = false
-		}
-		cursorY -= l.ScenesRowH + l.RowGap
+	names := make([]string, len(o.hooks.DevScenes))
+	for i, s := range o.hooks.DevScenes {
+		names[i] = s.Name
 	}
+	sRow := pixel.R(x0, cursorY-l.RowH, x0+w, cursorY)
+	if dc.DropdownSelectRow(sRow, "Scene", "select...", o.dropdownID == "scenes") {
+		o.toggleDropdown("scenes", o.canvasToWindow(sRow, contentRect), names, -1, func(i int) {
+			game.SetActiveStateIntent(o.hooks.DevScenes[i].Factory())
+			o.panelOpen = false
+		})
+	}
+	cursorY -= l.RowH + l.RowGap
+
 	cursorY -= l.RowGap * 2
 	return cursorY
 }
 
 // ---- DEBUG ------------------------------------------------------------------
 
-func (o *Overlay) renderDebugSection(dc *DrawCtx, panel pixel.Rect, cursorY float64, contentRect pixel.Rect, l pl) float64 {
+func (o *Overlay) renderDebugSection(dc *DrawCtx, panel pixel.Rect, cursorY float64, contentRect pixel.Rect, l pl, win *opengl.Window) float64 {
 	x0, w := panel.Min.X+l.Pad, panel.W()-l.Pad*2
 	s := game.CurrentSave().SystemSettings
 
@@ -389,9 +421,6 @@ func (o *Overlay) renderDebugSection(dc *DrawCtx, panel pixel.Rect, cursorY floa
 		ss.Debugging.FillDefaults()
 		*ss.Lighting = rpg.SystemSettingsLighting{}
 		ss.Lighting.FillDefaults()
-		*ss.RetroFrame = rpg.SystemSettingsRetroFrame{}
-		ss.RetroFrame.FillDefaults()
-		game.Flags().Set("retro_frame_reset")
 		o.markDirty()
 	})
 	cursorY -= l.HeaderH + l.RowGap
@@ -452,7 +481,99 @@ func (o *Overlay) renderDebugSection(dc *DrawCtx, panel pixel.Rect, cursorY floa
 	}
 	cursorY -= l.RowH + l.RowGap
 
-	// Pixel Grid (note: field is DisablePixelGrid, so UI shows inverse)
+	// Fn Keys - collapsible, lets mobile users trigger F1-F8 debug toggles
+	newFnOpen, fnChanged := dc.Toggle(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY),
+		"Fn Keys", o.fnKeysOpen)
+	if fnChanged {
+		o.fnKeysOpen = newFnOpen
+	}
+	cursorY -= l.RowH + l.RowGap
+
+	if o.fnKeysOpen {
+		btnW := math.Floor((w - 3*l.RowGap) / 4)
+		for row := 0; row < 2; row++ {
+			rowY := cursorY - l.RowH
+			for col := 0; col < 4; col++ {
+				fn := row*4 + col + 1
+				bx := x0 + float64(col)*(btnW+l.RowGap)
+				btnR := pixel.R(bx, rowY, bx+btnW, cursorY)
+				toggle := game.DebugToggles().FN(fn)
+				if toggle == nil {
+					continue
+				}
+				hover := contains(btnR, dc.Ptr.Pos)
+				var bg pixel.RGBA
+				switch {
+				case toggle.ToggleState():
+					bg = dc.fade(colAccent)
+				case hover && dc.Ptr.Down:
+					bg = dc.fade(colPress)
+				case hover:
+					bg = dc.fade(colHover)
+				default:
+					bg = dc.fade(colBg)
+				}
+				dc.fillRect(btnR, bg)
+
+				txt := newText()
+				if toggle.ToggleState() {
+					txt.Color = colors.LayerAlpha(colors.HexString("#101010"), dc.A)
+				} else {
+					txt.Color = dc.fade(colText)
+				}
+				txt.WriteString(fmt.Sprintf("F%d", fn))
+				tw := txt.Bounds().W() * dc.ts()
+				cx := math.Floor(btnR.Min.X + (btnR.W()-tw)/2)
+				cy := math.Floor(btnR.Min.Y + (btnR.H()-dc.lh())/2)
+				dc.drawText(txt, pixel.V(cx, cy))
+
+				if dc.clicked(btnR) {
+					toggle.Simulate()
+				}
+			}
+			cursorY -= l.RowH + l.RowGap
+		}
+	}
+
+	cursorY -= l.RowGap * 2
+	return cursorY
+}
+
+// ---- RETRO OVERLAY ----------------------------------------------------------
+
+func (o *Overlay) renderRetroOverlaySection(dc *DrawCtx, panel pixel.Rect, cursorY float64, win *opengl.Window, l pl) float64 {
+	x0, w := panel.Min.X+l.Pad, panel.W()-l.Pad*2
+	s := game.CurrentSave().SystemSettings
+
+	dc.SectionHeaderWithReset(pixel.R(x0, cursorY-l.HeaderH, x0+w, cursorY), "RETRO OVERLAY", func() {
+		ss := game.CurrentSave().SystemSettings
+		*ss.RetroFrame = rpg.SystemSettingsRetroFrame{}
+		physScale := int(GameCanvasScale(win.Bounds()))
+		ss.RetroFrame.FillDefaultsForScale(physScale)
+		game.Flags().Set("retro_frame_reset")
+		o.markDirty()
+	})
+	cursorY -= l.HeaderH + l.RowGap
+
+	newOvr, ovrChanged := dc.Toggle(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY),
+		"Override Retro Overlay", s.RetroFrame.OverrideRetroOverlay)
+	if ovrChanged {
+		s.RetroFrame.OverrideRetroOverlay = newOvr
+		if newOvr {
+			physScale := int(GameCanvasScale(win.Bounds()))
+			s.RetroFrame.GridDarkenX, s.RetroFrame.GridDarkenY, s.RetroFrame.SubpixelTint =
+				s.RetroFrame.EffectiveGridValues(physScale)
+		}
+		game.Flags().Set("retro_frame_reset")
+		o.markDirty()
+	}
+	cursorY -= l.RowH + l.RowGap
+
+	if !s.RetroFrame.OverrideRetroOverlay {
+		cursorY -= l.RowGap * 2
+		return cursorY
+	}
+
 	pixelGridOn := !s.RetroFrame.DisablePixelGrid
 	newPG, pgChanged := dc.Toggle(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY), "Pixel Grid", pixelGridOn)
 	if pgChanged {
@@ -462,20 +583,23 @@ func (o *Overlay) renderDebugSection(dc *DrawCtx, panel pixel.Rect, cursorY floa
 	}
 	cursorY -= l.RowH + l.RowGap
 
-	// Retro-frame float sliders (range 0 - 0.25, three-decimal display)
 	retroOpts := SliderOpts{Format: "%.3f"}
+	physScale := int(GameCanvasScale(win.Bounds()))
+	darkenX, darkenY, subpixel := s.RetroFrame.EffectiveGridValues(physScale)
+
 	sliders := []struct {
 		label string
+		val   float64
 		ptr   *float64
 	}{
-		{"Scanline", &s.RetroFrame.ScanlineDarken},
-		{"Grid X", &s.RetroFrame.GridDarkenX},
-		{"Grid Y", &s.RetroFrame.GridDarkenY},
-		{"Subpixel", &s.RetroFrame.SubpixelTint},
+		{"Scanline", s.RetroFrame.ScanlineDarken, &s.RetroFrame.ScanlineDarken},
+		{"Grid X", darkenX, &s.RetroFrame.GridDarkenX},
+		{"Grid Y", darkenY, &s.RetroFrame.GridDarkenY},
+		{"Subpixel", subpixel, &s.RetroFrame.SubpixelTint},
 	}
 	for _, sl := range sliders {
 		nv, ch := dc.Slider(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY),
-			sl.label, *sl.ptr, 0, 0.25, retroOpts)
+			sl.label, sl.val, 0, 0.25, retroOpts)
 		if ch {
 			*sl.ptr = nv
 			game.Flags().Set("retro_frame_reset")

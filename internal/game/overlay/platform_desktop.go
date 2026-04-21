@@ -16,3 +16,11 @@ func ApplyFullscreen(win *opengl.Window, fullscreen bool) {
 		win.SetMonitor(nil)
 	}
 }
+
+// PhysicalDPR returns 1.0 on desktop. The pixel desktop backend reports logical
+// pixels in Window.Bounds(), so no DPR correction is needed.
+func PhysicalDPR() float64 { return 1.0 }
+
+func physicalDPR() float64 { return 1.0 }
+
+func SupportsFullscreen() bool { return true }

@@ -46,37 +46,43 @@ func (o *Overlay) renderCornerChrome(win *opengl.Window, dt float64) {
 		imd:    o.imd,
 		Ptr:    o.pointer,
 		A:      o.alpha,
+		Scale:  OverlayUIScale(wb),
 	}
 
 	x := math.Floor(wb.Max.X - cl.pad - cl.sz)
 	y := math.Floor(cl.pad)
 
-	// Button rects right-to-left: gear, fullscreen, scale, volume
+	// Button rects right-to-left: gear, fullscreen (if supported), scale, volume
 	gearR := pixel.R(x, y, x+cl.sz, y+cl.sz)
 	x -= cl.sz + cl.gap
-	fullscreenR := pixel.R(x, y, x+cl.sz, y+cl.sz)
-	x -= cl.sz + cl.gap
+	var fullscreenR pixel.Rect
+	if SupportsFullscreen() {
+		fullscreenR = pixel.R(x, y, x+cl.sz, y+cl.sz)
+		x -= cl.sz + cl.gap
+	}
 	scaleR := pixel.R(x, y, x+cl.sz, y+cl.sz)
 	x -= cl.sz + cl.gap
 	volumeR := pixel.R(x, y, x+cl.sz, y+cl.sz)
 
 	volumePopoverR := volumeSliderRect(volumeR, cl)
 
-	// Volume popover: only the button can open it. Once open, hovering the
-	// popover itself keeps it alive. A grace period handles the gap between
-	// button and slider so a quick upward move doesn't immediately close it.
-	inButton := contains(volumeR, dc.Ptr.Pos)
-	inPopover := o.volumePopoverOpen && contains(volumePopoverR, dc.Ptr.Pos)
-	if inButton {
-		o.volumePopoverOpen = true
+	// Volume popover: click/tap toggles open; while open, hovering button or
+	// popover resets the close timer; moving away closes after the grace period.
+	// On mobile there is no hover so the tap-to-toggle is the only mechanism.
+	if dc.clicked(volumeR) {
+		o.volumePopoverOpen = !o.volumePopoverOpen
 		o.volumePopoverCloseTimer = 0
-	} else if inPopover {
-		o.volumePopoverCloseTimer = 0
-	} else if o.volumePopoverOpen {
-		o.volumePopoverCloseTimer += dt
-		if o.volumePopoverCloseTimer >= volumePopoverHideDelay {
-			o.volumePopoverOpen = false
+	} else {
+		inButton := contains(volumeR, dc.Ptr.Pos)
+		inPopover := o.volumePopoverOpen && contains(volumePopoverR, dc.Ptr.Pos)
+		if inButton || inPopover || dc.Ptr.Down {
 			o.volumePopoverCloseTimer = 0
+		} else if o.volumePopoverOpen {
+			o.volumePopoverCloseTimer += dt
+			if o.volumePopoverCloseTimer >= volumePopoverHideDelay {
+				o.volumePopoverOpen = false
+				o.volumePopoverCloseTimer = 0
+			}
 		}
 	}
 
@@ -97,15 +103,17 @@ func (o *Overlay) renderCornerChrome(win *opengl.Window, dt float64) {
 		}
 	}
 
-	o.drawChromeButton(dc, fullscreenR, func(dc *DrawCtx, r pixel.Rect) {
-		name := "fullscreen"
-		if o.displayFullscreen {
-			name = "fullscreen_exit"
+	if SupportsFullscreen() {
+		o.drawChromeButton(dc, fullscreenR, func(dc *DrawCtx, r pixel.Rect) {
+			name := "fullscreen"
+			if o.displayFullscreen {
+				name = "fullscreen_exit"
+			}
+			dc.drawIcon(name, r.Center(), r.W())
+		})
+		if dc.clicked(fullscreenR) {
+			o.toggleFullscreen()
 		}
-		dc.drawIcon(name, r.Center(), r.W())
-	})
-	if dc.clicked(fullscreenR) {
-		o.toggleFullscreen()
 	}
 
 	o.drawChromeButton(dc, scaleR, func(dc *DrawCtx, r pixel.Rect) {
@@ -118,9 +126,6 @@ func (o *Overlay) renderCornerChrome(win *opengl.Window, dt float64) {
 	o.drawChromeButton(dc, volumeR, func(dc *DrawCtx, r pixel.Rect) {
 		dc.drawIcon(o.volumeSpriteName(), r.Center(), r.W())
 	})
-	if dc.clicked(volumeR) {
-		o.toggleMute()
-	}
 
 	// 2. Popovers
 	if o.volumePopoverOpen {
@@ -188,11 +193,11 @@ func (o *Overlay) renderVolumePopover(dc *DrawCtx, r pixel.Rect) {
 
 func (o *Overlay) scaleOptionCount(win *opengl.Window) int {
 	wb := win.Bounds()
-	maxFit := int(math.Min(math.Floor(wb.W()/240), math.Floor(wb.H()/160)))
-	if maxFit < 1 {
-		maxFit = 1
+	physFit := int(math.Min(math.Floor(wb.W()/240), math.Floor(wb.H()/160)))
+	if physFit < 1 {
+		physFit = 1
 	}
-	return maxFit + 1
+	return physFit + 1 // auto + x1..xPhysFit
 }
 
 func scaleListRect(btnR pixel.Rect, nOptions int, cl chromeLayout) pixel.Rect {
