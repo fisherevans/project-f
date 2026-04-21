@@ -92,10 +92,42 @@
             color: #555;
             margin-top: 16px;
         }
+        #ctx-lost {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 20;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: #ddd;
+            text-align: center;
+            padding: 24px;
+        }
+        #ctx-lost.visible { display: flex; }
+        #ctx-lost .msg { font-size: 14px; color: #aaa; }
+        #ctx-lost button {
+            font-family: inherit;
+            font-size: 13px;
+            background: #aad620;
+            color: #000;
+            border: none;
+            padding: 10px 28px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
     <canvas id="game" tabindex="0" style="touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;"></canvas>
+    <div id="ctx-lost">
+        <div class="msg">Graphics context lost.<br>This can happen when switching tabs on mobile.</div>
+        <button onclick="location.reload()">Reload</button>
+    </div>
     <div id="loader">
         <div class="title">Primortal</div>
         <div class="bar"><div class="bar-fill" id="loader-bar"></div></div>
@@ -105,6 +137,11 @@
     <script src="build_info.js"></script>
     <script src="wasm_exec.js"></script>
     <script>
+        // WebGL context-lost bridge: pixel calls this instead of auto-reloading.
+        window.pixelOnContextLost = () => {
+            document.getElementById("ctx-lost").classList.add("visible");
+        };
+
         // Cursor visibility bridge: Go calls this to hide/show the cursor when idle.
         window.primortalSetCursorVisible = (visible) => {
             document.getElementById("game").style.cursor = visible ? "default" : "none";
