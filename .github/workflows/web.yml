@@ -1,0 +1,51 @@
+name: Web
+
+on:
+  push:
+    branches: [dev]
+    tags: ['v*']
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Build WASM bundle
+        run: ./web/build.sh
+
+      - name: Stage dist
+        run: |
+          mkdir -p dist
+          cp web/index.html web/wasm_exec.js web/main.wasm web/build_info.js dist/
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: primortal-web-${{ github.sha }}
+          path: dist/
+          retention-days: 30
+
+      - name: Package itch.io zip
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          cd dist
+          zip -9 ../primortal-web-${{ github.ref_name }}.zip index.html wasm_exec.js main.wasm build_info.js
+
+      - name: Attach zip to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: primortal-web-${{ github.ref_name }}.zip
