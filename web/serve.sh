@@ -29,6 +29,7 @@ class H(http.server.SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass  # suppress per-request noise
 H.extensions_map['.wasm'] = 'application/wasm'
+socketserver.TCPServer.allow_reuse_address = True
 with socketserver.TCPServer(('', port), H) as s:
     s.serve_forever()
 " "$PORT" "web"
