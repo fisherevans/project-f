@@ -187,42 +187,54 @@ func squareHitRect(center pixel.Vec, size float64) pixel.Rect {
 	return pixel.R(center.X-h, center.Y-h, center.X+h, center.Y+h)
 }
 
-// computeGamepadInput reads the current pointer and returns the virtual button
-// state. Called from UpdateInput so it is available before game.UpdateControls.
+// computeGamepadInput returns the virtual button state for the current frame.
+// It checks every active touch position independently so holding one zone
+// while pressing another (e.g. D-pad + B) registers both simultaneously.
+// Falls back to the single mouse pointer for desktop testing.
 func (o *Overlay) computeGamepadInput(win *opengl.Window) input.VirtualState {
 	wb := win.Bounds()
-	if !o.isGamepadVisible(wb) || !o.pointer.Down {
+	if !o.isGamepadVisible(wb) {
 		return input.VirtualState{}
+	}
+
+	// Collect all simultaneous touch positions; fall back to mouse pointer.
+	ptrs := win.ActiveTouches()
+	if len(ptrs) == 0 {
+		if !o.pointer.Down {
+			return input.VirtualState{}
+		}
+		ptrs = []pixel.Vec{o.pointer.Pos}
 	}
 
 	scale := GameCanvasScale(wb)
 	pos := gamepadLayout(wb, scale)
-	ptr := o.pointer.Pos
 	var vs input.VirtualState
 
-	// D-pad: dominant-axis quadrant, no dead zone. Hit area extends dpadHitPad
-	// beyond the sprite edge so a sliding thumb stays registered.
-	if contains(squareHitRect(pos.dpad, pos.dpadSize+dpadHitPad*2), ptr) {
-		off := ptr.Sub(pos.dpad)
-		if math.Abs(off.X) >= math.Abs(off.Y) {
-			if off.X >= 0 {
-				vs.Dir = input.Right
-			} else {
-				vs.Dir = input.Left
-			}
-		} else {
-			if off.Y >= 0 {
-				vs.Dir = input.Up
-			} else {
-				vs.Dir = input.Down
+	for _, ptr := range ptrs {
+		// D-pad: dominant-axis quadrant, first touch in the zone wins.
+		if vs.Dir == input.NotPressed {
+			if contains(squareHitRect(pos.dpad, pos.dpadSize+dpadHitPad*2), ptr) {
+				off := ptr.Sub(pos.dpad)
+				if math.Abs(off.X) >= math.Abs(off.Y) {
+					if off.X >= 0 {
+						vs.Dir = input.Right
+					} else {
+						vs.Dir = input.Left
+					}
+				} else {
+					if off.Y >= 0 {
+						vs.Dir = input.Up
+					} else {
+						vs.Dir = input.Down
+					}
+				}
 			}
 		}
+		vs.A = vs.A || contains(squareHitRect(pos.btnA, pos.btnSize), ptr)
+		vs.B = vs.B || contains(squareHitRect(pos.btnB, pos.btnSize), ptr)
+		vs.Start = vs.Start || contains(squareHitRect(pos.start, pos.btnSize), ptr)
+		vs.Select = vs.Select || contains(squareHitRect(pos.sel, pos.btnSize), ptr)
 	}
-
-	vs.A = contains(squareHitRect(pos.btnA, pos.btnSize), ptr)
-	vs.B = contains(squareHitRect(pos.btnB, pos.btnSize), ptr)
-	vs.Start = contains(squareHitRect(pos.start, pos.btnSize), ptr)
-	vs.Select = contains(squareHitRect(pos.sel, pos.btnSize), ptr)
 
 	return vs
 }
