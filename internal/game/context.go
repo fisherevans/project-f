@@ -28,6 +28,10 @@ func Controls[T State]() *input.Controls {
 	return ControlsNoop
 }
 
+func SetVirtualControls(v input.VirtualState) {
+	controls.SetVirtual(v)
+}
+
 func UpdateControls(window *opengl.Window) {
 	controls.Update(window)
 }

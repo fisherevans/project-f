@@ -24,6 +24,26 @@ type DrawCtx struct {
 	imd    *imdraw.IMDraw
 	Ptr    Pointer
 	A      float64 // fade alpha 0..1
+	Scale  float64 // UI scale factor (≥1); scales internal chrome and text
+}
+
+// ts returns the integer text scale for the 7x13 bitmap font.
+func (dc *DrawCtx) ts() float64 {
+	if dc.Scale <= 1 {
+		return 1
+	}
+	return math.Max(1, math.Floor(dc.Scale))
+}
+
+// lh returns the effective rendered line height in pixels (font height × text scale).
+func (dc *DrawCtx) lh() float64 { return 13 * dc.ts() }
+
+// sc scales v by dc.Scale, floored to an integer pixel. At Scale ≤ 1 returns v unchanged.
+func (dc *DrawCtx) sc(v float64) float64 {
+	if dc.Scale <= 1 {
+		return v
+	}
+	return math.Floor(v * dc.Scale)
 }
 
 // ---- colors (muted greys) ---------------------------------------------------
@@ -108,7 +128,7 @@ func (dc *DrawCtx) drawIcon(spriteName string, center pixel.Vec, sizePx float64)
 	if b.H() > longest {
 		longest = b.H()
 	}
-	scale := sizePx / longest
+	scale := math.Max(1, math.Floor(sizePx/longest))
 	m := pixel.IM.Scaled(pixel.ZV, scale).Moved(center)
 	sprite.DrawColorMask(dc.target, m, dc.fade(colText))
 }
@@ -128,11 +148,12 @@ var widgetAtlas = text.NewAtlas(basicfont.Face7x13, text.ASCII)
 
 func newText() *text.Text { return text.New(pixel.ZV, widgetAtlas) }
 
-// drawText draws txt at pos, flooring both axes to integer pixels. The 7x13
-// bitmap font renders blurry if placed at a half-pixel Y (easy to hit with
-// `LineHeight/2`, since LineHeight=13 → 6.5).
+// drawText draws txt at pos (bottom-left origin), scaled by dc.ts(). Floors
+// both axes to integer pixels — the 7x13 bitmap font renders blurry at
+// half-pixel positions (common when dividing an odd lineHeight by 2).
 func (dc *DrawCtx) drawText(txt *text.Text, pos pixel.Vec) {
-	txt.Draw(dc.target, pixel.IM.Moved(pixel.V(math.Floor(pos.X), math.Floor(pos.Y))))
+	ts := dc.ts()
+	txt.Draw(dc.target, pixel.IM.Scaled(pixel.ZV, ts).Moved(pixel.V(math.Floor(pos.X), math.Floor(pos.Y))))
 }
 
 // ---- alpha helpers ----------------------------------------------------------

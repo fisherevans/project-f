@@ -1,8 +1,11 @@
 package overlay
 
 import (
+	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
+
+	"fisherevans.com/project/f/internal/game/input"
 )
 
 func init() { initAtlas() }
@@ -38,9 +41,16 @@ type Overlay struct {
 	alpha     float64
 	touchSeen bool
 
-	panelOpen      bool
-	scalePopoverOpen bool // vertical scale list above the scale button
-	settingsDirty  bool   // any setting changed; save on next pointer release
+	panelOpen           bool
+	panelJustClosed     bool // true for the one frame renderSettingsPanel closed the panel
+	scalePopoverOpen    bool
+	volumePopoverOpen      bool
+	volumePopoverCloseTimer float64 // counts up while cursor is outside button+popover zone
+	settingsDirty     bool
+	settingsSaveTimer float64 // counts down to zero, then flushes to disk
+
+	// settings panel layout scale (set each frame from OverlayUIScale)
+	panelScale float64
 
 	// settings panel scroll state
 	scrollCanvas       *opengl.Canvas
@@ -58,6 +68,18 @@ type Overlay struct {
 	// display state
 	displayScale      int // 0 = auto, >0 = fixed scale N
 	displayFullscreen bool
+
+	// dropdown popover state (panel rows that need more options than SegmentedSelect fits)
+	dropdownID          string     // non-empty = a dropdown is open
+	dropdownAnchor      pixel.Rect // window-space anchor row (used for close-on-anchor-click)
+	dropdownRect        pixel.Rect // window-space popover rect, computed at open time
+	dropdownOpts        []string
+	dropdownSel         int
+	dropdownOnSel       func(int)
+	dropdownJustOpened  bool // true for the one frame the dropdown was opened; skips same-frame close
+
+	// virtual gamepad state; computed in UpdateInput, consumed by runtime before UpdateControls
+	virtualState input.VirtualState
 }
 
 func New(hooks Hooks) *Overlay {
@@ -94,6 +116,7 @@ func (o *Overlay) UpdateInput(win *opengl.Window, dt float64) {
 
 	if o.panelOpen {
 		o.idleTimer = 0
+		o.alpha = 1 // panel must always be fully opaque; don't wait for fade-in
 	}
 
 	if o.idleTimer < idleHideSeconds {
@@ -101,28 +124,47 @@ func (o *Overlay) UpdateInput(win *opengl.Window, dt float64) {
 	} else {
 		o.alpha = clamp01(o.alpha - dt/fadeDuration)
 	}
+
+	o.virtualState = o.computeGamepadInput(win)
+
+	setCursorVisible(win, o.alpha > 0)
 }
 
 func (o *Overlay) Render(win *opengl.Window, dt float64) {
+	// Gamepad renders at its own persisted opacity, never suppressed by the idle fade.
+	o.renderGamepad(win)
+
 	if o.alpha <= 0 {
 		return
 	}
 	if o.panelOpen {
 		o.renderSettingsPanel(win)
 	}
-	o.renderCornerChrome(win)
+	o.renderCornerChrome(win, dt)
 
-	// Persist settings on pointer release. Captures click-releases from sliders,
-	// toggles, and segmented selects without spamming the save during drags.
-	if o.settingsDirty && o.pointer.JustUp {
-		if o.hooks.SaveSettings != nil {
-			o.hooks.SaveSettings()
+	// Persist settings with a trailing debounce: any change resets the timer;
+	// the file is written once after the last change settles.
+	if o.settingsDirty {
+		o.settingsSaveTimer -= dt
+		if o.settingsSaveTimer <= 0 {
+			if o.hooks.SaveSettings != nil {
+				o.hooks.SaveSettings()
+			}
+			o.settingsDirty = false
 		}
-		o.settingsDirty = false
 	}
 }
 
-func (o *Overlay) markDirty() { o.settingsDirty = true }
+const settingsDebounceSeconds = 1.0
+
+func (o *Overlay) markDirty() {
+	o.settingsDirty = true
+	o.settingsSaveTimer = settingsDebounceSeconds
+}
+
+// VirtualControls returns the virtual gamepad state computed during UpdateInput.
+// Call this after UpdateInput and before game.UpdateControls each frame.
+func (o *Overlay) VirtualControls() input.VirtualState { return o.virtualState }
 
 func (o *Overlay) PointerConsumed() bool { return o.panelOpen }
 

@@ -4,6 +4,7 @@ package main
 
 import (
 	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/devscenes"
 	"fisherevans.com/project/f/internal/game/runtime"
 	"fisherevans.com/project/f/internal/setup"
 	"github.com/gopxl/pixel/v2/backends/opengl"
@@ -16,6 +17,6 @@ func main() {
 		setup.LogMetadata()
 		runtime.NewInstance("default", func() any {
 			return game.StartupDeviceIntent{}
-		}).Run()
+		}).WithDevScenes(devscenes.Scenes()).Run()
 	})
 }

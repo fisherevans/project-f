@@ -9,15 +9,37 @@ import (
 	"github.com/gopxl/pixel/v2/backends/opengl"
 )
 
+// Base chrome dimensions at uiScale = 1.0.
 const (
 	chromeSize = 32.0
 	chromeGap  = 6.0
 	chromePad  = 12.0
-
 	popoverGap = 6.0
+
+	chromeIconSize = 32.0 // source sprite size; scaled to button size at render time
 )
 
-func (o *Overlay) renderCornerChrome(win *opengl.Window) {
+// chromeLayout holds scaled chrome dimensions computed once per frame.
+type chromeLayout struct {
+	sz, pad, gap, pgap float64
+}
+
+func newChromeLayout(wb pixel.Rect) chromeLayout {
+	us := OverlayUIScale(wb)
+	return chromeLayout{
+		sz:   math.Floor(chromeSize * us),
+		pad:  math.Floor(chromePad * us),
+		gap:  math.Floor(chromeGap * us),
+		pgap: math.Floor(popoverGap * us),
+	}
+}
+
+const volumePopoverHideDelay = 0.25 // seconds of cursor-outside before popover closes
+
+func (o *Overlay) renderCornerChrome(win *opengl.Window, dt float64) {
+	wb := win.Bounds()
+	cl := newChromeLayout(wb)
+
 	dc := &DrawCtx{
 		target: win,
 		atlas:  overlayAtlas,
@@ -26,63 +48,94 @@ func (o *Overlay) renderCornerChrome(win *opengl.Window) {
 		A:      o.alpha,
 	}
 
-	wb := win.Bounds()
-	x := wb.Max.X - chromePad - chromeSize
-	y := chromePad
+	x := math.Floor(wb.Max.X - cl.pad - cl.sz)
+	y := math.Floor(cl.pad)
 
-	// Button rects, right-to-left: gear, fullscreen, scale, volume
-	gearR := pixel.R(x, y, x+chromeSize, y+chromeSize)
-	x -= chromeSize + chromeGap
-	fullscreenR := pixel.R(x, y, x+chromeSize, y+chromeSize)
-	x -= chromeSize + chromeGap
-	scaleR := pixel.R(x, y, x+chromeSize, y+chromeSize)
-	x -= chromeSize + chromeGap
-	volumeR := pixel.R(x, y, x+chromeSize, y+chromeSize)
+	// Button rects right-to-left: gear, fullscreen, scale, volume
+	gearR := pixel.R(x, y, x+cl.sz, y+cl.sz)
+	x -= cl.sz + cl.gap
+	fullscreenR := pixel.R(x, y, x+cl.sz, y+cl.sz)
+	x -= cl.sz + cl.gap
+	scaleR := pixel.R(x, y, x+cl.sz, y+cl.sz)
+	x -= cl.sz + cl.gap
+	volumeR := pixel.R(x, y, x+cl.sz, y+cl.sz)
 
-	// Volume popover hit area (used for hover expansion)
-	volumePopoverR := volumeSliderRect(volumeR)
-	volumeExpanded := contains(volumeR, dc.Ptr.Pos) || contains(volumePopoverR, dc.Ptr.Pos)
+	volumePopoverR := volumeSliderRect(volumeR, cl)
 
-	// Scale popover rect (only rendered when open)
-	scalePopoverR := scaleListRect(scaleR, o.scaleOptionCount(win))
-
-	// ---- 1. render buttons (bg + icon) ----
-	o.drawChromeButton(dc, gearR, drawIconSettings)
-	if dc.clicked(gearR) {
-		o.panelOpen = !o.panelOpen
+	// Volume popover: only the button can open it. Once open, hovering the
+	// popover itself keeps it alive. A grace period handles the gap between
+	// button and slider so a quick upward move doesn't immediately close it.
+	inButton := contains(volumeR, dc.Ptr.Pos)
+	inPopover := o.volumePopoverOpen && contains(volumePopoverR, dc.Ptr.Pos)
+	if inButton {
+		o.volumePopoverOpen = true
+		o.volumePopoverCloseTimer = 0
+	} else if inPopover {
+		o.volumePopoverCloseTimer = 0
+	} else if o.volumePopoverOpen {
+		o.volumePopoverCloseTimer += dt
+		if o.volumePopoverCloseTimer >= volumePopoverHideDelay {
+			o.volumePopoverOpen = false
+			o.volumePopoverCloseTimer = 0
+		}
 	}
 
-	o.drawChromeButton(dc, fullscreenR, o.drawIconFullscreen)
+	scalePopoverR := scaleListRect(scaleR, o.scaleOptionCount(win), cl)
+
+	// 1. Buttons
+	drawIconFn := func(name string) func(*DrawCtx, pixel.Rect) {
+		return func(dc *DrawCtx, r pixel.Rect) { dc.drawIcon(name, r.Center(), r.W()) }
+	}
+	o.drawChromeButton(dc, gearR, drawIconFn("settings"))
+	if dc.clicked(gearR) {
+		if o.panelJustClosed {
+			// renderSettingsPanel already closed the panel this frame (click landed
+			// outside, which includes the gear button). Don't reopen.
+			o.panelJustClosed = false
+		} else {
+			o.panelOpen = !o.panelOpen
+		}
+	}
+
+	o.drawChromeButton(dc, fullscreenR, func(dc *DrawCtx, r pixel.Rect) {
+		name := "fullscreen"
+		if o.displayFullscreen {
+			name = "fullscreen_exit"
+		}
+		dc.drawIcon(name, r.Center(), r.W())
+	})
 	if dc.clicked(fullscreenR) {
 		o.toggleFullscreen()
 	}
 
-	o.drawChromeButton(dc, scaleR, o.drawScaleIcon)
+	o.drawChromeButton(dc, scaleR, func(dc *DrawCtx, r pixel.Rect) {
+		dc.drawIcon("scale", r.Center(), r.W())
+	})
 	if dc.clicked(scaleR) {
 		o.scalePopoverOpen = !o.scalePopoverOpen
 	}
 
-	o.drawChromeButton(dc, volumeR, o.drawVolumeIcon)
+	o.drawChromeButton(dc, volumeR, func(dc *DrawCtx, r pixel.Rect) {
+		dc.drawIcon(o.volumeSpriteName(), r.Center(), r.W())
+	})
 	if dc.clicked(volumeR) {
 		o.toggleMute()
 	}
 
-	// ---- 2. popovers on top ----
-	if volumeExpanded {
+	// 2. Popovers
+	if o.volumePopoverOpen {
 		o.renderVolumePopover(dc, volumePopoverR)
 	}
 	if o.scalePopoverOpen {
-		// close on click outside both the popover and the scale button
 		if dc.Ptr.JustUp && !contains(scalePopoverR, dc.Ptr.Pos) && !contains(scaleR, dc.Ptr.Pos) {
 			o.scalePopoverOpen = false
 		} else {
-			o.renderScalePopover(dc, scalePopoverR, win)
+			o.renderScalePopover(dc, scalePopoverR, win, cl)
 		}
 	}
 }
 
-// drawChromeButton renders one button's bg + its icon/label callback.
-func (o *Overlay) drawChromeButton(dc *DrawCtx, r pixel.Rect, drawFg func(dc *DrawCtx, r pixel.Rect)) {
+func (o *Overlay) drawChromeButton(dc *DrawCtx, r pixel.Rect, drawFg func(*DrawCtx, pixel.Rect)) {
 	hover := contains(r, dc.Ptr.Pos)
 	var bg pixel.RGBA
 	switch {
@@ -95,35 +148,6 @@ func (o *Overlay) drawChromeButton(dc *DrawCtx, r pixel.Rect, drawFg func(dc *Dr
 	}
 	dc.fillRect(r, bg)
 	drawFg(dc, r)
-}
-
-// ---- button foreground draws ------------------------------------------------
-
-// chromeIconSize is the rendered size of the 16×16 source sprites (integer 2x).
-const chromeIconSize = 32.0
-
-func drawIconSettings(dc *DrawCtx, r pixel.Rect) {
-	dc.drawIcon("settings", r.Center(), chromeIconSize)
-}
-
-func (o *Overlay) drawIconFullscreen(dc *DrawCtx, r pixel.Rect) {
-	name := "fullscreen"
-	if o.displayFullscreen {
-		name = "fullscreen_exit"
-	}
-	dc.drawIcon(name, r.Center(), chromeIconSize)
-}
-
-func (o *Overlay) drawScaleIcon(dc *DrawCtx, r pixel.Rect) {
-	dc.drawIcon("scale", r.Center(), chromeIconSize)
-}
-
-func (o *Overlay) drawResetIcon(dc *DrawCtx, r pixel.Rect) {
-	dc.drawIcon("reset", r.Center(), chromeIconSize)
-}
-
-func (o *Overlay) drawVolumeIcon(dc *DrawCtx, r pixel.Rect) {
-	dc.drawIcon(o.volumeSpriteName(), r.Center(), chromeIconSize)
 }
 
 func (o *Overlay) volumeSpriteName() string {
@@ -141,19 +165,15 @@ func (o *Overlay) volumeSpriteName() string {
 
 // ---- volume hover popover ---------------------------------------------------
 
-const (
-	volumePopoverW = 28.0
-	volumePopoverH = 110.0
-)
-
-func volumeSliderRect(btnR pixel.Rect) pixel.Rect {
+func volumeSliderRect(btnR pixel.Rect, cl chromeLayout) pixel.Rect {
+	w := math.Floor(cl.sz * 0.875) // ~28px at 1x
+	h := math.Floor(cl.sz * 3.4)   // ~110px at 1x
 	cx := btnR.Center().X
-	bottom := btnR.Max.Y + popoverGap
-	return pixel.R(cx-volumePopoverW/2, bottom, cx+volumePopoverW/2, bottom+volumePopoverH)
+	bot := btnR.Max.Y + cl.pgap
+	return pixel.R(math.Floor(cx-w/2), bot, math.Floor(cx+w/2), bot+h)
 }
 
 func (o *Overlay) renderVolumePopover(dc *DrawCtx, r pixel.Rect) {
-	// disable slider drag when muted (but still show it dimmed)
 	sliderDC := *dc
 	if o.audioMuted {
 		sliderDC.A = dc.A * 0.4
@@ -166,41 +186,36 @@ func (o *Overlay) renderVolumePopover(dc *DrawCtx, r pixel.Rect) {
 
 // ---- scale click popover ----------------------------------------------------
 
-const (
-	scalePopoverW    = 40.0
-	scaleOptionH     = 24.0
-	scalePopoverPad  = 4.0
-)
-
 func (o *Overlay) scaleOptionCount(win *opengl.Window) int {
 	wb := win.Bounds()
 	maxFit := int(math.Min(math.Floor(wb.W()/240), math.Floor(wb.H()/160)))
 	if maxFit < 1 {
 		maxFit = 1
 	}
-	return maxFit + 1 // auto + x1..xMax
+	return maxFit + 1
 }
 
-func scaleListRect(btnR pixel.Rect, nOptions int) pixel.Rect {
-	h := float64(nOptions)*scaleOptionH + scalePopoverPad*2
+func scaleListRect(btnR pixel.Rect, nOptions int, cl chromeLayout) pixel.Rect {
+	optH := math.Floor(cl.sz * 0.75) // ~24px at 1x
+	pad := math.Floor(cl.sz * 0.125) // ~4px at 1x
+	w := math.Floor(cl.sz * 1.25)    // ~40px at 1x
+	h := float64(nOptions)*optH + pad*2
 	cx := btnR.Center().X
-	bottom := btnR.Max.Y + popoverGap
-	return pixel.R(cx-scalePopoverW/2, bottom, cx+scalePopoverW/2, bottom+h)
+	bot := btnR.Max.Y + cl.pgap
+	return pixel.R(math.Floor(cx-w/2), bot, math.Floor(cx+w/2), bot+h)
 }
 
-func (o *Overlay) renderScalePopover(dc *DrawCtx, r pixel.Rect, win *opengl.Window) {
+func (o *Overlay) renderScalePopover(dc *DrawCtx, r pixel.Rect, win *opengl.Window, cl chromeLayout) {
 	dc.fillRect(r, dc.fade(colBg))
 
+	optH := math.Floor(cl.sz * 0.75)
+	pad := math.Floor(cl.sz * 0.125)
 	nOpts := o.scaleOptionCount(win)
-	// render from the TOP down: auto is on top, xMax at the bottom (closest to the button)
-	// matches the web wrapper which shows higher scales at the bottom of its popover.
+
 	for i := 0; i < nOpts; i++ {
-		// index 0 = auto, 1 = x1, ...
 		optIdx := i
-		// position: top option at r.Max.Y - padding, going down
-		top := r.Max.Y - scalePopoverPad - float64(i)*scaleOptionH
-		optR := pixel.R(r.Min.X+scalePopoverPad, top-scaleOptionH,
-			r.Max.X-scalePopoverPad, top)
+		top := r.Max.Y - pad - float64(i)*optH
+		optR := pixel.R(r.Min.X+pad, top-optH, r.Max.X-pad, top)
 
 		hover := contains(optR, dc.Ptr.Pos)
 		isSelected := optIdx == o.displayScale
@@ -213,8 +228,6 @@ func (o *Overlay) renderScalePopover(dc *DrawCtx, r pixel.Rect, win *opengl.Wind
 			bg = dc.fade(colPress)
 		case hover:
 			bg = dc.fade(colHover)
-		default:
-			bg = pixel.RGBA{} // transparent
 		}
 		if bg.A > 0 {
 			dc.fillRect(optR, bg)
@@ -242,4 +255,3 @@ func (o *Overlay) renderScalePopover(dc *DrawCtx, r pixel.Rect, win *opengl.Wind
 		}
 	}
 }
-

@@ -7,12 +7,22 @@ import (
 	"github.com/gopxl/pixel/v2/backends/opengl"
 )
 
+// VirtualState carries one frame of on-screen gamepad input. Set via
+// Controls.SetVirtual before each Controls.Update call.
+type VirtualState struct {
+	A, B, Start, Select bool
+	Dir                 Direction
+}
+
 type Controls struct {
 	buttonA      *Button
 	buttonB      *Button
 	buttonStart  *Button
 	buttonSelect *Button
 	dpad         *DirectionalButton
+
+	virtual     VirtualState
+	prevVirtual VirtualState
 }
 
 func NewControls() *Controls {
@@ -46,12 +56,27 @@ func NewControls() *Controls {
 	}
 }
 
+// SetVirtual stores virtual gamepad state for the next Update call. Call this
+// every frame before Update; the zero value clears all virtual input.
+func (c *Controls) SetVirtual(v VirtualState) {
+	c.virtual = v
+}
+
 func (c *Controls) Update(win *opengl.Window) {
 	c.buttonA.updateButton(win)
 	c.buttonB.updateButton(win)
 	c.buttonStart.updateButton(win)
 	c.buttonSelect.updateButton(win)
 	c.dpad.updateDirectional(win)
+
+	c.buttonA.applyVirtual(c.virtual.A, c.prevVirtual.A)
+	c.buttonB.applyVirtual(c.virtual.B, c.prevVirtual.B)
+	c.buttonStart.applyVirtual(c.virtual.Start, c.prevVirtual.Start)
+	c.buttonSelect.applyVirtual(c.virtual.Select, c.prevVirtual.Select)
+	c.dpad.applyVirtualDir(c.virtual.Dir, c.prevVirtual.Dir)
+
+	c.prevVirtual = c.virtual
+	c.virtual = VirtualState{} // cleared each frame; caller must re-set
 }
 
 func (c *Controls) ButtonA() *Button {

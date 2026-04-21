@@ -1,0 +1,43 @@
+tilesheet:
+    tileWidth: 16
+    tileHeight: 16
+sprites:
+    btn_a:
+        row: 1
+        column: 6
+    btn_a_press:
+        row: 1
+        column: 7
+    btn_b:
+        row: 2
+        column: 1
+    btn_b_press:
+        row: 2
+        column: 2
+    btn_select:
+        row: 2
+        column: 5
+    btn_select_press:
+        row: 2
+        column: 6
+    btn_start:
+        row: 2
+        column: 3
+    btn_start_press:
+        row: 2
+        column: 4
+    dpad:
+        row: 1
+        column: 1
+    dpad_down:
+        row: 1
+        column: 3
+    dpad_left:
+        row: 1
+        column: 4
+    dpad_right:
+        row: 1
+        column: 5
+    dpad_up:
+        row: 1
+        column: 2

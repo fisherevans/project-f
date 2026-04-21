@@ -63,3 +63,15 @@ func NewButton(keys ...pixel.Button) *Button {
 func (b *Button) updateButton(win *opengl.Window) {
 	b.ButtonState.updateState(win, b.sourceKeys...)
 }
+
+// applyVirtual ORs in a virtual (on-screen) button press. pressed is the current
+// frame state; prevPressed is last frame's, for edge detection.
+func (b *ButtonState) applyVirtual(pressed, prevPressed bool) {
+	if !pressed {
+		return
+	}
+	b.pressed = true
+	if !prevPressed {
+		b.justPressed = true
+	}
+}

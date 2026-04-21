@@ -245,6 +245,9 @@ func (i *Instance) Run() {
 		// Update overlay input first — it gets first pick on pointer events
 		ov.UpdateInput(i.window, deltaTime)
 
+		// Inject virtual gamepad state before keyboard is merged in UpdateControls
+		game.SetVirtualControls(ov.VirtualControls())
+
 		// Update game state
 		game.ApplyIntent()
 		game.UpdateControls(i.window)
@@ -255,7 +258,7 @@ func (i *Instance) Run() {
 		game.GetActiveState().OnTick(sceneCanvas, sceneCanvas.Bounds(), deltaTime)
 
 		// Update canvas scale and pixel grid canvas
-		canvasScale = i.calculateCanvasScale()
+		canvasScale = overlay.GameCanvasScale(i.window.Bounds())
 		if lastSceneCanvasScale != canvasScale || game.Flags().JustChanged("retro_frame_reset") {
 			lastSceneCanvasScale = canvasScale
 			pixelGridCanvas = i.createPixelGridCanvas(canvasScale)
@@ -263,7 +266,7 @@ func (i *Instance) Run() {
 		}
 
 		// Composite and draw to i.window
-		i.compositeToWindow(sceneCanvas, pixelGridCanvas, canvasScale)
+		i.compositeToWindow(sceneCanvas, pixelGridCanvas, canvasScale, i.window.Bounds())
 
 		// Overlay UI (rendered at window resolution, above game canvas)
 		ov.Render(i.window, deltaTime)
@@ -299,37 +302,16 @@ func (i *Instance) createPixelGridCanvas(scale float64) *shaders.Canvas {
 	return c
 }
 
-func (i *Instance) calculateCanvasScale() float64 {
-	windowWidth, windowHeight := i.window.Bounds().Size().XY()
-	maxFit := math.Min(
-		math.Floor(windowWidth/game.GameWidth),
-		math.Floor(windowHeight/game.GameHeight),
-	)
-	if maxFit < 1 {
-		maxFit = 1
-	}
-
-	d := game.CurrentSave().SystemSettings.Display
-	if d.ScaleMode == rpg.ScaleModeFixed && d.FixedScale > 0 {
-		fixed := float64(d.FixedScale)
-		if fixed > maxFit {
-			fixed = maxFit // clamp to what fits
-		}
-		return fixed
-	}
-
-	return maxFit
-}
 
 func (i *Instance) renderScene(sceneCanvas *shaders.Canvas, deltaTime float64) {
 	i.window.Clear(color.RGBA{A: 255})
 	sceneCanvas.Clear(game.GetActiveState().ClearColor())
 }
 
-func (i *Instance) compositeToWindow(sceneCanvas, pixelGridCanvas *shaders.Canvas, scale float64) {
+func (i *Instance) compositeToWindow(sceneCanvas, pixelGridCanvas *shaders.Canvas, scale float64, wb pixel.Rect) {
 	pixelGridCanvas.Clear(pixel.RGBA{A: 1})
 	sceneCanvas.Draw(pixelGridCanvas, pixel.IM.Scaled(pixel.ZV, scale).Moved(pixelGridCanvas.Bounds().Center()))
-	pixelGridCanvas.Draw(i.window, pixel.IM.Moved(i.window.Bounds().Center()))
+	pixelGridCanvas.Draw(i.window, pixel.IM.Moved(overlay.CanvasCenter(wb, scale)))
 }
 
 func (i *Instance) renderDebugInfo(m *runtime.MemStats, frameStats, gameLogicStats *util.FloatStats, deltaTime float64) {

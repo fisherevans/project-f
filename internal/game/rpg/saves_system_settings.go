@@ -164,10 +164,11 @@ const (
 )
 
 type SystemSettingsDisplay struct {
-	ScaleMode      string `yaml:"scale_mode"`      // "auto" | "fixed"
-	FixedScale     int    `yaml:"fixed_scale"`
-	Fullscreen     bool   `yaml:"fullscreen"`
-	VirtualGamepad string `yaml:"virtual_gamepad"` // "auto" | "on" | "off"
+	ScaleMode             string  `yaml:"scale_mode"`              // "auto" | "fixed"
+	FixedScale            int     `yaml:"fixed_scale"`
+	Fullscreen            bool    `yaml:"fullscreen"`
+	VirtualGamepad        string  `yaml:"virtual_gamepad"`         // "auto" | "on" | "off"
+	VirtualGamepadOpacity float64 `yaml:"virtual_gamepad_opacity"` // 0.2 – 1.0
 }
 
 func (s *SystemSettingsDisplay) FillDefaults() {
@@ -176,5 +177,8 @@ func (s *SystemSettingsDisplay) FillDefaults() {
 	}
 	if s.VirtualGamepad == "" {
 		s.VirtualGamepad = VirtualGamepadAuto
+	}
+	if s.VirtualGamepadOpacity <= 0 {
+		s.VirtualGamepadOpacity = 0.85
 	}
 }

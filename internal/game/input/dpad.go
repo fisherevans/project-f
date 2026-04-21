@@ -157,3 +157,16 @@ func (d *DirectionalButton) DirectionJustPressedOrRepeated(dir Direction) bool {
 func (d *DirectionalButton) DirectionPressed(dir Direction) bool {
 	return d.IsPressed() && d.GetDirection() == dir
 }
+
+// applyVirtualDir ORs in a virtual D-pad direction. Keyboard input takes priority;
+// virtual only applies when the keyboard produced no direction this frame.
+func (d *DirectionalButton) applyVirtualDir(dir, prevDir Direction) {
+	if dir == NotPressed || d.direction != NotPressed {
+		return
+	}
+	d.pressed = true
+	d.direction = dir
+	if dir != prevDir {
+		d.justPressed = true
+	}
+}

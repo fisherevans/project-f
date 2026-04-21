@@ -1,0 +1,19 @@
+tilesheet:
+    tileWidth: 32
+    tileHeight: 32
+sprites:
+    dpad:
+        row: 1
+        column: 1
+    dpad_down:
+        row: 1
+        column: 3
+    dpad_left:
+        row: 1
+        column: 4
+    dpad_right:
+        row: 1
+        column: 5
+    dpad_up:
+        row: 1
+        column: 2
