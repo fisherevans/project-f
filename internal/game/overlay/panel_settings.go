@@ -113,6 +113,14 @@ func (o *Overlay) renderSettingsPanel(win *opengl.Window) {
 
 	if contains(panel, o.pointer.Pos) {
 		if dy := win.MouseScroll().Y; dy != 0 {
+			// Browsers report raw pixel deltas (~100/notch); desktop GLFW reports
+			// ~1/notch. Normalize anything above 1 down to 1 unit so sensitivity
+			// is consistent, while preserving sub-1 values for trackpad smoothness.
+			if dy > 1 {
+				dy = 1
+			} else if dy < -1 {
+				dy = -1
+			}
 			o.scrollOffset -= dy * layout.ScrollWheelPx
 			o.dropdownID = "" // dropdown anchor moves with scroll; just close it
 		}
