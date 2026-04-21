@@ -79,6 +79,7 @@ func init() {
 	installGestureUnlock(ctx)
 	installVisibilityHandler(ctx)
 	installWebVolumeBridge(system)
+	installResumeAudioBridge(ctx)
 }
 
 // installWebVolumeBridge exposes the web page's volume slider as a global
@@ -131,6 +132,19 @@ func (a *System) newBus() *Bus {
 	g.Get("gain").Set("value", 1.0)
 	g.Call("connect", a.master)
 	return &Bus{gain: g}
+}
+
+// installResumeAudioBridge exposes primortalResumeAudio() so the JS "press to
+// play" handler can explicitly resume the AudioContext as part of the same
+// user gesture, rather than relying on event bubbling reaching document.
+func installResumeAudioBridge(ctx js.Value) {
+	fn := js.FuncOf(func(this js.Value, args []js.Value) any {
+		if ctx.Get("state").String() == "suspended" {
+			ctx.Call("resume")
+		}
+		return nil
+	})
+	js.Global().Set("primortalResumeAudio", fn)
 }
 
 // installGestureUnlock resumes the AudioContext on the first user interaction.

@@ -12,6 +12,7 @@
             overflow: hidden;
             width: 100%;
             height: 100%;
+            touch-action: none;
         }
         #game {
             position: fixed;
@@ -293,12 +294,21 @@
                 setTimeout(() => startScreen.remove(), 500);
 
                 const canvas = document.getElementById("game");
-                canvas.focus();
+
+                // Explicitly resume the AudioContext from within this user gesture
+                // before unblocking Go. Relying on event bubbling to document alone
+                // is unreliable inside iframes where the first click focuses the
+                // frame rather than propagating as a gesture to the audio system.
+                if (typeof window.primortalResumeAudio === "function") {
+                    window.primortalResumeAudio();
+                }
 
                 // Call the bridge registered by Go's signalReady to unblock the game loop.
                 if (typeof window.primortalStart === "function") {
                     window.primortalStart();
                 }
+
+                canvas.focus();
 
                 // Warn before navigating away so players don't lose progress.
                 window.addEventListener("beforeunload", (e) => {

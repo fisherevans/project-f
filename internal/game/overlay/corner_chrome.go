@@ -184,7 +184,7 @@ func (o *Overlay) renderVolumePopover(dc *DrawCtx, r pixel.Rect) {
 		sliderDC.A = dc.A * 0.4
 	}
 	newVol, changed := sliderDC.VerticalSlider(r, o.audioVolume, 0, 1)
-	if changed && !o.audioMuted {
+	if changed {
 		o.setVolume(newVol)
 	}
 }

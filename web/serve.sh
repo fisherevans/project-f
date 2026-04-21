@@ -12,10 +12,11 @@ PORT="${1:-8082}"
 
 echo ""
 echo "Listening on:"
-echo "  http://localhost:${PORT}  (this machine)"
+echo "  http://localhost:${PORT}             (direct)"
+echo "  http://localhost:${PORT}/itch_wrapper.html  (itch iframe)"
 # Print every non-loopback IPv4 so the user knows which address to type on their phone.
-ifconfig 2>/dev/null | awk '/inet / && !/127\.0\.0\.1/ { print "  http://" $2 ":'${PORT}'  (wifi)" }' \
-  || ip -4 addr 2>/dev/null | awk '/inet/ && !/127\.0\.0\.1/ { split($2,a,"/"); print "  http://" a[1] ":'${PORT}'  (wifi)" }'
+ifconfig 2>/dev/null | awk '/inet / && !/127\.0\.0\.1/ { print "  http://" $2 ":'${PORT}'  (wifi direct) / http://" $2 ":'${PORT}'/itch_wrapper.html  (wifi itch)" }' \
+  || ip -4 addr 2>/dev/null | awk '/inet/ && !/127\.0\.0\.1/ { split($2,a,"/"); print "  http://" a[1] ":'${PORT}'  (wifi direct) / http://" a[1] ":'${PORT}'/itch_wrapper.html  (wifi itch)" }'
 echo ""
 
 python3 -c "

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- Local replica of the itch.io iframe wrapper.
+     Load this instead of index.html to test in an environment that matches
+     how itch embeds the game: sandboxed iframe, constrained viewport, no
+     direct page focus. Mirrors the sandbox and allow attributes itch uses. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Primortal - itch wrapper</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: ui-monospace, monospace;
+            color: #888;
+            overflow: hidden;
+        }
+        #game-wrap {
+            position: relative;
+            width: 960px;
+            height: 600px;
+            max-width: 100vw;
+            max-height: 100vh;
+            box-shadow: 0 0 0 1px #333;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        #label {
+            margin-top: 12px;
+            font-size: 11px;
+            opacity: 0.5;
+        }
+        @media (max-width: 960px) {
+            #game-wrap {
+                width: 100vw;
+                height: calc(100vw * 600 / 960);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-wrap">
+        <iframe
+            src="./index.html"
+            scrolling="no"
+            allowfullscreen="true"
+            allow="autoplay; fullscreen *; payment; microphone *; camera *; xr-spatial-tracking"
+            sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-orientation-lock allow-popups allow-modals allow-forms allow-downloads"
+        ></iframe>
+    </div>
+    <div id="label">itch.io wrapper — 960×600 sandboxed iframe</div>
+</body>
+</html>
