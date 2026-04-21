@@ -18,12 +18,18 @@ jobs:
           - os: windows-latest
             goos: windows
             goarch: amd64
+            itchio_channel: windows
+            butler_platform: windows-amd64
           - os: macos-latest
             goos: darwin
             goarch: amd64
+            itchio_channel: mac-intel
+            butler_platform: darwin-amd64
           - os: macos-latest
             goos: darwin
             goarch: arm64
+            itchio_channel: mac-arm64
+            butler_platform: darwin-amd64
     
     steps:
       - name: Checkout code
@@ -70,3 +76,18 @@ jobs:
         with:
           files: |
             primortal_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.${{ matrix.goos == 'windows' && 'zip' || 'tar.gz' }}
+
+      - name: Install butler
+        shell: bash
+        run: |
+          curl -L -o butler.zip "https://broth.itch.ovh/butler/${{ matrix.butler_platform }}/LATEST/archive/default"
+          unzip -o butler.zip
+          chmod +x butler || true
+
+      - name: Publish to itch.io
+        shell: bash
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          ARCHIVE="primortal_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.${{ matrix.goos == 'windows' && 'zip' || 'tar.gz' }}"
+          ./butler push "$ARCHIVE" fisherevans/primortal:${{ matrix.itchio_channel }} --userversion ${{ github.ref_name }}
