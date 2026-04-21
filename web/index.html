@@ -125,8 +125,9 @@
 <body>
     <canvas id="game" tabindex="0" style="touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;"></canvas>
     <div id="ctx-lost">
-        <div class="msg">Graphics context lost.<br>This can happen when switching tabs on mobile.</div>
+        <div class="msg">Graphics context lost.<br>This can happen when the device runs low on GPU memory.</div>
         <button onclick="location.reload()">Reload</button>
+        <div id="ctx-lost-diag" style="font-size:10px;color:#555;max-width:320px;word-break:break-all;"></div>
     </div>
     <div id="loader">
         <div class="title">Primortal</div>
@@ -138,8 +139,24 @@
     <script src="wasm_exec.js"></script>
     <script>
         // WebGL context-lost bridge: pixel calls this instead of auto-reloading.
-        window.pixelOnContextLost = () => {
+        window.pixelOnContextLost = (diag) => {
             document.getElementById("ctx-lost").classList.add("visible");
+            if (diag) {
+                const elapsed = diag.elapsedMs ? (diag.elapsedMs / 1000).toFixed(1) + "s" : "?";
+                const mem = (diag.backingW && diag.backingH)
+                    ? (diag.backingW * diag.backingH * 4 / 1024 / 1024).toFixed(1) + " MB framebuffer"
+                    : "";
+                const parts = [
+                    diag.renderer || "unknown GPU",
+                    `DPR ${diag.dpr}`,
+                    `${diag.backingW}x${diag.backingH}`,
+                    mem,
+                    `after ${elapsed}`,
+                    diag.count > 1 ? `(#${diag.count})` : "",
+                ].filter(Boolean);
+                document.getElementById("ctx-lost-diag").textContent = parts.join(" - ");
+                console.warn("context lost diag:", diag);
+            }
         };
 
         // Cursor visibility bridge: Go calls this to hide/show the cursor when idle.
