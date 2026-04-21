@@ -63,6 +63,9 @@ var debugText = text.New(pixel.ZV, text.NewAtlas(basicfont.Face7x13, text.ASCII)
 var debugPadding = 10.0
 var showDebug = false
 
+func SetShowDebug(v bool) { showDebug = v }
+func ShowDebug() bool     { return showDebug }
+
 func RenderDebugLines(win *opengl.Window, areaLines map[DebugArea][]string) {
 	if win.JustPressed(pixel.KeyBackslash) {
 		showDebug = !showDebug

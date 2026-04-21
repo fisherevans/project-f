@@ -396,6 +396,14 @@ func (o *Overlay) renderDebugSection(dc *DrawCtx, panel pixel.Rect, cursorY floa
 	})
 	cursorY -= l.HeaderH + l.RowGap
 
+	// Debug overlay (FPS, memory, etc.) - also toggled with backslash key
+	debugVal, debugChanged := dc.Toggle(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY),
+		"Show Overlay", game.ShowDebug())
+	if debugChanged {
+		game.SetShowDebug(debugVal)
+	}
+	cursorY -= l.RowH + l.RowGap
+
 	// Pathfinding debug
 	newVal, changed := dc.Toggle(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY),
 		"Pathfinding", s.Debugging.ShowPathfindingDebugging)
