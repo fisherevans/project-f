@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 echo "Building WASM..."
 ./web/build.sh
 
-PORT="${1:-8080}"
+PORT="${1:-8082}"
 
 echo ""
 echo "Listening on:"
