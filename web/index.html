@@ -193,7 +193,15 @@
             try { prev = JSON.parse(localStorage.getItem(CRASH_KEY)); } catch(e) {}
             if (prev && prev.running) {
                 // Previous session was killed without a clean exit.
+                // Log each field individually so Safari doesn't truncate them.
                 const age = ((Date.now() - prev.ts) / 1000).toFixed(0);
+                console.warn("=== primortal crash detected ===");
+                console.warn("uptime:   " + (prev.uptime || "?") + "s");
+                console.warn("canvas:   " + (prev.canvasW || "?") + "x" + (prev.canvasH || "?"));
+                console.warn("dpr:      " + (prev.dpr || "?"));
+                console.warn("renderer: " + (prev.renderer || "unknown"));
+                console.warn("age:      " + age + "s ago");
+                console.warn("================================");
                 const parts = [
                     "Previous session ended unexpectedly",
                     prev.renderer ? `GPU: ${prev.renderer}` : null,
@@ -202,9 +210,6 @@
                     prev.uptime ? `uptime: ${prev.uptime}s` : null,
                     `(${age}s ago)`,
                 ].filter(Boolean).join(" - ");
-                console.warn("crash detected:", prev);
-                // Show the diagnostic in the context-lost overlay if it appears,
-                // or log it for devtools inspection.
                 window._lastCrashDiag = parts;
             }
             // Clear on each fresh load so we start clean.
