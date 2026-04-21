@@ -19,8 +19,9 @@ ifconfig 2>/dev/null | awk '/inet / && !/127\.0\.0\.1/ { print "  http://" $2 ":
 echo ""
 
 python3 -c "
-import http.server, socketserver, sys
+import http.server, socketserver, sys, os
 port = int(sys.argv[1])
+os.chdir(sys.argv[2])
 class H(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
@@ -30,4 +31,4 @@ class H(http.server.SimpleHTTPRequestHandler):
 H.extensions_map['.wasm'] = 'application/wasm'
 with socketserver.TCPServer(('', port), H) as s:
     s.serve_forever()
-" "$PORT"
+" "$PORT" "web"
