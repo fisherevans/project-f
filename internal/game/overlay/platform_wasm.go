@@ -53,5 +53,5 @@ func physicalDPR() float64 { return PhysicalDPR() }
 // SupportsFullscreen reports whether the browser supports the Fullscreen API.
 // iOS Safari does not support it.
 func SupportsFullscreen() bool {
-	return js.Global().Get("document").Get("fullscreenEnabled").Bool()
+	return js.Global().Get("document").Get("fullscreenEnabled").Truthy()
 }
