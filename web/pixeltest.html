@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Pixel Rendering Test</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #111;
+    color: #eee;
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    overflow-y: auto;
+  }
+  #info {
+    padding: 14px 16px;
+    line-height: 1.7;
+    border-bottom: 1px solid #333;
+  }
+  .label { color: #888; }
+  .val   { color: #aad620; }
+  .warn  { color: #f0a000; }
+  .ok    { color: #3c9; }
+  .fail  { color: #f44; }
+  h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #555;
+    margin: 14px 0 6px;
+  }
+  .section {
+    padding: 14px 16px;
+    border-bottom: 1px solid #333;
+  }
+  .section p { margin-bottom: 4px; }
+  canvas { display: block; image-rendering: pixelated; }
+  #canvases { padding: 14px 16px; display: flex; flex-direction: column; gap: 20px; }
+  .test-block label {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="info">
+  <h2>Device &amp; Viewport</h2>
+  <p><span class="label">screen px:     </span> <span id="v-screen"></span></p>
+  <p><span class="label">viewport CSS:  </span> <span id="v-css"></span></p>
+  <p><span class="label">native DPR:    </span> <span id="v-ndpr"></span></p>
+  <p><span class="label">MAX_DPR cap:   </span> <span id="v-maxdpr"></span></p>
+  <p><span class="label">effective DPR: </span> <span id="v-edpr"></span></p>
+  <p><span class="label">fullscreen API:</span> <span id="v-fs"></span></p>
+
+  <h2>Game Canvas (240x160)</h2>
+  <p><span class="label">CSS scale:     </span> <span id="v-css-scale"></span></p>
+  <p><span class="label">physical scale:</span> <span id="v-phys-scale"></span></p>
+  <p><span class="label">canvas phys px:</span> <span id="v-canvas-size"></span></p>
+  <p><span class="label">canvas CSS px: </span> <span id="v-canvas-css"></span></p>
+  <p><span class="label">pixel grid:    </span> <span id="v-shader"></span></p>
+</div>
+
+<div id="canvases"></div>
+
+<script>
+const GAME_W = 240, GAME_H = 160;
+const MAX_DPR = 3.0;
+
+function effectiveDPR(native, max) {
+  const limit = Math.min(Math.floor(native), Math.floor(max));
+  for (let d = limit; d >= 1; d--) {
+    const ratio = native / d;
+    if (Math.abs(ratio - Math.round(ratio)) < 0.1) return d;
+  }
+  return 1;
+}
+
+function run() {
+  const nativeDPR = window.devicePixelRatio || 1;
+  const effDPR    = effectiveDPR(nativeDPR, MAX_DPR);
+  const cssW      = window.innerWidth;
+  const cssH      = window.innerHeight;
+  // Auto scale: largest integer physical scale that fits (not constrained to
+  // CSS multiples). On DPR=3/402px-wide phone: floor(1206/240)=5, not 3.
+  const physW     = Math.round(cssW * effDPR);
+  const physH     = Math.round(cssH * effDPR);
+  const physScale = Math.max(1, Math.floor(physW / GAME_W));
+  const cssScale  = physScale / effDPR; // may be non-integer (e.g. 5/3)
+
+  const dprOk = Number.isInteger(nativeDPR / effDPR);
+
+  document.getElementById("v-screen").innerHTML =
+    `<span class="val">${screen.width} x ${screen.height}</span>`;
+  document.getElementById("v-css").innerHTML =
+    `<span class="val">${cssW} x ${cssH} CSS px</span>`;
+  document.getElementById("v-ndpr").innerHTML =
+    `<span class="val">${nativeDPR}</span>`;
+  document.getElementById("v-maxdpr").innerHTML =
+    `<span class="val">${MAX_DPR}</span>`;
+  document.getElementById("v-edpr").innerHTML =
+    `<span class="${dprOk ? 'ok' : 'warn'}">${effDPR} ${dprOk ? '(clean divisor ✓)' : '(non-integer ratio – fallback)'}</span>`;
+  document.getElementById("v-fs").innerHTML =
+    document.fullscreenEnabled
+      ? `<span class="ok">supported</span>`
+      : `<span class="warn">not supported (iOS Safari)</span>`;
+
+  document.getElementById("v-css-scale").innerHTML =
+    `<span class="val">${cssScale.toFixed(2)} CSS px per game px</span>`;
+  document.getElementById("v-phys-scale").innerHTML =
+    `<span class="val">x${physScale} physical px per game px</span>`;
+  document.getElementById("v-canvas-size").innerHTML =
+    `<span class="val">${GAME_W * physScale} x ${GAME_H * physScale}</span>`;
+  document.getElementById("v-canvas-css").innerHTML =
+    `<span class="val">${(GAME_W * physScale / effDPR).toFixed(1)} x ${(GAME_H * physScale / effDPR).toFixed(1)}</span>`;
+  document.getElementById("v-shader").innerHTML =
+    physScale >= 2
+      ? `<span class="ok">active (physical scale ${physScale} >= 2)</span>`
+      : `<span class="label">inactive (physical scale ${physScale} < 2)</span>`;
+
+  const container = document.getElementById("canvases");
+  container.innerHTML = "";
+
+  // ---- Test 1: 1-physical-pixel checkerboard ----------------------------
+  // Each cell is 1 physical pixel. If DPR is clean, every cell should look
+  // identical (uniform grey). Any uneven cells = fractional scale problem.
+  addTest(container,
+    `1 physical px checkerboard  (${effDPR}x${effDPR} physical px = 1 CSS px each)`,
+    "All squares must look identical. Uneven sizes = DPR not clean.",
+    32 * effDPR, 32 * effDPR, effDPR,
+    (ctx, W, H, cellPx) => {
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          ctx.fillStyle = (x + y) % 2 === 0 ? "#fff" : "#000";
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+  );
+
+  // ---- Test 2: game-pixel checkerboard at physScale ---------------------
+  // Each cell is physScale physical pixels. This is what one game pixel looks
+  // like. All cells should be visibly equal squares.
+  addTest(container,
+    `1 game px checkerboard  (${physScale} physical px per game px)`,
+    "Each square = 1 game pixel. All must be equal size.",
+    20 * physScale, 10 * physScale, physScale,
+    (ctx, W, H, cellPx) => {
+      for (let gy = 0; gy < H / cellPx; gy++) {
+        for (let gx = 0; gx < W / cellPx; gx++) {
+          ctx.fillStyle = (gx + gy) % 2 === 0 ? "#aad620" : "#224400";
+          ctx.fillRect(gx * cellPx, gy * cellPx, cellPx, cellPx);
+        }
+      }
+    }
+  );
+
+  // ---- Test 3: pixel grid shader preview --------------------------------
+  // Draws game pixels with the grid/scanline effect the shader adds, using
+  // canvas 2D as a CPU-side approximation. Lets you preview the look.
+  if (physScale >= 2) {
+    const scanlineDarken = 0.015;
+    const gridDarken     = 0.05;
+    addTest(container,
+      `Pixel grid shader preview  (CSS scale x${cssScale}, physical x${physScale})`,
+      "Simulates the retro grid shader – should look uniform and regular.",
+      20 * physScale, 10 * physScale, physScale,
+      (ctx, W, H, cellPx) => {
+        for (let gy = 0; gy < H / cellPx; gy++) {
+          for (let gx = 0; gx < W / cellPx; gx++) {
+            const base = (gx + gy) % 2 === 0 ? [170, 214, 32] : [34, 68, 0];
+            for (let py = 0; py < cellPx; py++) {
+              for (let px = 0; px < cellPx; px++) {
+                let [r, g, b] = base;
+                if (gy % 2 === 1) { r *= 1 - scanlineDarken; g *= 1 - scanlineDarken; b *= 1 - scanlineDarken; }
+                if (px === 0) { r *= 1 - gridDarken; g *= 1 - gridDarken; b *= 1 - gridDarken; }
+                if (py === 0) { r *= 1 - gridDarken; g *= 1 - gridDarken; b *= 1 - gridDarken; }
+                ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+                ctx.fillRect(gx * cellPx + px, gy * cellPx + py, 1, 1);
+              }
+            }
+          }
+        }
+      }
+    );
+  }
+
+  // ---- Test 4: thin horizontal and vertical lines -----------------------
+  // Single-physical-pixel lines. On a clean DPR all lines should be the
+  // same weight. Fuzzy or varying-weight lines indicate fractional scaling.
+  addTest(container,
+    `1-physical-px lines (horizontal + vertical)`,
+    "All lines must have equal visual weight. Varying thickness = fractional scale.",
+    cssW * effDPR, 40 * effDPR, effDPR,
+    (ctx, W, H, cellPx) => {
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, W, H);
+      const step = 4 * effDPR;
+      ctx.fillStyle = "#aad620";
+      for (let y = 0; y < H; y += step) ctx.fillRect(0, y, W, 1);
+      for (let x = 0; x < W; x += step) ctx.fillRect(x, 0, 1, H);
+    }
+  );
+}
+
+function addTest(container, title, hint, physW, physH, effDPR, drawFn) {
+  const cssW = physW / effDPR;
+  const cssH = physH / effDPR;
+
+  const block = document.createElement("div");
+  block.className = "test-block";
+
+  const lbl = document.createElement("label");
+  lbl.textContent = title;
+  block.appendChild(lbl);
+
+  const hint_el = document.createElement("div");
+  hint_el.style.cssText = "font-size:10px;color:#555;margin-bottom:6px;";
+  hint_el.textContent = hint;
+  block.appendChild(hint_el);
+
+  const c = document.createElement("canvas");
+  c.width  = physW;
+  c.height = physH;
+  c.style.width  = cssW + "px";
+  c.style.height = cssH + "px";
+  block.appendChild(c);
+
+  const ctx = c.getContext("2d");
+  drawFn(ctx, physW, physH, effDPR);
+
+  container.appendChild(block);
+}
+
+run();
+window.addEventListener("resize", run);
+</script>
+</body>
+</html>
