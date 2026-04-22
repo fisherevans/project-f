@@ -326,6 +326,10 @@ func (i *Instance) compositeToWindow(sceneCanvas, pixelGridCanvas *shaders.Canva
 
 func (i *Instance) renderDebugInfo(m *runtime.MemStats, frameStats, gameLogicStats *util.FloatStats, deltaTime float64) {
 	runtime.ReadMemStats(m)
+	wb := i.window.Bounds()
+	scale := overlay.GameCanvasScale(wb)
+	game.DebugTLf("Win: %.0fx%.0f  Scale: x%.0f  DPR: %.0f  UI: %.1fx",
+		wb.W(), wb.H(), scale, overlay.PhysicalDPR(), overlay.OverlayUIScale(wb))
 	game.DebugTLf("Memory: %vMB (Heap %vMB), GCs: %d", m.Alloc/1024/1024, m.HeapAlloc/1024/1024, m.NumGC)
 	game.DebugTLf("%s", frameStats.SummaryFPS())
 	game.DebugTLf("Game Logic %s", gameLogicStats.SummaryMS())
