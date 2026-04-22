@@ -25,10 +25,10 @@ func ApplyFullscreen(win *opengl.Window, fullscreen bool) {
 	}
 }
 
-// PhysicalDPR returns the effective DPR that the WASM backend's syncCanvasSize
-// chose for this device. Window.Bounds() reports physical pixels at this scale,
-// so layout math that needs CSS pixels must divide by this value.
-// Mirrors the effectiveDPR logic in the pixel fork so the two stay in sync.
+// PhysicalDPR returns the DPR the WASM backend applied when sizing the canvas
+// backing store: min(devicePixelRatio, MaxDevicePixelRatio). Window.Bounds()
+// reports physical pixels at this scale, so layout math that needs CSS pixels
+// must divide by this value.
 func PhysicalDPR() float64 {
 	native := js.Global().Get("devicePixelRatio").Float()
 	if native < 1 {
@@ -38,14 +38,7 @@ func PhysicalDPR() float64 {
 	if max <= 0 {
 		max = 3
 	}
-	limit := int(math.Min(math.Floor(native), math.Floor(max)))
-	for d := limit; d >= 1; d-- {
-		ratio := native / float64(d)
-		if math.Abs(ratio-math.Round(ratio)) < 0.1 {
-			return float64(d)
-		}
-	}
-	return 1
+	return math.Min(native, max)
 }
 
 func physicalDPR() float64 { return PhysicalDPR() }
