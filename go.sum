@@ -16,8 +16,8 @@ github.com/fisherevans/glhf/v2 v2.0.0-20260421020347-b30f28d254ab h1:MXWXDILB6G7
 github.com/fisherevans/glhf/v2 v2.0.0-20260421020347-b30f28d254ab/go.mod h1:9Q8UspSmdMkcS2ki3kpYiBBA7QwRYzgav7BYbCGb1kw=
 github.com/fisherevans/mainthread/v2 v2.0.0-20260421020339-08fc034e56e9 h1:jOWXZFwFU7a4aiQT9fH9tD0U7kKyMIfXoFMaQzlsCdk=
 github.com/fisherevans/mainthread/v2 v2.0.0-20260421020339-08fc034e56e9/go.mod h1:RLdqSRamocAGPzK9P4HsZf+WXL5bfHHtX78O6GkKaUw=
-github.com/fisherevans/pixel/v2 v2.0.0-20260421181638-ceba20e3b06f h1:b/E4ey/KOGnBIUdvfYWkYycAPf6mlYHxUoHFRxR/CR8=
-github.com/fisherevans/pixel/v2 v2.0.0-20260421181638-ceba20e3b06f/go.mod h1:4x2fUMpvunt+VFiBqd/5grkXCYTPoNwryqDWKnarFrs=
+github.com/fisherevans/pixel/v2 v2.0.0-20260422133724-7ad13d76136a h1:pEtsYFd3UdkSz0BWDMULoMe0sY4FmBqLw/P1N/gvbZ4=
+github.com/fisherevans/pixel/v2 v2.0.0-20260422133724-7ad13d76136a/go.mod h1:4x2fUMpvunt+VFiBqd/5grkXCYTPoNwryqDWKnarFrs=
 github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 h1:5BVwOaUSBTlVZowGO6VZGw2H/zl9nrd3eCZfYV+NfQA=
 github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a h1:vxnBhFDDT+xzxf1jTJKMKZw3H0swfWk9RpWbBbDK5+0=
