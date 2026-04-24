@@ -78,8 +78,8 @@ func (s Skill) Duration() int {
 	return len(s.Ticks) - 1
 }
 
-// validate checks that the skill is correctly defined, identifying all the problems with the skull definition and then
-// panicing with the full list of errors and the skill definition.
+// validate checks that the skill is correctly defined, identifying all the problems with the skill definition and then
+// panicking with the full list of errors and the skill definition.
 func (s Skill) validate() {
 	errors := []string{}
 	if s.Id == "" {
