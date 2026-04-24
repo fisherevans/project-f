@@ -7,59 +7,9 @@ import (
 	"fisherevans.com/project/f/internal/util"
 )
 
-func init() {
-	registerEventHandler("map1", func(_ *util.Properties) EventHandler {
-		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
-				if thisEntity.GetId() != event.TargetId {
-					return nil
-				}
-				return NewOutput().WithEffects(NewDialogueEffect("You've interacted with me!"))
-			},
-		}.CreateHandler()
-	})
-}
+// map1 handler migrated to assets/scripts/map1/main.yaml
 
-func init() {
-	type ExitChatterState struct {
-		Ready bool
-	}
-	registerEventHandler("exit_chatter", func(_ *util.Properties) EventHandler {
-		return BasicHandlerBuilder[ExitChatterState]{
-			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state ExitChatterState) *HandlerOutput {
-				return NewOutput().WithState(ExitChatterState{
-					Ready: true,
-				})
-			},
-			TimerComplete: func(thisEntity EntityReader, globals StateGlobalsReader, state ExitChatterState, event *EventTimerComplete) *HandlerOutput {
-				if event.CreatedBy != thisEntity.GetId() || event.TimerId != "reset" {
-					return nil
-				}
-				state.Ready = true
-				return NewOutput().WithState(state)
-			},
-			EntityZoneActivity: func(thisEntity EntityReader, globals StateGlobalsReader, state ExitChatterState, event *EventEntityZoneActivity) *HandlerOutput {
-				if event.ZoneId == "exit" &&
-					event.IsEntering &&
-					event.EntityId == globals.Get(globalVariableNamePlayerId).AsString("unknown") &&
-					state.Ready {
-					state.Ready = false
-					return NewOutput().WithState(state).WithEffects(
-						NewSerialPlan(
-							NewWaitForConditionEffect(func(s *State, _ float64) bool {
-								e, _ := s.entities.GetEntity(s.player)
-								return !e.IsMoving()
-							}),
-							NewChatterEffect(globals.Get(globalVariableNamePlayerId).AsString("unknown"), 5, "I should turn around..."),
-							NewTimerEffect(10).WithTimerId("reset"),
-						),
-					)
-				}
-				return nil
-			},
-		}.CreateHandler()
-	})
-}
+// exit_chatter handler migrated to assets/scripts/map1/main.yaml
 
 const doorStateVariable = "door_state"
 const doorOpen, doorClosed = "open", "closed"
