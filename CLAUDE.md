@@ -197,6 +197,29 @@ Contains `SpriteMetadata`, `SpriteTilesheet`, `SpriteTilesheetAnimation`,
 `SpriteFrame`, and related types. The game's resource loaders in
 `internal/resources/` import these types rather than defining their own.
 
+### Adventure script system
+
+Event handlers for adventure entities are defined in YAML files under
+`assets/scripts/`. Each file declares `handlers` (named event handlers
+attached to entities via Tiled map properties) and optional `sequences`
+(reusable step lists). Handlers have event hook fields (`on_interact_self`,
+`on_broadcast`, etc.) containing rules with optional filters, conditions,
+steps (effects), and handler state mutations.
+
+The complete schema for all step kinds, named actions, conditions, event
+hooks, and template variables is in `internal/schema/script_schema.json`.
+A human-readable reference is at `docs/script_reference.md` (regenerate
+via `go run ./cmd/gen_script_docs`). Tests in
+`internal/game/states/adventure/script_schema_test.go` enforce that the
+schema stays in sync with runtime registrations.
+
+Key files:
+- `internal/game/states/adventure/script_types.go` - YAML parsing types
+- `internal/game/states/adventure/script_effects.go` - step kind to Effect conversion
+- `internal/game/states/adventure/script_actions.go` - named action/condition registrations
+- `internal/game/states/adventure/script_adapter.go` - ScriptHandler (EventHandler implementation)
+- `internal/game/states/adventure/script_loader.go` - YAML file loading and handler registration
+
 ### Entry points
 
 - `cmd/development/dev_launcher.go` - dev launcher with hardcoded test scenarios
