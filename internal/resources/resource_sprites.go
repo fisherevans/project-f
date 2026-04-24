@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"fisherevans.com/project/f/assets"
+	"fisherevans.com/project/f/internal/schema"
 )
 
 var (
@@ -26,22 +27,7 @@ type spriteResource struct {
 	metadata SpriteMetadata
 }
 
-type SpriteMetadata struct {
-	Frame          *SpriteFrame                         `yaml:"frame,omitempty"`
-	Tilesheet      *SpriteTilesheet                     `yaml:"tilesheet,omitempty"`
-	Animations     map[string]*SpriteTilesheetAnimation `yaml:"animations,omitempty"`
-	Sprites        map[string]*TilesheetCoordinates     `yaml:"sprites"`
-	NonAtlasSprite bool                                 `yaml:"nonAtlasSprite,omitempty"`
-}
-
-func (m SpriteMetadata) init(img image.Image) {
-	if m.Frame != nil {
-		m.Frame.init(img)
-	}
-	if m.Tilesheet != nil {
-		m.Tilesheet.init(img)
-	}
-}
+type SpriteMetadata = schema.SpriteMetadata
 
 func GetSpriteNames() []string {
 	var names []string
@@ -89,7 +75,7 @@ func loadSpriteResource(path string, name string, data []byte) error {
 			log.Fatal().Msgf("Failed to decode metadata %s: %v", metadataPath, err)
 		}
 	}
-	metadata.init(img)
+	metadata.Init(img)
 
 	spriteResources[name] = spriteResource{
 		data:     img,

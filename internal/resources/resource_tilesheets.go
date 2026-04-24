@@ -2,12 +2,15 @@ package resources
 
 import (
 	"fmt"
-	"image"
 	_ "image/png"
 
+	"fisherevans.com/project/f/internal/schema"
 	"fisherevans.com/project/f/internal/util/pixelutil"
 	"github.com/rs/zerolog/log"
 )
+
+type SpriteTilesheet = schema.SpriteTilesheet
+type TilesheetCoordinates = schema.TilesheetCoordinates
 
 var (
 	tilesheets       = map[string]*SpriteTilesheet{}
@@ -50,20 +53,6 @@ func GetNamedTilesheetSpriteId(tilesheetName, spriteName string) TilesheetSprite
 	}
 }
 
-type SpriteTilesheet struct {
-	TileWidth  Pixels `yaml:"tileWidth"`
-	TileHeight Pixels `yaml:"tileHeight"`
-
-	// set when loaded
-	Columns int `yaml:"-"`
-	Rows    int `yaml:"-"`
-}
-
-func (t *SpriteTilesheet) init(img image.Image) {
-	t.Columns = img.Bounds().Dx() / t.TileWidth.Int()
-	t.Rows = img.Bounds().Dy() / t.TileHeight.Int()
-}
-
 type TilesheetSpriteId struct {
 	Tilesheet string `json:"tilesheet"`
 	Column    int    `json:"col"`
@@ -76,9 +65,4 @@ func (s TilesheetSpriteId) String() string {
 
 func (s TilesheetSpriteId) From(a *Atlas) pixelutil.BoundedDrawable {
 	return a.GetTilesheetSpriteById(s)
-}
-
-type TilesheetCoordinates struct {
-	Row    int `yaml:"row"`
-	Column int `yaml:"column"`
 }

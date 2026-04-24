@@ -3,12 +3,14 @@ module fisherevans.com/project/f
 go 1.25.0
 
 require (
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-gl/mathgl v1.1.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.6.0
 	github.com/gopxl/beep/v2 v2.1.1
 	github.com/gopxl/glhf/v2 v2.0.0
 	github.com/gopxl/pixel/v2 v2.3.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/lafriks/go-tiled v0.14.0
 	github.com/mattn/go-isatty v0.0.19
 	github.com/ncruces/zenity v0.10.14

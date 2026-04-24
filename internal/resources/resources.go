@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"fisherevans.com/project/f/assets"
+	"fisherevans.com/project/f/internal/schema"
 )
 
 const (
@@ -240,12 +241,4 @@ func jsonEncoder(resource any) ([]byte, error) {
 	return json.MarshalIndent(resource, "", "  ")
 }
 
-type Pixels int
-
-func (p Pixels) Float() float64 {
-	return float64(p)
-}
-
-func (p Pixels) Int() int {
-	return int(p)
-}
+type Pixels = schema.Pixels
