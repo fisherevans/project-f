@@ -14,7 +14,7 @@ import { apiImageUrl } from "@/api/client"
 import { TilesheetViewer } from "@/components/sprites/TilesheetViewer"
 import { SpriteAliasEditor } from "@/components/sprites/SpriteAliasEditor"
 
-import { AnimationEditor } from "@/components/sprites/AnimationEditor"
+import { AnimationModal } from "@/components/sprites/AnimationModal"
 import { FrameEditor } from "@/components/sprites/FrameEditor"
 import type { SpriteMetadata } from "@/types/sprites"
 
@@ -100,7 +100,6 @@ export function SpriteEditor() {
     const { data: sprite, isLoading, error } = useSprite(path)
     const saveMutation = useSaveSprite()
     const deleteMutation = useDeleteSpriteSidecar()
-    const [selectedAnimation, setSelectedAnimation] = useState<string | undefined>()
     const [pendingTile, setPendingTile] = useState<{ col: number; row: number } | null>(null)
     const [editedMeta, setEditedMeta] = useState<SpriteMetadata | null>(null)
     const [dirty, setDirty] = useState(false)
@@ -242,12 +241,33 @@ export function SpriteEditor() {
                                         tileHeight={tileHeight}
                                         sprites={meta.sprites}
                                         animations={meta.animations}
-                                        selectedAnimation={selectedAnimation}
                                         onTileClick={(col, row) => setPendingTile({ col, row })}
                                         bgClass={bgClass}
                                         tilesheet={meta.tilesheet!}
                                         onTilesheetChange={(ts) => updateMeta((prev) => ({ ...prev, tilesheet: ts }))}
                                     />
+                                    <div className="flex items-center gap-2">
+                                        <AnimationModal
+                                            animations={meta.animations ?? {}}
+                                            onChange={(animations) =>
+                                                updateMeta((prev) => ({
+                                                    ...prev,
+                                                    animations: Object.keys(animations).length > 0 ? animations : undefined,
+                                                }))
+                                            }
+                                            imageSrc={apiImageUrl(sprite.path)}
+                                            tileWidth={tileWidth}
+                                            tileHeight={tileHeight}
+                                            imageWidth={sprite.imageWidth}
+                                            imageHeight={sprite.imageHeight}
+                                            totalCols={totalCols}
+                                            totalRows={totalRows}
+                                            bgClass={bgClass}
+                                            sprites={meta.sprites}
+                                            tilesheet={meta.tilesheet!}
+                                            onTilesheetChange={(ts) => updateMeta((prev) => ({ ...prev, tilesheet: ts }))}
+                                        />
+                                    </div>
                                     <SpriteAliasEditor
                                         sprites={meta.sprites ?? {}}
                                         onChange={(sprites) =>
@@ -258,23 +278,6 @@ export function SpriteEditor() {
                                         }
                                         pendingTile={pendingTile}
                                         onClearPendingTile={() => setPendingTile(null)}
-                                    />
-                                    <AnimationEditor
-                                        animations={meta.animations ?? {}}
-                                        onChange={(animations) =>
-                                            updateMeta((prev) => ({
-                                                ...prev,
-                                                animations: Object.keys(animations).length > 0 ? animations : undefined,
-                                            }))
-                                        }
-                                        imageSrc={apiImageUrl(sprite.path)}
-                                        tileWidth={tileWidth}
-                                        tileHeight={tileHeight}
-                                        totalCols={totalCols}
-                                        totalRows={totalRows}
-                                        selectedAnimation={selectedAnimation}
-                                        onSelectAnimation={setSelectedAnimation}
-                                        bgClass={bgClass}
                                     />
                                 </>
                             )}
