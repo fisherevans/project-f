@@ -33,3 +33,37 @@ type ScaffoldRequest struct {
     Sprites    []string `json:"sprites"`
     Force      bool     `json:"force"`
 }
+
+type AudioEntry struct {
+    Path         string   `json:"path"`
+    Directory    string   `json:"directory"`
+    Name         string   `json:"name"`
+    Format       string   `json:"format"`
+    FileSize     int64    `json:"fileSize"`
+    Category     string   `json:"category"`
+    HasYAML      bool     `json:"hasYaml"`
+    Gain         *float64 `json:"gain,omitempty"`
+    ResourceName string   `json:"resourceName"`
+}
+
+type AudioDetail struct {
+    AudioEntry
+    ResourceName string                `json:"resourceName"`
+    Metadata     *schema.AudioMetadata `json:"metadata,omitempty"`
+    RawYAML      string                `json:"rawYaml,omitempty"`
+}
+
+type ScriptFileEntry struct {
+    Path          string   `json:"path"`
+    Directory     string   `json:"directory"`
+    Name          string   `json:"name"`
+    HandlerCount  int      `json:"handlerCount"`
+    SequenceCount int      `json:"sequenceCount"`
+    HandlerNames  []string `json:"handlerNames"`
+    SequenceNames []string `json:"sequenceNames,omitempty"`
+}
+
+type ScriptFileDetail struct {
+    ScriptFileEntry
+    RawYAML string `json:"rawYaml"`
+}

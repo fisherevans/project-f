@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { spriteKeys } from "@/api/sprites";
+import { audioKeys } from "@/api/audio";
+import { scriptKeys } from "@/api/scripts";
 
 interface WebSocketState {
     connected: boolean;
@@ -33,6 +35,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
                     const msg = JSON.parse(event.data);
                     if (msg.type === "change" || msg.type === "create" || msg.type === "remove") {
                         queryClient.invalidateQueries({ queryKey: spriteKeys.all });
+                        queryClient.invalidateQueries({ queryKey: audioKeys.all });
+                        queryClient.invalidateQueries({ queryKey: scriptKeys.all });
                     }
                 } catch {
                     // ignore malformed messages

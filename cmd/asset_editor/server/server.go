@@ -14,6 +14,8 @@ type Server struct {
 	assetsDir  string
 	devMode    bool
 	sprites    *SpriteService
+	audio      *AudioService
+	scripts    *ScriptService
 	hub        *Hub
 	frontendFS fs.FS
 }
@@ -27,6 +29,8 @@ func New(assetsDir string, devMode bool, frontendFS fs.FS) *Server {
 		assetsDir:  assetsDir,
 		devMode:    devMode,
 		sprites:    NewSpriteService(assetsDir),
+		audio:      NewAudioService(assetsDir),
+		scripts:    NewScriptService(assetsDir),
 		hub:        NewHub(assetsDir),
 		frontendFS: frontendFS,
 	}
@@ -58,6 +62,17 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/v1/images/{path...}", s.handleServeImage)
 
 	s.mux.HandleFunc("POST /api/v1/sprites/_scaffold", s.handleScaffold)
+
+	s.mux.HandleFunc("GET /api/v1/audio", s.handleListAudio)
+	s.mux.HandleFunc("GET /api/v1/audio-files/{path...}", s.handleServeAudioFile)
+	s.mux.HandleFunc("GET /api/v1/audio/{name...}", s.handleGetAudio)
+	s.mux.HandleFunc("PUT /api/v1/audio/{name...}", s.handleSaveAudio)
+
+	s.mux.HandleFunc("GET /api/v1/script-schema", s.handleGetScriptSchema)
+	s.mux.HandleFunc("GET /api/v1/scripts", s.handleListScripts)
+	s.mux.HandleFunc("GET /api/v1/scripts/{name...}", s.handleGetScript)
+	s.mux.HandleFunc("PUT /api/v1/scripts/{name...}", s.handleSaveScript)
+	s.mux.HandleFunc("DELETE /api/v1/scripts/{name...}", s.handleDeleteScript)
 
 	s.mux.HandleFunc("GET /api/v1/ws", s.handleWebSocket)
 

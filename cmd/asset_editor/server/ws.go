@@ -87,7 +87,15 @@ func (h *Hub) watch() {
 
 	spritesDir := filepath.Join(h.assetsDir, "sprites")
 	if err := addDirRecursive(watcher, spritesDir); err != nil {
-		log.Printf("fsnotify add: %v", err)
+		log.Printf("fsnotify add sprites: %v", err)
+	}
+	audioDir := filepath.Join(h.assetsDir, "audio")
+	if err := addDirRecursive(watcher, audioDir); err != nil {
+		log.Printf("fsnotify add audio: %v", err)
+	}
+	scriptsDir := filepath.Join(h.assetsDir, "scripts")
+	if err := addDirRecursive(watcher, scriptsDir); err != nil {
+		log.Printf("fsnotify add scripts: %v", err)
 	}
 
 	// Debounce: collapse rapid events on the same path.
@@ -103,7 +111,9 @@ func (h *Hub) watch() {
 			}
 
 			ext := strings.ToLower(filepath.Ext(ev.Name))
-			if ext != ".png" && ext != ".yaml" && ext != ".yml" {
+			switch ext {
+			case ".png", ".yaml", ".yml", ".wav", ".mp3", ".ogg", ".flac":
+			default:
 				continue
 			}
 

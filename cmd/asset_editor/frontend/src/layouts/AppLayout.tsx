@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Image } from "lucide-react";
+import { Image, Volume2, ScrollText } from "lucide-react";
 
 export function AppLayout() {
     return (
@@ -17,6 +17,32 @@ export function AppLayout() {
                     title="Sprites"
                 >
                     <Image className="h-4 w-4" />
+                </NavLink>
+                <NavLink
+                    to="/audio"
+                    className={({ isActive }) =>
+                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                            isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`
+                    }
+                    title="Audio"
+                >
+                    <Volume2 className="h-4 w-4" />
+                </NavLink>
+                <NavLink
+                    to="/scripts"
+                    className={({ isActive }) =>
+                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                            isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`
+                    }
+                    title="Scripts"
+                >
+                    <ScrollText className="h-4 w-4" />
                 </NavLink>
             </nav>
             <main className="flex-1 overflow-hidden">
