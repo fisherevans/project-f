@@ -140,11 +140,6 @@ func (s *SpriteService) SaveSprite(name string, meta *schema.SpriteMetadata) err
     root := s.spritesDir()
     yamlPath := filepath.Join(root, name+".yaml")
 
-    data, err := yaml.Marshal(meta)
-    if err != nil {
-        return fmt.Errorf("marshaling yaml: %w", err)
-    }
-
     dir := filepath.Dir(yamlPath)
     tmp, err := os.CreateTemp(dir, ".sprite-*.yaml")
     if err != nil {
@@ -156,8 +151,13 @@ func (s *SpriteService) SaveSprite(name string, meta *schema.SpriteMetadata) err
         _ = os.Remove(tmpName)
     }()
 
-    if _, err := tmp.Write(data); err != nil {
-        return fmt.Errorf("writing temp file: %w", err)
+    enc := yaml.NewEncoder(tmp)
+    enc.SetIndent(2)
+    if err := enc.Encode(meta); err != nil {
+        return fmt.Errorf("marshaling yaml: %w", err)
+    }
+    if err := enc.Close(); err != nil {
+        return fmt.Errorf("closing encoder: %w", err)
     }
     if err := tmp.Close(); err != nil {
         return fmt.Errorf("closing temp file: %w", err)

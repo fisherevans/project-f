@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSprites } from "@/api/sprites"
 import { apiImageUrl } from "@/api/client"
 import { cn } from "@/lib/utils"
+import { ScaffoldDialog } from "@/components/sprites/ScaffoldDialog"
 import type { SpriteEntry } from "@/types/sprites"
 
 interface DirectoryNode {
@@ -96,6 +97,15 @@ export function SpriteBrowser() {
         return buildTree(sprites)
     }, [sprites])
 
+    const directories = useMemo(() => {
+        if (!sprites) return []
+        const dirs = new Set<string>()
+        for (const s of sprites) {
+            if (s.directory) dirs.add(s.directory)
+        }
+        return Array.from(dirs).sort()
+    }, [sprites])
+
     const filtered = useMemo(() => {
         if (!sprites) return []
         let items = sprites
@@ -153,13 +163,14 @@ export function SpriteBrowser() {
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="p-3 border-b border-border">
+                <div className="p-3 border-b border-border flex items-center gap-3">
                     <Input
                         placeholder="Filter sprites..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="max-w-sm"
                     />
+                    <ScaffoldDialog directories={directories} />
                 </div>
                 <ScrollArea className="flex-1">
                     <div className="p-3 grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
