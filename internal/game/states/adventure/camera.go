@@ -321,11 +321,9 @@ func (s *State) PopOverrideCamera(maintainCurrentLocation bool) {
 		log.Warn().Msg("camera isn't overridden, nothing to do")
 		return
 	}
-	// todo consider making single highly customizable camera
-	newFollow, newOk := getCameraToMutate(override.newCamera).(*EntityCamera)
-	replacedFollow, replacedOk := getCameraToMutate(override.replacedCamera).(*EntityCamera)
-	if newOk && replacedOk && maintainCurrentLocation {
-		replacedFollow.SetLocation(newFollow.CurrentLocation())
+	if maintainCurrentLocation {
+		current := getCameraToMutate(override.newCamera).CurrentLocation()
+		getCameraToMutate(override.replacedCamera).SetLocation(current)
 	}
 	s.camera = override.replacedCamera
 }
