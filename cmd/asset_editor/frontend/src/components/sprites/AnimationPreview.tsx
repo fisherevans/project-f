@@ -7,24 +7,22 @@ import type { SpriteTilesheetAnimation } from "@/types/sprites"
 
 interface AnimationPreviewProps {
     imageSrc: string
-    imageWidth: number
-    imageHeight: number
     tileWidth: number
     tileHeight: number
     totalCols: number
     totalRows: number
     animation: SpriteTilesheetAnimation
+    bgClass?: string
 }
 
 export function AnimationPreview({
     imageSrc,
-    imageWidth: _imageWidth,
-    imageHeight: _imageHeight,
     tileWidth,
     tileHeight,
     totalCols,
     totalRows,
     animation,
+    bgClass,
 }: AnimationPreviewProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const stripCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -36,9 +34,7 @@ export function AnimationPreview({
     const [speed, setSpeed] = useState(1)
     const [frameIndex, setFrameIndex] = useState(0)
     const [frameCount, setFrameCount] = useState(0)
-
-    void _imageWidth
-    void _imageHeight
+    const [imageLoaded, setImageLoaded] = useState(false)
 
     const previewScale = Math.max(1, Math.floor(128 / Math.max(tileWidth, tileHeight)))
 
@@ -54,8 +50,10 @@ export function AnimationPreview({
         const img = new Image()
         img.onload = () => {
             imageRef.current = img
+            setImageLoaded(true)
         }
         img.src = imageSrc
+        return () => { setImageLoaded(false) }
     }, [imageSrc])
 
     const drawFrame = useCallback((player: AnimationPlayer) => {
@@ -109,6 +107,7 @@ export function AnimationPreview({
     }, [tileWidth, tileHeight])
 
     useEffect(() => {
+        if (!imageLoaded) return
         const animate = (time: number) => {
             const player = playerRef.current
             if (!player) return
@@ -133,7 +132,7 @@ export function AnimationPreview({
             }
         }
         return () => cancelAnimationFrame(rafRef.current)
-    }, [playing, speed, drawFrame, drawStrip])
+    }, [playing, speed, drawFrame, drawStrip, imageLoaded])
 
     const handleStepForward = () => {
         playerRef.current?.stepForward()
@@ -186,7 +185,7 @@ export function AnimationPreview({
     return (
         <div className="space-y-3">
             <div className="flex items-start gap-4">
-                <div className="rounded border border-border bg-zinc-900 overflow-hidden inline-block">
+                <div className={`rounded border border-border overflow-hidden inline-block ${bgClass ?? "bg-zinc-900"}`}>
                     <canvas
                         ref={canvasRef}
                         width={tileWidth * previewScale}
@@ -194,7 +193,7 @@ export function AnimationPreview({
                         style={{ imageRendering: "pixelated" }}
                     />
                 </div>
-                <div className="space-y-2 text-xs text-muted-foreground">
+                <div className="space-y-1 text-xs text-muted-foreground">
                     <p>Frame: {frameIndex + 1} / {frameCount}</p>
                     {currentTile && (
                         <>
@@ -206,20 +205,20 @@ export function AnimationPreview({
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={handleReset}>
-                    <RotateCcw className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={handleReset}>
+                    <RotateCcw className="h-3 w-3" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleStepBackward}>
-                    <SkipBack className="h-3.5 w-3.5" />
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={handleStepBackward}>
+                    <SkipBack className="h-3 w-3" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setPlaying(!playing)}>
-                    {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setPlaying(!playing)}>
+                    {playing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleStepForward}>
-                    <SkipForward className="h-3.5 w-3.5" />
+                <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={handleStepForward}>
+                    <SkipForward className="h-3 w-3" />
                 </Button>
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 ml-3">
                     <span className="text-xs text-muted-foreground w-8">x{speed.toFixed(1)}</span>
                     <Slider
                         className="w-24"

@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { ArrowLeft, Save, Trash2 } from "lucide-react"
+import { Save, Trash2, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -13,13 +12,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useSprite, useSaveSprite, useDeleteSpriteSidecar } from "@/api/sprites"
 import { apiImageUrl } from "@/api/client"
 import { TilesheetViewer } from "@/components/sprites/TilesheetViewer"
-import { TilesheetConfigForm } from "@/components/sprites/TilesheetConfigForm"
 import { SpriteAliasEditor } from "@/components/sprites/SpriteAliasEditor"
+
 import { AnimationEditor } from "@/components/sprites/AnimationEditor"
 import { FrameEditor } from "@/components/sprites/FrameEditor"
 import type { SpriteMetadata } from "@/types/sprites"
 
 type SpriteType = "plain" | "tilesheet" | "frame" | "nonAtlas"
+
+const BG_OPTIONS = [
+    { value: "checker", label: "Checker", style: "bg-[repeating-conic-gradient(#808080_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]" },
+    { value: "black", label: "Black", style: "bg-black" },
+    { value: "white", label: "White", style: "bg-white" },
+    { value: "magenta", label: "Magenta", style: "bg-fuchsia-600" },
+] as const
 
 function detectType(meta: SpriteMetadata | undefined): SpriteType {
     if (!meta) return "plain"
@@ -33,6 +39,60 @@ function cloneMetadata(meta: SpriteMetadata): SpriteMetadata {
     return JSON.parse(JSON.stringify(meta))
 }
 
+function Breadcrumb({ path, navigate }: { path: string; navigate: (path: string) => void }) {
+    const parts = path.split("/")
+    const name = parts.pop()!
+
+    return (
+        <div className="flex items-center gap-0.5 text-sm min-w-0">
+            {parts.map((part, i) => {
+                const dirPath = parts.slice(0, i + 1).join("/")
+                return (
+                    <span key={i} className="flex items-center gap-0.5">
+                        <button
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={() => navigate(`/sprites?dir=${encodeURIComponent(dirPath)}`)}
+                        >
+                            {part}
+                        </button>
+                        <span className="text-muted-foreground">/</span>
+                    </span>
+                )
+            })}
+            <span className="font-medium truncate">{name}</span>
+        </div>
+    )
+}
+
+function CopyButton({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false)
+    const handleCopy = () => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+    }
+    return (
+        <Button variant="ghost" size="sm" className="h-6 px-1.5" onClick={handleCopy} title="Copy sprite path">
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+        </Button>
+    )
+}
+
+function BgPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    return (
+        <div className="flex items-center gap-1">
+            {BG_OPTIONS.map((opt) => (
+                <button
+                    key={opt.value}
+                    className={`w-5 h-5 rounded border ${opt.style} ${value === opt.value ? "ring-2 ring-primary ring-offset-1 ring-offset-background" : "border-border"}`}
+                    onClick={() => onChange(opt.value)}
+                    title={opt.label}
+                />
+            ))}
+        </div>
+    )
+}
+
 export function SpriteEditor() {
     const params = useParams()
     const path = params["*"] ?? ""
@@ -44,6 +104,7 @@ export function SpriteEditor() {
     const [pendingTile, setPendingTile] = useState<{ col: number; row: number } | null>(null)
     const [editedMeta, setEditedMeta] = useState<SpriteMetadata | null>(null)
     const [dirty, setDirty] = useState(false)
+    const [bg, setBg] = useState("checker")
 
     useEffect(() => {
         if (sprite?.metadata) {
@@ -94,10 +155,6 @@ export function SpriteEditor() {
         })
     }
 
-    const handleTileClick = (col: number, row: number) => {
-        setPendingTile({ col, row })
-    }
-
     if (isLoading) {
         return <div className="flex items-center justify-center h-full text-muted-foreground">Loading...</div>
     }
@@ -107,7 +164,6 @@ export function SpriteEditor() {
             <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
                 <p>Sprite not found: {path}</p>
                 <Button variant="outline" onClick={() => navigate("/sprites")}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to browser
                 </Button>
             </div>
@@ -122,62 +178,51 @@ export function SpriteEditor() {
     const tileHeight = meta.tilesheet?.tileHeight ?? sprite.imageHeight
     const totalCols = tileWidth > 0 ? Math.floor(sprite.imageWidth / tileWidth) : 1
     const totalRows = tileHeight > 0 ? Math.floor(sprite.imageHeight / tileHeight) : 1
+    const bgClass = BG_OPTIONS.find((o) => o.value === bg)?.style ?? BG_OPTIONS[0].style
 
     return (
         <div className="flex h-full flex-col">
-            <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-                <Button variant="ghost" size="sm" onClick={() => navigate("/sprites")}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
+            <div className="flex items-center gap-3 border-b border-border px-4 py-2 shrink-0">
                 <div className="flex-1 min-w-0">
-                    <h1 className="text-sm font-medium truncate">{sprite.path}</h1>
+                    <div className="flex items-center gap-1">
+                        <Breadcrumb path={sprite.path} navigate={navigate} />
+                        <CopyButton text={sprite.path} />
+                    </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{sprite.imageWidth}x{sprite.imageHeight}px</span>
                         {hasTilesheet && (
                             <>
                                 <Separator orientation="vertical" className="h-3" />
-                                <span>{tileWidth}x{tileHeight} tiles</span>
-                                <Separator orientation="vertical" className="h-3" />
-                                <span>{totalCols}x{totalRows} grid</span>
+                                <span>{tileWidth}x{tileHeight} tiles, {totalCols}x{totalRows} grid</span>
                             </>
                         )}
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Select value={currentType} onValueChange={(v) => handleTypeChange(v as SpriteType)}>
-                        <SelectTrigger className="w-32 h-8">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="plain">Plain</SelectItem>
-                            <SelectItem value="tilesheet">Tilesheet</SelectItem>
-                            <SelectItem value="frame">Frame</SelectItem>
-                            <SelectItem value="nonAtlas">Non-Atlas</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    {sprite.hasYaml && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleDelete}
-                            disabled={deleteMutation.isPending}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    )}
-                    <Button
-                        size="sm"
-                        onClick={handleSave}
-                        disabled={!dirty || saveMutation.isPending}
-                    >
-                        <Save className="h-4 w-4 mr-1" />
-                        {saveMutation.isPending ? "Saving..." : "Save"}
-                        {dirty && <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0">modified</Badge>}
+                <BgPicker value={bg} onChange={setBg} />
+                <Select value={currentType} onValueChange={(v) => handleTypeChange(v as SpriteType)}>
+                    <SelectTrigger className="w-28 h-7 text-xs">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="plain">Plain</SelectItem>
+                        <SelectItem value="tilesheet">Tilesheet</SelectItem>
+                        <SelectItem value="frame">Frame</SelectItem>
+                        <SelectItem value="nonAtlas">Non-Atlas</SelectItem>
+                    </SelectContent>
+                </Select>
+                {sprite.hasYaml && (
+                    <Button variant="outline" size="sm" className="h-7" onClick={handleDelete} disabled={deleteMutation.isPending}>
+                        <Trash2 className="h-3.5 w-3.5" />
                     </Button>
-                </div>
+                )}
+                <Button size="sm" className="h-7" onClick={handleSave} disabled={!dirty || saveMutation.isPending}>
+                    <Save className="h-3.5 w-3.5 mr-1" />
+                    {saveMutation.isPending ? "Saving..." : "Save"}
+                    {dirty && <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0">*</Badge>}
+                </Button>
             </div>
 
-            <ScrollArea className="flex-1">
+            <div className="flex-1 overflow-y-auto">
                 <div className="p-4 space-y-4">
                     <Tabs defaultValue="edit">
                         <TabsList>
@@ -198,13 +243,10 @@ export function SpriteEditor() {
                                         sprites={meta.sprites}
                                         animations={meta.animations}
                                         selectedAnimation={selectedAnimation}
-                                        onTileClick={handleTileClick}
-                                    />
-                                    <TilesheetConfigForm
+                                        onTileClick={(col, row) => setPendingTile({ col, row })}
+                                        bgClass={bgClass}
                                         tilesheet={meta.tilesheet!}
-                                        onChange={(tilesheet) => updateMeta((prev) => ({ ...prev, tilesheet }))}
-                                        imageWidth={sprite.imageWidth}
-                                        imageHeight={sprite.imageHeight}
+                                        onTilesheetChange={(ts) => updateMeta((prev) => ({ ...prev, tilesheet: ts }))}
                                     />
                                     <SpriteAliasEditor
                                         sprites={meta.sprites ?? {}}
@@ -226,14 +268,13 @@ export function SpriteEditor() {
                                             }))
                                         }
                                         imageSrc={apiImageUrl(sprite.path)}
-                                        imageWidth={sprite.imageWidth}
-                                        imageHeight={sprite.imageHeight}
                                         tileWidth={tileWidth}
                                         tileHeight={tileHeight}
                                         totalCols={totalCols}
                                         totalRows={totalRows}
                                         selectedAnimation={selectedAnimation}
                                         onSelectAnimation={setSelectedAnimation}
+                                        bgClass={bgClass}
                                     />
                                 </>
                             )}
@@ -268,7 +309,7 @@ export function SpriteEditor() {
                             )}
 
                             {currentType === "plain" && !hasTilesheet && !hasFrame && (
-                                <div className="overflow-auto rounded border border-border bg-[repeating-conic-gradient(#808080_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] inline-block">
+                                <div className={`overflow-auto rounded border border-border ${bgClass} inline-block`}>
                                     <img
                                         src={apiImageUrl(sprite.path)}
                                         alt={sprite.path}
@@ -279,7 +320,7 @@ export function SpriteEditor() {
                         </TabsContent>
 
                         <TabsContent value="preview" className="space-y-4">
-                            <div className="overflow-auto rounded border border-border bg-[repeating-conic-gradient(#808080_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] inline-block">
+                            <div className={`overflow-auto rounded border border-border ${bgClass} inline-block`}>
                                 <img
                                     src={apiImageUrl(sprite.path)}
                                     alt={sprite.path}
@@ -301,7 +342,7 @@ export function SpriteEditor() {
                         )}
                     </Tabs>
                 </div>
-            </ScrollArea>
+            </div>
         </div>
     )
 }

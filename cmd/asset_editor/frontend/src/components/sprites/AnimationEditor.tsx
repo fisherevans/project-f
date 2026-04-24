@@ -12,29 +12,26 @@ interface AnimationEditorProps {
     animations: Record<string, SpriteTilesheetAnimation>
     onChange: (animations: Record<string, SpriteTilesheetAnimation>) => void
     imageSrc: string
-    imageWidth: number
-    imageHeight: number
     tileWidth: number
     tileHeight: number
     totalCols: number
     totalRows: number
     selectedAnimation?: string
     onSelectAnimation: (name: string | undefined) => void
-    onTileClick?: (col: number, row: number) => void
+    bgClass?: string
 }
 
 export function AnimationEditor({
     animations,
     onChange,
     imageSrc,
-    imageWidth,
-    imageHeight,
     tileWidth,
     tileHeight,
     totalCols,
     totalRows,
     selectedAnimation,
     onSelectAnimation,
+    bgClass,
 }: AnimationEditorProps) {
     const [newName, setNewName] = useState("")
     const [renamingKey, setRenamingKey] = useState<string | null>(null)
@@ -176,13 +173,12 @@ export function AnimationEditor({
                         <Separator />
                         <AnimationPreview
                             imageSrc={imageSrc}
-                            imageWidth={imageWidth}
-                            imageHeight={imageHeight}
                             tileWidth={tileWidth}
                             tileHeight={tileHeight}
                             totalCols={totalCols}
                             totalRows={totalRows}
                             animation={selected}
+                            bgClass={bgClass}
                         />
                     </>
                 )}

@@ -1,7 +1,6 @@
-import { useState, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useMemo, useEffect } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSprites } from "@/api/sprites"
 import { apiImageUrl } from "@/api/client"
 import { cn } from "@/lib/utils"
@@ -91,6 +90,12 @@ export function SpriteBrowser() {
     const [search, setSearch] = useState("")
     const [selectedDir, setSelectedDir] = useState("")
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+
+    useEffect(() => {
+        const dir = searchParams.get("dir")
+        if (dir) setSelectedDir(dir)
+    }, [searchParams])
 
     const tree = useMemo(() => {
         if (!sprites) return null
@@ -137,7 +142,7 @@ export function SpriteBrowser() {
                         Directories
                     </span>
                 </div>
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                     <div className="p-1">
                         <button
                             className={cn(
@@ -159,7 +164,7 @@ export function SpriteBrowser() {
                             />
                         )}
                     </div>
-                </ScrollArea>
+                </div>
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -172,7 +177,7 @@ export function SpriteBrowser() {
                     />
                     <ScaffoldDialog directories={directories} />
                 </div>
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                     <div className="p-3 grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
                         {filtered.map((sprite) => (
                             <button
@@ -213,7 +218,7 @@ export function SpriteBrowser() {
                             </div>
                         )}
                     </div>
-                </ScrollArea>
+                </div>
             </div>
         </div>
     )

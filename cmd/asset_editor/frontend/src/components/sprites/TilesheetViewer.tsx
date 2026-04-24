@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
-import type { TilesheetCoordinates, SpriteTilesheetAnimation } from "@/types/sprites"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import type { TilesheetCoordinates, SpriteTilesheetAnimation, SpriteTilesheet } from "@/types/sprites"
 
 interface TilesheetViewerProps {
     imageSrc: string
@@ -12,6 +14,9 @@ interface TilesheetViewerProps {
     animations?: Record<string, SpriteTilesheetAnimation>
     selectedAnimation?: string
     onTileClick?: (col: number, row: number) => void
+    bgClass?: string
+    tilesheet: SpriteTilesheet
+    onTilesheetChange: (ts: SpriteTilesheet) => void
 }
 
 const ZOOM_LEVELS = [1, 2, 4, 8] as const
@@ -26,6 +31,9 @@ export function TilesheetViewer({
     animations,
     selectedAnimation,
     onTileClick,
+    bgClass,
+    tilesheet,
+    onTilesheetChange,
 }: TilesheetViewerProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const [zoom, setZoom] = useState(2)
@@ -47,7 +55,6 @@ export function TilesheetViewer({
         ctx.clearRect(0, 0, canvasWidth, canvasHeight)
         ctx.drawImage(imageRef.current, 0, 0, canvasWidth, canvasHeight)
 
-        // Grid lines
         ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"
         ctx.lineWidth = 1
         ctx.setLineDash([2, 2])
@@ -67,7 +74,6 @@ export function TilesheetViewer({
         }
         ctx.setLineDash([])
 
-        // Named sprites (green)
         if (sprites) {
             for (const [name, coords] of Object.entries(sprites)) {
                 const x = (coords.column - 1) * tileWidth * zoom
@@ -78,14 +84,13 @@ export function TilesheetViewer({
                 ctx.lineWidth = 2
                 ctx.strokeRect(x + 1, y + 1, tileWidth * zoom - 2, tileHeight * zoom - 2)
                 ctx.fillStyle = "rgba(0, 0, 0, 0.6)"
+                ctx.font = "10px monospace"
                 ctx.fillRect(x + 1, y + 1, ctx.measureText(name).width + 4, 12)
                 ctx.fillStyle = "rgba(34, 197, 94, 1)"
-                ctx.font = "10px monospace"
                 ctx.fillText(name, x + 3, y + 11)
             }
         }
 
-        // Animation frames (blue)
         if (selectedAnimation && animations?.[selectedAnimation]) {
             const anim = animations[selectedAnimation]
             const tiles = getAnimationTiles(anim, cols, rows)
@@ -103,7 +108,6 @@ export function TilesheetViewer({
             })
         }
 
-        // Hovered tile
         if (hoverTile) {
             const x = (hoverTile.col - 1) * tileWidth * zoom
             const y = (hoverTile.row - 1) * tileHeight * zoom
@@ -153,16 +157,33 @@ export function TilesheetViewer({
 
     return (
         <div>
-            <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs text-muted-foreground">
-                    {cols}x{rows} tiles ({tileWidth}x{tileHeight}px each)
-                </span>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs">
+                    <Label className="text-xs text-muted-foreground">Tile</Label>
+                    <Input
+                        type="number"
+                        className="w-14 h-6 text-xs px-1"
+                        min={1}
+                        value={tilesheet.tileWidth}
+                        onChange={(e) => onTilesheetChange({ ...tilesheet, tileWidth: parseInt(e.target.value) || 1 })}
+                    />
+                    <span className="text-muted-foreground">x</span>
+                    <Input
+                        type="number"
+                        className="w-14 h-6 text-xs px-1"
+                        min={1}
+                        value={tilesheet.tileHeight}
+                        onChange={(e) => onTilesheetChange({ ...tilesheet, tileHeight: parseInt(e.target.value) || 1 })}
+                    />
+                    <span className="text-muted-foreground">= {cols}x{rows} grid</span>
+                </div>
                 <div className="flex gap-1 ml-auto">
                     {ZOOM_LEVELS.map((z) => (
                         <Button
                             key={z}
                             variant={zoom === z ? "default" : "outline"}
                             size="sm"
+                            className="h-6 w-7 text-xs p-0"
                             onClick={() => setZoom(z)}
                         >
                             {z}x
@@ -171,11 +192,11 @@ export function TilesheetViewer({
                 </div>
                 {hoverTile && (
                     <span className="text-xs text-muted-foreground">
-                        Row {hoverTile.row}, Col {hoverTile.col}
+                        r{hoverTile.row} c{hoverTile.col}
                     </span>
                 )}
             </div>
-            <div className="overflow-auto bg-zinc-900 rounded border border-border">
+            <div className={`overflow-auto rounded border border-border ${bgClass ?? "bg-zinc-900"}`}>
                 <canvas
                     ref={canvasRef}
                     width={canvasWidth}
