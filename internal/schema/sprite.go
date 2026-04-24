@@ -2,13 +2,12 @@ package schema
 
 import "image"
 
-// SpriteMetadata is the top-level structure of a sprite YAML sidecar.
 type SpriteMetadata struct {
-    Frame          *SpriteFrame                         `yaml:"frame,omitempty"`
-    Tilesheet      *SpriteTilesheet                     `yaml:"tilesheet,omitempty"`
-    Animations     map[string]*SpriteTilesheetAnimation `yaml:"animations,omitempty"`
-    Sprites        map[string]*TilesheetCoordinates     `yaml:"sprites"`
-    NonAtlasSprite bool                                 `yaml:"nonAtlasSprite,omitempty"`
+    Frame          *SpriteFrame                         `yaml:"frame,omitempty" json:"frame,omitempty"`
+    Tilesheet      *SpriteTilesheet                     `yaml:"tilesheet,omitempty" json:"tilesheet,omitempty"`
+    Animations     map[string]*SpriteTilesheetAnimation `yaml:"animations,omitempty" json:"animations,omitempty"`
+    Sprites        map[string]*TilesheetCoordinates     `yaml:"sprites" json:"sprites,omitempty"`
+    NonAtlasSprite bool                                 `yaml:"nonAtlasSprite,omitempty" json:"nonAtlasSprite,omitempty"`
 }
 
 func (m SpriteMetadata) Init(img image.Image) {

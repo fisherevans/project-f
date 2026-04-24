@@ -2,14 +2,12 @@ package schema
 
 import "image"
 
-// SpriteTilesheet describes a grid-based sprite sheet.
 type SpriteTilesheet struct {
-    TileWidth  Pixels `yaml:"tileWidth"`
-    TileHeight Pixels `yaml:"tileHeight"`
+    TileWidth  Pixels `yaml:"tileWidth" json:"tileWidth"`
+    TileHeight Pixels `yaml:"tileHeight" json:"tileHeight"`
 
-    // Set when loaded from an image.
-    Columns int `yaml:"-"`
-    Rows    int `yaml:"-"`
+    Columns int `yaml:"-" json:"columns,omitempty"`
+    Rows    int `yaml:"-" json:"rows,omitempty"`
 }
 
 func (t *SpriteTilesheet) Init(img image.Image) {
@@ -17,8 +15,7 @@ func (t *SpriteTilesheet) Init(img image.Image) {
     t.Rows = img.Bounds().Dy() / t.TileHeight.Int()
 }
 
-// TilesheetCoordinates identifies a named sprite cell in a tilesheet.
 type TilesheetCoordinates struct {
-    Row    int `yaml:"row"`
-    Column int `yaml:"column"`
+    Row    int `yaml:"row" json:"row"`
+    Column int `yaml:"column" json:"column"`
 }

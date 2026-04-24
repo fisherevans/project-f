@@ -27,10 +27,10 @@ const (
 )
 
 type SpriteFrame struct {
-    CutMargin  map[FrameSide]int       `yaml:"cutMargin"`
-    Padding    map[FrameSide]int       `yaml:"padding"`
-    FrameModes map[FrameSide]FrameMode `yaml:"frameModes"`
-    Defaults   SpriteFrameDefaults     `yaml:"defaults"`
+    CutMargin  map[FrameSide]int       `yaml:"cutMargin" json:"cutMargin,omitempty"`
+    Padding    map[FrameSide]int       `yaml:"padding" json:"padding,omitempty"`
+    FrameModes map[FrameSide]FrameMode `yaml:"frameModes" json:"frameModes,omitempty"`
+    Defaults   SpriteFrameDefaults     `yaml:"defaults" json:"defaults"`
 }
 
 func FillDefaults[T any](ref *map[FrameSide]T, defaultValue T, sides ...FrameSide) {
@@ -76,9 +76,9 @@ func (sf *SpriteFrame) LeftPadding() int {
 }
 
 type SpriteFrameDefaults struct {
-    CutMargin int       `yaml:"cutMargin"`
-    Padding   int       `yaml:"padding"`
-    FrameMode FrameMode `yaml:"frameMode"`
+    CutMargin int       `yaml:"cutMargin" json:"cutMargin"`
+    Padding   int       `yaml:"padding" json:"padding"`
+    FrameMode FrameMode `yaml:"frameMode" json:"frameMode"`
 }
 
 type FrameSpriteId struct {
