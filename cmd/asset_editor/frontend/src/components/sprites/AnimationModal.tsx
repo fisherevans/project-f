@@ -41,7 +41,13 @@ export function AnimationModal({
     onTilesheetChange,
 }: AnimationModalProps) {
     const [open, setOpen] = useState(false)
-    const [selectedAnimation, setSelectedAnimation] = useState<string | undefined>()
+    const [selectedAnimation, setSelectedAnimationRaw] = useState<string | undefined>()
+    const [selectedTileIndex, setSelectedTileIndex] = useState<number | undefined>()
+
+    const setSelectedAnimation = (name: string | undefined) => {
+        setSelectedAnimationRaw(name)
+        setSelectedTileIndex(undefined)
+    }
     const [newName, setNewName] = useState("")
     const [renamingKey, setRenamingKey] = useState<string | null>(null)
     const [renameValue, setRenameValue] = useState("")
@@ -95,12 +101,15 @@ export function AnimationModal({
 
     const handleTileClick = (col: number, row: number) => {
         if (!selectedAnimation || !selected) return
-        if (selected.tiles) {
-            updateAnimation(selectedAnimation, {
-                ...selected,
-                tiles: [...(selected.tiles ?? []), { row, column: col }],
-            })
+        if (!selected.tiles) return
+        const tiles = [...(selected.tiles ?? [])]
+        if (selectedTileIndex !== undefined && selectedTileIndex < tiles.length) {
+            tiles[selectedTileIndex] = { ...tiles[selectedTileIndex], row, column: col }
+        } else {
+            tiles.push({ row, column: col })
+            setSelectedTileIndex(tiles.length - 1)
         }
+        updateAnimation(selectedAnimation, { ...selected, tiles })
     }
 
     return (
@@ -183,6 +192,8 @@ export function AnimationModal({
                                     onChange={(anim) => updateAnimation(selectedAnimation, anim)}
                                     totalCols={totalCols}
                                     totalRows={totalRows}
+                                    selectedTileIndex={selectedTileIndex}
+                                    onSelectTileIndex={setSelectedTileIndex}
                                 />
                                 <Separator />
                                 <AnimationPreview

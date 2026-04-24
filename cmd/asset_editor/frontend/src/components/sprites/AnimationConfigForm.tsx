@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Plus, GripVertical } from "lucide-react"
+import { X, Plus, ChevronUp, ChevronDown } from "lucide-react"
 import type { SpriteTilesheetAnimation, SpriteTilesheetAnimationTile } from "@/types/sprites"
 
 type AnimType = "h_sequence" | "v_sequence" | "tiles"
@@ -13,6 +13,8 @@ interface AnimationConfigFormProps {
     onChange: (anim: SpriteTilesheetAnimation) => void
     totalCols: number
     totalRows: number
+    selectedTileIndex?: number
+    onSelectTileIndex?: (index: number | undefined) => void
 }
 
 function getAnimType(anim: SpriteTilesheetAnimation): AnimType {
@@ -21,7 +23,7 @@ function getAnimType(anim: SpriteTilesheetAnimation): AnimType {
     return "tiles"
 }
 
-export function AnimationConfigForm({ animation, onChange, totalCols, totalRows }: AnimationConfigFormProps) {
+export function AnimationConfigForm({ animation, onChange, totalCols, totalRows, selectedTileIndex, onSelectTileIndex }: AnimationConfigFormProps) {
     const animType = getAnimType(animation)
 
     const setType = (type: AnimType) => {
@@ -99,6 +101,8 @@ export function AnimationConfigForm({ animation, onChange, totalCols, totalRows 
                 <TilesFields
                     tiles={animation.tiles ?? []}
                     onChange={(tiles) => onChange({ ...animation, tiles })}
+                    selectedIndex={selectedTileIndex}
+                    onSelectIndex={onSelectTileIndex}
                 />
             )}
 
@@ -248,20 +252,23 @@ function VSequenceFields({
 function TilesFields({
     tiles,
     onChange,
+    selectedIndex,
+    onSelectIndex,
 }: {
     tiles: SpriteTilesheetAnimationTile[]
     onChange: (tiles: SpriteTilesheetAnimationTile[]) => void
+    selectedIndex?: number
+    onSelectIndex?: (index: number | undefined) => void
 }) {
     const addTile = () => {
         onChange([...tiles, { row: 1, column: 1 }])
+        onSelectIndex?.(tiles.length)
     }
 
     const removeTile = (index: number) => {
         onChange(tiles.filter((_, i) => i !== index))
-    }
-
-    const updateTile = (index: number, patch: Partial<SpriteTilesheetAnimationTile>) => {
-        onChange(tiles.map((t, i) => (i === index ? { ...t, ...patch } : t)))
+        if (selectedIndex === index) onSelectIndex?.(undefined)
+        else if (selectedIndex !== undefined && selectedIndex > index) onSelectIndex?.(selectedIndex - 1)
     }
 
     const moveTile = (from: number, to: number) => {
@@ -270,6 +277,7 @@ function TilesFields({
         const [item] = next.splice(from, 1)
         next.splice(to, 0, item)
         onChange(next)
+        if (selectedIndex === from) onSelectIndex?.(to)
     }
 
     return (
@@ -280,60 +288,56 @@ function TilesFields({
                     <Plus className="h-3 w-3 mr-1" /> Add
                 </Button>
             </div>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
-                {tiles.map((tile, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs">
-                        <button
-                            className="cursor-grab text-muted-foreground hover:text-foreground"
-                            onMouseDown={(e) => {
-                                e.preventDefault()
-                                const onMouseUp = () => {
-                                    document.removeEventListener("mouseup", onMouseUp)
-                                }
-                                document.addEventListener("mouseup", onMouseUp)
-                            }}
-                            onClick={() => {
-                                if (i > 0) moveTile(i, i - 1)
-                            }}
+            {selectedIndex !== undefined && (
+                <p className="text-xs text-blue-400">
+                    Tile {selectedIndex + 1} selected - click grid to reassign
+                </p>
+            )}
+            <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                {tiles.map((tile, i) => {
+                    const isSelected = selectedIndex === i
+                    return (
+                        <div
+                            key={i}
+                            className={`flex items-center gap-1 text-xs rounded px-1 py-0.5 cursor-pointer ${isSelected ? "bg-blue-500/20 ring-1 ring-blue-500/40" : "hover:bg-muted"}`}
+                            onClick={() => onSelectIndex?.(isSelected ? undefined : i)}
                         >
-                            <GripVertical className="h-3 w-3" />
-                        </button>
-                        <span className="text-muted-foreground w-4">{i + 1}.</span>
-                        <Label className="text-xs">R</Label>
-                        <Input
-                            type="number"
-                            className="w-16 h-7"
-                            min={1}
-                            value={tile.row}
-                            onChange={(e) => updateTile(i, { row: parseInt(e.target.value) || 1 })}
-                        />
-                        <Label className="text-xs">C</Label>
-                        <Input
-                            type="number"
-                            className="w-16 h-7"
-                            min={1}
-                            value={tile.column}
-                            onChange={(e) => updateTile(i, { column: parseInt(e.target.value) || 1 })}
-                        />
-                        <Label className="text-xs">W</Label>
-                        <Input
-                            type="number"
-                            className="w-16 h-7"
-                            min={0}
-                            step={0.1}
-                            value={tile.weight ?? 1}
-                            onChange={(e) => updateTile(i, { weight: parseFloat(e.target.value) || 1 })}
-                        />
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0"
-                            onClick={() => removeTile(i)}
-                        >
-                            <X className="h-3 w-3" />
-                        </Button>
-                    </div>
-                ))}
+                            <span className="text-muted-foreground w-5 text-right shrink-0">{i + 1}.</span>
+                            <span className="text-muted-foreground">r</span>
+                            <span>{tile.row}</span>
+                            <span className="text-muted-foreground ml-1">c</span>
+                            <span>{tile.column}</span>
+                            <div className="flex items-center gap-0 ml-auto">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    disabled={i === 0}
+                                    onClick={(e) => { e.stopPropagation(); moveTile(i, i - 1) }}
+                                >
+                                    <ChevronUp className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    disabled={i === tiles.length - 1}
+                                    onClick={(e) => { e.stopPropagation(); moveTile(i, i + 1) }}
+                                >
+                                    <ChevronDown className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0 text-destructive"
+                                    onClick={(e) => { e.stopPropagation(); removeTile(i) }}
+                                >
+                                    <X className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
         </div>
     )

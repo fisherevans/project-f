@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { AnimationPlayer } from "@/lib/animationEngine"
 import type { SpriteTilesheetAnimation } from "@/types/sprites"
@@ -219,11 +220,22 @@ export function AnimationPreview({
                     <SkipForward className="h-3 w-3" />
                 </Button>
                 <div className="flex items-center gap-2 ml-3">
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">x{speed.toFixed(1)}</span>
+                    <Input
+                        type="number"
+                        className="w-16 h-7 text-xs px-1.5"
+                        min={0.1}
+                        max={5}
+                        step={0.1}
+                        value={speed}
+                        onChange={(e) => {
+                            const v = parseFloat(e.target.value)
+                            if (!isNaN(v) && v >= 0.1 && v <= 5) setSpeed(v)
+                        }}
+                    />
                     <div className="w-32">
                         <Slider
                             min={0.1}
-                            max={3}
+                            max={5}
                             step={0.1}
                             value={[speed]}
                             onValueChange={(v) => setSpeed(Array.isArray(v) ? v[0] : v)}
