@@ -85,7 +85,6 @@ func init() {
 		if s.globals.Get(entityId).AsString("") == game.InstanceId {
 			return
 		}
-		fmt.Println("resetting!")
 		var effects []Effect
 		for _, key := range s.globals.baseGlobals.KeysWithPrefix("intro.") {
 			effects = append(effects, NewSetWorldStateEffect(key, nil))

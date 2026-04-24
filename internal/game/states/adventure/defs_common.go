@@ -18,7 +18,7 @@ func init() {
 }
 
 // random_chatters, random_dialogues, door.run_state_based handlers migrated
-// to assets/scripts/_shared/common.yaml
+// to assets/scripts/shared/common.yaml
 
 func init() {
 	newRegistrarBuilder().byClass("DirectInteraction").registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {

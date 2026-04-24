@@ -1,6 +1,7 @@
 package adventure
 
 
+
 type ScriptHandler struct {
 	entityId     string
 	def          *HandlerDef
