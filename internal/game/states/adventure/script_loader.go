@@ -73,8 +73,8 @@ func registerScriptHandlerFactory() {
 			log.Debug().Str("name", handlerName).Msg("script handler skipped - Go handler already registered")
 			continue
 		}
-		registerEventHandler(handlerName, func(_ *util.Properties) EventHandler {
-			return newScriptHandlerFactory(handlerDef, scriptSequences)
+		registerEventHandler(handlerName, func(props *util.Properties) EventHandler {
+			return newScriptHandlerFactory(handlerDef, scriptSequences, templateContextFromProps(props))
 		})
 	}
 }

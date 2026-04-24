@@ -1,0 +1,29 @@
+handlers:
+  random_chatters:
+    on_interact_self:
+      - steps:
+          - action:
+              name: random_chatter_interact
+              chatters: "{{prop.chatters}}"
+              duration: "{{prop.duration}}"
+
+  random_dialogues:
+    on_interact_self:
+      - steps:
+          - action:
+              name: random_dialogue_interact
+              dialogues: "{{prop.dialogues}}"
+
+  door.run_state_based:
+    on_init:
+      - steps:
+          - action:
+              name: door_sync_blocking
+              variable: "{{prop.run_state_key}}"
+    on_global_updated:
+      - filter:
+          key: "{{prop.run_state_key}}"
+        steps:
+          - action:
+              name: door_sync_blocking
+              variable: "{{prop.run_state_key}}"

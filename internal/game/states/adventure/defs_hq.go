@@ -1,7 +1,6 @@
 package adventure
 
 import (
-	"fmt"
 	"math/rand"
 
 	"fisherevans.com/project/f/internal/game"
@@ -93,49 +92,7 @@ func init() {
 			},
 		}.CreateHandler()
 	})
-	registerEventHandler("hq.animech", func(*util.Properties) EventHandler {
-		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != thisEntity.GetId() {
-					return nil
-				}
-				level := game.CurrentSave().Animech.Upgrades.GetLevel()
-				msg := fmt.Sprintf("It's a shiny, level %d Animech.", level)
-				return NewOutput().WithEffects(NewSelfDialogueEffect(msg))
-			},
-		}.CreateHandler()
-	})
-	registerEventHandler("hq.xenolog", func(_ *util.Properties) EventHandler {
-		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != thisEntity.GetId() {
-					return nil
-				}
-				return NewOutput().WithEffects(NewFunctionEffect(func(s *State) {
-					s.openXenolog()
-				}))
-			},
-		}.CreateHandler()
-	})
-	registerEventHandler("hq.bed", func(*util.Properties) EventHandler {
-		return BasicHandlerBuilder[None]{
-			OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
-				if event.TargetId != thisEntity.GetId() {
-					return nil
-				}
-				if err := game.CurrentSave().Save(); err != nil {
-					return NewOutput().WithEffects(
-						NewSelfDialogueEffect("oh no."),
-						NewSelfDialogueEffect(err.Error()),
-					)
-				}
-				return NewOutput().WithEffects(
-					NewSelfDialogueEffect("SAVING... DON'T TURN OFF THE POWER."),
-					NewSelfDialogueEffect("You saved the game."),
-				)
-			},
-		}.CreateHandler()
-	})
+	// hq.animech, hq.xenolog, hq.bed handlers migrated to assets/scripts/hq/main.yaml
 	registerEventHandler("hq.stars", func(*util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {

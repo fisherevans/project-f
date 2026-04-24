@@ -1,0 +1,178 @@
+handlers:
+  hint.listener:
+    on_init:
+      - when:
+          not_run_this_instance:
+            key: intro.hints.hint.interact
+        steps:
+          - set_world_state:
+              key: intro.hints.hint.interact
+              value: "{{instance_id}}"
+          - timer: 3
+          - tooltip: "Press A to interact"
+    on_zone_activity:
+      - filter:
+          zone: "hint.interact"
+          entity: "{{player}}"
+          entering: true
+        when:
+          not_run_this_instance:
+            key: intro.hints.hint.interact
+        steps:
+          - set_world_state:
+              key: intro.hints.hint.interact
+              value: "{{instance_id}}"
+          - timer: 3
+          - tooltip: "Press A to interact"
+      - filter:
+          zone: "hint.run"
+          entity: "{{player}}"
+          entering: true
+        when:
+          not_run_this_instance:
+            key: intro.hints.hint.run
+        steps:
+          - set_world_state:
+              key: intro.hints.hint.run
+              value: "{{instance_id}}"
+          - timer: 3
+          - tooltip: "Hold B to run"
+
+  intro.reset:
+    on_state_enter:
+      - steps:
+          - action: reset_intro_state
+
+  intro.not_your_paper:
+    on_interact_self:
+      - steps:
+          - action:
+              name: indexed_self_dialogue
+              counter_key: intro.not_your_paper.attempts
+              messages:
+                - "This isn't my paper... I probably shouldn't touch it."
+                - "Still not my paper."
+                - "Yep, definitely not mine."
+                - "Why am I even looking at this."
+                - "Someone's gonna think I'm snooping."
+                - "I really should stop touching things that aren't mine."
+                - "This is getting weirdly habitual."
+                - "I swear I'm not a thief, just nosy."
+                - "Okay, this is a problem."
+                - "Fine, it's not mine, I'll stop... probably"
+
+  intro.is_your_paper:
+    on_interact_self:
+      - steps:
+          - action:
+              name: pick_up_paper
+              attempts_key: intro.not_your_paper.attempts
+
+  intro.paper_instructor:
+    on_interact_self:
+      - when:
+          global_eq:
+            intro.papers_turned_in: true
+        steps:
+          - focused_sequence:
+              target: "{{source}}"
+              effects:
+                - dialogue: "What do you want? Go find the equipment specialist."
+      - when:
+          global_ne:
+            intro.has_papers: true
+        steps:
+          - focused_sequence:
+              target: "{{source}}"
+              effects:
+                - dialogue: "Are you confused? Fill out your paper work, and give it to me."
+      - steps:
+          - action:
+              name: turn_in_papers
+              attempts_key: intro.not_your_paper.attempts
+    on_zone_activity:
+      - filter:
+          zone: "papers.instructions"
+          entity: "{{player}}"
+          entering: true
+        when:
+          all:
+            - handler_state_ne:
+                blabbed: true
+            - global_ne:
+                intro.papers_turned_in: true
+        set_state:
+          blabbed: true
+        steps:
+          - focused_sequence:
+              target: "{{player}}"
+              move_camera: true
+              face_player: true
+              effects:
+                - chatter:
+                    entity: "{{self}}"
+                    duration: 3
+                    message: "You've gotta fill out your paperwork before you can leave..."
+
+  intro.guarded_entry:
+    on_zone_activity:
+      - filter:
+          zone: "{{prop.zone_id}}"
+          entity: "{{player}}"
+          entering: true
+        steps:
+          - action:
+              name: guarded_entry_deny
+              walk_back_direction: "{{prop.walk_back_direction}}"
+    on_interact_self:
+      - steps:
+          - action: guarded_entry_chat
+
+  intro.hall_way_npc:
+    on_init:
+      - steps:
+          - push_behavior:
+              entity: "{{self}}"
+              scripted_motion: true
+              active_player_zone: "intro.hallway"
+          - action: hall_npc_start_random_motion
+    on_interact_self:
+      - when:
+          not:
+            has_face_behavior:
+              entity: "{{self}}"
+        steps:
+          - action: hall_npc_random_chatter
+    on_motion_complete_self:
+      - filter:
+          was_canceled: true
+        steps:
+          - action:
+              name: hall_npc_start_random_motion
+              was_canceled: true
+      - steps:
+          - action: hall_npc_start_random_motion
+
+  intro.equipment_specialist:
+    on_interact_self:
+      - when:
+          global_eq:
+            intro.has_equipment_key: true
+        steps:
+          - dialogue: "Do you need help finding testing room 1...?"
+      - steps:
+          - focused_sequence:
+              target: "{{source}}"
+              effects:
+                - dialogue: "Ah! Hello. Yes, this is the equipment testing facility. No.. No, I'm not a specialist; they're inside the testing rooms."
+                - dialogue: "Here, take this key card. They're waiting for you in testing room 1."
+                - set_run_state:
+                    key: intro.has_equipment_key
+                    value: true
+
+  intro.equipment_door.key_slot:
+    on_interact_self:
+      - steps:
+          - action:
+              name: equipment_key_slot_interact
+              run_state_key: "{{prop.run_state_key}}"

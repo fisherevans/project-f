@@ -376,35 +376,45 @@ func convertAction(name string, params map[string]any, tc *TemplateContext) []Ef
 func convertFocusedSequence(params any, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
 	m := resolveMap(params, tc)
 	focusedEntity := tc.SelfId
-	playerId := tc.PlayerId
 	if eid := mapStr(m, "entity"); eid != "" {
 		focusedEntity = eid
+	}
+	target := tc.PlayerId
+	if t := mapStr(m, "target"); t != "" {
+		target = t
 	}
 	moveCamera := mapBool(m, "move_camera")
 	facePlayer := mapBool(m, "face_player")
 
-	var middleEffects []Effect
-	if effectsRaw, ok := m["effects"].([]any); ok {
-		for _, rawStep := range effectsRaw {
+	extractSteps := func(key string) []Effect {
+		raw, ok := m[key].([]any)
+		if !ok {
+			return nil
+		}
+		var effects []Effect
+		for _, rawStep := range raw {
 			stepMap, ok := rawStep.(map[string]any)
 			if !ok {
 				continue
 			}
 			for k, v := range stepMap {
 				subStep := &StepNode{Kind: k, Params: v}
-				middleEffects = append(middleEffects, convertStep(subStep, tc, sequences)...)
+				effects = append(effects, convertStep(subStep, tc, sequences)...)
 			}
 		}
+		return effects
 	}
 
-	builder := NewFocusedSequenceBuilder(focusedEntity, playerId)
+	builder := NewFocusedSequenceBuilder(focusedEntity, target)
 	if moveCamera {
 		builder = builder.WithMoveCamera(true)
 	}
 	if facePlayer {
 		builder = builder.WithFacePlayer(true)
 	}
-	builder = builder.WithMiddleEffects(middleEffects...)
+	builder = builder.WithPreEffects(extractSteps("pre_effects")...)
+	builder = builder.WithMiddleEffects(extractSteps("effects")...)
+	builder = builder.WithPostEffects(extractSteps("post_effects")...)
 	return builder.BuildEffects()
 }
 

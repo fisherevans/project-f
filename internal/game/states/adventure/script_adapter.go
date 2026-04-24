@@ -6,6 +6,7 @@ type ScriptHandler struct {
 	def          *HandlerDef
 	sequences    map[string]*SequenceDef
 	handlerState map[string]any
+	propParams   map[string]string
 }
 
 func NewScriptHandler(entityId string, def *HandlerDef, sequences map[string]*SequenceDef) *ScriptHandler {
@@ -17,11 +18,12 @@ func NewScriptHandler(entityId string, def *HandlerDef, sequences map[string]*Se
 	}
 }
 
-func newScriptHandlerFactory(def *HandlerDef, sequences map[string]*SequenceDef) *ScriptHandler {
+func newScriptHandlerFactory(def *HandlerDef, sequences map[string]*SequenceDef, propParams map[string]string) *ScriptHandler {
 	return &ScriptHandler{
 		def:          def,
 		sequences:    sequences,
 		handlerState: make(map[string]any),
+		propParams:   propParams,
 	}
 }
 
@@ -35,6 +37,7 @@ func (h *ScriptHandler) templateContext(source EntityReader, globals StateGlobal
 		SelfId:   h.entityId,
 		PlayerId: playerId,
 		SourceId: sourceId,
+		Params:   h.propParams,
 	}
 }
 

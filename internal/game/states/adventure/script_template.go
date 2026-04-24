@@ -1,6 +1,12 @@
 package adventure
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/util"
+)
 
 type TemplateContext struct {
 	SelfId   string
@@ -9,10 +15,22 @@ type TemplateContext struct {
 	Params   map[string]string
 }
 
+func templateContextFromProps(props *util.Properties) map[string]string {
+	if props == nil {
+		return nil
+	}
+	params := make(map[string]string)
+	for k, v := range props.All() {
+		params["prop."+k] = fmt.Sprintf("%v", v)
+	}
+	return params
+}
+
 func (tc *TemplateContext) Resolve(s string) string {
 	s = strings.ReplaceAll(s, "{{self}}", tc.SelfId)
 	s = strings.ReplaceAll(s, "{{player}}", tc.PlayerId)
 	s = strings.ReplaceAll(s, "{{source}}", tc.SourceId)
+	s = strings.ReplaceAll(s, "{{instance_id}}", game.InstanceId)
 	for k, v := range tc.Params {
 		s = strings.ReplaceAll(s, "{{"+k+"}}", v)
 	}

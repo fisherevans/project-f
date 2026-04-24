@@ -266,6 +266,14 @@ func evaluateFilter(filter map[string]any, event any, tc *TemplateContext) bool 
 			}
 		}
 		return true
+	case *EventGlobalVariableUpdated:
+		if key, ok := filter["key"]; ok {
+			expected := tc.Resolve(fmt.Sprintf("%v", key))
+			if e.Key != expected {
+				return false
+			}
+		}
+		return true
 	case *EventCombatComplete:
 		if combatId, ok := filter["combat_id"]; ok {
 			expected := tc.Resolve(fmt.Sprintf("%v", combatId))
@@ -284,6 +292,11 @@ func evaluateFilter(filter map[string]any, event any, tc *TemplateContext) bool 
 		if motionId, ok := filter["motion_id"]; ok {
 			expected := tc.Resolve(fmt.Sprintf("%v", motionId))
 			if e.MotionId != expected {
+				return false
+			}
+		}
+		if wasCanceled, ok := filter["was_canceled"]; ok {
+			if b, ok := wasCanceled.(bool); ok && b != e.WasCanceled {
 				return false
 			}
 		}

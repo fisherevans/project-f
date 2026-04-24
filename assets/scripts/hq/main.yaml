@@ -1,0 +1,15 @@
+handlers:
+  hq.xenolog:
+    on_interact_self:
+      - steps:
+          - action: open_xenolog
+
+  hq.bed:
+    on_interact_self:
+      - steps:
+          - action: save_game
+
+  hq.animech:
+    on_interact_self:
+      - steps:
+          - action: animech_level_description

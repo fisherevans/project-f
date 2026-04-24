@@ -35,6 +35,13 @@ func MergeProps(props ...*Properties) *Properties {
 	}
 }
 
+func (p *Properties) All() map[string]any {
+	if p == nil {
+		return nil
+	}
+	return p.kvs
+}
+
 func (p *Properties) Get(key string) (any, bool) {
 	if p == nil {
 		return nil, false
