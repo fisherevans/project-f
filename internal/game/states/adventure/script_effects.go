@@ -362,9 +362,7 @@ func convertAction(name string, params map[string]any, tc *TemplateContext) []Ef
 	}
 	return []Effect{NewFunctionEffect(func(s *State) {
 		var source EntityReader
-		if e, ok := s.entities.GetEntity(tc.SourceId); ok {
-			source = e
-		} else if e, ok := s.entities.GetEntity(tc.SelfId); ok {
+		if e, ok := s.entities.GetEntity(tc.SelfId); ok {
 			source = e
 		} else {
 			source = &NullEntity{id: tc.SelfId}

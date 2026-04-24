@@ -238,10 +238,7 @@ func init() {
 		} else {
 			message = "Ah, the elusive papers that are actually mine."
 		}
-		entityId := ""
-		if source != nil {
-			entityId = source.GetId()
-		}
+		entityId, _ := params["entity_id"].(string)
 		s.ExecuteSystemEffectsInOrder(
 			NewSelfDialogueEffect(message),
 			NewDeleteEntityEffect(entityId),

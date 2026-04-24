@@ -67,6 +67,7 @@ handlers:
           - action:
               name: pick_up_paper
               attempts_key: intro.not_your_paper.attempts
+              entity_id: "{{self}}"
 
   intro.paper_instructor:
     on_interact_self:
