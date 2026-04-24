@@ -111,6 +111,12 @@ unnamed. The tool refuses to overwrite existing files unless you pass
 `-force`. Open the `.aseprite` file to start drawing; the PNG is what the
 game loads and what the atlas consumes.
 
+## Visual editor
+
+`cmd/asset_editor` provides a web UI for browsing and editing sprite YAML
+sidecars with live animation preview, tilesheet grid visualization, and
+9-slice frame editing. See `cmd/asset_editor/CLAUDE.md` for how to run it.
+
 ## What to edit vs regenerate
 
 - `.aseprite` files are the source of truth for art; `.png` siblings are

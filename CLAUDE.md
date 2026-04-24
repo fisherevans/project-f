@@ -9,6 +9,7 @@ There are scoped CLAUDE.md files that agents inherit automatically:
 - `internal/CLAUDE.md` - rendering, asset, gfx, text, frames, color, shader, and atlas conventions. The source of truth for "what tool do I use to draw X".
 - `internal/game/CLAUDE.md` - state/intent/context/controls patterns.
 - `assets/CLAUDE.md` - YAML sidecar formats for sprite, frame, and tilesheet assets.
+- `cmd/asset_editor/CLAUDE.md` - asset editor web tool architecture, API surface, and frontend conventions.
 
 Treat these as living docs. When you introduce or change a shared pattern that other code should follow, update the relevant CLAUDE.md in the same change:
 
@@ -52,6 +53,18 @@ Sprite aliases are positional, row-major. Use `-` or blank to skip a cell. Pass
 `-force` to overwrite existing files. The `.aseprite` step runs automatically
 if the Aseprite CLI is on PATH or at `/Applications/Aseprite.app`. See
 `assets/CLAUDE.md` for what the generated YAML means.
+
+**Run asset editor (visual sprite/animation/frame editor):**
+```
+# Development (two terminals):
+GOWORK=off go run ./cmd/asset_editor -dev    # Go API on :8090
+cd cmd/asset_editor/frontend && npm run dev  # Vite HMR on :5173
+
+# Production (single binary):
+cd cmd/asset_editor/frontend && npm run build
+GOWORK=off go run ./cmd/asset_editor         # serves embedded frontend on :8090
+```
+Opens a browser automatically. See `cmd/asset_editor/CLAUDE.md` for details.
 
 **Tests:**
 ```
@@ -176,7 +189,16 @@ animations:
 
 All row/column indices are **1-indexed**. `pingPong` is applied after `reverse`. The `frameWeights` list length must match the number of frames in the sequence.
 
+### Shared schema (`internal/schema/`)
+
+Pure-data YAML types extracted from `internal/resources/` so both the game
+and the asset editor can import them without pulling in OpenGL dependencies.
+Contains `SpriteMetadata`, `SpriteTilesheet`, `SpriteTilesheetAnimation`,
+`SpriteFrame`, and related types. The game's resource loaders in
+`internal/resources/` import these types rather than defining their own.
+
 ### Entry points
 
-- `cmd/development/dev_launcher.go` — dev launcher with hardcoded test scenarios
-- `cmd/release/release_launcher.go` — release launcher with panic recovery and zenity error dialogs
+- `cmd/development/dev_launcher.go` - dev launcher with hardcoded test scenarios
+- `cmd/release/release_launcher.go` - release launcher with panic recovery and zenity error dialogs
+- `cmd/asset_editor/main.go` - asset editor web tool (see `cmd/asset_editor/CLAUDE.md`)
