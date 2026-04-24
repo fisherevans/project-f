@@ -1,0 +1,488 @@
+handlers:
+  intro.training.enter.listener:
+    on_zone_activity:
+      - filter:
+          zone: intro.training.enter
+        steps:
+          - action: reset_training_state
+
+  intro.training.0.npc:
+    on_interact_self:
+      - when:
+          global_eq:
+            key: "intro.training.0.door"
+            value: true
+        steps:
+          - dialogue: "We don't appreciate those who linger. Move on to the next training room, recruit..."
+      - when:
+          not:
+            global_eq:
+              key: "intro.training.0.door"
+              value: true
+        steps:
+          - focused_sequence:
+              effects:
+                - dialogue: "Welcome to...argh..! ARGHHRRGG!!! ... {+r}PssszzZZZtttt!{-r} Hello! This is Fisher, sorry for the interruption..."
+                - dialogue: "Thank you for playtesting Primortal! This is a very rough draft of the overall game experience, please excuse the many rough edges. This training segment is extremely condensed just to get you into the core gameplay loop."
+                - dialogue: "Thanks again! Back to actual game content ... {+r}PssszzZZZtttt!{-r} ... your.. err, uhhh. I'm sorry, I don't know what just came over me. Let me start over."
+                - dialogue: "Welcome to your crash course training, recruit. I'm sure you're eager to get started."
+                - dialogue: "This series of training rooms will get you ready to venture out into the unknown to explore."
+                - timer: 0.25
+                - set_run_state:
+                    key: "intro.training.0.door"
+                    value: true
+                - timer: 0.25
+                - dialogue: "Please continue into the next room..."
+
+  intro.training.1.npc:
+    on_interact_self:
+      - when:
+          global_eq:
+            intro.training.10.door: true
+        steps:
+          - dialogue: "Don't worry, you'll have plenty of time to practice some more... once you're all alone in deep space."
+          - dialogue: "Now, get through that door."
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.10.door: true
+            - global_eq:
+                abilities.xenolog_access: true
+        steps:
+          - focused_sequence:
+              move_camera: true
+              effects:
+                - dialogue: "You're now ready to explore on your own. Proceed through the final door to begin your adventure."
+                - mutate_camera:
+                    follow_entity: "intro.training.10.door"
+                - timer: 1.5
+                - set_world_state:
+                    key: "intro.training.10.door"
+                    value: true
+                - timer: 1.5
+                - mutate_camera:
+                    follow_entity: "{{player}}"
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.10.door: true
+            - not:
+                global_eq:
+                  abilities.xenolog_access: true
+        steps:
+          - focused_sequence:
+              effects:
+                - dialogue: "Just take a seat over there. All will be explained..."
+
+  intro.training.1.chair:
+    on_interact_self:
+      - when:
+          global_eq:
+            abilities.xenolog_primortals: true
+        steps:
+          - self_dialogue: "Uhhh. I don't think I need to do that again..."
+      - when:
+          not:
+            global_eq:
+              abilities.xenolog_primortals: true
+        steps:
+          - push_behavior:
+              entity: "{{player}}"
+              scripted_motion: true
+          - scripted_motion:
+              entity: "{{player}}"
+              to_entity: "intro.training.1.chair_front"
+          - pop_behavior: "{{player}}"
+          - face_direction:
+              entity: "{{source}}"
+              direction: down
+          - self_dialogue: "Hesitantly, you climb into the chair..."
+          - change_player_renderer: hidden
+          - set_mode:
+              entity: "intro.training.1.chair"
+              mode: enter
+          - wait_for_animation: "intro.training.1.chair"
+          - set_mode:
+              entity: "intro.training.1.chair"
+              mode: close_eyes
+          - wait_for_animation: "intro.training.1.chair"
+          - play_sound: "adventure/beeps/success"
+          - self_dialogue: "Without any warning, you feel it. Your mind slips backwards. Not quite falling, but... floating?"
+          - teleport_player:
+              to_entity: "intro.training.1.animech"
+              interstitial:
+                - change_player_renderer: animech
+                - face_direction:
+                    entity: "{{source}}"
+                    direction: down
+                - set_mode:
+                    entity: "intro.training.1.animech"
+                    mode: hidden
+          - disable_behavior:
+              entity: "{{source}}"
+              by: "{{self}}"
+          - timer: 1
+          - self_dialogue: "You open your eyes..... and see yourself. Across the gap."
+          - face_direction:
+              entity: "{{player}}"
+              direction: right
+          - self_dialogue: "Your limbs feel rigid. But strong."
+          - self_dialogue: "Your balance feels solid, like its on auto pilot."
+          - self_dialogue: "You {+u}are{-u} an Animech."
+          - enable_behavior:
+              entity: "{{source}}"
+              by: "{{self}}"
+
+  intro.training.2.npc:
+    on_interact_self:
+      - steps:
+          - focused_sequence:
+              effects:
+                - dialogue: "Your Animech has a special ability to dash across small gaps."
+                - dialogue: "Walk up to the edge and press A."
+
+  intro.training.2.button:
+    on_interact_self:
+      - when:
+          global_eq:
+            key: "intro.training.2.door"
+            value: true
+        steps:
+          - self_dialogue: "The door has already been opened."
+      - when:
+          not:
+            global_eq:
+              key: "intro.training.2.door"
+              value: true
+        steps:
+          - play_sound: "adventure/beeps/success"
+          - set_run_state:
+              key: "intro.training.2.door"
+              value: true
+
+  intro.training.3.npc:
+    on_interact_self:
+      - when:
+          global_eq:
+            key: "intro.training.3.door"
+            value: true
+        steps:
+          - dialogue: "There's no going back. You must continue to the next room."
+      - when:
+          not:
+            global_eq:
+              key: "intro.training.3.door"
+              value: true
+        steps:
+          - focused_sequence:
+              effects:
+                - dialogue: "Well, at least you can move around in that Animech."
+                - dialogue: "Next, you'll need to know how to battle specimen. Go through to the next room and defeat the little vermin."
+                - timer: 0.25
+                - set_run_state:
+                    key: "intro.training.3.door"
+                    value: true
+                - timer: 0.25
+
+  intro.training.4.listener:
+    on_broadcast:
+      - filter:
+          id: intro.training.4.combat
+        steps:
+          - action: trigger_training_combat_1
+    on_combat_complete:
+      - filter:
+          combat_id: intro.training.4.combat_over
+        steps:
+          - dialogue: "INTERCOM: Nice job recruit. Most folks curl up in a ball when hey face their first foe."
+          - dialogue: "INTERCOM: I don't know why though. That combat dummy can't even attack."
+          - set_run_state:
+              key: "intro.training.4.door"
+              value: true
+
+  intro.training.5.npc:
+    on_interact_self:
+      - when:
+          global_eq:
+            intro.training.5.door: true
+        steps:
+          - dialogue: "There's no going back. You must continue to the next room."
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.5.door: true
+            - global_eq:
+                intro.training.5.xenolog: true
+        steps:
+          - dialogue: "Don't chicken out now."
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.5.door: true
+            - not:
+                global_eq:
+                  intro.training.5.xenolog: true
+        steps:
+          - focused_sequence:
+              effects:
+                - dialogue: "Now that your first battle is under your belt, you've gained some experience. With it, we can enhance the synchronization between your soul and the Animech."
+                - dialogue: "On the table next to me is a Xenolog. A device that allows you to track your explorations and see the status of your Animech."
+                - dialogue: "Try opening it up, and spend those experience points to enhance your Animech's abilities."
+                - set_world_state:
+                    key: "intro.training.5.xenolog"
+                    value: true
+    on_state_enter:
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.5.door: true
+            - animech_upgrade_level_gt:
+                level: 1
+            - player_in_zone:
+                zone: "intro.training.5"
+        steps:
+          - focused_sequence:
+              move_camera: true
+              effects:
+                - dialogue: "Nicely done."
+                - dialogue: "Now, lets try battling a real specimen."
+                - mutate_camera:
+                    follow_entity: "intro.training.5.door"
+                - timer: 1.5
+                - set_world_state:
+                    key: "intro.training.5.door"
+                    value: true
+                - timer: 1.5
+                - mutate_camera:
+                    follow_entity: "{{player}}"
+
+  intro.training.5.xenolog:
+    on_interact_self:
+      - when:
+          global_eq:
+            key: "intro.training.5.xenolog"
+            value: true
+        steps:
+          - action: open_xenolog
+      - when:
+          not:
+            global_eq:
+              key: "intro.training.5.xenolog"
+              value: true
+        steps:
+          - play_sound: "adventure/beeps/error"
+          - chatter:
+              entity: "{{self}}"
+              duration: 3
+              message: "The device is locked."
+
+  intro.training.6.listener:
+    on_broadcast:
+      - filter:
+          id: intro.training.6.combat
+        steps:
+          - action: trigger_training_combat_2
+    on_combat_complete:
+      - filter:
+          combat_id: intro.training.6.combat_over
+        steps:
+          - dialogue: "INTERCOM: Okay, I'll be honest. I expected you to chicken out of that one."
+          - set_run_state:
+              key: "intro.training.6.door"
+              value: true
+
+  intro.training.7.npc:
+    on_interact_self:
+      - when:
+          global_eq:
+            intro.training.7.door: true
+        steps:
+          - dialogue: "There's no getting out of it. Yes, there are creatures out there. You're also in a $371 million dollar military grade robot."
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.7.door: true
+            - global_eq:
+                intro.control.elythium: true
+        steps:
+          - dialogue: "Just go smash it with your first."
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.7.door: true
+            - not:
+                global_eq:
+                  intro.control.elythium: true
+            - global_eq:
+                abilities.xenolog_primortals: true
+        steps:
+          - dialogue: "Open up that Xenolog, learn a skill, and then equip it."
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.training.7.door: true
+            - not:
+                global_eq:
+                  intro.control.elythium: true
+            - not:
+                global_eq:
+                  abilities.xenolog_primortals: true
+        steps:
+          - focused_sequence:
+              effects:
+                - dialogue: "As you battled that specimen, your Animech acquired research points."
+                - dialogue: "Using the Xenolog, you can spend those research points to unlock new skills."
+                - dialogue: "Do that, and equip your new skill."
+                - set_world_state:
+                    key: "intro.training.5.xenolog"
+                    value: true
+                - set_world_state:
+                    key: "abilities.xenolog_primortals"
+                    value: true
+    on_state_enter:
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.control.elythium: true
+            - player_in_zone:
+                zone: "intro.training.7"
+            - not:
+                skill_equipped:
+                  skill: "acid_string"
+        steps:
+          - focused_sequence:
+              move_camera: true
+              effects:
+                - dialogue: "Make sure your unlock a Toxmidge skill, then equip it in your Animech."
+      - when:
+          all:
+            - not:
+                global_eq:
+                  intro.control.elythium: true
+            - player_in_zone:
+                zone: "intro.training.7"
+            - skill_equipped:
+                skill: "acid_string"
+        steps:
+          - focused_sequence:
+              move_camera: true
+              effects:
+                - dialogue: "Now. In order to transfer your soul back to your body, you'll need to gather enough Elythium."
+                - dialogue: "Go gather that crystal over there."
+                - set_run_state:
+                    key: "intro.control.elythium"
+                    value: true
+                - set_world_state:
+                    key: "elythium_goal"
+                    value: 12
+    on_broadcast:
+      - filter:
+          id: intro.training.7.elythium
+        when:
+          not:
+            global_eq:
+              intro.training.7.elythium.done: true
+        steps:
+          - set_world_state:
+              key: "intro.training.7.elythium.done"
+              value: true
+          - focused_sequence:
+              move_camera: true
+              effects:
+                - dialogue: "You'll need to collect more than that to complete the soul transfer."
+                - dialogue: "Go below and gather enough to trigger the return sequence."
+                - set_run_state:
+                    key: "intro.training.7.door"
+                    value: true
+          - timer: 0.5
+          - action: show_elythium_highlight
+
+  intro.training.9.exit:
+    on_interact_self:
+      - when:
+          global_lt:
+            elythium: 12
+        steps:
+          - self_dialogue: "This transfer station won't work until I collect more Elythium."
+      - when:
+          global_gte:
+            elythium: 12
+        steps:
+          - self_dialogue: "You deposit the elythium and press the button..."
+          - push_behavior:
+              entity: "{{player}}"
+              scripted_motion: true
+          - scripted_motion:
+              entity: "{{player}}"
+              to_entity: "intro.training.9.animech"
+          - pop_behavior: "{{player}}"
+          - disable_behavior:
+              entity: "{{player}}"
+              by: exit
+          - face_direction:
+              entity: "{{source}}"
+              direction: down
+          - timer: 0.25
+          - set_mode:
+              entity: "intro.training.9.animech"
+              mode: visible
+          - change_player_renderer: hidden
+          - self_dialogue: "Your feet latch into the depressions. Suddenly, you can't move your body. Not an inch..."
+          - play_sound: "adventure/beeps/success"
+          - self_dialogue: "Your vision swims. You feel... liquid. Your mind melting inwards."
+          - teleport_player:
+              to_entity: "intro.training.1.return"
+              interstitial:
+                - face_direction:
+                    entity: "{{source}}"
+                    direction: left
+          - timer: 1.5
+          - self_dialogue: "You awake."
+          - set_mode:
+              entity: "intro.training.1.chair"
+              mode: open_eyes
+          - wait_for_animation: "intro.training.1.chair"
+          - self_dialogue: "It takes enormous effort to climb out of the chair."
+          - set_mode:
+              entity: "intro.training.1.chair"
+              mode: exit
+          - wait_for_animation: "intro.training.1.chair"
+          - change_player_renderer: human
+          - set_mode:
+              entity: "intro.training.1.chair"
+              mode: ""
+          - timer: 0.5
+          - self_dialogue: "Your limbs are heavy, sluggish. The light hurts your eyes."
+          - self_dialogue: "You'r back in your own body."
+          - set_world_state:
+              key: "abilities.xenolog_access"
+              value: true
+          - set_world_state:
+              key: "intro.control.elythium"
+              value: false
+          - set_world_state:
+              key: "elythium"
+              value: 0
+          - enable_behavior:
+              entity: "{{player}}"
+              by: exit
+
+  intro.training.wip.listener:
+    on_zone_activity:
+      - filter:
+          zone: intro.training.wip
+          entity: "{{player}}"
+        steps:
+          - dialogue: "Annnnnnd, that's it for now. Hope to see you soon."
+          - load_map:
+              map: hq
+              waypoint: default

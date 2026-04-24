@@ -1,0 +1,58 @@
+handlers:
+  map1:
+    on_interact_self:
+      - steps:
+          - dialogue: "You've interacted with me!"
+
+  captain_chair_front:
+    on_zone_activity:
+      - filter:
+          zone: captains_area
+          entity: "{{player}}"
+          entering: true
+        steps:
+          - push_behavior:
+              entity: "{{player}}"
+              scripted_motion: true
+          - scripted_motion:
+              entity: "{{player}}"
+              to_entity: captain_chair_front
+          - pop_behavior: "{{player}}"
+          - face_direction:
+              entity: "{{player}}"
+              direction: right
+
+  exit_chatter:
+    on_init:
+      - set_state:
+          ready: true
+        steps: []
+    on_timer_complete:
+      - filter:
+          created_by: "{{self}}"
+          timer_id: reset
+        set_state:
+          ready: true
+        steps: []
+    on_zone_activity:
+      - filter:
+          zone: exit
+          entering: true
+          entity: "{{player}}"
+        when:
+          all:
+            - handler_state_eq:
+                ready: true
+        steps:
+          - wait_for:
+              condition: entity_not_moving
+              entity: "{{player}}"
+          - chatter:
+              entity: "{{player}}"
+              duration: 5
+              message: "I should turn around..."
+          - timer:
+              duration: 10
+              id: reset
+        set_state:
+          ready: false
