@@ -23,6 +23,7 @@ func (e *EffectOverrideCamera) Process(source EntityReader, s *State) bool {
 		location = target.GetPreciseLocation()
 	}
 	camera := NewSimpleEntityCamera(target.GetId(), location, EntityCameraSpeedMedium, true)
+	camera.isSnapped = false
 	s.OverrideCamera(camera)
 	return true
 }
