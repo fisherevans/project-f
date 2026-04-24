@@ -93,8 +93,8 @@ type HealthFlash struct {
 
 func NewDamageFlashMask() *HealthFlash {
 	return &HealthFlash{
-		DamageMask:       pixel.RGBA{1, 0.4, 0.4, 1},
-		HealMask:         pixel.RGBA{0.4, 1, 0.4, 1},
+		DamageMask:       pixel.RGBA{R: 1, G: 0.4, B: 0.4, A: 1},
+		HealMask:         pixel.RGBA{R: 0.4, G: 1, B: 0.4, A: 1},
 		RecoveryDuration: 0.5,
 	}
 }
@@ -104,7 +104,7 @@ func (d *HealthFlash) Update(timeDelta float64) {
 }
 
 func (d *HealthFlash) getMask() pixel.RGBA {
-	recovered := pixel.RGBA{1, 1, 1, 1}
+	recovered := pixel.RGBA{R: 1, G: 1, B: 1, A: 1}
 	recoveryProgress := math.Min(1, d.timeRecovered/d.RecoveryDuration)
 	if recoveryProgress >= 1 {
 		return recovered

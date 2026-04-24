@@ -33,7 +33,7 @@ func (i *Instance) Draw(target pixel.Target, rect pixel.Rect, matrix pixel.Matri
 	right := float64(i.CutMargin[resources.FrameRight])
 
 	options := &frameOptions{
-		color:        pixel.RGBA{1, 1, 1, 1},
+		color:        pixel.RGBA{R: 1, G: 1, B: 1, A: 1},
 		renderOrigin: gfx.BottomLeft,
 	}
 	for _, opt := range append(i.opts, opts...) {

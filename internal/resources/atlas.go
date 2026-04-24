@@ -334,7 +334,6 @@ func createAtlasGuillotine(sourceImages []image.Image, atlasWidth, atlasHeight P
 		fi := findRect(w, h)
 		if fi == -1 {
 			panic(fmt.Sprintf("atlas is too small (%dx%d) for %d images. Was able to fit %d images before failing at %.1f%% usage while finding room for a %dx%d image", atlasWidth, atlasHeight, len(sourceImages), id, pctUsed(), w, h))
-			return nil, nil
 		}
 
 		// Placement the image in that free rectangle
