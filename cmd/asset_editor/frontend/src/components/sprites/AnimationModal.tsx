@@ -99,11 +99,15 @@ export function AnimationModal({
         onChange({ ...animations, [name]: anim })
     }
 
-    const handleTileClick = (col: number, row: number) => {
+    const handleTileClick = (col: number, row: number, shiftKey: boolean) => {
         if (!selectedAnimation || !selected) return
         if (!selected.tiles) return
         const tiles = [...(selected.tiles ?? [])]
-        if (selectedTileIndex !== undefined && selectedTileIndex < tiles.length) {
+        if (shiftKey) {
+            const insertAt = selectedTileIndex !== undefined ? selectedTileIndex + 1 : tiles.length
+            tiles.splice(insertAt, 0, { row, column: col })
+            setSelectedTileIndex(insertAt)
+        } else if (selectedTileIndex !== undefined && selectedTileIndex < tiles.length) {
             tiles[selectedTileIndex] = { ...tiles[selectedTileIndex], row, column: col }
         } else {
             tiles.push({ row, column: col })

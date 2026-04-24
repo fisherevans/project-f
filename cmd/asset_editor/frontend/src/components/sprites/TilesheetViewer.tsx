@@ -13,7 +13,7 @@ interface TilesheetViewerProps {
     sprites?: Record<string, TilesheetCoordinates>
     animations?: Record<string, SpriteTilesheetAnimation>
     selectedAnimation?: string
-    onTileClick?: (col: number, row: number) => void
+    onTileClick?: (col: number, row: number, shiftKey: boolean) => void
     bgClass?: string
     tilesheet: SpriteTilesheet
     onTilesheetChange: (ts: SpriteTilesheet) => void
@@ -151,7 +151,7 @@ export function TilesheetViewer({
         const col = Math.floor(x / (tileWidth * zoom)) + 1
         const row = Math.floor(y / (tileHeight * zoom)) + 1
         if (col >= 1 && col <= cols && row >= 1 && row <= rows) {
-            onTileClick(col, row)
+            onTileClick(col, row, e.shiftKey)
         }
     }
 
