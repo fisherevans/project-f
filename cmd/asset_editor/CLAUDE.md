@@ -111,7 +111,7 @@ src/
       AudioEditor.tsx     # detail view with player, gain slider, path info
     scripts/
       ScriptBrowser.tsx   # script file listing with handler names
-      ScriptEditor.tsx    # YAML editor + schema reference sidebar
+      ScriptEditor.tsx    # structured editor + raw YAML tabs, handler list + detail
   components/
     sprites/
       TilesheetViewer.tsx      # canvas: PNG + grid overlay + zoom + tile selection
@@ -121,9 +121,20 @@ src/
       AnimationPreview.tsx     # live canvas playback + frame strip + speed controls
       FrameEditor.tsx          # 9-slice config + canvas preview
       ScaffoldDialog.tsx       # new tilesheet form (wraps cmd/sprite_new)
+    scripts/
+      HandlerList.tsx          # left panel: handler names, add/rename/delete
+      HandlerDetail.tsx        # right panel: hook sections for selected handler
+      HookSection.tsx          # collapsible section per event hook with rules
+      RuleEditor.tsx           # single rule: filter + condition + set_state + steps
+      StepList.tsx             # ordered step list with add/remove/reorder
+      StepEditor.tsx           # single step: kind badge + inline/expanded params
+      StepKindPicker.tsx       # schema-driven step kind selector grouped by category
+      StepParamForm.tsx        # dynamic form from ParamDef[] (inputs, selects, toggles)
+      ConditionEditor.tsx      # recursive condition tree builder (all/any/not/leaf)
     ui/                        # shadcn/ui primitives (button, dialog, input, etc.)
   lib/
     animationEngine.ts   # TypeScript port of Go's animation accumulator
+    scriptUtils.ts       # YAML parse/stringify, step/condition conversion, tree helpers
 ```
 
 **Routing:**
@@ -148,6 +159,28 @@ progression with weight-based duration, jitter, randomize, and repeat.
 
 This must stay in sync with the Go implementation. If the Go animation
 logic changes, update `animationEngine.ts` to match.
+
+### Script editor architecture
+
+The script editor uses client-side YAML parsing (the `yaml` npm package).
+The backend serves raw YAML strings; the frontend parses them into a typed
+tree (`ParsedScript > HandlerDef > RuleDef > StepNode/ConditionNode`),
+renders editable components, and serializes back to YAML on save.
+
+Two editing modes share state via bidirectional sync:
+- **Structured tab** - split layout with handler list (left) and handler
+  detail (right). Components nest: HandlerDetail > HookSection > RuleEditor
+  > StepList/ConditionEditor.
+- **Raw YAML tab** - plain textarea, same as before.
+
+Switching tabs converts between representations. Parse errors block the
+switch to structured mode.
+
+`scriptUtils.ts` contains all parse/serialize logic. Sub-steps within
+container steps (focused_sequence effects, teleport_player interstitial)
+are kept as raw YAML objects in `StepNode.params`. The `getStepSubSteps()`
+and `setStepSubSteps()` helpers convert them to/from `StepNode[]` at edit
+boundaries.
 
 ### Type alignment
 

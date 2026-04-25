@@ -64,3 +64,36 @@ export interface TemplateVarDef {
     pattern: string;
     description: string;
 }
+
+// Parsed script tree types - mirrors the YAML structure
+
+export interface ParsedScript {
+    handlers: Record<string, HandlerDef>;
+    sequences?: Record<string, SequenceDef>;
+}
+
+export type HandlerDef = {
+    [hookKey: string]: RuleDef[];
+};
+
+export interface RuleDef {
+    filter?: Record<string, unknown>;
+    when?: ConditionNode;
+    steps: StepNode[];
+    set_state?: Record<string, unknown>;
+}
+
+export interface StepNode {
+    kind: string;
+    params: unknown;
+}
+
+export interface ConditionNode {
+    type: string;
+    params: unknown;
+}
+
+export interface SequenceDef {
+    params?: string[];
+    steps: StepNode[];
+}

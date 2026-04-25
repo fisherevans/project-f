@@ -1,204 +1,92 @@
-import { useState, useEffect, useMemo } from "react"
-import { useLocation, useNavigate } from "react-router-dom"
-import { useScript, useSaveScript, useScriptSchema } from "@/api/scripts"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, Save, ChevronDown, ChevronRight } from "lucide-react"
-import type { ScriptSchema, StepKindDef, CallableDef, ConditionDef, EventHookDef, ParamDef } from "@/types/scripts"
-
-function ParamList({ params }: { params?: ParamDef[] }) {
-    if (!params || params.length === 0) return <span className="text-xs text-muted-foreground italic">no params</span>
-    return (
-        <div className="mt-1 space-y-0.5">
-            {params.map((p) => (
-                <div key={p.name} className="flex items-baseline gap-1.5 text-xs">
-                    <code className="rounded bg-muted px-1 font-mono text-[11px]">{p.name}</code>
-                    <span className="text-muted-foreground">{p.type}</span>
-                    {p.required && <span className="text-destructive">required</span>}
-                    {p.default !== undefined && (
-                        <span className="text-muted-foreground">= {JSON.stringify(p.default)}</span>
-                    )}
-                    {p.enum && (
-                        <span className="text-muted-foreground">[{p.enum.join(", ")}]</span>
-                    )}
-                    {p.description && (
-                        <span className="text-muted-foreground/70">- {p.description}</span>
-                    )}
-                </div>
-            ))}
-        </div>
-    )
-}
-
-function SchemaSection({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
-    const [open, setOpen] = useState(defaultOpen)
-    return (
-        <div className="border-b border-border">
-            <button
-                onClick={() => setOpen(!open)}
-                className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-accent/50"
-            >
-                {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                {title}
-            </button>
-            {open && <div className="px-3 pb-3">{children}</div>}
-        </div>
-    )
-}
-
-function StepKindEntry({ def }: { def: StepKindDef }) {
-    return (
-        <div className="mb-2">
-            <div className="flex items-baseline gap-2">
-                <code className="font-mono text-xs font-semibold">{def.name}</code>
-                <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">{def.category}</span>
-                <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">{def.paramStyle}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">{def.description}</p>
-            <ParamList params={def.params} />
-        </div>
-    )
-}
-
-function CallableEntry({ def }: { def: CallableDef | ConditionDef }) {
-    return (
-        <div className="mb-2">
-            <code className="font-mono text-xs font-semibold">{def.name}</code>
-            <p className="text-xs text-muted-foreground">{def.description}</p>
-            <ParamList params={def.params} />
-        </div>
-    )
-}
-
-function EventHookEntry({ def }: { def: EventHookDef }) {
-    return (
-        <div className="mb-2">
-            <div className="flex items-baseline gap-2">
-                <code className="font-mono text-xs font-semibold">{def.yamlKey}</code>
-                <span className="text-[10px] text-muted-foreground">{def.eventType}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">{def.description}</p>
-            {def.filterFields && def.filterFields.length > 0 && (
-                <div className="mt-1">
-                    <span className="text-[10px] font-medium text-muted-foreground">Filter fields:</span>
-                    <ParamList params={def.filterFields} />
-                </div>
-            )}
-        </div>
-    )
-}
-
-function SchemaReference({ schema }: { schema: ScriptSchema }) {
-    const stepsByCategory = useMemo(() => {
-        const map = new Map<string, StepKindDef[]>()
-        for (const def of Object.values(schema.stepKinds)) {
-            const cat = def.category
-            if (!map.has(cat)) map.set(cat, [])
-            map.get(cat)!.push(def)
-        }
-        for (const defs of map.values()) {
-            defs.sort((a, b) => a.name.localeCompare(b.name))
-        }
-        return map
-    }, [schema])
-
-    return (
-        <div className="h-full overflow-auto text-sm">
-            <SchemaSection title="Step Kinds" defaultOpen={true}>
-                {Array.from(stepsByCategory.entries())
-                    .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([category, defs]) => (
-                        <div key={category} className="mb-3">
-                            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                                {category}
-                            </div>
-                            {defs.map((def) => (
-                                <StepKindEntry key={def.name} def={def} />
-                            ))}
-                        </div>
-                    ))}
-            </SchemaSection>
-
-            <SchemaSection title="Named Actions">
-                {Object.values(schema.actions)
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((def) => (
-                        <CallableEntry key={def.name} def={def} />
-                    ))}
-            </SchemaSection>
-
-            <SchemaSection title="Named Conditions">
-                {Object.values(schema.conditions)
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((def) => (
-                        <CallableEntry key={def.name} def={def} />
-                    ))}
-            </SchemaSection>
-
-            <SchemaSection title="Built-in Conditions">
-                {Object.values(schema.builtinConditions)
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((def) => (
-                        <CallableEntry key={def.name} def={def} />
-                    ))}
-            </SchemaSection>
-
-            <SchemaSection title="Event Hooks">
-                {Object.values(schema.eventHooks)
-                    .sort((a, b) => a.yamlKey.localeCompare(b.yamlKey))
-                    .map((def) => (
-                        <EventHookEntry key={def.yamlKey} def={def} />
-                    ))}
-            </SchemaSection>
-
-            <SchemaSection title="Template Variables">
-                <div className="space-y-1">
-                    {schema.templateVars.map((v) => (
-                        <div key={v.pattern}>
-                            <code className="font-mono text-xs font-semibold">{v.pattern}</code>
-                            <p className="text-xs text-muted-foreground">{v.description}</p>
-                        </div>
-                    ))}
-                </div>
-            </SchemaSection>
-        </div>
-    )
-}
+import { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useScript, useSaveScript, useScriptSchema } from "@/api/scripts";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Save } from "lucide-react";
+import { HandlerList } from "@/components/scripts/HandlerList";
+import { HandlerDetail } from "@/components/scripts/HandlerDetail";
+import { parseScript, stringifyScript } from "@/lib/scriptUtils";
+import type { ParsedScript } from "@/types/scripts";
 
 export function ScriptEditor() {
-    const location = useLocation()
-    const navigate = useNavigate()
-    const path = location.pathname.replace(/^\/scripts\//, "")
+    const location = useLocation();
+    const navigate = useNavigate();
+    const path = location.pathname.replace(/^\/scripts\//, "");
 
-    const { data: script, isLoading, error } = useScript(path)
-    const { data: schema } = useScriptSchema()
-    const saveScript = useSaveScript()
+    const { data: script, isLoading, error } = useScript(path);
+    const { data: schema } = useScriptSchema();
+    const saveScript = useSaveScript();
 
-    const [content, setContent] = useState("")
-    const [dirty, setDirty] = useState(false)
+    const [rawContent, setRawContent] = useState("");
+    const [parsed, setParsed] = useState<ParsedScript>({ handlers: {} });
+    const [parseError, setParseError] = useState<string | null>(null);
+    const [dirty, setDirty] = useState(false);
+    const [activeTab, setActiveTab] = useState<string>("structured");
+    const [selectedHandler, setSelectedHandler] = useState<string | null>(null);
 
     useEffect(() => {
         if (script) {
-            setContent(script.rawYaml)
-            setDirty(false)
+            setRawContent(script.rawYaml);
+            try {
+                const p = parseScript(script.rawYaml);
+                setParsed(p);
+                setParseError(null);
+                const firstHandler = Object.keys(p.handlers)[0] ?? null;
+                setSelectedHandler(firstHandler);
+            } catch (e) {
+                setParseError(String(e));
+            }
+            setDirty(false);
         }
-    }, [script])
+    }, [script]);
 
-    const handleSave = () => {
+    const handleSave = useCallback(() => {
+        const content = activeTab === "structured" ? stringifyScript(parsed) : rawContent;
         saveScript.mutate(
             { path, content },
             { onSuccess: () => setDirty(false) },
-        )
-    }
+        );
+    }, [activeTab, parsed, rawContent, path, saveScript]);
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-            e.preventDefault()
-            if (dirty) handleSave()
+            e.preventDefault();
+            if (dirty) handleSave();
         }
-    }
+    }, [dirty, handleSave]);
 
-    if (isLoading) return <div className="p-4 text-muted-foreground">Loading...</div>
-    if (error) return <div className="p-4 text-destructive">Error: {error.message}</div>
+    useEffect(() => {
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [handleKeyDown]);
+
+    const handleTabChange = (tab: string) => {
+        if (tab === "structured" && activeTab === "raw") {
+            try {
+                const p = parseScript(rawContent);
+                setParsed(p);
+                setParseError(null);
+                if (!selectedHandler || !p.handlers[selectedHandler]) {
+                    setSelectedHandler(Object.keys(p.handlers)[0] ?? null);
+                }
+            } catch (e) {
+                setParseError(String(e));
+                return;
+            }
+        } else if (tab === "raw" && activeTab === "structured") {
+            setRawContent(stringifyScript(parsed));
+        }
+        setActiveTab(tab);
+    };
+
+    const handleStructuredChange = (updated: ParsedScript) => {
+        setParsed(updated);
+        setDirty(true);
+    };
+
+    if (isLoading) return <div className="p-4 text-muted-foreground">Loading...</div>;
+    if (error) return <div className="p-4 text-destructive">Error: {error.message}</div>;
 
     return (
         <div className="flex h-full flex-col">
@@ -224,25 +112,68 @@ export function ScriptEditor() {
                     {saveScript.isPending ? "Saving..." : "Save"}
                 </Button>
             </div>
-            <div className="flex flex-1 overflow-hidden">
-                <div className="flex-1 overflow-hidden">
+
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-1 flex-col overflow-hidden">
+                <div className="border-b border-border px-3">
+                    <TabsList className="h-8">
+                        <TabsTrigger value="structured" className="text-xs px-3 py-1">Structured</TabsTrigger>
+                        <TabsTrigger value="raw" className="text-xs px-3 py-1">Raw YAML</TabsTrigger>
+                    </TabsList>
+                    {parseError && activeTab === "structured" && (
+                        <span className="ml-2 text-xs text-destructive">Parse error: {parseError}</span>
+                    )}
+                </div>
+
+                <TabsContent value="structured" className="flex-1 overflow-hidden m-0 p-0">
+                    {schema ? (
+                        <div className="flex h-full">
+                            <div className="w-64 shrink-0 border-r border-border overflow-hidden">
+                                <HandlerList
+                                    script={parsed}
+                                    selectedHandler={selectedHandler}
+                                    onSelect={setSelectedHandler}
+                                    onChange={handleStructuredChange}
+                                />
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                                {selectedHandler && parsed.handlers[selectedHandler] ? (
+                                    <HandlerDetail
+                                        handlerName={selectedHandler}
+                                        handler={parsed.handlers[selectedHandler]}
+                                        schema={schema}
+                                        onChange={(handler) => {
+                                            handleStructuredChange({
+                                                ...parsed,
+                                                handlers: { ...parsed.handlers, [selectedHandler]: handler },
+                                            });
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                                        {Object.keys(parsed.handlers).length === 0
+                                            ? "No handlers. Add one from the left panel."
+                                            : "Select a handler to edit."}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-4 text-muted-foreground">Loading schema...</div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="raw" className="flex-1 overflow-hidden m-0 p-0">
                     <textarea
                         className="h-full w-full resize-none bg-background p-4 font-mono text-xs leading-relaxed outline-none"
-                        value={content}
+                        value={rawContent}
                         onChange={(e) => {
-                            setContent(e.target.value)
-                            setDirty(true)
+                            setRawContent(e.target.value);
+                            setDirty(true);
                         }}
-                        onKeyDown={handleKeyDown}
                         spellCheck={false}
                     />
-                </div>
-                {schema && (
-                    <div className="w-80 shrink-0 border-l border-border overflow-hidden">
-                        <SchemaReference schema={schema} />
-                    </div>
-                )}
-            </div>
+                </TabsContent>
+            </Tabs>
         </div>
-    )
+    );
 }
