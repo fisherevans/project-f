@@ -8,6 +8,7 @@ type ScriptHandler struct {
 	sequences    map[string]*SequenceDef
 	handlerState map[string]any
 	propParams   map[string]string
+	properties   map[string]any
 }
 
 func NewScriptHandler(entityId string, def *HandlerDef, sequences map[string]*SequenceDef) *ScriptHandler {
@@ -19,12 +20,13 @@ func NewScriptHandler(entityId string, def *HandlerDef, sequences map[string]*Se
 	}
 }
 
-func newScriptHandlerFactory(def *HandlerDef, sequences map[string]*SequenceDef, propParams map[string]string) *ScriptHandler {
+func newScriptHandlerFactory(def *HandlerDef, sequences map[string]*SequenceDef, propParams map[string]string, properties map[string]any) *ScriptHandler {
 	return &ScriptHandler{
 		def:          def,
 		sequences:    sequences,
 		handlerState: make(map[string]any),
 		propParams:   propParams,
+		properties:   properties,
 	}
 }
 
@@ -35,10 +37,12 @@ func (h *ScriptHandler) templateContext(source EntityReader, globals StateGlobal
 		sourceId = source.GetId()
 	}
 	return &TemplateContext{
-		SelfId:   h.entityId,
-		PlayerId: playerId,
-		SourceId: sourceId,
-		Params:   h.propParams,
+		SelfId:     h.entityId,
+		PlayerId:   playerId,
+		SourceId:   sourceId,
+		Params:     h.propParams,
+		Properties: h.properties,
+		Globals:    globals,
 	}
 }
 
@@ -117,7 +121,7 @@ func (h *ScriptHandler) processRules(rules []*RuleDef, event any, tc *TemplateCo
 		if !evaluateFilter(rule.Filter, event, tc) {
 			continue
 		}
-		if !evaluateCondition(rule.When, globals, h.handlerState) {
+		if !evaluateCondition(rule.When, globals, h.handlerState, tc) {
 			continue
 		}
 

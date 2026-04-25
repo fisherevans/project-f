@@ -226,3 +226,163 @@ func TestEvaluateFilter_Broadcast(t *testing.T) {
 		t.Error("expected no match")
 	}
 }
+
+type testEntityGlobals struct {
+	testGlobals
+	entities map[string]EntityReader
+}
+
+func newTestEntityGlobals(values map[string]any, entities map[string]EntityReader) *testEntityGlobals {
+	return &testEntityGlobals{
+		testGlobals: testGlobals{values: values},
+		entities:    entities,
+	}
+}
+
+func (g *testEntityGlobals) GetEntityReader(id string) (EntityReader, bool) {
+	e, ok := g.entities[id]
+	return e, ok
+}
+
+type testEntity struct {
+	NullEntity
+	moving           bool
+	hasPushedBehav   bool
+	behaviorDisabled bool
+}
+
+func (e *testEntity) IsMoving() bool          { return e.moving }
+func (e *testEntity) HasPushedBehavior() bool  { return e.hasPushedBehav }
+func (e *testEntity) IsBehaviorEnabled() bool  { return !e.behaviorDisabled }
+
+func TestEvaluateCondition_PropExists(t *testing.T) {
+	globals := newTestGlobals(nil)
+
+	tests := []struct {
+		name  string
+		props map[string]any
+		cond  *ConditionNode
+		want  bool
+	}{
+		{
+			"exists with key param",
+			map[string]any{"color": "red", "size": 5},
+			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"key": "color"}},
+			true,
+		},
+		{
+			"not exists with key param",
+			map[string]any{"color": "red"},
+			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"key": "shape"}},
+			false,
+		},
+		{
+			"exists with compact format",
+			map[string]any{"color": "red"},
+			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"value": "color"}},
+			true,
+		},
+		{
+			"nil properties",
+			nil,
+			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"key": "color"}},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tc := &TemplateContext{Properties: tt.props}
+			got := evaluateCondition(tt.cond, globals, nil, tc)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEvaluateCondition_PropEq(t *testing.T) {
+	globals := newTestGlobals(nil)
+	props := map[string]any{"color": "red", "count": 3}
+	tc := &TemplateContext{Properties: props}
+
+	tests := []struct {
+		name string
+		cond *ConditionNode
+		want bool
+	}{
+		{
+			"string match",
+			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "color", "value": "red"}},
+			true,
+		},
+		{
+			"string mismatch",
+			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "color", "value": "blue"}},
+			false,
+		},
+		{
+			"int match",
+			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "count", "value": 3}},
+			true,
+		},
+		{
+			"missing key nil value",
+			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "missing", "value": nil}},
+			true,
+		},
+		{
+			"missing key non-nil value",
+			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "missing", "value": "x"}},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := evaluateCondition(tt.cond, globals, nil, tc)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEvaluateCondition_PropEq_NilProperties(t *testing.T) {
+	globals := newTestGlobals(nil)
+	tc := &TemplateContext{Properties: nil}
+	cond := &ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "color", "value": "red"}}
+	if evaluateCondition(cond, globals, nil, tc) {
+		t.Error("expected false with nil properties")
+	}
+}
+
+func TestEvaluateCondition_EntityIdle(t *testing.T) {
+	tests := []struct {
+		name   string
+		entity *testEntity
+		want   bool
+	}{
+		{"idle", &testEntity{NullEntity: NullEntity{id: "npc"}}, true},
+		{"moving", &testEntity{NullEntity: NullEntity{id: "npc"}, moving: true}, false},
+		{"pushed behavior", &testEntity{NullEntity: NullEntity{id: "npc"}, hasPushedBehav: true}, false},
+		{"behavior disabled", &testEntity{NullEntity: NullEntity{id: "npc"}, behaviorDisabled: true}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			globals := newTestEntityGlobals(nil, map[string]EntityReader{"npc": tt.entity})
+			tc := &TemplateContext{SelfId: "npc"}
+			cond := &ConditionNode{Kind: "entity_idle", Params: map[string]any{}}
+			got := evaluateCondition(cond, globals, nil, tc)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+	t.Run("nil template context", func(t *testing.T) {
+		globals := newTestGlobals(nil)
+		cond := &ConditionNode{Kind: "entity_idle", Params: map[string]any{}}
+		if evaluateCondition(cond, globals, nil) {
+			t.Error("expected false with nil template context")
+		}
+	})
+}

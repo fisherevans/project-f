@@ -25,6 +25,7 @@ type EntityReader interface {
 	GetMetadata() *EntityMetadata
 
 	GetBehavior() (EntityBehavior, bool)
+	HasPushedBehavior() bool
 	IsBehaviorEnabled() bool
 
 	IsSoundEnabled() bool
@@ -247,6 +248,10 @@ func (e *entityReference) GetBehavior() (EntityBehavior, bool) {
 		return nil, false
 	}
 	return e.system.behaviors[e.id][len(e.system.behaviors[e.id])-1], true
+}
+
+func (e *entityReference) HasPushedBehavior() bool {
+	return len(e.system.behaviors[e.id]) > 1
 }
 
 func (e *entityReference) AddSoundProvider(soundProvider EntitySoundProvider) {

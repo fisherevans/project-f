@@ -7,9 +7,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerState map[string]any) bool {
+func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerState map[string]any, tc ...*TemplateContext) bool {
 	if node == nil {
 		return true
+	}
+	var templateCtx *TemplateContext
+	if len(tc) > 0 {
+		templateCtx = tc[0]
 	}
 	switch node.Kind {
 	case "global_eq":
@@ -53,7 +57,7 @@ func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerS
 				log.Warn().Err(err).Msg("failed to decode 'all' sub-condition")
 				return false
 			}
-			if !evaluateCondition(sub, globals, handlerState) {
+			if !evaluateCondition(sub, globals, handlerState, templateCtx) {
 				return false
 			}
 		}
@@ -69,7 +73,7 @@ func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerS
 				log.Warn().Err(err).Msg("failed to decode 'any' sub-condition")
 				continue
 			}
-			if evaluateCondition(sub, globals, handlerState) {
+			if evaluateCondition(sub, globals, handlerState, templateCtx) {
 				return true
 			}
 		}
@@ -80,7 +84,39 @@ func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerS
 			log.Warn().Err(err).Msg("failed to decode 'not' sub-condition")
 			return false
 		}
-		return !evaluateCondition(sub, globals, handlerState)
+		return !evaluateCondition(sub, globals, handlerState, templateCtx)
+	case "prop_exists":
+		m := anyToStringMap(node.Params)
+		key, _ := m["key"].(string)
+		if key == "" {
+			key, _ = m["value"].(string)
+		}
+		if templateCtx == nil || templateCtx.Properties == nil {
+			return false
+		}
+		_, exists := templateCtx.Properties[key]
+		return exists
+	case "prop_eq":
+		m := anyToStringMap(node.Params)
+		key, _ := m["key"].(string)
+		expected := m["value"]
+		if templateCtx == nil || templateCtx.Properties == nil {
+			return false
+		}
+		actual, exists := templateCtx.Properties[key]
+		if !exists {
+			return expected == nil
+		}
+		return fmt.Sprintf("%v", actual) == fmt.Sprintf("%v", expected)
+	case "entity_idle":
+		if templateCtx == nil {
+			return false
+		}
+		entity, ok := globals.GetEntityReader(templateCtx.SelfId)
+		if !ok {
+			return false
+		}
+		return !entity.IsMoving() && !entity.HasPushedBehavior() && entity.IsBehaviorEnabled()
 	default:
 		fn, ok := getScriptConditionFactory(node.Kind)
 		if !ok {

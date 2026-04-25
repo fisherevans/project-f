@@ -7,6 +7,7 @@ import (
 )
 
 type ScriptFile struct {
+	Data      map[string][]string     `yaml:"data"`
 	Handlers  map[string]*HandlerDef  `yaml:"handlers"`
 	Sequences map[string]*SequenceDef `yaml:"sequences"`
 }

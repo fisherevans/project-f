@@ -9,10 +9,12 @@ import (
 )
 
 type TemplateContext struct {
-	SelfId   string
-	PlayerId string
-	SourceId string
-	Params   map[string]string
+	SelfId     string
+	PlayerId   string
+	SourceId   string
+	Params     map[string]string
+	Properties map[string]any
+	Globals    StateGlobalsReader
 }
 
 func templateContextFromProps(props *util.Properties) map[string]string {

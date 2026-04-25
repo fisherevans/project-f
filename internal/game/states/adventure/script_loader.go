@@ -12,6 +12,7 @@ import (
 var (
 	scriptHandlerDefs = map[string]*HandlerDef{}
 	scriptSequences   = map[string]*SequenceDef{}
+	scriptDataLists   = map[string][]string{}
 )
 
 func init() {
@@ -54,6 +55,12 @@ func loadScriptFiles() {
 			scriptHandlerDefs[name] = handler
 			log.Debug().Str("name", name).Str("path", path).Msg("loaded script handler def")
 		}
+		for name, list := range sf.Data {
+			if _, exists := scriptDataLists[name]; exists {
+				log.Fatal().Str("name", name).Str("path", path).Msg("duplicate data list name")
+			}
+			scriptDataLists[name] = list
+		}
 		return nil
 	})
 	if err != nil {
@@ -62,6 +69,7 @@ func loadScriptFiles() {
 	log.Info().
 		Int("handlers", len(scriptHandlerDefs)).
 		Int("sequences", len(scriptSequences)).
+		Int("data_lists", len(scriptDataLists)).
 		Msg("loaded script files")
 }
 
@@ -74,7 +82,16 @@ func registerScriptHandlerFactory() {
 			continue
 		}
 		registerEventHandler(handlerName, func(props *util.Properties) EventHandler {
-			return newScriptHandlerFactory(handlerDef, scriptSequences, templateContextFromProps(props))
+			var rawProps map[string]any
+			if props != nil {
+				rawProps = props.All()
+			}
+			return newScriptHandlerFactory(handlerDef, scriptSequences, templateContextFromProps(props), rawProps)
 		})
 	}
+}
+
+func getDataList(name string) ([]string, bool) {
+	list, ok := scriptDataLists[name]
+	return list, ok
 }
