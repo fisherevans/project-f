@@ -10,7 +10,6 @@ import { HandlerDetail } from "@/components/scripts/HandlerDetail";
 import { CustomActionDetail } from "@/components/scripts/CustomActionDetail";
 import { SequenceDetail } from "@/components/scripts/SequenceDetail";
 import { ConstDetail } from "@/components/scripts/ConstDetail";
-import { DataListDetail } from "@/components/scripts/DataListDetail";
 import { PropertyTemplateDetail } from "@/components/scripts/PropertyTemplateDetail";
 import { ExprContextProvider } from "@/components/scripts/ExprContext";
 import { parseScript, stringifyScript } from "@/lib/scriptUtils";
@@ -76,17 +75,6 @@ function renderDetail(
                     name={selection.name}
                     value={value}
                     onChange={(v) => onChange({ ...parsed, consts: { ...parsed.consts, [selection.name]: v } })}
-                />
-            );
-        }
-        case "data": {
-            const items = parsed.data?.[selection.name];
-            if (!items) return null;
-            return (
-                <DataListDetail
-                    name={selection.name}
-                    items={items}
-                    onChange={(list) => onChange({ ...parsed, data: { ...parsed.data, [selection.name]: list } })}
                 />
             );
         }

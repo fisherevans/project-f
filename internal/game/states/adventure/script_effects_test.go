@@ -65,11 +65,11 @@ func TestSelectFromList(t *testing.T) {
 }
 
 func TestConvertSteps_PickDialogue(t *testing.T) {
-	oldData := scriptDataLists
-	scriptDataLists = map[string][]string{
-		"greetings": {"Hello!", "Hi there!", "Hey!"},
+	oldConsts := scriptConsts
+	scriptConsts = map[string]any{
+		"greetings": []any{"Hello!", "Hi there!", "Hey!"},
 	}
-	defer func() { scriptDataLists = oldData }()
+	defer func() { scriptConsts = oldConsts }()
 
 	globals := newTestGlobals(map[string]any{
 		"greet_counter": 1,
@@ -133,11 +133,11 @@ func TestConvertSteps_PickDialogue(t *testing.T) {
 }
 
 func TestConvertSteps_PickSelfDialogue(t *testing.T) {
-	oldData := scriptDataLists
-	scriptDataLists = map[string][]string{
-		"thoughts": {"Hmm...", "Interesting."},
+	oldConsts := scriptConsts
+	scriptConsts = map[string]any{
+		"thoughts": []any{"Hmm...", "Interesting."},
 	}
-	defer func() { scriptDataLists = oldData }()
+	defer func() { scriptConsts = oldConsts }()
 
 	tc := &TemplateContext{SelfId: "npc"}
 
@@ -158,11 +158,11 @@ func TestConvertSteps_PickSelfDialogue(t *testing.T) {
 }
 
 func TestConvertSteps_PickChatter(t *testing.T) {
-	oldData := scriptDataLists
-	scriptDataLists = map[string][]string{
-		"remarks": {"Nice day.", "Cold out."},
+	oldConsts := scriptConsts
+	scriptConsts = map[string]any{
+		"remarks": []any{"Nice day.", "Cold out."},
 	}
-	defer func() { scriptDataLists = oldData }()
+	defer func() { scriptConsts = oldConsts }()
 
 	tc := &TemplateContext{SelfId: "npc"}
 

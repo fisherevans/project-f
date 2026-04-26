@@ -35,42 +35,48 @@ func (g *testGlobals) Player() EntityReader {
 }
 
 func (g *testGlobals) KeysWithPrefix(prefix string) []string {
-	return nil
+	var keys []string
+	for k := range g.values {
+		if prefix == "" || len(k) >= len(prefix) && k[:len(prefix)] == prefix {
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }
 
-func TestEvaluateCondition_GlobalEq(t *testing.T) {
+func TestEvaluateCondition_Expr(t *testing.T) {
 	globals := newTestGlobals(map[string]any{
-		"my_key": true,
+		"my_key":   true,
+		"elythium": 10,
 	})
+	tc := &TemplateContext{
+		SelfId:  "npc",
+		Globals: globals,
+	}
+
 	tests := []struct {
 		name   string
-		cond   *ConditionNode
+		expr   string
 		expect bool
 	}{
-		{
-			"match_key_value",
-			&ConditionNode{Kind: "global_eq", Params: map[string]any{"key": "my_key", "value": true}},
-			true,
-		},
-		{
-			"no_match_key_value",
-			&ConditionNode{Kind: "global_eq", Params: map[string]any{"key": "my_key", "value": false}},
-			false,
-		},
-		{
-			"match_shorthand",
-			&ConditionNode{Kind: "global_eq", Params: map[string]any{"my_key": true}},
-			true,
-		},
-		{
-			"missing_key",
-			&ConditionNode{Kind: "global_eq", Params: map[string]any{"key": "missing", "value": true}},
-			false,
-		},
+		{"global eq true", "global.my_key == true", true},
+		{"global eq false", "global.my_key == false", false},
+		{"global ne", "global.my_key != false", true},
+		{"global gt pass", "global.elythium > 9", true},
+		{"global gt fail", "global.elythium > 10", false},
+		{"global gte pass", "global.elythium >= 10", true},
+		{"global gte fail", "global.elythium >= 11", false},
+		{"global lt pass", "global.elythium < 11", true},
+		{"global lt fail", "global.elythium < 10", false},
+		{"global lte pass", "global.elythium <= 10", true},
+		{"global lte fail", "global.elythium <= 9", false},
+		{"hasKey exists", "hasKey(global, 'my_key')", true},
+		{"hasKey not exists", "hasKey(global, 'missing')", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := evaluateCondition(tt.cond, globals, nil)
+			cond := &ConditionNode{Kind: "expr", Params: tt.expr}
+			got := evaluateCondition(cond, globals, nil, tc)
 			if got != tt.expect {
 				t.Errorf("expected %v, got %v", tt.expect, got)
 			}
@@ -78,29 +84,30 @@ func TestEvaluateCondition_GlobalEq(t *testing.T) {
 	}
 }
 
-func TestEvaluateCondition_NumericComparisons(t *testing.T) {
-	globals := newTestGlobals(map[string]any{
-		"elythium": 10,
-	})
+func TestEvaluateCondition_ExprHandlerState(t *testing.T) {
+	globals := newTestGlobals(nil)
+	state := map[string]any{"ready": true, "mood": "neutral"}
+	tc := &TemplateContext{
+		SelfId:       "npc",
+		Globals:      globals,
+		handlerState: state,
+	}
+
 	tests := []struct {
 		name   string
-		kind   string
-		value  int
+		expr   string
 		expect bool
 	}{
-		{"gte_pass", "global_gte", 10, true},
-		{"gte_fail", "global_gte", 11, false},
-		{"gt_fail", "global_gt", 10, false},
-		{"gt_pass", "global_gt", 9, true},
-		{"lt_pass", "global_lt", 11, true},
-		{"lt_fail", "global_lt", 10, false},
-		{"lte_pass", "global_lte", 10, true},
-		{"lte_fail", "global_lte", 9, false},
+		{"var eq true", "var.ready == true", true},
+		{"var eq false", "var.ready == false", false},
+		{"var ne", "var.ready != true", false},
+		{"var string eq", "var.mood == 'neutral'", true},
+		{"var string ne", "var.mood == 'happy'", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cond := &ConditionNode{Kind: tt.kind, Params: map[string]any{"elythium": tt.value}}
-			got := evaluateCondition(cond, globals, nil)
+			cond := &ConditionNode{Kind: "expr", Params: tt.expr}
+			got := evaluateCondition(cond, globals, state, tc)
 			if got != tt.expect {
 				t.Errorf("expected %v, got %v", tt.expect, got)
 			}
@@ -112,22 +119,24 @@ func TestEvaluateCondition_Not(t *testing.T) {
 	globals := newTestGlobals(map[string]any{
 		"door": true,
 	})
+	tc := &TemplateContext{SelfId: "npc", Globals: globals}
+
 	cond := &ConditionNode{
 		Kind: "not",
 		Params: map[string]any{
-			"global_eq": map[string]any{"door": true},
+			"expr": "global.door == true",
 		},
 	}
-	if evaluateCondition(cond, globals, nil) {
+	if evaluateCondition(cond, globals, nil, tc) {
 		t.Error("expected false (not of true)")
 	}
 	cond2 := &ConditionNode{
 		Kind: "not",
 		Params: map[string]any{
-			"global_eq": map[string]any{"door": false},
+			"expr": "global.door == false",
 		},
 	}
-	if !evaluateCondition(cond2, globals, nil) {
+	if !evaluateCondition(cond2, globals, nil, tc) {
 		t.Error("expected true (not of false)")
 	}
 }
@@ -137,44 +146,27 @@ func TestEvaluateCondition_All(t *testing.T) {
 		"a": true,
 		"b": true,
 	})
+	tc := &TemplateContext{SelfId: "npc", Globals: globals}
+
 	cond := &ConditionNode{
 		Kind: "all",
 		Params: []any{
-			map[string]any{"global_eq": map[string]any{"a": true}},
-			map[string]any{"global_eq": map[string]any{"b": true}},
+			map[string]any{"expr": "global.a == true"},
+			map[string]any{"expr": "global.b == true"},
 		},
 	}
-	if !evaluateCondition(cond, globals, nil) {
+	if !evaluateCondition(cond, globals, nil, tc) {
 		t.Error("expected true (all match)")
 	}
 	cond2 := &ConditionNode{
 		Kind: "all",
 		Params: []any{
-			map[string]any{"global_eq": map[string]any{"a": true}},
-			map[string]any{"global_eq": map[string]any{"b": false}},
+			map[string]any{"expr": "global.a == true"},
+			map[string]any{"expr": "global.b == false"},
 		},
 	}
-	if evaluateCondition(cond2, globals, nil) {
+	if evaluateCondition(cond2, globals, nil, tc) {
 		t.Error("expected false (not all match)")
-	}
-}
-
-func TestEvaluateCondition_HandlerState(t *testing.T) {
-	globals := newTestGlobals(nil)
-	state := map[string]any{"ready": true}
-	cond := &ConditionNode{
-		Kind:   "handler_state_eq",
-		Params: map[string]any{"ready": true},
-	}
-	if !evaluateCondition(cond, globals, state) {
-		t.Error("expected true")
-	}
-	cond2 := &ConditionNode{
-		Kind:   "handler_state_eq",
-		Params: map[string]any{"ready": false},
-	}
-	if evaluateCondition(cond2, globals, state) {
-		t.Error("expected false")
 	}
 }
 
@@ -251,9 +243,9 @@ type testEntity struct {
 	behaviorDisabled bool
 }
 
-func (e *testEntity) IsMoving() bool          { return e.moving }
-func (e *testEntity) HasPushedBehavior() bool  { return e.hasPushedBehav }
-func (e *testEntity) IsBehaviorEnabled() bool  { return !e.behaviorDisabled }
+func (e *testEntity) IsMoving() bool         { return e.moving }
+func (e *testEntity) HasPushedBehavior() bool { return e.hasPushedBehav }
+func (e *testEntity) IsBehaviorEnabled() bool { return !e.behaviorDisabled }
 
 func TestEvaluateCondition_PropExists(t *testing.T) {
 	globals := newTestGlobals(nil)

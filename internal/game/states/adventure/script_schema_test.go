@@ -26,9 +26,6 @@ var knownStepKinds = []string{
 }
 
 var knownBuiltinConditions = []string{
-	"global_eq", "global_ne", "global_gt", "global_gte", "global_lt", "global_lte",
-	"global_exists", "global_not_exists",
-	"handler_state_eq", "handler_state_ne",
 	"all", "any", "not",
 	"expr",
 }

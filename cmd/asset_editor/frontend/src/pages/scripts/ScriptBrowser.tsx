@@ -10,7 +10,6 @@ function ScriptCounts({ file }: { file: ScriptFileEntry }) {
     if (file.handlerCount > 0) parts.push(`${file.handlerCount} handler${file.handlerCount !== 1 ? "s" : ""}`);
     if (file.sequenceCount > 0) parts.push(`${file.sequenceCount} sequence${file.sequenceCount !== 1 ? "s" : ""}`);
     if (file.customActionNames && file.customActionNames.length > 0) parts.push(`${file.customActionNames.length} action${file.customActionNames.length !== 1 ? "s" : ""}`);
-    if (file.dataListNames && file.dataListNames.length > 0) parts.push(`${file.dataListNames.length} data list${file.dataListNames.length !== 1 ? "s" : ""}`);
     if (file.constNames && file.constNames.length > 0) parts.push(`${file.constNames.length} const${file.constNames.length !== 1 ? "s" : ""}`);
     return <>{parts.join(", ") || "empty"}</>;
 }
@@ -19,7 +18,6 @@ const tagStyles: Record<string, string> = {
     handler: "bg-accent-blue-tint text-accent-blue",
     sequence: "bg-accent-teal-tint text-accent-teal",
     action: "bg-accent-violet-tint text-accent-violet",
-    data: "bg-accent-orange-tint text-accent-orange",
     const: "bg-accent-amber-tint text-accent-amber",
     template: "bg-accent-green-tint text-accent-green",
 };
@@ -29,7 +27,6 @@ function ScriptNameTags({ file }: { file: ScriptFileEntry }) {
     if (file.handlerNames?.length) groups.push({ label: "handler", names: file.handlerNames });
     if (file.customActionNames?.length) groups.push({ label: "action", names: file.customActionNames });
     if (file.sequenceNames?.length) groups.push({ label: "sequence", names: file.sequenceNames });
-    if (file.dataListNames?.length) groups.push({ label: "data", names: file.dataListNames });
     if (file.constNames?.length) groups.push({ label: "const", names: file.constNames });
     if (file.propertyTemplateNames?.length) groups.push({ label: "template", names: file.propertyTemplateNames });
 

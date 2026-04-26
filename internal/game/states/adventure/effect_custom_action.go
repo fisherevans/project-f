@@ -31,9 +31,6 @@ func convertCustomActionStep(params any, tc *TemplateContext, sequences map[stri
 	}
 
 	withMap, _ := m["params"].(map[string]any)
-	if withMap == nil {
-		withMap, _ = m["with"].(map[string]any)
-	}
 
 	scope := &ReturnScope{Id: nextScopeId("custom_action")}
 

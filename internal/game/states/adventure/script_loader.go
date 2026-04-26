@@ -13,7 +13,6 @@ import (
 var (
 	scriptHandlerDefs      = map[string]*HandlerDef{}
 	scriptSequences        = map[string]*SequenceDef{}
-	scriptDataLists        = map[string][]string{}
 	scriptConsts           = map[string]any{}
 	scriptCustomActions    = map[string]*CustomActionDef{}
 	scriptPropertyTemplates = map[string]map[string]any{}
@@ -59,12 +58,6 @@ func loadScriptFiles() {
 			scriptHandlerDefs[name] = handler
 			log.Debug().Str("name", name).Str("path", path).Msg("loaded script handler def")
 		}
-		for name, list := range sf.Data {
-			if _, exists := scriptDataLists[name]; exists {
-				log.Fatal().Str("name", name).Str("path", path).Msg("duplicate data list name")
-			}
-			scriptDataLists[name] = list
-		}
 		for name, val := range sf.Consts {
 			if _, exists := scriptConsts[name]; exists {
 				log.Fatal().Str("name", name).Str("path", path).Msg("duplicate const name")
@@ -100,7 +93,6 @@ func loadScriptFiles() {
 	log.Info().
 		Int("handlers", len(scriptHandlerDefs)).
 		Int("sequences", len(scriptSequences)).
-		Int("data_lists", len(scriptDataLists)).
 		Int("consts", len(scriptConsts)).
 		Int("custom_actions", len(scriptCustomActions)).
 		Int("property_templates", len(scriptPropertyTemplates)).
@@ -128,20 +120,19 @@ func registerScriptHandlerFactory() {
 }
 
 func getDataList(name string) ([]string, bool) {
-	if list, ok := scriptDataLists[name]; ok {
-		return list, true
+	val, ok := scriptConsts[name]
+	if !ok {
+		return nil, false
 	}
-	if val, ok := scriptConsts[name]; ok {
-		if list, ok := val.([]any); ok {
-			strs := make([]string, len(list))
-			for i, v := range list {
-				strs[i] = fmt.Sprintf("%v", v)
-			}
-			return strs, true
+	if list, ok := val.([]any); ok {
+		strs := make([]string, len(list))
+		for i, v := range list {
+			strs[i] = fmt.Sprintf("%v", v)
 		}
-		if list, ok := val.([]string); ok {
-			return list, true
-		}
+		return strs, true
+	}
+	if list, ok := val.([]string); ok {
+		return list, true
 	}
 	return nil, false
 }

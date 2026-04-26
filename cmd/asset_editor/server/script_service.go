@@ -61,7 +61,6 @@ func (s *ScriptService) ListScripts() ([]ScriptFileEntry, error) {
 			SequenceNames:         summary.Sequences,
 			CustomActionNames:     summary.CustomActions,
 			ConstNames:            summary.Consts,
-			DataListNames:         summary.DataLists,
 			PropertyTemplateNames: summary.PropertyTemplates,
 		})
 		return nil
@@ -107,7 +106,6 @@ func (s *ScriptService) GetScript(name string) (*ScriptFileDetail, error) {
 			SequenceNames:         summary.Sequences,
 			CustomActionNames:     summary.CustomActions,
 			ConstNames:            summary.Consts,
-			DataListNames:         summary.DataLists,
 			PropertyTemplateNames: summary.PropertyTemplates,
 		},
 		RawYAML: string(data),
@@ -162,22 +160,20 @@ func (s *ScriptService) DeleteScript(name string) error {
 }
 
 type scriptSummary struct {
-	Handlers           []string
-	Sequences          []string
-	CustomActions      []string
-	Consts             []string
-	DataLists          []string
-	PropertyTemplates  []string
+	Handlers          []string
+	Sequences         []string
+	CustomActions     []string
+	Consts            []string
+	PropertyTemplates []string
 }
 
 func parseScriptSummary(data []byte) scriptSummary {
 	var raw struct {
-		Handlers           yaml.Node `yaml:"handlers"`
-		Sequences          yaml.Node `yaml:"sequences"`
-		CustomActions      yaml.Node `yaml:"custom_actions"`
-		Consts             yaml.Node `yaml:"consts"`
-		Data               yaml.Node `yaml:"data"`
-		PropertyTemplates  yaml.Node `yaml:"property_templates"`
+		Handlers          yaml.Node `yaml:"handlers"`
+		Sequences         yaml.Node `yaml:"sequences"`
+		CustomActions     yaml.Node `yaml:"custom_actions"`
+		Consts            yaml.Node `yaml:"consts"`
+		PropertyTemplates yaml.Node `yaml:"property_templates"`
 	}
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return scriptSummary{}
@@ -192,7 +188,6 @@ func parseScriptSummary(data []byte) scriptSummary {
 		{&raw.Sequences, &summary.Sequences},
 		{&raw.CustomActions, &summary.CustomActions},
 		{&raw.Consts, &summary.Consts},
-		{&raw.Data, &summary.DataLists},
 		{&raw.PropertyTemplates, &summary.PropertyTemplates},
 	} {
 		if node.n.Kind == yaml.MappingNode {

@@ -44,16 +44,12 @@ handlers:
   test:
     on_interact_self:
       - when:
-          global_eq:
-            key: "my_key"
-            value: true
+          expr: "global.my_key == true"
         steps:
           - dialogue: "Door is open"
       - when:
           not:
-            global_eq:
-              key: "my_key"
-              value: true
+            expr: "global.my_key == true"
         steps:
           - dialogue: "Door is closed"
 `
@@ -69,8 +65,8 @@ handlers:
 	if r1.When == nil {
 		t.Fatal("expected when condition on rule 1")
 	}
-	if r1.When.Kind != "global_eq" {
-		t.Errorf("expected 'global_eq', got %q", r1.When.Kind)
+	if r1.When.Kind != "expr" {
+		t.Errorf("expected 'expr', got %q", r1.When.Kind)
 	}
 	r2 := h.OnInteractSelf.Rules[1]
 	if r2.When == nil {
@@ -88,10 +84,8 @@ handlers:
     on_interact_self:
       - when:
           all:
-            - global_eq:
-                key1: true
-            - global_eq:
-                key2: false
+            - expr: "global.key1 == true"
+            - expr: "global.key2 == false"
         steps:
           - dialogue: "Both match"
 `
@@ -225,8 +219,7 @@ handlers:
               value: "true"
     on_zone_activity:
       - when:
-          handler_state_eq:
-            ready: true
+          expr: "var.ready == true"
         steps:
           - dialogue: "Triggered"
 `
@@ -367,7 +360,7 @@ handlers:
       - steps:
           - ref:
               name: my_sequence
-              with:
+              params:
                 target: "world"
 `
 	sf, err := ParseScriptFile([]byte(yaml))

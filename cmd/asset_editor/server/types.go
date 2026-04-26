@@ -62,9 +62,8 @@ type ScriptFileEntry struct {
     HandlerNames      []string `json:"handlerNames"`
     SequenceNames     []string `json:"sequenceNames,omitempty"`
     CustomActionNames []string `json:"customActionNames,omitempty"`
-    ConstNames        []string `json:"constNames,omitempty"`
-    DataListNames            []string `json:"dataListNames,omitempty"`
-    PropertyTemplateNames    []string `json:"propertyTemplateNames,omitempty"`
+    ConstNames            []string `json:"constNames,omitempty"`
+    PropertyTemplateNames []string `json:"propertyTemplateNames,omitempty"`
 }
 
 type ScriptFileDetail struct {

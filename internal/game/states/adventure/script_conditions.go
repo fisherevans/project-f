@@ -3,7 +3,6 @@ package adventure
 import (
 	"fmt"
 
-	"fisherevans.com/project/f/internal/game/rpg"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,36 +15,6 @@ func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerS
 		templateCtx = tc[0]
 	}
 	switch node.Kind {
-	case "global_eq":
-		return evalGlobalComparison(node.Params, globals, func(gv any, expected any) bool {
-			return fmt.Sprintf("%v", gv) == fmt.Sprintf("%v", expected)
-		})
-	case "global_ne":
-		return evalGlobalComparison(node.Params, globals, func(gv any, expected any) bool {
-			return fmt.Sprintf("%v", gv) != fmt.Sprintf("%v", expected)
-		})
-	case "global_gt":
-		return evalGlobalNumericComparison(node.Params, globals, func(a, b float64) bool { return a > b })
-	case "global_gte":
-		return evalGlobalNumericComparison(node.Params, globals, func(a, b float64) bool { return a >= b })
-	case "global_lt":
-		return evalGlobalNumericComparison(node.Params, globals, func(a, b float64) bool { return a < b })
-	case "global_lte":
-		return evalGlobalNumericComparison(node.Params, globals, func(a, b float64) bool { return a <= b })
-	case "global_exists":
-		key, _ := node.Params.(string)
-		return globals.Get(key).Exists()
-	case "global_not_exists":
-		key, _ := node.Params.(string)
-		return !globals.Get(key).Exists()
-	case "handler_state_eq":
-		return evalHandlerStateComparison(node.Params, handlerState, func(gv any, expected any) bool {
-			return fmt.Sprintf("%v", gv) == fmt.Sprintf("%v", expected)
-		})
-	case "handler_state_ne":
-		return evalHandlerStateComparison(node.Params, handlerState, func(gv any, expected any) bool {
-			return fmt.Sprintf("%v", gv) != fmt.Sprintf("%v", expected)
-		})
 	case "all":
 		items, ok := node.Params.([]any)
 		if !ok {
@@ -165,91 +134,6 @@ func decodeConditionFromAny(v any) (*ConditionNode, error) {
 		return &ConditionNode{Kind: k, Params: val}, nil
 	}
 	return nil, fmt.Errorf("unreachable")
-}
-
-func evalGlobalComparison(params any, globals StateGlobalsReader, cmp func(any, any) bool) bool {
-	m, ok := params.(map[string]any)
-	if !ok {
-		return false
-	}
-	key, hasKey := m["key"]
-	value, hasValue := m["value"]
-	if hasKey && hasValue {
-		keyStr, _ := key.(string)
-		gv := globals.Get(keyStr)
-		if !gv.Exists() {
-			return cmp(nil, value)
-		}
-		return cmp(gv.Value(), value)
-	}
-	for k, expected := range m {
-		gv := globals.Get(k)
-		if !gv.Exists() {
-			return cmp(nil, expected)
-		}
-		if !cmp(gv.Value(), expected) {
-			return false
-		}
-	}
-	return true
-}
-
-func evalGlobalNumericComparison(params any, globals StateGlobalsReader, cmp func(float64, float64) bool) bool {
-	m, ok := params.(map[string]any)
-	if !ok {
-		return false
-	}
-	for k, expected := range m {
-		if k == "key" || k == "value" {
-			continue
-		}
-		gv := globals.Get(k)
-		actual := globalValueToFloat(gv)
-		expectedFloat := toFloat64(expected)
-		if !cmp(actual, expectedFloat) {
-			return false
-		}
-	}
-	key, hasKey := m["key"]
-	value, hasValue := m["value"]
-	if hasKey && hasValue {
-		keyStr, _ := key.(string)
-		actual := globalValueToFloat(globals.Get(keyStr))
-		expectedFloat := toFloat64(value)
-		return cmp(actual, expectedFloat)
-	}
-	if hasKey || hasValue {
-		log.Warn().Bool("has_key", hasKey).Bool("has_value", hasValue).Msg("numeric comparison has orphaned key or value")
-		return false
-	}
-	return true
-}
-
-func globalValueToFloat(gv *rpg.GlobalValue) float64 {
-	if !gv.Exists() {
-		return 0
-	}
-	return toFloat64(gv.Value())
-}
-
-func evalHandlerStateComparison(params any, handlerState map[string]any, cmp func(any, any) bool) bool {
-	m, ok := params.(map[string]any)
-	if !ok {
-		return false
-	}
-	for k, expected := range m {
-		actual, exists := handlerState[k]
-		if !exists {
-			if !cmp(nil, expected) {
-				return false
-			}
-			continue
-		}
-		if !cmp(actual, expected) {
-			return false
-		}
-	}
-	return true
 }
 
 func toFloat64(v any) float64 {

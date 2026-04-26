@@ -51,16 +51,6 @@ export function parseScript(yamlStr: string): ParsedScript {
         }
     }
 
-    let data: Record<string, string[]> | undefined;
-    if (raw.data && typeof raw.data === "object") {
-        data = {};
-        for (const [name, list] of Object.entries(raw.data as Record<string, unknown>)) {
-            if (Array.isArray(list)) {
-                data[name] = list.map(String);
-            }
-        }
-    }
-
     let consts: Record<string, unknown> | undefined;
     if (raw.consts && typeof raw.consts === "object") {
         consts = raw.consts as Record<string, unknown>;
@@ -84,7 +74,7 @@ export function parseScript(yamlStr: string): ParsedScript {
         property_templates = raw.property_templates as Record<string, Record<string, unknown>>;
     }
 
-    return { handlers, sequences, consts, custom_actions, data, property_templates };
+    return { handlers, sequences, consts, custom_actions, property_templates };
 }
 
 function parseHandler(raw: Record<string, unknown>): HandlerDef {
@@ -165,10 +155,6 @@ export function parseCondition(raw: unknown): ConditionNode {
 
 export function stringifyScript(script: ParsedScript): string {
     const obj: Record<string, unknown> = {};
-
-    if (script.data && Object.keys(script.data).length > 0) {
-        obj.data = script.data;
-    }
 
     const handlers: Record<string, unknown> = {};
     for (const [name, handler] of Object.entries(script.handlers)) {

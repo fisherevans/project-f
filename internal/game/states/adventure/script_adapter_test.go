@@ -13,8 +13,8 @@ func TestScriptHandler_ProcessRules_FirstMatchWins(t *testing.T) {
 		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
-					Kind:   "global_gt",
-					Params: map[string]any{"visit_count": 1},
+					Kind:   "expr",
+					Params: "global.visit_count > 1",
 				},
 				Steps: []*StepNode{
 					{Kind: "dialogue", Params: "repeat visitor"},
@@ -68,8 +68,8 @@ func TestScriptHandler_ProcessRules_NoMatch(t *testing.T) {
 		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
-					Kind:   "global_eq",
-					Params: map[string]any{"ready": true},
+					Kind:   "expr",
+					Params: "global.ready == true",
 				},
 				Steps: []*StepNode{
 					{Kind: "dialogue", Params: "ready"},
@@ -133,8 +133,8 @@ func TestScriptHandler_ProcessRules_SetVarUsedInCondition(t *testing.T) {
 		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
-					Kind:   "handler_state_eq",
-					Params: map[string]any{"talked": true},
+					Kind:   "expr",
+					Params: "var.talked == true",
 				},
 				Steps: []*StepNode{
 					{Kind: "dialogue", Params: "we already talked"},
@@ -189,8 +189,8 @@ func TestScriptHandler_VarInitialization(t *testing.T) {
 		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
-					Kind:   "handler_state_eq",
-					Params: map[string]any{"mood": "neutral"},
+					Kind:   "expr",
+					Params: "var.mood == 'neutral'",
 				},
 				Steps: []*StepNode{
 					{Kind: "dialogue", Params: "I'm feeling neutral"},

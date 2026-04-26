@@ -358,7 +358,7 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 		for k, v := range tc.Params {
 			childTC.Params[k] = v
 		}
-		if withMap, ok := m["with"].(map[string]any); ok {
+		if withMap, ok := m["params"].(map[string]any); ok {
 			for k, v := range withMap {
 				childTC.Params[k] = fmt.Sprintf("%v", v)
 			}

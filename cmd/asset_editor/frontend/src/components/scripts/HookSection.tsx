@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { RuleEditor } from "./RuleEditor";
 import { createEmptyRule, moveItem } from "@/lib/scriptUtils";
 import type { HookDef, ScriptSchema, EventHookDef } from "@/types/scripts";

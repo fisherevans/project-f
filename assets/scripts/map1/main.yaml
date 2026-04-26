@@ -42,9 +42,7 @@ handlers:
           entering: true
           entity: "{{player}}"
         when:
-          all:
-            - handler_state_eq:
-                ready: true
+          expr: "var.ready == true"
         steps:
           - set_var:
               key: ready

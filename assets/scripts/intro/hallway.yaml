@@ -299,16 +299,14 @@ handlers:
   intro.paper_instructor:
     on_interact_self:
       - when:
-          global_eq:
-            intro.papers_turned_in: true
+          expr: "global['intro.papers_turned_in'] == true"
         steps:
           - focused_sequence:
               target: "{{source}}"
               effects:
                 - dialogue: "What do you want? Go find the equipment specialist."
       - when:
-          global_ne:
-            intro.has_papers: true
+          expr: "global['intro.has_papers'] != true"
         steps:
           - focused_sequence:
               target: "{{source}}"
@@ -326,10 +324,8 @@ handlers:
           entering: true
         when:
           all:
-            - handler_state_ne:
-                blabbed: true
-            - global_ne:
-                intro.papers_turned_in: true
+            - expr: "var.blabbed != true"
+            - expr: "global['intro.papers_turned_in'] != true"
         steps:
           - set_var:
               key: blabbed
@@ -397,8 +393,7 @@ handlers:
   intro.equipment_specialist:
     on_interact_self:
       - when:
-          global_eq:
-            intro.has_equipment_key: true
+          expr: "global['intro.has_equipment_key'] == true"
         steps:
           - dialogue: "Do you need help finding testing room 1...?"
       - steps:

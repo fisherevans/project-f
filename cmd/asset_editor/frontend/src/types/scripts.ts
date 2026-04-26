@@ -8,7 +8,6 @@ export interface ScriptFileEntry {
     sequenceNames?: string[];
     customActionNames?: string[];
     constNames?: string[];
-    dataListNames?: string[];
     propertyTemplateNames?: string[];
 }
 
@@ -101,7 +100,6 @@ export interface ParsedScript {
     sequences?: Record<string, SequenceDef>;
     consts?: Record<string, unknown>;
     custom_actions?: Record<string, CustomActionDef>;
-    data?: Record<string, string[]>;
     property_templates?: Record<string, Record<string, unknown>>;
 }
 
@@ -110,7 +108,6 @@ export type ScriptItemSelection =
     | { type: "custom_action"; name: string }
     | { type: "sequence"; name: string }
     | { type: "const"; name: string }
-    | { type: "data"; name: string }
     | { type: "property_template"; name: string };
 
 export interface CustomActionDef {

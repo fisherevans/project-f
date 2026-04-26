@@ -9,16 +9,11 @@ handlers:
   intro.training.0.npc:
     on_interact_self:
       - when:
-          global_eq:
-            key: "intro.training.0.door"
-            value: true
+          expr: "global['intro.training.0.door'] == true"
         steps:
           - dialogue: "We don't appreciate those who linger. Move on to the next training room, recruit..."
       - when:
-          not:
-            global_eq:
-              key: "intro.training.0.door"
-              value: true
+          expr: "global['intro.training.0.door'] != true"
         steps:
           - focused_sequence:
               effects:
@@ -37,18 +32,14 @@ handlers:
   intro.training.1.npc:
     on_interact_self:
       - when:
-          global_eq:
-            intro.training.10.door: true
+          expr: "global['intro.training.10.door'] == true"
         steps:
           - dialogue: "Don't worry, you'll have plenty of time to practice some more... once you're all alone in deep space."
           - dialogue: "Now, get through that door."
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.10.door: true
-            - global_eq:
-                abilities.xenolog_access: true
+            - expr: "global['intro.training.10.door'] != true"
+            - expr: "global['abilities.xenolog_access'] == true"
         steps:
           - focused_sequence:
               move_camera: true
@@ -65,12 +56,8 @@ handlers:
                     follow_entity: "{{player}}"
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.10.door: true
-            - not:
-                global_eq:
-                  abilities.xenolog_access: true
+            - expr: "global['intro.training.10.door'] != true"
+            - expr: "global['abilities.xenolog_access'] != true"
         steps:
           - focused_sequence:
               effects:
@@ -79,14 +66,11 @@ handlers:
   intro.training.1.chair:
     on_interact_self:
       - when:
-          global_eq:
-            abilities.xenolog_primortals: true
+          expr: "global['abilities.xenolog_primortals'] == true"
         steps:
           - self_dialogue: "Uhhh. I don't think I need to do that again..."
       - when:
-          not:
-            global_eq:
-              abilities.xenolog_primortals: true
+          expr: "global['abilities.xenolog_primortals'] != true"
         steps:
           - push_behavior:
               entity: "{{player}}"
@@ -146,16 +130,11 @@ handlers:
   intro.training.2.button:
     on_interact_self:
       - when:
-          global_eq:
-            key: "intro.training.2.door"
-            value: true
+          expr: "global['intro.training.2.door'] == true"
         steps:
           - self_dialogue: "The door has already been opened."
       - when:
-          not:
-            global_eq:
-              key: "intro.training.2.door"
-              value: true
+          expr: "global['intro.training.2.door'] != true"
         steps:
           - play_sound: "adventure/beeps/success"
           - set_run_state:
@@ -165,16 +144,11 @@ handlers:
   intro.training.3.npc:
     on_interact_self:
       - when:
-          global_eq:
-            key: "intro.training.3.door"
-            value: true
+          expr: "global['intro.training.3.door'] == true"
         steps:
           - dialogue: "There's no going back. You must continue to the next room."
       - when:
-          not:
-            global_eq:
-              key: "intro.training.3.door"
-              value: true
+          expr: "global['intro.training.3.door'] != true"
         steps:
           - focused_sequence:
               effects:
@@ -205,27 +179,19 @@ handlers:
   intro.training.5.npc:
     on_interact_self:
       - when:
-          global_eq:
-            intro.training.5.door: true
+          expr: "global['intro.training.5.door'] == true"
         steps:
           - dialogue: "There's no going back. You must continue to the next room."
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.5.door: true
-            - global_eq:
-                intro.training.5.xenolog: true
+            - expr: "global['intro.training.5.door'] != true"
+            - expr: "global['intro.training.5.xenolog'] == true"
         steps:
           - dialogue: "Don't chicken out now."
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.5.door: true
-            - not:
-                global_eq:
-                  intro.training.5.xenolog: true
+            - expr: "global['intro.training.5.door'] != true"
+            - expr: "global['intro.training.5.xenolog'] != true"
         steps:
           - focused_sequence:
               effects:
@@ -238,9 +204,7 @@ handlers:
     on_state_enter:
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.5.door: true
+            - expr: "global['intro.training.5.door'] != true"
             - animech_upgrade_level_gt:
                 level: 1
             - player_in_zone:
@@ -264,16 +228,11 @@ handlers:
   intro.training.5.xenolog:
     on_interact_self:
       - when:
-          global_eq:
-            key: "intro.training.5.xenolog"
-            value: true
+          expr: "global['intro.training.5.xenolog'] == true"
         steps:
           - action: open_xenolog
       - when:
-          not:
-            global_eq:
-              key: "intro.training.5.xenolog"
-              value: true
+          expr: "global['intro.training.5.xenolog'] != true"
         steps:
           - play_sound: "adventure/beeps/error"
           - chatter:
@@ -299,42 +258,27 @@ handlers:
   intro.training.7.npc:
     on_interact_self:
       - when:
-          global_eq:
-            intro.training.7.door: true
+          expr: "global['intro.training.7.door'] == true"
         steps:
           - dialogue: "There's no getting out of it. Yes, there are creatures out there. You're also in a $371 million dollar military grade robot."
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.7.door: true
-            - global_eq:
-                intro.control.elythium: true
+            - expr: "global['intro.training.7.door'] != true"
+            - expr: "global['intro.control.elythium'] == true"
         steps:
           - dialogue: "Just go smash it with your first."
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.7.door: true
-            - not:
-                global_eq:
-                  intro.control.elythium: true
-            - global_eq:
-                abilities.xenolog_primortals: true
+            - expr: "global['intro.training.7.door'] != true"
+            - expr: "global['intro.control.elythium'] != true"
+            - expr: "global['abilities.xenolog_primortals'] == true"
         steps:
           - dialogue: "Open up that Xenolog, learn a skill, and then equip it."
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.training.7.door: true
-            - not:
-                global_eq:
-                  intro.control.elythium: true
-            - not:
-                global_eq:
-                  abilities.xenolog_primortals: true
+            - expr: "global['intro.training.7.door'] != true"
+            - expr: "global['intro.control.elythium'] != true"
+            - expr: "global['abilities.xenolog_primortals'] != true"
         steps:
           - focused_sequence:
               effects:
@@ -350,9 +294,7 @@ handlers:
     on_state_enter:
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.control.elythium: true
+            - expr: "global['intro.control.elythium'] != true"
             - player_in_zone:
                 zone: "intro.training.7"
             - not:
@@ -365,9 +307,7 @@ handlers:
                 - dialogue: "Make sure your unlock a Toxmidge skill, then equip it in your Animech."
       - when:
           all:
-            - not:
-                global_eq:
-                  intro.control.elythium: true
+            - expr: "global['intro.control.elythium'] != true"
             - player_in_zone:
                 zone: "intro.training.7"
             - skill_equipped:
@@ -388,9 +328,7 @@ handlers:
       - filter:
           id: intro.training.7.elythium
         when:
-          not:
-            global_eq:
-              intro.training.7.elythium.done: true
+          expr: "global['intro.training.7.elythium.done'] != true"
         steps:
           - set_world_state:
               key: "intro.training.7.elythium.done"
@@ -409,13 +347,11 @@ handlers:
   intro.training.9.exit:
     on_interact_self:
       - when:
-          global_lt:
-            elythium: 12
+          expr: "global.elythium < 12"
         steps:
           - self_dialogue: "This transfer station won't work until I collect more Elythium."
       - when:
-          global_gte:
-            elythium: 12
+          expr: "global.elythium >= 12"
         steps:
           - self_dialogue: "You deposit the elythium and press the button..."
           - push_behavior:

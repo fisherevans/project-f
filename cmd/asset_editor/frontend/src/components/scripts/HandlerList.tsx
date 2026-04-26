@@ -14,7 +14,7 @@ interface HandlerListProps {
     onChange: (script: ParsedScript) => void;
 }
 
-type AddingType = "handler" | "custom_action" | "sequence" | "const" | "data" | "property_template" | null;
+type AddingType = "handler" | "custom_action" | "sequence" | "const" | "property_template" | null;
 
 function isSelected(selection: ScriptItemSelection | null, type: ScriptItemSelection["type"], name: string): boolean {
     return selection?.type === type && selection.name === name;
@@ -30,7 +30,6 @@ export function HandlerList({ script, selection, onSelect, onChange }: HandlerLi
     const sequenceNames = script.sequences ? Object.keys(script.sequences) : [];
     const customActionNames = script.custom_actions ? Object.keys(script.custom_actions) : [];
     const constNames = script.consts ? Object.keys(script.consts) : [];
-    const dataNames = script.data ? Object.keys(script.data) : [];
     const templateNames = script.property_templates ? Object.keys(script.property_templates) : [];
 
     const startAdd = (type: AddingType) => {
@@ -75,14 +74,6 @@ export function HandlerList({ script, selection, onSelect, onChange }: HandlerLi
                 });
                 onSelect({ type: "const", name: newName });
                 break;
-            case "data":
-                if (script.data?.[newName]) return;
-                onChange({
-                    ...script,
-                    data: { ...(script.data ?? {}), [newName]: [] },
-                });
-                onSelect({ type: "data", name: newName });
-                break;
             case "property_template":
                 if (script.property_templates?.[newName]) return;
                 onChange({
@@ -120,12 +111,6 @@ export function HandlerList({ script, selection, onSelect, onChange }: HandlerLi
                 const next = { ...(script.consts ?? {}) };
                 delete next[name];
                 onChange({ ...script, consts: Object.keys(next).length > 0 ? next : undefined });
-                break;
-            }
-            case "data": {
-                const next = { ...(script.data ?? {}) };
-                delete next[name];
-                onChange({ ...script, data: Object.keys(next).length > 0 ? next : undefined });
                 break;
             }
             case "property_template": {
@@ -180,15 +165,6 @@ export function HandlerList({ script, selection, onSelect, onChange }: HandlerLi
                     next[k === oldName ? renameValue : k] = v;
                 }
                 onChange({ ...script, consts: next });
-                break;
-            }
-            case "data": {
-                if (script.data?.[renameValue]) { setRenamingKey(null); return; }
-                const next: Record<string, string[]> = {};
-                for (const [k, v] of Object.entries(script.data ?? {})) {
-                    next[k === oldName ? renameValue : k] = v;
-                }
-                onChange({ ...script, data: next });
                 break;
             }
             case "property_template": {
@@ -361,30 +337,6 @@ export function HandlerList({ script, selection, onSelect, onChange }: HandlerLi
                 {sequenceNames.length === 0 && adding !== "sequence" && (
                     <>
                         {renderSectionHeader("Sequences", "sequence")}
-                    </>
-                )}
-
-                {(dataNames.length > 0 || adding === "data") && (
-                    <>
-                        {renderSectionHeader("Data Lists", "data")}
-                        <div className="p-1 space-y-px">
-                            {dataNames.map((name) => {
-                                const count = script.data?.[name]?.length ?? 0;
-                                return renderItem(
-                                    "data",
-                                    name,
-                                    count > 0 ? (
-                                        <span className="text-[10px] text-muted-foreground/50 shrink-0">[{count}]</span>
-                                    ) : undefined,
-                                );
-                            })}
-                            {renderAddRow("data", "list_name")}
-                        </div>
-                    </>
-                )}
-                {dataNames.length === 0 && adding !== "data" && (
-                    <>
-                        {renderSectionHeader("Data Lists", "data")}
                     </>
                 )}
 
