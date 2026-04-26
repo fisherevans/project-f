@@ -15,6 +15,10 @@ type TemplateContext struct {
 	Params     map[string]string
 	Properties map[string]any
 	Globals    StateGlobalsReader
+
+	handlerState      map[string]any
+	customActionDepth int
+	customActionParams map[string]any
 }
 
 func templateContextFromProps(props *util.Properties) map[string]string {
@@ -28,7 +32,16 @@ func templateContextFromProps(props *util.Properties) map[string]string {
 	return params
 }
 
+func (tc *TemplateContext) getExprEnv() *ExprEnv {
+	// Rebuilt each call - TemplateContext fields (SourceId) can change between uses
+	return NewExprEnv(tc, tc.handlerState, scriptConsts)
+}
+
 func (tc *TemplateContext) Resolve(s string) string {
+	if !strings.Contains(s, "{{") {
+		return s
+	}
+	// First pass: legacy substitution for simple {{name}} patterns
 	s = strings.ReplaceAll(s, "{{self}}", tc.SelfId)
 	s = strings.ReplaceAll(s, "{{player}}", tc.PlayerId)
 	s = strings.ReplaceAll(s, "{{source}}", tc.SourceId)
@@ -36,7 +49,22 @@ func (tc *TemplateContext) Resolve(s string) string {
 	for k, v := range tc.Params {
 		s = strings.ReplaceAll(s, "{{"+k+"}}", v)
 	}
+	// If any {{...}} remain after legacy substitution, evaluate with expr engine
+	if strings.Contains(s, "{{") {
+		s = InterpolateString(s, tc.getExprEnv())
+	}
 	return s
+}
+
+func (tc *TemplateContext) getCustomActionDepth() int {
+	return tc.customActionDepth
+}
+
+func (tc *TemplateContext) withCustomActionParams(params map[string]any) *TemplateContext {
+	child := *tc
+	child.customActionDepth = tc.customActionDepth + 1
+	child.customActionParams = params
+	return &child
 }
 
 func (tc *TemplateContext) ResolveAny(v any) any {

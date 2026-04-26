@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { X } from "lucide-react";
 import type { ScriptSchema, StepKindDef } from "@/types/scripts";
 
 interface StepKindPickerProps {
@@ -13,23 +13,37 @@ interface StepKindPickerProps {
 const CATEGORY_ORDER = ["text", "flow", "state", "entity", "camera", "audio", "transition", "rpg", "combat"];
 
 const CATEGORY_COLORS: Record<string, string> = {
-    text: "bg-blue-500/20 text-blue-300",
-    flow: "bg-purple-500/20 text-purple-300",
-    state: "bg-amber-500/20 text-amber-300",
-    entity: "bg-emerald-500/20 text-emerald-300",
-    camera: "bg-cyan-500/20 text-cyan-300",
-    audio: "bg-pink-500/20 text-pink-300",
-    transition: "bg-orange-500/20 text-orange-300",
-    rpg: "bg-red-500/20 text-red-300",
-    combat: "bg-red-500/20 text-red-300",
+    text: "bg-accent-blue-tint text-accent-blue",
+    flow: "bg-accent-violet-tint text-accent-violet",
+    state: "bg-accent-amber-tint text-accent-amber",
+    entity: "bg-accent-teal-tint text-accent-teal",
+    camera: "bg-accent-blue-tint text-accent-blue",
+    audio: "bg-accent-violet-tint text-accent-violet",
+    transition: "bg-accent-orange-tint text-accent-orange",
+    rpg: "bg-accent-red-tint text-accent-red",
+    combat: "bg-accent-red-tint text-accent-red",
 };
 
 export function getCategoryColor(category: string): string {
     return CATEGORY_COLORS[category] ?? "bg-muted text-muted-foreground";
 }
 
+function paramSummary(def: StepKindDef): string {
+    if (!def.params || def.params.length === 0) return "";
+    return def.params
+        .filter((p) => p.type !== "steps")
+        .map((p) => p.required ? p.name : `${p.name}?`)
+        .join(", ");
+}
+
 export function StepKindPicker({ schema, onSelect, onCancel }: StepKindPickerProps) {
     const [search, setSearch] = useState("");
+    const [activeCategory, setActiveCategory] = useState<string | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
 
     const grouped = useMemo(() => {
         const map = new Map<string, StepKindDef[]>();
@@ -45,58 +59,101 @@ export function StepKindPicker({ schema, onSelect, onCancel }: StepKindPickerPro
     }, [schema]);
 
     const filtered = useMemo(() => {
-        if (!search) return grouped;
-        const q = search.toLowerCase();
-        const result = new Map<string, StepKindDef[]>();
-        for (const [cat, defs] of grouped) {
-            const matching = defs.filter(
-                (d) => d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q)
-            );
-            if (matching.length > 0) result.set(cat, matching);
+        let source = grouped;
+        if (search) {
+            const q = search.toLowerCase();
+            const result = new Map<string, StepKindDef[]>();
+            for (const [cat, defs] of source) {
+                const matching = defs.filter(
+                    (d) => d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q)
+                );
+                if (matching.length > 0) result.set(cat, matching);
+            }
+            source = result;
         }
-        return result;
-    }, [grouped, search]);
+        if (activeCategory) {
+            const result = new Map<string, StepKindDef[]>();
+            if (source.has(activeCategory)) {
+                result.set(activeCategory, source.get(activeCategory)!);
+            }
+            return result;
+        }
+        return source;
+    }, [grouped, search, activeCategory]);
 
-    const categories = CATEGORY_ORDER.filter((c) => filtered.has(c));
+    const categories = [
+        ...CATEGORY_ORDER.filter((c) => grouped.has(c)),
+        ...[...grouped.keys()].filter((c) => !CATEGORY_ORDER.includes(c)).sort(),
+    ];
+    const visibleCategories = [
+        ...CATEGORY_ORDER.filter((c) => filtered.has(c)),
+        ...[...filtered.keys()].filter((c) => !CATEGORY_ORDER.includes(c)).sort(),
+    ];
 
     return (
-        <div className="rounded-md border border-border bg-popover shadow-lg">
-            <div className="border-b border-border p-2">
+        <div className="rounded-lg border border-border bg-popover shadow-xl">
+            <div className="flex items-center gap-2 border-b border-border p-2">
                 <Input
-                    className="h-7 text-xs"
-                    placeholder="Search step kinds..."
+                    ref={inputRef}
+                    className="h-7 text-xs flex-1"
+                    placeholder="Search steps..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    autoFocus
                     onKeyDown={(e) => {
                         if (e.key === "Escape") onCancel();
                     }}
                 />
+                <button className="text-muted-foreground hover:text-foreground shrink-0" onClick={onCancel}>
+                    <X className="h-4 w-4" />
+                </button>
             </div>
-            <ScrollArea className="max-h-64">
-                <div className="p-1">
-                    {categories.map((cat) => (
-                        <div key={cat} className="mb-1">
-                            <div className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                                {cat}
-                            </div>
-                            {filtered.get(cat)!.map((def) => (
+            <div className="flex flex-wrap gap-1 px-2 py-1.5 border-b border-border/50">
+                {categories.map((cat) => (
+                    <button
+                        key={cat}
+                        className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                            activeCategory === cat
+                                ? CATEGORY_COLORS[cat] ?? "bg-muted text-foreground"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        }`}
+                        onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                    >
+                        {cat}
+                    </button>
+                ))}
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-1">
+                {visibleCategories.map((cat) => (
+                    <div key={cat} className="mb-1">
+                        <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 sticky top-0 bg-popover">
+                            {cat}
+                        </div>
+                        {filtered.get(cat)!.map((def) => {
+                            const params = paramSummary(def);
+                            return (
                                 <button
                                     key={def.name}
-                                    className="flex w-full items-start gap-2 rounded px-2 py-1 text-left text-xs hover:bg-accent"
+                                    className="flex w-full items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent group/item"
                                     onClick={() => onSelect(def.name)}
                                 >
-                                    <code className="shrink-0 font-mono font-semibold">{def.name}</code>
-                                    <span className="text-muted-foreground line-clamp-1">{def.description}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <code className="text-xs font-mono font-semibold">{def.name}</code>
+                                            {params && (
+                                                <span className="text-[10px] text-muted-foreground/60 font-mono truncate">({params})</span>
+                                            )}
+                                        </div>
+                                        <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{def.description}</div>
+                                    </div>
                                 </button>
-                            ))}
-                        </div>
-                    ))}
-                    {categories.length === 0 && (
-                        <div className="px-2 py-3 text-center text-xs text-muted-foreground">No matches</div>
-                    )}
-                </div>
-            </ScrollArea>
+                            );
+                        })}
+                    </div>
+                ))}
+                {visibleCategories.length === 0 && (
+                    <div className="px-2 py-4 text-center text-xs text-muted-foreground">No matches</div>
+                )}
+            </div>
         </div>
     );
 }

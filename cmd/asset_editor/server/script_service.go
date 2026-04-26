@@ -70,7 +70,10 @@ func (s *ScriptService) ListScripts() ([]ScriptFileEntry, error) {
 
 func (s *ScriptService) GetScript(name string) (*ScriptFileDetail, error) {
 	root := s.scriptsDir()
-	path := filepath.Join(root, name)
+	path, err := safePath(root, name)
+	if err != nil {
+		return nil, err
+	}
 	if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
 		path += ".yaml"
 	}
@@ -105,7 +108,10 @@ func (s *ScriptService) GetScript(name string) (*ScriptFileDetail, error) {
 
 func (s *ScriptService) SaveScript(name string, content string) error {
 	root := s.scriptsDir()
-	path := filepath.Join(root, name)
+	path, err := safePath(root, name)
+	if err != nil {
+		return err
+	}
 	if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
 		path += ".yaml"
 	}
@@ -137,7 +143,10 @@ func (s *ScriptService) SaveScript(name string, content string) error {
 
 func (s *ScriptService) DeleteScript(name string) error {
 	root := s.scriptsDir()
-	path := filepath.Join(root, name)
+	path, err := safePath(root, name)
+	if err != nil {
+		return err
+	}
 	if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
 		path += ".yaml"
 	}

@@ -7,9 +7,11 @@ handlers:
   hq.bed:
     on_interact_self:
       - steps:
+          - self_dialogue: "SAVING... DON'T TURN OFF THE POWER."
           - action: save_game
+          - self_dialogue: "You saved the game."
 
   hq.animech:
     on_interact_self:
       - steps:
-          - action: animech_level_description
+          - self_dialogue: "It's a shiny, level {{save.animech.level}} Animech."

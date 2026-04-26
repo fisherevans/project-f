@@ -2,7 +2,7 @@ package adventure
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 
 	"fisherevans.com/project/f/internal/game"
@@ -19,16 +19,8 @@ func init() {
 
 	RegisterScriptAction("save_game", func(s *State, source EntityReader, params map[string]any) {
 		if err := game.CurrentSave().Save(); err != nil {
-			s.ExecuteSystemEffectsInOrder(
-				NewSelfDialogueEffect("oh no."),
-				NewSelfDialogueEffect(err.Error()),
-			)
-			return
+			s.ExecuteSystemEffects(NewSelfDialogueEffect(err.Error()))
 		}
-		s.ExecuteSystemEffectsInOrder(
-			NewSelfDialogueEffect("SAVING... DON'T TURN OFF THE POWER."),
-			NewSelfDialogueEffect("You saved the game."),
-		)
 	})
 
 	RegisterScriptAction("animech_level_description", func(s *State, source EntityReader, params map[string]any) {
@@ -53,12 +45,12 @@ func init() {
 			effects = append(effects, NewSetWorldStateEffect(key, nil))
 		}
 		game.CurrentSave().Animech.SkillSet = &rpg.SkillSet{
-			Skill1: rpg.Skill_Tackle.Id,
-			Skill2: rpg.Skill_Guard.Id,
+			Skill1: "tackle",
+			Skill2: "guard",
 		}
 		game.CurrentSave().ControlledUnlockedSkills = map[rpg.SkillId]struct{}{
-			rpg.Skill_Tackle.Id: {},
-			rpg.Skill_Guard.Id:  {},
+			"tackle": {},
+			"guard":  {},
 		}
 		game.CurrentSave().Animech.Upgrades.ShieldLevel = 0
 		game.CurrentSave().Animech.Upgrades.SyncLevel = 0
@@ -66,7 +58,7 @@ func init() {
 		for _, p := range game.CurrentSave().Primortals {
 			p.ResearchPoints = 0
 		}
-		game.CurrentSave().Primortals[rpg.Primortal_Toxmidge.Type] = &rpg.PrimortalProgress{
+		game.CurrentSave().Primortals["toxmidge"] = &rpg.PrimortalProgress{
 			Visibility:     rpg.PrimortalVisibilityDefeated,
 			ResearchPoints: 5,
 		}
@@ -117,13 +109,13 @@ func init() {
 	RegisterScriptAction("trigger_training_combat_1", func(s *State, source EntityReader, params map[string]any) {
 		combatPlayer := game.NewCombatPlayer(game.CurrentSave().Animech)
 		combatPlayer.SkillSet = &rpg.SkillSet{
-			Skill1: rpg.Skill_Tackle.Id,
-			Skill2: rpg.Skill_Guard.Id,
+			Skill1: "tackle",
+			Skill2: "guard",
 		}
 		triggerCombat := NewTriggerCombatEffect(rpg.CombatBGSpaceBase).
 			WithCombatId("intro.training.4.combat_over").
 			WithOpponent(game.CombatOpponent{
-				Type:      rpg.Primortal_Dummy.Type,
+				Type:      "dummy",
 				Archetype: "training.1",
 			}).
 			WithPlayer(combatPlayer).
@@ -137,18 +129,18 @@ func init() {
 	RegisterScriptAction("trigger_training_combat_2", func(s *State, source EntityReader, params map[string]any) {
 		combatPlayer := game.NewCombatPlayer(game.CurrentSave().Animech)
 		combatPlayer.SkillSet = &rpg.SkillSet{
-			Skill1: rpg.Skill_Tackle.Id,
-			Skill2: rpg.Skill_Guard.Id,
+			Skill1: "tackle",
+			Skill2: "guard",
 		}
 		triggerCombat := NewTriggerCombatEffect(rpg.CombatBGSpaceBase).
 			WithCombatId("intro.training.6.combat_over").
 			WithOpponent(game.CombatOpponent{
-				Type:      rpg.Primortal_Toxmidge.Type,
+				Type:      "toxmidge",
 				Archetype: "training.2",
 			}).
 			WithReward(game.CombatReward{
 				ExperiencePoints: 25,
-				ResearchType:     rpg.Primortal_Toxmidge.Type,
+				ResearchType:     "toxmidge",
 				ResearchPoints:   4,
 			}).
 			WithPlayer(combatPlayer).
@@ -398,7 +390,7 @@ func init() {
 		if source != nil {
 			entityId = source.GetId()
 		}
-		target := targets[rand.Intn(len(targets))]
+		target := targets[rand.IntN(len(targets))]
 		wasCanceled, _ := params["was_canceled"].(bool)
 		if wasCanceled {
 			s.ExecuteSystemEffectsInOrder(

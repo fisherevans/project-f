@@ -108,8 +108,17 @@ Sprites are configured in YAML sidecar files (e.g. `assets/sprites/.../foo.yaml`
 
 ### RPG data layer (`internal/game/rpg/`)
 
-- `primortals.go` — creature definitions and learnable skills
-- `skills.go` — combat skill mechanics
+Skills and primortals are defined as YAML files under `assets/rpg/skills/`
+and `assets/rpg/primortals/`. Schema types live in `internal/schema/rpg.go`.
+At game startup, `rpg.LoadFromFS(assets.FS)` reads the YAML, converts to
+runtime types, validates, and populates the `rpg.Skills` and
+`rpg.Primortals` registries. The asset editor reads/writes the same YAML
+files on disk.
+
+- `loader.go` — YAML loading + schema-to-runtime conversion
+- `skills.go` — runtime skill types (`Skill`, `SkillSet`, `SkillId`)
+- `skills_ticks.go` — tick types (`SkillTick`, `CombatStance`, `SkillTickEffect`, etc.)
+- `primortals.go` — runtime primortal types (`Primortal`, `PrimortalType`, registration)
 - `damage.go` — damage calculation
 - `saves.go` / `saves_animech.go` / `saves_primortals.go` — YAML-backed persistence in `game_data/saves/`
 
@@ -194,17 +203,42 @@ All row/column indices are **1-indexed**. `pingPong` is applied after `reverse`.
 Pure-data YAML types extracted from `internal/resources/` so both the game
 and the asset editor can import them without pulling in OpenGL dependencies.
 Contains `SpriteMetadata`, `SpriteTilesheet`, `SpriteTilesheetAnimation`,
-`SpriteFrame`, and related types. The game's resource loaders in
-`internal/resources/` import these types rather than defining their own.
+`SpriteFrame`, and related types. Also contains `RPGSkill`, `RPGPrimortal`,
+and related types for the YAML-backed RPG data under `assets/rpg/`. The
+game's resource loaders in `internal/resources/` and `internal/game/rpg/`
+import these types rather than defining their own.
 
 ### Adventure script system
 
 Event handlers for adventure entities are defined in YAML files under
 `assets/scripts/`. Each file declares `handlers` (named event handlers
 attached to entities via Tiled map properties) and optional `sequences`
-(reusable step lists). Handlers have event hook fields (`on_interact_self`,
-`on_broadcast`, etc.) containing rules with optional filters, conditions,
-steps (effects), and handler state mutations.
+(reusable step lists), `consts` (shared read-only data), and
+`custom_actions` (reusable parameterized step sequences).
+
+Handlers have event hook fields (`on_interact_self`, `on_broadcast`, etc.)
+containing rules with optional filters, conditions, steps (effects), and
+handler state mutations. Handlers can declare a `var` block with initial
+values for handler-local state, mutable via the `set_var` step and
+accessible as `var.*` in expressions.
+
+**Expression engine:** String interpolation uses `expr-lang/expr`
+(`github.com/expr-lang/expr`). Expressions in `{{...}}` blocks are
+compiled at script load time and evaluated at runtime. The expression
+environment provides: `var` (handler state), `global` (world/run state),
+`const` (script-defined constants), `save` (game save data), `self`,
+`player`, `source`, `prop` (entity properties), `param` (custom action
+parameters). Built-in functions: `len`, `min`, `max`, `clamp`, `str`,
+`int`, `float`, `rand`, `randf`, `keys`, `values`, `hasKey`.
+
+**Control flow steps:** `if` (conditional with then/else), `switch`
+(multi-branch matching), `while` (loop with safety cap). Conditions are
+expr expressions evaluated at runtime.
+
+**Custom actions:** YAML-defined reusable step sequences with parameters.
+Defined in `custom_actions:` blocks, invoked via the `custom_action` step
+with `name` and optional `with` params. Share the caller's var scope;
+recursion capped at depth 10.
 
 The complete schema for all step kinds, named actions, conditions, event
 hooks, and template variables is in `internal/schema/script_schema.json`.
@@ -214,11 +248,14 @@ via `go run ./cmd/gen_script_docs`). Tests in
 schema stays in sync with runtime registrations.
 
 Key files:
+- `internal/game/states/adventure/script_expr.go` - expression engine (compile, eval, interpolation)
 - `internal/game/states/adventure/script_types.go` - YAML parsing types
 - `internal/game/states/adventure/script_effects.go` - step kind to Effect conversion
 - `internal/game/states/adventure/script_actions.go` - named action/condition registrations
 - `internal/game/states/adventure/script_adapter.go` - ScriptHandler (EventHandler implementation)
-- `internal/game/states/adventure/script_loader.go` - YAML file loading and handler registration
+- `internal/game/states/adventure/script_loader.go` - YAML file loading, consts, custom actions
+- `internal/game/states/adventure/effect_control_flow.go` - if/switch/while step effects
+- `internal/game/states/adventure/effect_custom_action.go` - custom action invocation
 
 ### Entry points
 

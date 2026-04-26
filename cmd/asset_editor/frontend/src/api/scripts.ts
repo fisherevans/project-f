@@ -47,6 +47,13 @@ export function useSaveScript() {
     })
 }
 
+export async function validateExpr(expression: string): Promise<{ valid: boolean; error?: string }> {
+    return apiFetch<{ valid: boolean; error?: string }>("/scripts/_validate-expr", {
+        method: "POST",
+        body: JSON.stringify({ expression }),
+    })
+}
+
 export function useDeleteScript() {
     const queryClient = useQueryClient()
     return useMutation({

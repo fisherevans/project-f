@@ -22,6 +22,8 @@ export function HandlerList({ script, selectedHandler, onSelect, onChange }: Han
 
     const handlerNames = Object.keys(script.handlers);
     const sequenceNames = script.sequences ? Object.keys(script.sequences) : [];
+    const constNames = script.consts ? Object.keys(script.consts) : [];
+    const customActionNames = script.custom_actions ? Object.keys(script.custom_actions) : [];
 
     const handleAdd = () => {
         if (!newName || script.handlers[newName]) return;
@@ -57,14 +59,14 @@ export function HandlerList({ script, selectedHandler, onSelect, onChange }: Han
     };
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-2 py-1.5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Handlers</span>
                 <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setAdding(true)}>
                     <Plus className="h-3 w-3" />
                 </Button>
             </div>
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 overflow-hidden">
                 <div className="p-1 space-y-px">
                     {handlerNames.map((name) => {
                         const hookCount = getHandlerHookKeys(script.handlers[name]).length;
@@ -157,6 +159,44 @@ export function HandlerList({ script, selectedHandler, onSelect, onChange }: Han
                                     <span className="font-mono truncate">{name}</span>
                                 </div>
                             ))}
+                        </div>
+                    </>
+                )}
+                {customActionNames.length > 0 && (
+                    <>
+                        <div className="border-t border-border mt-2 pt-1.5 px-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Custom Actions</span>
+                        </div>
+                        <div className="p-1 space-y-px">
+                            {customActionNames.map((name) => (
+                                <div key={name} className="flex items-start gap-1.5 px-2 py-1 text-xs text-muted-foreground">
+                                    <span className="font-mono truncate">{name}</span>
+                                    {script.custom_actions?.[name]?.params && (
+                                        <span className="text-[10px] text-muted-foreground/50 shrink-0">
+                                            ({script.custom_actions[name].params!.length})
+                                        </span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+                {constNames.length > 0 && (
+                    <>
+                        <div className="border-t border-border mt-2 pt-1.5 px-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">Constants</span>
+                        </div>
+                        <div className="p-1 space-y-px">
+                            {constNames.map((name) => {
+                                const val = script.consts![name];
+                                const typeHint = Array.isArray(val) ? `[${val.length}]` : typeof val === "object" ? "map" : typeof val;
+                                return (
+                                    <div key={name} className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground">
+                                        <span className="font-mono truncate">{name}</span>
+                                        <span className="text-[10px] text-muted-foreground/50 shrink-0">{typeHint}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </>
                 )}

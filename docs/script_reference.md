@@ -223,6 +223,16 @@ Send a broadcast event that other handlers can listen for
 - `id` (string (required)): Broadcast identifier
 - `data` (any): Optional data payload
 
+#### `custom_action`
+
+Invoke a YAML-defined reusable action with parameters. Custom actions share the caller's var scope.
+
+- **Param style:** string_or_map
+**Parameters:**
+
+- `name` (string (required)): Name of the custom action to invoke
+- `with` (map): Map of parameter names to expressions (evaluated before invocation, accessible as param.*)
+
 #### `focused_sequence`
 
 A scripted interaction sequence that disables player controls, optionally moves the camera, faces entities, runs effects, then restores everything. Replicates FocusedSequenceBuilder.
@@ -238,6 +248,18 @@ A scripted interaction sequence that disables player controls, optionally moves 
 - `pre_effects` (steps): Steps to execute before the main effects
 - `effects` (steps (required)): Main steps of the focused sequence
 - `post_effects` (steps): Steps to execute after the main effects, before restoring state
+
+#### `if`
+
+Conditional step - evaluates an expression and runs 'then' or 'else' sub-steps accordingly
+
+- **Param style:** map
+- **Accepts sub-steps:** yes
+**Parameters:**
+
+- `when` (string (required)): Expression to evaluate as boolean (e.g. 'var.count > 3')
+- `then` (steps (required)): Steps to execute if the condition is true
+- `else` (steps): Steps to execute if the condition is false
 
 #### `parallel`
 
@@ -258,6 +280,18 @@ Include a named sequence inline with optional parameter substitution
 
 - `name` (string (required)): Name of the sequence to reference
 - `with` (map): Parameter values to pass to the referenced sequence
+
+#### `switch`
+
+Multi-branch step - evaluates an expression and matches against case values
+
+- **Param style:** map
+- **Accepts sub-steps:** yes
+**Parameters:**
+
+- `on` (string (required)): Expression to evaluate (result compared against case values)
+- `cases` (list (required)): List of {value: expr, steps: [...]} case objects
+- `default` (steps): Steps to execute if no case matches
 
 #### `timer`
 
@@ -288,6 +322,18 @@ Pause the sequence until an entity's current animation completes
 
 - `entity_id` (string (required)): Entity ID whose animation to wait for
 
+#### `while`
+
+Loop step - repeatedly executes sub-steps while a condition is true
+
+- **Param style:** map
+- **Accepts sub-steps:** yes
+**Parameters:**
+
+- `when` (string (required)): Expression evaluated before each iteration (e.g. 'var.i < len(var.targets)')
+- `max` (number, default: 100): Maximum iteration count (safety cap, hard max 1000)
+- `steps` (steps (required)): Steps to execute each iteration
+
 ### rpg
 
 #### `yield_elythium`
@@ -310,6 +356,16 @@ Set a run state variable (persists only during current game session)
 
 - `key` (string (required)): Run state variable key
 - `value` (any (required)): Value to set
+
+#### `set_var`
+
+Set a handler-local variable using an expression. The value is evaluated as an expr expression against the current environment (var, global, const, save, etc.)
+
+- **Param style:** map
+**Parameters:**
+
+- `key` (string (required)): Variable key in the handler's var map
+- `value` (string (required)): Expression to evaluate and store (e.g. 'var.count + 1')
 
 #### `set_world_state`
 
@@ -642,6 +698,14 @@ Logical OR - at least one sub-condition must be true
 **Parameters:**
 
 - `conditions` (condition (required)): List of condition nodes where at least one must evaluate to true
+
+### `expr`
+
+Evaluate an expression. Supports full expr syntax with access to var, global, const, save, prop, self, player, source.
+
+**Parameters:**
+
+- `expression` (string (required)): Expression string (e.g. 'var.count > 3 && global.quest_stage == "complete"')
 
 ### `global_eq`
 

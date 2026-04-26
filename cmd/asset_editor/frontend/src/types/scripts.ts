@@ -70,10 +70,26 @@ export interface TemplateVarDef {
 export interface ParsedScript {
     handlers: Record<string, HandlerDef>;
     sequences?: Record<string, SequenceDef>;
+    consts?: Record<string, unknown>;
+    custom_actions?: Record<string, CustomActionDef>;
+}
+
+export interface CustomActionDef {
+    description?: string;
+    params?: CustomActionParam[];
+    steps: StepNode[];
+}
+
+export interface CustomActionParam {
+    name: string;
+    description?: string;
+    default?: unknown;
 }
 
 export type HandlerDef = {
     [hookKey: string]: RuleDef[];
+} & {
+    var?: Record<string, unknown>;
 };
 
 export interface RuleDef {

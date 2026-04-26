@@ -7,9 +7,11 @@ import (
 )
 
 type ScriptFile struct {
-	Data      map[string][]string     `yaml:"data"`
-	Handlers  map[string]*HandlerDef  `yaml:"handlers"`
-	Sequences map[string]*SequenceDef `yaml:"sequences"`
+	Data          map[string][]string        `yaml:"data"`
+	Consts        map[string]any             `yaml:"consts"`
+	Handlers      map[string]*HandlerDef     `yaml:"handlers"`
+	Sequences     map[string]*SequenceDef    `yaml:"sequences"`
+	CustomActions map[string]*CustomActionDef `yaml:"custom_actions"`
 }
 
 type SequenceDef struct {
@@ -17,7 +19,20 @@ type SequenceDef struct {
 	Steps  []*StepNode `yaml:"steps"`
 }
 
+type CustomActionDef struct {
+	Description string              `yaml:"description"`
+	Params      []*CustomActionParam `yaml:"params"`
+	Steps       []*StepNode         `yaml:"steps"`
+}
+
+type CustomActionParam struct {
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	Default     any    `yaml:"default,omitempty"`
+}
+
 type HandlerDef struct {
+	Var                  map[string]any `yaml:"var,omitempty"`
 	OnInteractSelf       []*RuleDef `yaml:"on_interact_self"`
 	OnInteract           []*RuleDef `yaml:"on_interact"`
 	OnZoneActivity       []*RuleDef `yaml:"on_zone_activity"`

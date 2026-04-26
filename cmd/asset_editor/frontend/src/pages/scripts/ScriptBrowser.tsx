@@ -2,11 +2,13 @@ import { useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { useScripts } from "@/api/scripts"
 import { FileText, ChevronRight } from "lucide-react"
+import { usePageTitle } from "@/hooks/usePageTitle"
 import type { ScriptFileEntry } from "@/types/scripts"
 
 export function ScriptBrowser() {
     const navigate = useNavigate()
     const { data: scripts, isLoading, error } = useScripts()
+    usePageTitle("Scripts")
 
     const grouped = useMemo(() => {
         if (!scripts) return new Map<string, ScriptFileEntry[]>()

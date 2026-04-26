@@ -71,7 +71,7 @@ func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerS
 			sub, err := decodeConditionFromAny(item)
 			if err != nil {
 				log.Warn().Err(err).Msg("failed to decode 'any' sub-condition")
-				continue
+				return false
 			}
 			if evaluateCondition(sub, globals, handlerState, templateCtx) {
 				return true
@@ -117,6 +117,22 @@ func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerS
 			return false
 		}
 		return !entity.IsMoving() && !entity.HasPushedBehavior() && entity.IsBehaviorEnabled()
+	case "expr":
+		exprStr, ok := node.Params.(string)
+		if !ok {
+			log.Warn().Msg("expr condition requires a string expression")
+			return false
+		}
+		if templateCtx == nil {
+			return false
+		}
+		prog, err := CompileExpr(exprStr)
+		if err != nil {
+			log.Warn().Err(err).Str("expr", exprStr).Msg("failed to compile expr condition")
+			return false
+		}
+		return EvalExprBool(prog, templateCtx.getExprEnv())
+
 	default:
 		fn, ok := getScriptConditionFactory(node.Kind)
 		if !ok {
@@ -201,6 +217,10 @@ func evalGlobalNumericComparison(params any, globals StateGlobalsReader, cmp fun
 		actual := globalValueToFloat(globals.Get(keyStr))
 		expectedFloat := toFloat64(value)
 		return cmp(actual, expectedFloat)
+	}
+	if hasKey || hasValue {
+		log.Warn().Bool("has_key", hasKey).Bool("has_value", hasValue).Msg("numeric comparison has orphaned key or value")
+		return false
 	}
 	return true
 }

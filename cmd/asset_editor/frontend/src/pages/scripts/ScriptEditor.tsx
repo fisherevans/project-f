@@ -1,17 +1,107 @@
-import { useState, useEffect, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useScript, useSaveScript, useScriptSchema } from "@/api/scripts";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, GitCompare, X } from "lucide-react";
 import { HandlerList } from "@/components/scripts/HandlerList";
 import { HandlerDetail } from "@/components/scripts/HandlerDetail";
+import { ExprContextProvider } from "@/components/scripts/ExprContext";
 import { parseScript, stringifyScript } from "@/lib/scriptUtils";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import type { ParsedScript } from "@/types/scripts";
+
+interface DiffLine {
+    type: "context" | "add" | "remove";
+    text: string;
+    oldNum?: number;
+    newNum?: number;
+}
+
+function computeUnifiedDiff(oldText: string, newText: string): DiffLine[] {
+    const oldLines = oldText.split("\n");
+    const newLines = newText.split("\n");
+
+    const n = oldLines.length;
+    const m = newLines.length;
+    const max = n + m;
+    const v = new Int32Array(2 * max + 1);
+    const trace: Int32Array[] = [];
+
+    for (let d = 0; d <= max; d++) {
+        trace.push(v.slice());
+        for (let k = -d; k <= d; k += 2) {
+            let x: number;
+            if (k === -d || (k !== d && v[k - 1 + max] < v[k + 1 + max])) {
+                x = v[k + 1 + max];
+            } else {
+                x = v[k - 1 + max] + 1;
+            }
+            let y = x - k;
+            while (x < n && y < m && oldLines[x] === newLines[y]) {
+                x++;
+                y++;
+            }
+            v[k + max] = x;
+            if (x >= n && y >= m) {
+                const edits: DiffLine[] = [];
+                let cx = n, cy = m;
+                for (let dd = d; dd > 0; dd--) {
+                    const vv = trace[dd];
+                    const kk = cx - cy;
+                    const isDown = kk === -dd || (kk !== dd && vv[kk - 1 + max] < vv[kk + 1 + max]);
+                    const prevK = isDown ? kk + 1 : kk - 1;
+                    const endX = vv[prevK + max];
+                    const endY = endX - prevK;
+                    while (cx > endX && cy > endY) {
+                        cx--;
+                        cy--;
+                        edits.push({ type: "context", text: oldLines[cx], oldNum: cx + 1, newNum: cy + 1 });
+                    }
+                    if (isDown) {
+                        cy--;
+                        edits.push({ type: "add", text: newLines[cy], newNum: cy + 1 });
+                    } else {
+                        cx--;
+                        edits.push({ type: "remove", text: oldLines[cx], oldNum: cx + 1 });
+                    }
+                }
+                while (cx > 0 && cy > 0) {
+                    cx--;
+                    cy--;
+                    edits.push({ type: "context", text: oldLines[cx], oldNum: cx + 1, newNum: cy + 1 });
+                }
+                edits.reverse();
+
+                const contextLines = 3;
+                const result: DiffLine[] = [];
+                let lastShown = -1;
+                const changeIndices = edits.map((e, i) => e.type !== "context" ? i : -1).filter(i => i >= 0);
+                if (changeIndices.length === 0) return [];
+
+                for (const ci of changeIndices) {
+                    const start = Math.max(0, ci - contextLines);
+                    const end = Math.min(edits.length - 1, ci + contextLines);
+                    if (start > lastShown + 1) {
+                        result.push({ type: "context", text: "···" });
+                    }
+                    for (let j = Math.max(start, lastShown + 1); j <= end; j++) {
+                        result.push(edits[j]);
+                    }
+                    lastShown = end;
+                }
+                return result;
+            }
+        }
+    }
+    return [];
+}
 
 export function ScriptEditor() {
     const location = useLocation();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const path = location.pathname.replace(/^\/scripts\//, "");
 
     const { data: script, isLoading, error } = useScript(path);
@@ -22,8 +112,13 @@ export function ScriptEditor() {
     const [parsed, setParsed] = useState<ParsedScript>({ handlers: {} });
     const [parseError, setParseError] = useState<string | null>(null);
     const [dirty, setDirty] = useState(false);
-    const [activeTab, setActiveTab] = useState<string>("structured");
-    const [selectedHandler, setSelectedHandler] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<string>(() => searchParams.get("tab") ?? "structured");
+    const [selectedHandler, setSelectedHandler] = useState<string | null>(() => searchParams.get("handler"));
+    const [showDiff, setShowDiff] = useState(false);
+
+    const fileName = path.split("/").pop()?.replace(/\.ya?ml$/, "") ?? path;
+    usePageTitle(`${fileName} - Scripts`);
+    useUnsavedChanges(dirty);
 
     useEffect(() => {
         if (script) {
@@ -32,8 +127,13 @@ export function ScriptEditor() {
                 const p = parseScript(script.rawYaml);
                 setParsed(p);
                 setParseError(null);
-                const firstHandler = Object.keys(p.handlers)[0] ?? null;
-                setSelectedHandler(firstHandler);
+                const urlHandler = searchParams.get("handler");
+                if (urlHandler && p.handlers[urlHandler]) {
+                    setSelectedHandler(urlHandler);
+                } else {
+                    const firstHandler = Object.keys(p.handlers)[0] ?? null;
+                    setSelectedHandler(firstHandler);
+                }
             } catch (e) {
                 setParseError(String(e));
             }
@@ -45,7 +145,12 @@ export function ScriptEditor() {
         const content = activeTab === "structured" ? stringifyScript(parsed) : rawContent;
         saveScript.mutate(
             { path, content },
-            { onSuccess: () => setDirty(false) },
+            { onSuccess: () => {
+                setDirty(false);
+                if (activeTab === "structured") {
+                    setRawContent(content);
+                }
+            }},
         );
     }, [activeTab, parsed, rawContent, path, saveScript]);
 
@@ -60,6 +165,22 @@ export function ScriptEditor() {
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [handleKeyDown]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams);
+        let changed = false;
+        if (selectedHandler) {
+            if (params.get("handler") !== selectedHandler) { params.set("handler", selectedHandler); changed = true; }
+        } else {
+            if (params.has("handler")) { params.delete("handler"); changed = true; }
+        }
+        if (activeTab !== "structured") {
+            if (params.get("tab") !== activeTab) { params.set("tab", activeTab); changed = true; }
+        } else {
+            if (params.has("tab")) { params.delete("tab"); changed = true; }
+        }
+        if (changed) setSearchParams(params, { replace: true });
+    }, [selectedHandler, activeTab]);
 
     const handleTabChange = (tab: string) => {
         if (tab === "structured" && activeTab === "raw") {
@@ -85,6 +206,12 @@ export function ScriptEditor() {
         setDirty(true);
     };
 
+    const diffLines = useMemo(() => {
+        if (!showDiff || !script) return [];
+        const currentContent = activeTab === "structured" ? stringifyScript(parsed) : rawContent;
+        return computeUnifiedDiff(script.rawYaml, currentContent);
+    }, [showDiff, script, activeTab, parsed, rawContent]);
+
     if (isLoading) return <div className="p-4 text-muted-foreground">Loading...</div>;
     if (error) return <div className="p-4 text-destructive">Error: {error.message}</div>;
 
@@ -103,6 +230,16 @@ export function ScriptEditor() {
                         </span>
                     )}
                 </div>
+                {dirty && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowDiff(!showDiff)}
+                    >
+                        <GitCompare className="mr-1 h-3 w-3" />
+                        {showDiff ? "Hide diff" : "Show diff"}
+                    </Button>
+                )}
                 <Button
                     size="sm"
                     disabled={!dirty || saveScript.isPending}
@@ -113,7 +250,44 @@ export function ScriptEditor() {
                 </Button>
             </div>
 
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-1 flex-col overflow-hidden">
+            {showDiff && (
+                <div className="border-b border-border bg-muted/30 max-h-[40vh] overflow-auto">
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/50 sticky top-0 bg-muted/50 backdrop-blur-sm">
+                        <span className="text-xs font-medium text-muted-foreground">Unsaved changes</span>
+                        <button className="text-muted-foreground hover:text-foreground" onClick={() => setShowDiff(false)}>
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                    {diffLines.length === 0 ? (
+                        <div className="px-3 py-4 text-xs text-muted-foreground text-center">No changes</div>
+                    ) : (
+                        <pre className="text-xs font-mono leading-relaxed">
+                            {diffLines.map((line, i) => (
+                                <div
+                                    key={i}
+                                    className={
+                                        line.type === "add" ? "bg-accent-green-tint text-accent-green" :
+                                        line.type === "remove" ? "bg-accent-red-tint text-accent-red" :
+                                        line.text === "···" ? "text-muted-foreground/40 text-center" :
+                                        "text-muted-foreground"
+                                    }
+                                >
+                                    <span className="inline-block w-8 text-right text-muted-foreground/40 select-none pr-1">
+                                        {line.oldNum ?? ""}
+                                    </span>
+                                    <span className="inline-block w-8 text-right text-muted-foreground/40 select-none pr-2">
+                                        {line.newNum ?? ""}
+                                    </span>
+                                    <span className="select-none">{line.type === "add" ? "+" : line.type === "remove" ? "-" : " "}</span>
+                                    {line.text}
+                                </div>
+                            ))}
+                        </pre>
+                    )}
+                </div>
+            )}
+
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-1 flex-col overflow-hidden min-h-0">
                 <div className="border-b border-border px-3">
                     <TabsList className="h-8">
                         <TabsTrigger value="structured" className="text-xs px-3 py-1">Structured</TabsTrigger>
@@ -124,45 +298,50 @@ export function ScriptEditor() {
                     )}
                 </div>
 
-                <TabsContent value="structured" className="flex-1 overflow-hidden m-0 p-0">
+                <TabsContent value="structured" className="flex-1 overflow-hidden m-0 p-0 min-h-0">
                     {schema ? (
-                        <div className="flex h-full">
-                            <div className="w-64 shrink-0 border-r border-border overflow-hidden">
-                                <HandlerList
-                                    script={parsed}
-                                    selectedHandler={selectedHandler}
-                                    onSelect={setSelectedHandler}
-                                    onChange={handleStructuredChange}
-                                />
-                            </div>
-                            <div className="flex-1 overflow-hidden">
-                                {selectedHandler && parsed.handlers[selectedHandler] ? (
-                                    <HandlerDetail
-                                        handlerName={selectedHandler}
-                                        handler={parsed.handlers[selectedHandler]}
-                                        schema={schema}
-                                        onChange={(handler) => {
-                                            handleStructuredChange({
-                                                ...parsed,
-                                                handlers: { ...parsed.handlers, [selectedHandler]: handler },
-                                            });
-                                        }}
+                        <ExprContextProvider
+                            handlerVarKeys={selectedHandler && parsed.handlers[selectedHandler]?.var ? Object.keys(parsed.handlers[selectedHandler].var!) : []}
+                            constKeys={parsed.consts ? Object.keys(parsed.consts) : []}
+                        >
+                            <div className="flex h-full min-h-0 overflow-hidden">
+                                <div className="w-64 shrink-0 border-r border-border overflow-hidden">
+                                    <HandlerList
+                                        script={parsed}
+                                        selectedHandler={selectedHandler}
+                                        onSelect={setSelectedHandler}
+                                        onChange={handleStructuredChange}
                                     />
-                                ) : (
-                                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                                        {Object.keys(parsed.handlers).length === 0
-                                            ? "No handlers. Add one from the left panel."
-                                            : "Select a handler to edit."}
-                                    </div>
-                                )}
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    {selectedHandler && parsed.handlers[selectedHandler] ? (
+                                        <HandlerDetail
+                                            handlerName={selectedHandler}
+                                            handler={parsed.handlers[selectedHandler]}
+                                            schema={schema}
+                                            onChange={(handler) => {
+                                                handleStructuredChange({
+                                                    ...parsed,
+                                                    handlers: { ...parsed.handlers, [selectedHandler]: handler },
+                                                });
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                                            {Object.keys(parsed.handlers).length === 0
+                                                ? "No handlers. Add one from the left panel."
+                                                : "Select a handler to edit."}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        </ExprContextProvider>
                     ) : (
                         <div className="p-4 text-muted-foreground">Loading schema...</div>
                     )}
                 </TabsContent>
 
-                <TabsContent value="raw" className="flex-1 overflow-hidden m-0 p-0">
+                <TabsContent value="raw" className="flex-1 overflow-hidden m-0 p-0 min-h-0">
                     <textarea
                         className="h-full w-full resize-none bg-background p-4 font-mono text-xs leading-relaxed outline-none"
                         value={rawContent}

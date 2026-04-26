@@ -10,9 +10,11 @@ import (
 )
 
 var (
-	scriptHandlerDefs = map[string]*HandlerDef{}
-	scriptSequences   = map[string]*SequenceDef{}
-	scriptDataLists   = map[string][]string{}
+	scriptHandlerDefs  = map[string]*HandlerDef{}
+	scriptSequences    = map[string]*SequenceDef{}
+	scriptDataLists    = map[string][]string{}
+	scriptConsts       = map[string]any{}
+	scriptCustomActions = map[string]*CustomActionDef{}
 )
 
 func init() {
@@ -61,6 +63,19 @@ func loadScriptFiles() {
 			}
 			scriptDataLists[name] = list
 		}
+		for name, val := range sf.Consts {
+			if _, exists := scriptConsts[name]; exists {
+				log.Fatal().Str("name", name).Str("path", path).Msg("duplicate const name")
+			}
+			scriptConsts[name] = val
+		}
+		for name, action := range sf.CustomActions {
+			if _, exists := scriptCustomActions[name]; exists {
+				log.Fatal().Str("name", name).Str("path", path).Msg("duplicate custom action name")
+			}
+			scriptCustomActions[name] = action
+			log.Debug().Str("name", name).Str("path", path).Msg("loaded custom action")
+		}
 		return nil
 	})
 	if err != nil {
@@ -70,6 +85,8 @@ func loadScriptFiles() {
 		Int("handlers", len(scriptHandlerDefs)).
 		Int("sequences", len(scriptSequences)).
 		Int("data_lists", len(scriptDataLists)).
+		Int("consts", len(scriptConsts)).
+		Int("custom_actions", len(scriptCustomActions)).
 		Msg("loaded script files")
 }
 

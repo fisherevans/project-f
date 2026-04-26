@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { StepList } from "./StepList";
 import { ConditionEditor, createEmptyCondition } from "./ConditionEditor";
+import { ZoneIdInput } from "./inputs/ZoneIdInput";
 import type { RuleDef, ScriptSchema, EventHookDef } from "@/types/scripts";
 
 interface RuleEditorProps {
@@ -102,22 +103,36 @@ function FilterSection({ filter, hookDef, onChange }: {
                 {hookDef.filterFields!.map((field) => (
                     <div key={field.name} className="flex items-center gap-1.5">
                         <span className="text-xs text-muted-foreground w-24 shrink-0">{field.name}</span>
-                        <Input
-                            className="h-6 flex-1 text-xs font-mono"
-                            value={String(filter![field.name] ?? "")}
-                            placeholder={field.description}
-                            onChange={(e) => {
-                                const next = { ...filter! };
-                                if (e.target.value === "") {
-                                    delete next[field.name];
-                                } else {
-                                    let v: unknown = e.target.value;
-                                    if (field.type === "bool") v = v === "true";
-                                    next[field.name] = v;
-                                }
-                                onChange(Object.keys(next).length > 0 ? next : undefined);
-                            }}
-                        />
+                        {field.name === "zone" ? (
+                            <div className="flex-1">
+                                <ZoneIdInput
+                                    value={String(filter![field.name] ?? "")}
+                                    placeholder={field.description}
+                                    onChange={(v) => {
+                                        const next = { ...filter! };
+                                        if (!v) { delete next[field.name]; } else { next[field.name] = v; }
+                                        onChange(Object.keys(next).length > 0 ? next : undefined);
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <Input
+                                className="h-6 flex-1 text-xs font-mono"
+                                value={String(filter![field.name] ?? "")}
+                                placeholder={field.description}
+                                onChange={(e) => {
+                                    const next = { ...filter! };
+                                    if (e.target.value === "") {
+                                        delete next[field.name];
+                                    } else {
+                                        let v: unknown = e.target.value;
+                                        if (field.type === "bool") v = v === "true";
+                                        next[field.name] = v;
+                                    }
+                                    onChange(Object.keys(next).length > 0 ? next : undefined);
+                                }}
+                            />
+                        )}
                     </div>
                 ))}
             </div>
@@ -206,8 +221,9 @@ function SetStateSection({ setState, onChange }: {
                             value={key}
                             onChange={(e) => {
                                 const next: Record<string, unknown> = {};
-                                for (const [k, v] of entries) {
-                                    next[k === key ? e.target.value : k] = v;
+                                for (let j = 0; j < entries.length; j++) {
+                                    const [k, v] = entries[j];
+                                    next[j === i ? e.target.value : k] = v;
                                 }
                                 onChange(next);
                             }}

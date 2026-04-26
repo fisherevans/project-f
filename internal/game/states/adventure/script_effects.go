@@ -304,6 +304,10 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 			if name == "" {
 				name = resolveString(step.Params, tc)
 			}
+			if name == "" {
+				log.Warn().Interface("params", step.Params).Msg("action step missing 'name'")
+				return nil
+			}
 			return convertAction(name, m, tc)
 		}
 
@@ -360,6 +364,43 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 			}
 		}
 		return convertSteps(seq.Steps, &childTC, sequences)
+
+	case "set_var":
+		m := resolveMap(step.Params, tc)
+		key := mapStr(m, "key")
+		valueExpr := mapStr(m, "value")
+		if key == "" || valueExpr == "" {
+			log.Warn().Msg("set_var requires 'key' and 'value'")
+			return nil
+		}
+		handlerState := tc.handlerState
+		return []Effect{NewFunctionEffect(func(s *State) {
+			prog, err := CompileExpr(valueExpr)
+			if err != nil {
+				log.Warn().Err(err).Str("expr", valueExpr).Msg("set_var: failed to compile value expression")
+				return
+			}
+			env := tc.getExprEnv()
+			env.Var = handlerState
+			result, err := EvalExpr(prog, env)
+			if err != nil {
+				log.Warn().Err(err).Str("expr", valueExpr).Msg("set_var: failed to evaluate value expression")
+				return
+			}
+			handlerState[key] = result
+		})}
+
+	case "if":
+		return convertIfStep(step.Params, tc, sequences)
+
+	case "switch":
+		return convertSwitchStep(step.Params, tc, sequences)
+
+	case "while":
+		return convertWhileStep(step.Params, tc, sequences)
+
+	case "custom_action":
+		return convertCustomActionStep(step.Params, tc, sequences)
 
 	default:
 		log.Warn().Str("kind", step.Kind).Msg("unknown step kind")
@@ -503,18 +544,6 @@ func mapHas(m map[string]any, key string) bool {
 	return ok
 }
 
-func toFloat(v any) float64 {
-	switch n := v.(type) {
-	case float64:
-		return n
-	case int:
-		return float64(n)
-	case float32:
-		return float64(n)
-	default:
-		return 0
-	}
-}
 
 func selectFromList(list []string, mode string, counter int) string {
 	if len(list) == 0 {
@@ -656,8 +685,8 @@ func convertConfigureModeEntity(step *StepNode, tc *TemplateContext) []Effect {
 				}
 				if offset, ok := animMap["offset"].(map[string]any); ok {
 					ref.Offset = &OffsetConfig{
-						X: toFloat(offset["x"]),
-						Y: toFloat(offset["y"]),
+						X: toFloat64(offset["x"]),
+						Y: toFloat64(offset["y"]),
 					}
 				}
 				refs = append(refs, ref)
@@ -676,7 +705,7 @@ func convertConfigureModeEntity(step *StepNode, tc *TemplateContext) []Effect {
 				}
 				lc := LightConfig{
 					Color: resolveString(lightMap["color"], tc),
-					Size:  toFloat(lightMap["size"]),
+					Size:  toFloat64(lightMap["size"]),
 				}
 				if mod, ok := lightMap["modifier"].(string); ok {
 					resolved := tc.Resolve(mod)
@@ -731,10 +760,10 @@ func parseSoundEffect(m map[string]any, tc *TemplateContext) SoundEffect {
 		se.Loop = loop
 	}
 	if vol, ok := m["volume"]; ok {
-		se.Volume = toFloat(vol)
+		se.Volume = toFloat64(vol)
 	}
 	if fadeIn, ok := m["fade_in"]; ok {
-		se.FadeInSeconds = toFloat(fadeIn)
+		se.FadeInSeconds = toFloat64(fadeIn)
 	}
 	if falloffStr, ok := m["falloff"].(string); ok {
 		se.Falloff = parseFalloff(falloffStr)

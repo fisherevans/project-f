@@ -41,6 +41,11 @@ Go 1.24 `net/http` with wildcard routing. No framework.
 | `audio_service.go` | Audio directory scanning, YAML sidecar read/write |
 | `script_service.go` | Script YAML file listing, read/write |
 | `api_scripts.go` | CRUD handlers for script files + schema endpoint |
+| `api_expr_validate.go` | POST endpoint to validate expr expressions via expr.Compile |
+| `api_rpg.go` | CRUD handlers for RPG data (skills, primortals, combat) |
+| `rpg_service.go` | RPG YAML file scanning, read/write under `assets/rpg/` |
+| `api_saves.go` | CRUD handlers for game save files |
+| `save_service.go` | Save file scanning, raw YAML read/write under `game_data/saves/` |
 | `ws.go` | WebSocket hub + fsnotify watcher for live reload |
 | `types.go` | JSON response types (wraps `internal/schema` with computed fields) |
 
@@ -59,11 +64,28 @@ GET    /api/v1/audio/{name...}      # full metadata + resource name + raw YAML
 PUT    /api/v1/audio/{name...}      # write/remove YAML sidecar (gain config)
 GET    /api/v1/audio-files/{path...}# serve audio file from disk (wav/mp3/ogg/flac)
 
+POST   /api/v1/scripts/_validate-expr # validate an expression via expr.Compile (returns {valid, error?})
 GET    /api/v1/script-schema        # complete script system schema (step kinds, actions, conditions, hooks)
 GET    /api/v1/scripts              # list all script files with handler/sequence names
 GET    /api/v1/scripts/{name...}    # full script detail + raw YAML
 PUT    /api/v1/scripts/{name...}    # write script YAML (atomic: temp + rename)
 DELETE /api/v1/scripts/{name...}    # delete script file
+
+GET    /api/v1/rpg/skills           # list all skills (from YAML under assets/rpg/skills/)
+GET    /api/v1/rpg/skills/{id}      # skill detail with tick timeline
+PUT    /api/v1/rpg/skills/{id}      # write skill YAML (atomic: temp + rename)
+DELETE /api/v1/rpg/skills/{id}      # delete skill YAML
+GET    /api/v1/rpg/primortals       # list all primortals (from YAML under assets/rpg/primortals/)
+GET    /api/v1/rpg/primortals/{type}# primortal detail with skills + archetypes
+PUT    /api/v1/rpg/primortals/{type}# write primortal YAML (atomic: temp + rename)
+DELETE /api/v1/rpg/primortals/{type}# delete primortal YAML
+GET    /api/v1/rpg/combat           # status effects + combat stances reference
+
+GET    /api/v1/saves                # list all saves (from game_data/saves/)
+GET    /api/v1/saves/{id}           # save detail + raw YAML
+PUT    /api/v1/saves/{id}           # write save YAML (raw, validated as parseable YAML)
+DELETE /api/v1/saves/{id}           # delete save file
+POST   /api/v1/saves/{id}/clone     # duplicate save with new ID
 
 GET    /api/v1/ws                   # WebSocket file-change events
 ```
@@ -95,13 +117,17 @@ src/
     sprites.ts           # TanStack Query hooks for sprites
     audio.ts             # TanStack Query hooks for audio
     scripts.ts           # TanStack Query hooks for scripts + schema
+    rpg.ts               # TanStack Query hooks for RPG data (skills, primortals, combat)
+    saves.ts             # TanStack Query hooks for game saves
     websocket.tsx         # WebSocket provider with auto-reconnect + cache invalidation
   types/
     sprites.ts           # TS interfaces mirroring Go sprite JSON types
     audio.ts             # TS interfaces mirroring Go audio JSON types
     scripts.ts           # TS interfaces mirroring Go script schema types
+    rpg.ts               # TS interfaces for RPG data (skills, primortals, combat)
+    saves.ts             # TS interfaces for game save data
   layouts/
-    AppLayout.tsx         # left nav rail (Sprites, Audio, Scripts) + Outlet
+    AppLayout.tsx         # left nav rail (Sprites, Audio, Scripts, RPG, Saves) + Outlet
   pages/
     sprites/
       SpriteBrowser.tsx   # directory tree + thumbnail grid + search
@@ -112,6 +138,15 @@ src/
     scripts/
       ScriptBrowser.tsx   # script file listing with handler names
       ScriptEditor.tsx    # structured editor + raw YAML tabs, handler list + detail
+    rpg/
+      RpgLayout.tsx       # sub-nav wrapper (Skills, Primortals, Combat)
+      RpgNav.tsx          # tab navigation for RPG sub-pages
+      SkillBrowser.tsx    # skill table + editor panel with tick timeline, save/delete
+      PrimortalBrowser.tsx # primortal table + editor panel with skill tree + archetypes, save/delete
+      CombatBrowser.tsx   # status effects + combat stances reference cards
+    saves/
+      SaveBrowser.tsx    # save file listing with clone/delete
+      SaveEditor.tsx     # raw YAML editor for save files
   components/
     sprites/
       TilesheetViewer.tsx      # canvas: PNG + grid overlay + zoom + tile selection
@@ -122,15 +157,19 @@ src/
       FrameEditor.tsx          # 9-slice config + canvas preview
       ScaffoldDialog.tsx       # new tilesheet form (wraps cmd/sprite_new)
     scripts/
-      HandlerList.tsx          # left panel: handler names, add/rename/delete
-      HandlerDetail.tsx        # right panel: hook sections for selected handler
+      HandlerList.tsx          # left panel: handler names, add/rename/delete + sequences/consts/custom actions
+      HandlerDetail.tsx        # right panel: var section + hook sections for selected handler
       HookSection.tsx          # collapsible section per event hook with rules
       RuleEditor.tsx           # single rule: filter + condition + set_state + steps
       StepList.tsx             # ordered step list with add/remove/reorder
-      StepEditor.tsx           # single step: kind badge + inline/expanded params
+      StepEditor.tsx           # single step: kind badge + inline/expanded params + switch cases
       StepKindPicker.tsx       # schema-driven step kind selector grouped by category
-      StepParamForm.tsx        # dynamic form from ParamDef[] (inputs, selects, toggles)
-      ConditionEditor.tsx      # recursive condition tree builder (all/any/not/leaf)
+      StepParamForm.tsx        # dynamic form from ParamDef[] (inputs, selects, toggles, expr inputs)
+      ConditionEditor.tsx      # recursive condition tree builder (all/any/not/expr/leaf)
+      ExprContext.tsx           # React context for expression editor (var keys, const keys, help modal)
+      ExpressionHelpModal.tsx   # tabbed modal: env vars, functions, operators, examples
+      inputs/
+        ExpressionInput.tsx    # CodeMirror 6 editor with syntax highlighting, autocomplete, server-side linting
     ui/                        # shadcn/ui primitives (button, dialog, input, etc.)
   lib/
     animationEngine.ts   # TypeScript port of Go's animation accumulator
@@ -146,6 +185,11 @@ src/
 /audio/:path   -> AudioEditor (gain control, playback, resource name display)
 /scripts       -> ScriptBrowser (file listing with handler names)
 /scripts/:path -> ScriptEditor (YAML editor + schema reference)
+/rpg           -> SkillBrowser (editable, from YAML under assets/rpg/skills/)
+/rpg/primortals -> PrimortalBrowser
+/rpg/combat    -> CombatBrowser (statuses + stances reference)
+/saves         -> SaveBrowser (list + clone/delete from game_data/saves/)
+/saves/:id     -> SaveEditor (raw YAML editor with field reference)
 ```
 
 ### Animation engine (`src/lib/animationEngine.ts`)
@@ -177,10 +221,39 @@ Switching tabs converts between representations. Parse errors block the
 switch to structured mode.
 
 `scriptUtils.ts` contains all parse/serialize logic. Sub-steps within
-container steps (focused_sequence effects, teleport_player interstitial)
-are kept as raw YAML objects in `StepNode.params`. The `getStepSubSteps()`
-and `setStepSubSteps()` helpers convert them to/from `StepNode[]` at edit
-boundaries.
+container steps (focused_sequence effects, teleport_player interstitial,
+if/switch/while control flow) are kept as raw YAML objects in
+`StepNode.params`. The `getStepSubSteps()` and `setStepSubSteps()`
+helpers convert them to/from `StepNode[]` at edit boundaries.
+
+**Handler variables:** HandlerDetail shows a collapsible "Variables"
+section for editing `var` defaults. Values are typed (string, number,
+bool) based on input parsing.
+
+**Expression-aware editing:** Steps that accept expressions (`if.when`,
+`while.when`, `switch.on`, `set_var.value`) use a CodeMirror-based
+`ExpressionInput` component with syntax highlighting (token-based:
+keywords, functions, env roots, strings, numbers, operators),
+autocomplete (env variables, functions, handler var keys, const keys,
+save paths), and server-side linting via `POST /api/v1/scripts/_validate-expr`
+(debounced 500ms, calls `expr.Compile` on the backend). The `expr`
+condition type uses the same input. A help modal (`ExpressionHelpModal`)
+documents the full expression environment, functions, operators, and
+examples - accessed via an "expr reference" link next to expression fields.
+
+Expression context (handler var keys, const keys) flows via
+`ExprContext.tsx` React context, provided at the structured editor root
+in ScriptEditor.
+
+**Control flow rendering:** `if` and `while` steps render their sub-step
+branches (then/else, steps) inline. `switch` has a dedicated cases
+editor with per-case value expression inputs and step lists.
+
+**Custom actions:** The `custom_action` step renders with a dynamic
+key-value map editor for the `with` parameter (expression map).
+
+**Left panel sections:** HandlerList shows handlers (editable),
+sequences, custom actions, and constants defined in the file.
 
 ### Type alignment
 
@@ -188,6 +261,115 @@ Go types live in `internal/schema/`. The frontend mirrors them in
 `src/types/sprites.ts` and `src/types/audio.ts`. JSON field names use
 the Go struct tags. If a schema type changes, update both the Go struct
 and the TS interface.
+
+## Design system
+
+Light mode only. Flat colors, no gradients. Compact density with clear
+section hierarchy. Power-user focus - information density over whitespace,
+but organized with accents and structure so data doesn't read as a wall.
+
+### Font
+
+Plus Jakarta Sans (variable weight). Imported via
+`@fontsource-variable/plus-jakarta-sans` in `index.css`.
+
+| Role | Weight | Size |
+|------|--------|------|
+| Page header | 700 | `text-base` (16px) |
+| Section header | 600 | `text-sm` (14px) |
+| Body / form labels | 500 | `text-xs` (12px) |
+| Metadata / badges | 500 | `text-[11px]` or `text-[10px]` |
+| Code values, YAML, paths | mono 400 | `text-xs font-mono` |
+
+Monospace uses the system stack (`font-mono`). Used for YAML content,
+entity IDs, script handler names, file paths, and any value the user
+might copy into code.
+
+### Colors
+
+All colors are OKLch, defined as CSS custom properties in `index.css`.
+The base palette (background, foreground, muted, border, etc.) comes from
+shadcn tokens. Semantic accents are the main tool for organizing data.
+
+**Accent palette** - 8 hues, each with 3 variants:
+
+| Suffix | Purpose | Example class |
+|--------|---------|---------------|
+| `accent-{hue}` | Text, icons | `text-accent-blue` |
+| `accent-{hue}-tint` | Subtle background wash | `bg-accent-blue-tint` |
+| `accent-{hue}-edge` | Borders, left-bar indicators | `border-accent-blue-edge` |
+
+**Hue assignments** - each hue maps to a consistent semantic domain:
+
+| Hue | Domain | Used for |
+|-----|--------|----------|
+| `blue` | Structure / flow | Composite conditions, camera steps, defending stance, tilesheet badges |
+| `violet` | References / meta | Flow steps, template variables, action refs, reflecting stance |
+| `amber` | State / values | State steps, key-value conditions, vulnerable stance |
+| `teal` | Entities / objects | Entity steps, named conditions, sequence refs |
+| `red` | Danger / combat | RPG/combat steps, exposed stance, destructive actions, diff removals |
+| `orange` | Transitions / alerts | Transition steps, non-atlas badges, burning status |
+| `green` | Success / live data | Live-game indicators, diff additions, confirmations |
+| `yellow` | Attention / highlight | Ionized status, selected items, warnings |
+
+**Rules:**
+
+- Never use raw Tailwind color classes (`text-blue-400`, `bg-zinc-900`).
+  Use semantic tokens: `text-accent-blue`, `bg-accent-blue-tint`,
+  `bg-canvas`, `text-muted-foreground`, etc.
+- Asset preview backgrounds (sprites, animations, tile grids) use
+  `bg-canvas` - a dark neutral that makes pixel art readable.
+- `text-muted-foreground` for secondary/descriptive text.
+  `text-foreground` for primary text. No raw gray classes.
+- Status colors map to the accent palette: green for success, red for
+  error, amber for warning. No separate status tokens.
+
+### Spacing and density
+
+Compact layout. Consistent gap/padding values:
+
+| Context | Value |
+|---------|-------|
+| Items in a list | `gap-1` (4px) or `gap-1.5` (6px) |
+| Fields in a form | `gap-2` (8px) |
+| Between sections | `gap-4` (16px) |
+| Panel internal padding | `p-2` (8px) compact, `p-3` (12px) content areas |
+| Page-level padding | `p-4` (16px) |
+| Inline element spacing | `gap-1` (4px) |
+
+### Borders and radius
+
+- Base radius: 6px (`rounded-md`). Small badges: 4px (`rounded`).
+- Standard dividers: `border-border`.
+- Category-colored borders (step cards, condition cards):
+  `border-l-2 border-l-accent-{hue}-edge`.
+- Section dividers: `border-b border-border`.
+- No box shadows except floating elements (popovers, dropdowns, modals)
+  where `shadow-lg` is appropriate.
+
+### Component patterns
+
+**Badges/tags** - tinted background + accent text:
+`bg-accent-{hue}-tint text-accent-{hue} text-[10px] font-medium px-1.5 py-0.5 rounded`
+
+**Cards** - `border border-border rounded-md`. Category cards get a left
+accent border: `border-l-2 border-l-accent-{hue}-edge`.
+
+**Form inputs** - use shadcn primitives (`Input`, `Select`, `Switch`).
+Compact height: `h-7` for standard inputs, `h-6` for inline/embedded.
+
+**Combobox/autocomplete** - several custom implementations exist
+(SoundPicker, GlobalKeyInput, EntityRefInput, HandlerRefInput,
+ZoneIdInput). They share a pattern: text input with filtered dropdown,
+click-outside close, keyboard navigation. These should be consolidated
+into a shared `SearchableSelect` component. Until then, follow the
+pattern in `GlobalKeyInput.tsx`.
+
+**Section headers** - `text-sm font-semibold text-foreground` with
+`border-b border-border pb-1`.
+
+**Empty states** - centered `text-sm text-muted-foreground` with an
+actionable message.
 
 ## Common gotchas
 

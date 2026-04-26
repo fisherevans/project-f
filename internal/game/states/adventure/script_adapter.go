@@ -37,12 +37,13 @@ func (h *ScriptHandler) templateContext(source EntityReader, globals StateGlobal
 		sourceId = source.GetId()
 	}
 	return &TemplateContext{
-		SelfId:     h.entityId,
-		PlayerId:   playerId,
-		SourceId:   sourceId,
-		Params:     h.propParams,
-		Properties: h.properties,
-		Globals:    globals,
+		SelfId:       h.entityId,
+		PlayerId:     playerId,
+		SourceId:     sourceId,
+		Params:       h.propParams,
+		Properties:   h.properties,
+		Globals:      globals,
+		handlerState: h.handlerState,
 	}
 }
 
@@ -53,6 +54,12 @@ func (h *ScriptHandler) Init(thisEntity EntityReader, globals StateGlobalsReader
 	if state != nil {
 		if s, ok := state.(map[string]any); ok {
 			h.handlerState = s
+		}
+	}
+	// Initialize var defaults if handler defines them and state is fresh
+	if h.def.Var != nil && len(h.handlerState) == 0 {
+		for k, v := range h.def.Var {
+			h.handlerState[k] = deepCloneAny(v)
 		}
 	}
 	if len(h.def.OnInit) == 0 {
@@ -144,5 +151,24 @@ func (h *ScriptHandler) processRules(rules []*RuleDef, event any, tc *TemplateCo
 		return output
 	}
 	return nil
+}
+
+func deepCloneAny(v any) any {
+	switch val := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(val))
+		for k, v := range val {
+			out[k] = deepCloneAny(v)
+		}
+		return out
+	case []any:
+		out := make([]any, len(val))
+		for i, v := range val {
+			out[i] = deepCloneAny(v)
+		}
+		return out
+	default:
+		return v
+	}
 }
 

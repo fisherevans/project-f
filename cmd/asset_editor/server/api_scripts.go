@@ -39,11 +39,11 @@ func (s *Server) handleGetScript(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSaveScript(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 
+	body, _ := io.ReadAll(r.Body)
 	var req struct {
 		Content string `json:"content"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		body, _ := io.ReadAll(r.Body)
+	if err := json.Unmarshal(body, &req); err != nil {
 		req.Content = string(body)
 	}
 

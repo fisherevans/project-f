@@ -16,21 +16,23 @@ export function StepList({ steps, schema, onChange }: StepListProps) {
     const [showPicker, setShowPicker] = useState(false);
 
     return (
-        <div className="space-y-0.5">
+        <div className="space-y-1">
             {steps.map((step, i) => (
-                <StepEditor
-                    key={i}
-                    step={step}
-                    schema={schema}
-                    onChange={(updated) => {
-                        const next = [...steps];
-                        next[i] = updated;
-                        onChange(next);
-                    }}
-                    onRemove={() => onChange(steps.filter((_, j) => j !== i))}
-                    onMoveUp={i > 0 ? () => onChange(moveItem(steps, i, i - 1)) : undefined}
-                    onMoveDown={i < steps.length - 1 ? () => onChange(moveItem(steps, i, i + 1)) : undefined}
-                />
+                <div key={i} className="group/step">
+                    <StepEditor
+                        step={step}
+                        stepIndex={i}
+                        schema={schema}
+                        onChange={(updated) => {
+                            const next = [...steps];
+                            next[i] = updated;
+                            onChange(next);
+                        }}
+                        onRemove={() => onChange(steps.filter((_, j) => j !== i))}
+                        onMoveUp={i > 0 ? () => onChange(moveItem(steps, i, i - 1)) : undefined}
+                        onMoveDown={i < steps.length - 1 ? () => onChange(moveItem(steps, i, i + 1)) : undefined}
+                    />
+                </div>
             ))}
             {showPicker ? (
                 <StepKindPicker

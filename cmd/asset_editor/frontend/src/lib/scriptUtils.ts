@@ -51,11 +51,32 @@ export function parseScript(yamlStr: string): ParsedScript {
         }
     }
 
-    return { handlers, sequences };
+    let consts: Record<string, unknown> | undefined;
+    if (raw.consts && typeof raw.consts === "object") {
+        consts = raw.consts as Record<string, unknown>;
+    }
+
+    let custom_actions: Record<string, import("@/types/scripts").CustomActionDef> | undefined;
+    if (raw.custom_actions && typeof raw.custom_actions === "object") {
+        custom_actions = {};
+        for (const [name, actionRaw] of Object.entries(raw.custom_actions as Record<string, unknown>)) {
+            const a = actionRaw as Record<string, unknown>;
+            custom_actions[name] = {
+                description: a.description as string | undefined,
+                params: a.params as import("@/types/scripts").CustomActionParam[] | undefined,
+                steps: parseSteps((a.steps ?? []) as unknown[]),
+            };
+        }
+    }
+
+    return { handlers, sequences, consts, custom_actions };
 }
 
 function parseHandler(raw: Record<string, unknown>): HandlerDef {
     const handler: HandlerDef = {};
+    if (raw.var && typeof raw.var === "object") {
+        handler.var = raw.var as Record<string, unknown>;
+    }
     for (const [key, value] of Object.entries(raw)) {
         if (isEventHookKey(key) && Array.isArray(value)) {
             handler[key] = value.map((r) => parseRule(r as Record<string, unknown>));
@@ -125,6 +146,10 @@ export function stringifyScript(script: ParsedScript): string {
     }
     obj.handlers = handlers;
 
+    if (script.consts && Object.keys(script.consts).length > 0) {
+        obj.consts = script.consts;
+    }
+
     if (script.sequences && Object.keys(script.sequences).length > 0) {
         const seqs: Record<string, unknown> = {};
         for (const [name, seq] of Object.entries(script.sequences)) {
@@ -132,10 +157,22 @@ export function stringifyScript(script: ParsedScript): string {
             if (seq.params && seq.params.length > 0) {
                 s.params = seq.params;
             }
-            s.effects = serializeSteps(seq.steps);
+            s.steps = serializeSteps(seq.steps);
             seqs[name] = s;
         }
         obj.sequences = seqs;
+    }
+
+    if (script.custom_actions && Object.keys(script.custom_actions).length > 0) {
+        const actions: Record<string, unknown> = {};
+        for (const [name, action] of Object.entries(script.custom_actions)) {
+            const a: Record<string, unknown> = {};
+            if (action.description) a.description = action.description;
+            if (action.params && action.params.length > 0) a.params = action.params;
+            a.steps = serializeSteps(action.steps);
+            actions[name] = a;
+        }
+        obj.custom_actions = actions;
     }
 
     return YAML.stringify(obj, { indent: 2, lineWidth: 0 });
@@ -143,9 +180,12 @@ export function stringifyScript(script: ParsedScript): string {
 
 function serializeHandler(handler: HandlerDef): Record<string, unknown> {
     const obj: Record<string, unknown> = {};
+    if (handler.var && Object.keys(handler.var).length > 0) {
+        obj.var = handler.var;
+    }
     for (const [key, rules] of Object.entries(handler)) {
         if (isEventHookKey(key)) {
-            obj[key] = rules.map(serializeRule);
+            obj[key] = (rules as RuleDef[]).map(serializeRule);
         }
     }
     return obj;
@@ -250,9 +290,18 @@ export function getStepSubSteps(step: StepNode): { key: string; steps: StepNode[
     }
     const obj = step.params as Record<string, unknown>;
     const result: { key: string; steps: StepNode[] }[] = [];
-    for (const key of ["effects", "pre_effects", "post_effects", "interstitial", "steps"]) {
+    for (const key of ["effects", "pre_effects", "post_effects", "interstitial", "steps", "then", "else", "default"]) {
         if (Array.isArray(obj[key])) {
             result.push({ key, steps: parseSteps(obj[key] as unknown[]) });
+        }
+    }
+    // Handle switch cases - each case has its own steps
+    if (step.kind === "switch" && Array.isArray(obj.cases)) {
+        for (let i = 0; i < (obj.cases as unknown[]).length; i++) {
+            const c = (obj.cases as Record<string, unknown>[])[i];
+            if (c && Array.isArray(c.steps)) {
+                result.push({ key: `cases[${i}].steps`, steps: parseSteps(c.steps as unknown[]) });
+            }
         }
     }
     return result;
@@ -260,6 +309,14 @@ export function getStepSubSteps(step: StepNode): { key: string; steps: StepNode[
 
 export function setStepSubSteps(step: StepNode, key: string, steps: StepNode[]): StepNode {
     const params = { ...(step.params as Record<string, unknown>) };
-    params[key] = serializeSteps(steps);
+    const casesMatch = key.match(/^cases\[(\d+)\]\.steps$/);
+    if (casesMatch) {
+        const idx = parseInt(casesMatch[1]);
+        const cases = [...(params.cases as Record<string, unknown>[])];
+        cases[idx] = { ...cases[idx], steps: serializeSteps(steps) };
+        params.cases = cases;
+    } else {
+        params[key] = serializeSteps(steps);
+    }
     return { ...step, params };
 }

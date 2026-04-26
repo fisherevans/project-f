@@ -1,20 +1,44 @@
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import type { ParamDef, StepKindDef } from "@/types/scripts";
+import { Plus, X } from "lucide-react";
+import { SoundPicker } from "./inputs/SoundPicker";
+import { GlobalKeyInput } from "./inputs/GlobalKeyInput";
+import { EntityRefInput } from "./inputs/EntityRefInput";
+import { HandlerRefInput } from "./inputs/HandlerRefInput";
+import { ZoneIdInput } from "./inputs/ZoneIdInput";
+import { ExpressionInput } from "./inputs/ExpressionInput";
+import { ExprHint } from "./ConditionEditor";
+import { useExprContext } from "./ExprContext";
+import type { ParamDef, StepKindDef, ScriptSchema } from "@/types/scripts";
 
 interface StepParamFormProps {
     stepKind: StepKindDef;
     params: unknown;
     onChange: (params: unknown) => void;
     excludeKeys?: Set<string>;
+    schema?: ScriptSchema;
 }
 
-export function StepParamForm({ stepKind, params, onChange, excludeKeys }: StepParamFormProps) {
+const ENTITY_PARAM_NAMES = new Set(["entity", "target", "to_entity", "entity_id"]);
+const ZONE_PARAM_NAMES = new Set(["zone", "zone_id", "active_player_zone"]);
+const GLOBAL_KEY_STEP_KINDS = new Set(["set_world_state", "set_run_state"]);
+const EXPR_PARAM_HINTS: Record<string, Set<string>> = {
+    "set_var": new Set(["value"]),
+    "if": new Set(["when"]),
+    "while": new Set(["when"]),
+    "switch": new Set(["on"]),
+};
+
+export function StepParamForm({ stepKind, params, onChange, excludeKeys, schema }: StepParamFormProps) {
     const style = stepKind.paramStyle;
 
     if (style === "string") {
+        if (stepKind.name === "play_sound") {
+            return <SoundPicker value={String(params ?? "")} onChange={onChange} />;
+        }
         return (
             <Input
                 className="h-6 text-xs font-mono"
@@ -41,18 +65,23 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys }: StepP
     if (style === "string_or_map") {
         if (typeof params === "string" || typeof params === "number" || typeof params === "boolean") {
             const hasMapParams = (stepKind.params?.length ?? 0) > 1;
+            const inlineInput = stepKind.name === "play_sound" ? (
+                <SoundPicker value={String(params)} onChange={onChange} />
+            ) : (
+                <Input
+                    className="h-6 text-xs font-mono"
+                    value={String(params)}
+                    onChange={(e) => {
+                        let v: unknown = e.target.value;
+                        if (!isNaN(Number(v)) && v !== "") v = Number(v);
+                        onChange(v);
+                    }}
+                    placeholder={stepKind.params?.[0]?.description}
+                />
+            );
             return (
                 <div className="space-y-1">
-                    <Input
-                        className="h-6 text-xs font-mono"
-                        value={String(params)}
-                        onChange={(e) => {
-                            let v: unknown = e.target.value;
-                            if (!isNaN(Number(v)) && v !== "") v = Number(v);
-                            onChange(v);
-                        }}
-                        placeholder={stepKind.params?.[0]?.description}
-                    />
+                    {inlineInput}
                     {hasMapParams && (
                         <button
                             className="text-[10px] text-muted-foreground hover:text-foreground"
@@ -63,7 +92,7 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys }: StepP
                                 onChange(mapParams);
                             }}
                         >
-                            Switch to map form
+                            Show all options
                         </button>
                     )}
                 </div>
@@ -81,7 +110,7 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys }: StepP
         if (style === "string_or_map" && defs.length > 0) {
             return (
                 <div className="space-y-1">
-                    <MapParamFields defs={defs} params={mapParams} onChange={(updated) => onChange(updated)} />
+                    <MapParamFields defs={defs} params={mapParams} onChange={(updated) => onChange(updated)} stepKindName={stepKind.name} schema={schema} />
                     <button
                         className="text-[10px] text-muted-foreground hover:text-foreground"
                         onClick={() => {
@@ -89,22 +118,24 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys }: StepP
                             onChange(firstParam ? mapParams[firstParam.name] ?? "" : "");
                         }}
                     >
-                        Switch to simple form
+                        Collapse
                     </button>
                 </div>
             );
         }
 
-        return <MapParamFields defs={defs} params={mapParams} onChange={(updated) => onChange(updated)} />;
+        return <MapParamFields defs={defs} params={mapParams} onChange={(updated) => onChange(updated)} stepKindName={stepKind.name} schema={schema} />;
     }
 
     return null;
 }
 
-function MapParamFields({ defs, params, onChange }: {
+function MapParamFields({ defs, params, onChange, stepKindName, schema }: {
     defs: ParamDef[];
     params: Record<string, unknown>;
     onChange: (params: Record<string, unknown>) => void;
+    stepKindName?: string;
+    schema?: ScriptSchema;
 }) {
     const updateField = (name: string, value: unknown) => {
         const next = { ...params, [name]: value };
@@ -117,17 +148,152 @@ function MapParamFields({ defs, params, onChange }: {
     return (
         <div className="space-y-1">
             {defs.map((p) => (
-                <ParamField key={p.name} def={p} value={params[p.name]} onChange={(v) => updateField(p.name, v)} />
+                <ParamField key={p.name} def={p} value={params[p.name]} onChange={(v) => updateField(p.name, v)} stepKindName={stepKindName} schema={schema} />
             ))}
         </div>
     );
 }
 
-function ParamField({ def, value, onChange }: {
+function DynamicMapEditor({ value, onChange, valueLabel }: {
+    value: unknown;
+    onChange: (value: unknown) => void;
+    valueLabel?: string;
+}) {
+    const map = (typeof value === "object" && value !== null && !Array.isArray(value))
+        ? value as Record<string, unknown>
+        : {};
+    const entries = Object.entries(map);
+
+    const addEntry = () => {
+        const key = `param_${entries.length}`;
+        onChange({ ...map, [key]: "" });
+    };
+
+    const removeEntry = (key: string) => {
+        const next = { ...map };
+        delete next[key];
+        onChange(next);
+    };
+
+    const updateKey = (oldKey: string, newKey: string) => {
+        if (newKey === oldKey) return;
+        const next: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(map)) {
+            next[k === oldKey ? newKey : k] = v;
+        }
+        onChange(next);
+    };
+
+    const updateValue = (key: string, val: unknown) => {
+        onChange({ ...map, [key]: val });
+    };
+
+    return (
+        <div className="space-y-1">
+            {entries.map(([key, val], i) => (
+                <div key={i} className="flex items-center gap-1">
+                    <Input
+                        className="h-6 w-28 text-xs font-mono"
+                        value={key}
+                        onChange={(e) => updateKey(key, e.target.value)}
+                        placeholder="key"
+                    />
+                    <span className="text-muted-foreground text-[10px]">=</span>
+                    <Input
+                        className="h-6 flex-1 text-xs font-mono"
+                        value={String(val ?? "")}
+                        onChange={(e) => updateValue(key, e.target.value)}
+                        placeholder={valueLabel ?? "value (expression)"}
+                    />
+                    <button className="text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeEntry(key)}>
+                        <X className="h-3 w-3" />
+                    </button>
+                </div>
+            ))}
+            <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={addEntry}>
+                <Plus className="mr-1 h-2.5 w-2.5" />
+                Add entry
+            </Button>
+        </div>
+    );
+}
+
+function ParamField({ def, value, onChange, stepKindName, schema }: {
     def: ParamDef;
     value: unknown;
     onChange: (value: unknown) => void;
+    stepKindName?: string;
+    schema?: ScriptSchema;
 }) {
+    const exprCtx = useExprContext();
+    const isExprField = stepKindName ? EXPR_PARAM_HINTS[stepKindName]?.has(def.name) : false;
+
+    if (isExprField) {
+        return (
+            <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+                    <div className="flex-1">
+                        <ExpressionInput
+                            value={String(value ?? "")}
+                            onChange={(v) => onChange(v || undefined)}
+                            placeholder={def.default !== undefined ? String(def.default) : def.description}
+                            handlerVarKeys={exprCtx.handlerVarKeys}
+                            constKeys={exprCtx.constKeys}
+                        />
+                    </div>
+                </div>
+                <div className="pl-[6.5rem]"><ExprHint /></div>
+            </div>
+        );
+    }
+
+    if (ENTITY_PARAM_NAMES.has(def.name)) {
+        return (
+            <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+                <div className="flex-1"><EntityRefInput value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} /></div>
+            </div>
+        );
+    }
+
+    if (ZONE_PARAM_NAMES.has(def.name)) {
+        return (
+            <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+                <div className="flex-1"><ZoneIdInput value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} /></div>
+            </div>
+        );
+    }
+
+    if (def.name === "key" && stepKindName && GLOBAL_KEY_STEP_KINDS.has(stepKindName)) {
+        return (
+            <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+                <div className="flex-1"><GlobalKeyInput value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} /></div>
+            </div>
+        );
+    }
+
+    if (def.name === "name" && stepKindName && (stepKindName === "action" || stepKindName === "ref")) {
+        return (
+            <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+                <div className="flex-1"><HandlerRefInput value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} schema={schema} /></div>
+            </div>
+        );
+    }
+
+    if (def.type === "map") {
+        return (
+            <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">{def.name}{def.required ? "*" : ""}</span>
+                <DynamicMapEditor value={value} onChange={onChange} valueLabel={def.description} />
+                {stepKindName && EXPR_PARAM_HINTS[stepKindName]?.has(def.name) && <ExprHint />}
+            </div>
+        );
+    }
+
     if (def.type === "bool") {
         return (
             <div className="flex items-center gap-2">

@@ -20,6 +20,7 @@ var knownStepKinds = []string{
 	"wait_for", "wait_for_animation",
 	"action", "parallel", "focused_sequence", "ref",
 	"highlight_sequence", "trigger_combat",
+	"set_var", "if", "switch", "while", "custom_action",
 }
 
 var knownBuiltinConditions = []string{
@@ -27,6 +28,7 @@ var knownBuiltinConditions = []string{
 	"global_exists", "global_not_exists",
 	"handler_state_eq", "handler_state_ne",
 	"all", "any", "not",
+	"expr",
 }
 
 func loadSchema(t *testing.T) *schema.ScriptSchema {

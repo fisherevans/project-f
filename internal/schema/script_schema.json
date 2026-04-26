@@ -77,6 +77,16 @@
         {"name": "value", "type": "any", "required": true, "description": "Value to set"}
       ]
     },
+    "set_var": {
+      "name": "set_var",
+      "description": "Set a handler-local variable using an expression. The value is evaluated as an expr expression against the current environment (var, global, const, save, etc.)",
+      "category": "state",
+      "paramStyle": "map",
+      "params": [
+        {"name": "key", "type": "string", "required": true, "description": "Variable key in the handler's var map"},
+        {"name": "value", "type": "string", "required": true, "description": "Expression to evaluate and store (e.g. 'var.count + 1')"}
+      ]
+    },
     "delete_entity": {
       "name": "delete_entity",
       "description": "Remove an entity from the map",
@@ -369,6 +379,52 @@
       "params": [
         {"name": "name", "type": "string", "required": true, "description": "Name of the sequence to reference"},
         {"name": "with", "type": "map", "description": "Parameter values to pass to the referenced sequence"}
+      ]
+    },
+    "if": {
+      "name": "if",
+      "description": "Conditional step - evaluates an expression and runs 'then' or 'else' sub-steps accordingly",
+      "category": "flow",
+      "paramStyle": "map",
+      "params": [
+        {"name": "when", "type": "string", "required": true, "description": "Expression to evaluate as boolean (e.g. 'var.count > 3')"},
+        {"name": "then", "type": "steps", "required": true, "description": "Steps to execute if the condition is true"},
+        {"name": "else", "type": "steps", "description": "Steps to execute if the condition is false"}
+      ],
+      "acceptsSubSteps": true
+    },
+    "switch": {
+      "name": "switch",
+      "description": "Multi-branch step - evaluates an expression and matches against case values",
+      "category": "flow",
+      "paramStyle": "map",
+      "params": [
+        {"name": "on", "type": "string", "required": true, "description": "Expression to evaluate (result compared against case values)"},
+        {"name": "cases", "type": "list", "required": true, "description": "List of {value: expr, steps: [...]} case objects"},
+        {"name": "default", "type": "steps", "description": "Steps to execute if no case matches"}
+      ],
+      "acceptsSubSteps": true
+    },
+    "while": {
+      "name": "while",
+      "description": "Loop step - repeatedly executes sub-steps while a condition is true",
+      "category": "flow",
+      "paramStyle": "map",
+      "params": [
+        {"name": "when", "type": "string", "required": true, "description": "Expression evaluated before each iteration (e.g. 'var.i < len(var.targets)')"},
+        {"name": "max", "type": "number", "default": 100, "description": "Maximum iteration count (safety cap, hard max 1000)"},
+        {"name": "steps", "type": "steps", "required": true, "description": "Steps to execute each iteration"}
+      ],
+      "acceptsSubSteps": true
+    },
+    "custom_action": {
+      "name": "custom_action",
+      "description": "Invoke a YAML-defined reusable action with parameters. Custom actions share the caller's var scope.",
+      "category": "flow",
+      "paramStyle": "string_or_map",
+      "params": [
+        {"name": "name", "type": "string", "required": true, "description": "Name of the custom action to invoke"},
+        {"name": "with", "type": "map", "description": "Map of parameter names to expressions (evaluated before invocation, accessible as param.*)"}
       ]
     },
     "highlight_sequence": {
@@ -667,6 +723,13 @@
       "isComposite": true,
       "params": [
         {"name": "condition", "type": "condition", "required": true, "description": "Single condition node to negate"}
+      ]
+    },
+    "expr": {
+      "name": "expr",
+      "description": "Evaluate an expression. Supports full expr syntax with access to var, global, const, save, prop, self, player, source.",
+      "params": [
+        {"name": "expression", "type": "string", "required": true, "description": "Expression string (e.g. 'var.count > 3 && global.quest_stage == \"complete\"')"}
       ]
     }
   },

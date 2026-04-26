@@ -1,11 +1,14 @@
 package server
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path/filepath"
+	"strings"
 )
 
 // Server is the asset editor HTTP server.
@@ -16,6 +19,8 @@ type Server struct {
 	sprites    *SpriteService
 	audio      *AudioService
 	scripts    *ScriptService
+	rpg        *RPGService
+	saves      *SaveService
 	hub        *Hub
 	frontendFS fs.FS
 }
@@ -31,6 +36,8 @@ func New(assetsDir string, devMode bool, frontendFS fs.FS) *Server {
 		sprites:    NewSpriteService(assetsDir),
 		audio:      NewAudioService(assetsDir),
 		scripts:    NewScriptService(assetsDir),
+		rpg:        NewRPGService(assetsDir),
+		saves:      NewSaveService(assetsDir),
 		hub:        NewHub(assetsDir),
 		frontendFS: frontendFS,
 	}
@@ -68,11 +75,28 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/v1/audio/{name...}", s.handleGetAudio)
 	s.mux.HandleFunc("PUT /api/v1/audio/{name...}", s.handleSaveAudio)
 
+	s.mux.HandleFunc("POST /api/v1/scripts/_validate-expr", s.handleValidateExpr)
 	s.mux.HandleFunc("GET /api/v1/script-schema", s.handleGetScriptSchema)
 	s.mux.HandleFunc("GET /api/v1/scripts", s.handleListScripts)
 	s.mux.HandleFunc("GET /api/v1/scripts/{name...}", s.handleGetScript)
 	s.mux.HandleFunc("PUT /api/v1/scripts/{name...}", s.handleSaveScript)
 	s.mux.HandleFunc("DELETE /api/v1/scripts/{name...}", s.handleDeleteScript)
+
+	s.mux.HandleFunc("GET /api/v1/rpg/skills", s.handleListSkills)
+	s.mux.HandleFunc("GET /api/v1/rpg/skills/{id}", s.handleGetSkill)
+	s.mux.HandleFunc("PUT /api/v1/rpg/skills/{id}", s.handleSaveSkill)
+	s.mux.HandleFunc("DELETE /api/v1/rpg/skills/{id}", s.handleDeleteSkill)
+	s.mux.HandleFunc("GET /api/v1/rpg/primortals", s.handleListPrimortals)
+	s.mux.HandleFunc("GET /api/v1/rpg/primortals/{type}", s.handleGetPrimortal)
+	s.mux.HandleFunc("PUT /api/v1/rpg/primortals/{type}", s.handleSavePrimortal)
+	s.mux.HandleFunc("DELETE /api/v1/rpg/primortals/{type}", s.handleDeletePrimortal)
+	s.mux.HandleFunc("GET /api/v1/rpg/combat", s.handleGetCombatInfo)
+
+	s.mux.HandleFunc("GET /api/v1/saves", s.handleListSaves)
+	s.mux.HandleFunc("GET /api/v1/saves/{id}", s.handleGetSave)
+	s.mux.HandleFunc("PUT /api/v1/saves/{id}", s.handleSaveSave)
+	s.mux.HandleFunc("DELETE /api/v1/saves/{id}", s.handleDeleteSave)
+	s.mux.HandleFunc("POST /api/v1/saves/{id}/clone", s.handleCloneSave)
 
 	s.mux.HandleFunc("GET /api/v1/ws", s.handleWebSocket)
 
@@ -83,11 +107,37 @@ func (s *Server) routes() {
 		if s.frontendFS == nil {
 			log.Fatal("no embedded frontend and not in dev mode")
 		}
-		s.mux.Handle("/", http.FileServer(http.FS(s.frontendFS)))
+		s.mux.Handle("/", spaHandler(s.frontendFS))
 	}
+}
+
+func safePath(root, name string) (string, error) {
+	joined := filepath.Join(root, name)
+	cleaned := filepath.Clean(joined)
+	if !strings.HasPrefix(cleaned, filepath.Clean(root)+string(filepath.Separator)) {
+		return "", fmt.Errorf("path escapes root: %s", name)
+	}
+	return cleaned, nil
 }
 
 func viteProxy() http.Handler {
 	target, _ := url.Parse("http://localhost:5173")
 	return httputil.NewSingleHostReverseProxy(target)
+}
+
+// spaHandler serves static files from the embedded FS, falling back to
+// index.html for any path that doesn't match a real file. This lets
+// React Router handle client-side routes like /sprites/foo/bar.
+func spaHandler(fsys fs.FS) http.Handler {
+	fileServer := http.FileServer(http.FS(fsys))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path == "" {
+			path = "index.html"
+		}
+		if _, err := fs.Stat(fsys, path); err != nil {
+			r.URL.Path = "/"
+		}
+		fileServer.ServeHTTP(w, r)
+	})
 }
