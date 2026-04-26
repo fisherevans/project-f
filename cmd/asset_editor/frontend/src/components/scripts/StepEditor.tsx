@@ -55,7 +55,7 @@ const CATEGORY_BORDER_COLORS: Record<string, string> = {
 function SwitchCasesEditor({ step, schema, onChange }: { step: StepNode; schema: ScriptSchema; onChange: (step: StepNode) => void }) {
     const exprCtx = useExprContext();
     const params = step.params as Record<string, unknown>;
-    const cases = (params.cases ?? []) as Record<string, unknown>[];
+    const cases = (Array.isArray(params.cases) ? params.cases : []) as Record<string, unknown>[];
 
     const addCase = () => {
         const next = [...cases, { value: "''", steps: [] }];

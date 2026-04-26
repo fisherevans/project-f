@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import type { ScriptSchema, StepKindDef } from "@/types/scripts";
 

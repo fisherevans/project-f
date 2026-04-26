@@ -249,6 +249,10 @@ export function createEmptyStep(kind: string, schema?: StepKindDef): StepNode {
                         case "bool":
                             params[p.name] = false;
                             break;
+                        case "list":
+                        case "steps":
+                            params[p.name] = [];
+                            break;
                         default:
                             params[p.name] = "";
                     }
