@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2, BookOpen } from "lucide-react";
+import { ReferencePopover } from "./ReferencePopover";
 import { ZoneIdInput } from "./inputs/ZoneIdInput";
 import { ExpressionInput } from "./inputs/ExpressionInput";
 import { ExpressionHelpLink } from "./ExpressionHelpModal";
@@ -153,6 +154,9 @@ export function ConditionEditor({ condition, schema, onChange, onRemove, depth =
                     <code className={`font-mono font-semibold ${getConditionColor(condition.type)}`}>{condition.type}</code>
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </button>
+                <ReferencePopover target={{ type: "condition", name: condition.type }}>
+                    <BookOpen className="h-3 w-3 text-muted-foreground/40 hover:text-accent-violet" />
+                </ReferencePopover>
                 {desc && <span className="text-[10px] text-muted-foreground truncate">{desc}</span>}
                 <div className="flex-1" />
                 {onRemove && (

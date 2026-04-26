@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { X, BookOpen } from "lucide-react";
+import { ReferencePopover } from "./ReferencePopover";
 import type { ScriptSchema, StepKindDef } from "@/types/scripts";
 
 interface StepKindPickerProps {
@@ -146,14 +146,11 @@ export function StepKindPicker({ schema, onSelect, onCancel }: StepKindPickerPro
                                             <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{def.description}</div>
                                         </div>
                                     </button>
-                                    <Link
-                                        to={`/reference#step-${def.name}`}
-                                        className="shrink-0 mt-1.5 mr-1 opacity-0 group-hover/item:opacity-100 text-muted-foreground/50 hover:text-accent-violet transition-opacity"
-                                        title="View reference"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <BookOpen className="h-3 w-3" />
-                                    </Link>
+                                    <div className="shrink-0 mt-1.5 mr-1 opacity-0 group-hover/item:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                        <ReferencePopover target={{ type: "step", name: def.name }}>
+                                            <BookOpen className="h-3 w-3 text-muted-foreground/50 hover:text-accent-violet" />
+                                        </ReferencePopover>
+                                    </div>
                                 </div>
                             );
                         })}

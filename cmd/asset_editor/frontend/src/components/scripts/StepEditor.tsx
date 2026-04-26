@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
-import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus, BookOpen } from "lucide-react";
 import { getCategoryColor } from "./StepKindPicker";
+import { ReferencePopover } from "./ReferencePopover";
 import { StepParamForm } from "./StepParamForm";
 import { StepList } from "./StepList";
 import { ExpressionInput } from "./inputs/ExpressionInput";
@@ -261,18 +261,28 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                         {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     </button>
                 )}
-                <Link to={`/reference#step-${step.kind}`} className="shrink-0" title={`View ${step.kind} reference`}>
-                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-mono hover:ring-1 hover:ring-accent-violet/30 ${getCategoryColor(category)}`}>
+                <ReferencePopover target={{ type: "step", name: step.kind }}>
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-mono hover:ring-1 hover:ring-accent-violet/30 cursor-help ${getCategoryColor(category)}`}>
                         {step.kind}
+                        <BookOpen className="ml-0.5 h-2.5 w-2.5 opacity-30" />
                     </Badge>
-                </Link>
+                </ReferencePopover>
                 {isSimpleInline ? (
                     <div className="flex-1 min-w-0">
                         <StepParamForm stepKind={stepDef} params={step.params} onChange={(params) => onChange({ ...step, params })} schema={schema} />
                     </div>
                 ) : (
                     summary && !expanded && (
-                        <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground font-mono">{summary}</span>
+                        <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground font-mono">
+                            {summary}
+                            {(step.kind === "action" || step.kind === "ref") && summary && (
+                                <span className="inline-flex ml-1 align-middle" onClick={(e) => e.stopPropagation()}>
+                                    <ReferencePopover target={{ type: "action", name: summary }}>
+                                        <BookOpen className="h-2.5 w-2.5 text-muted-foreground/30 hover:text-accent-violet cursor-help" />
+                                    </ReferencePopover>
+                                </span>
+                            )}
+                        </span>
                     )
                 )}
                 {!isSimpleInline && !summary && !expandable && (

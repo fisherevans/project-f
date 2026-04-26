@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, BookOpen } from "lucide-react";
+import { ReferencePopover } from "./ReferencePopover";
 import { RuleEditor } from "./RuleEditor";
 import { createEmptyRule, moveItem } from "@/lib/scriptUtils";
 import type { HookDef, ScriptSchema, EventHookDef } from "@/types/scripts";
@@ -31,9 +31,12 @@ export function HookSection({ hookKey, hookDef, hook, schema, onChange, onRemove
                 <button className="shrink-0 text-muted-foreground" onClick={() => setExpanded(!expanded)}>
                     {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                 </button>
-                <Link to={`/reference#hook-${hookKey}`} className="hover:text-accent-violet" title="View hook reference">
-                    <code className="text-xs font-mono font-semibold">{hookKey}</code>
-                </Link>
+                <ReferencePopover target={{ type: "hook", yamlKey: hookKey }}>
+                    <span className="inline-flex items-center gap-1 hover:text-accent-violet cursor-help">
+                        <code className="text-xs font-mono font-semibold">{hookKey}</code>
+                        <BookOpen className="h-2.5 w-2.5 text-muted-foreground/40" />
+                    </span>
+                </ReferencePopover>
                 <Badge variant="outline" className="text-[10px] px-1 py-0">{rules.length} rule{rules.length !== 1 ? "s" : ""}</Badge>
                 <button
                     className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
