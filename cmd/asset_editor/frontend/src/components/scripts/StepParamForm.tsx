@@ -57,7 +57,7 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys, schema 
     if (style === "number") {
         return (
             <Input
-                className="h-6 w-24 text-xs font-mono"
+                className="h-6 w-32 text-xs font-mono"
                 type="number"
                 step="any"
                 value={String(params ?? 0)}
@@ -142,7 +142,7 @@ function DynamicMapEditor({ value, onChange, valueLabel }: {
             {entries.map(([key, val], i) => (
                 <div key={i} className="flex items-center gap-1">
                     <Input
-                        className="h-6 w-28 text-xs font-mono"
+                        className="h-6 min-w-0 flex-1 text-xs font-mono"
                         value={key}
                         onChange={(e) => updateKey(key, e.target.value)}
                         placeholder="key"
@@ -205,7 +205,7 @@ function CustomActionParamsEditor({ value, onChange, actionName }: {
             <span className="text-xs text-muted-foreground">params</span>
             {declaredParams.map((p) => (
                 <div key={p.name} className="flex items-start gap-1.5">
-                    <span className="text-xs text-muted-foreground w-24 shrink-0 pt-1">
+                    <span className="text-xs text-muted-foreground shrink-0 pt-1">
                         {p.name}{p.default === undefined ? "*" : ""}
                     </span>
                     <div className="flex-1 space-y-0.5">
@@ -226,7 +226,8 @@ function CustomActionParamsEditor({ value, onChange, actionName }: {
             {extraKeys.map((key) => (
                 <div key={key} className="flex items-center gap-1.5">
                     <Input
-                        className="h-6 w-24 text-xs font-mono text-accent-amber"
+                        className="h-6 shrink-0 text-xs font-mono text-accent-amber"
+                        style={{ width: `${Math.max(6, key.length + 2)}ch` }}
                         value={key}
                         readOnly
                         title="Unrecognized param"

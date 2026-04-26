@@ -1481,7 +1481,7 @@ function ShadowMobEditor({ object }: { object: TiledSelectedObject }) {
                 <div className="space-y-1.5 pl-1">
                     {fields.map((f) => (
                         <div key={f.key} className="flex items-center gap-2">
-                            <label className="text-xs shrink-0 w-24 truncate">{f.label}</label>
+                            <label className="text-xs shrink-0 truncate">{f.label}</label>
                             <Input
                                 className="h-6 flex-1 text-xs font-mono"
                                 key={`${f.key}-${config[f.key] ?? ""}`}
@@ -1825,8 +1825,9 @@ function AllPropertiesSection({ object }: { object: TiledSelectedObject }) {
                 <div className="space-y-1">
                     {entries.map(([key, val]) => (
                         <div key={key} className="flex items-center gap-2 text-xs">
-                            <span className="font-mono text-muted-foreground w-32 truncate shrink-0">{key}</span>
-                            <span className="font-mono truncate">{val}</span>
+                            <span className="font-mono text-muted-foreground shrink-0">{key}</span>
+                            <span className="font-mono text-muted-foreground/50 shrink-0">=</span>
+                            <span className="font-mono truncate min-w-0">{val}</span>
                         </div>
                     ))}
                 </div>

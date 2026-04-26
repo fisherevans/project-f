@@ -111,7 +111,7 @@ function FilterSection({ filter, hookDef, onChange }: {
             <div className="space-y-1 mt-1">
                 {hookDef.filterFields!.map((field) => (
                     <div key={field.name} className="flex items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground w-24 shrink-0">{field.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{field.name}</span>
                         {field.name === "zone" ? (
                             <div className="flex-1">
                                 <ZoneIdInput

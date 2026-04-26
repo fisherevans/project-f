@@ -83,7 +83,7 @@ function VarSection({ vars, onChange }: { vars: Record<string, unknown>; onChang
                     {entries.map(([key, val], i) => (
                         <div key={i} className="flex items-center gap-1 group/var">
                             <Input
-                                className="h-6 w-32 text-xs font-mono"
+                                className="h-6 min-w-0 flex-1 text-xs font-mono"
                                 value={key}
                                 onChange={(e) => updateKey(key, e.target.value)}
                                 placeholder="key"
@@ -156,21 +156,21 @@ function PropsSection({ props, onChange }: { props: HandlerPropDef[]; onChange: 
                     {props.map((p, i) => (
                         <div key={i} className="flex items-start gap-1 group/prop border border-border/30 rounded px-1.5 py-1">
                             <div className="flex flex-col gap-1 flex-1 min-w-0">
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1 flex-wrap">
                                     <Input
-                                        className="h-6 w-28 text-xs font-mono"
+                                        className="h-6 min-w-0 flex-1 text-xs font-mono"
                                         value={p.name}
                                         onChange={(e) => updateProp(i, { name: e.target.value })}
                                         placeholder="name"
                                     />
                                     <select
-                                        className="h-6 rounded border border-input bg-background px-1 text-xs"
+                                        className="h-6 rounded border border-input bg-background px-1 text-xs shrink-0"
                                         value={p.type}
                                         onChange={(e) => updateProp(i, { type: e.target.value })}
                                     >
                                         {PROP_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                                     </select>
-                                    <label className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                    <label className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
                                         <input
                                             type="checkbox"
                                             checked={p.required ?? false}
@@ -181,7 +181,7 @@ function PropsSection({ props, onChange }: { props: HandlerPropDef[]; onChange: 
                                     </label>
                                     {!p.required && (
                                         <Input
-                                            className="h-6 w-20 text-xs font-mono"
+                                            className="h-6 min-w-0 flex-1 text-xs font-mono"
                                             value={p.default !== undefined && p.default !== null ? String(p.default) : ""}
                                             onChange={(e) => {
                                                 const v = e.target.value;

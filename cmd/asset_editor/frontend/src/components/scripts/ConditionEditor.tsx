@@ -279,7 +279,7 @@ function ConditionParams({ condition, schema, onChange, depth }: {
                 )}
                 {activeDef?.params?.map((p) => (
                     <div key={p.name} className="flex items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground w-20 shrink-0">{p.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{p.name}</span>
                         {p.name === "zone" || p.name === "zone_id" ? (
                             <div className="flex-1">
                                 <ZoneIdInput
