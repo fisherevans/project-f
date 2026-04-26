@@ -21,18 +21,44 @@ interface StepEditorProps {
     onMoveDown?: () => void;
 }
 
+function formatParamValue(v: unknown): string {
+    if (v === null || v === undefined) return "";
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return String(v);
+    if (Array.isArray(v)) return `[${v.length}]`;
+    return "{...}";
+}
+
+function mapParamsSummary(m: Record<string, unknown>, skip?: Set<string>): string {
+    const parts: string[] = [];
+    for (const [k, v] of Object.entries(m)) {
+        if (skip?.has(k)) continue;
+        if (v === undefined || v === null || v === "" || v === false) continue;
+        if (Array.isArray(v) && (k === "steps" || k === "then" || k === "else" || k === "cases")) continue;
+        const fv = formatParamValue(v);
+        if (v === true) {
+            parts.push(k);
+        } else {
+            parts.push(`${k}: ${fv}`);
+        }
+    }
+    return parts.join(", ");
+}
+
 function getStepSummary(step: StepNode): string {
     if (step.kind === "return") return "";
-    if (typeof step.params === "string") return step.params;
-    if (typeof step.params === "number") return String(step.params);
-    if (typeof step.params === "boolean") return String(step.params);
+    if (typeof step.params === "string") return `(${step.params})`;
+    if (typeof step.params === "number") return `(${step.params})`;
+    if (typeof step.params === "boolean") return `(${step.params})`;
     if (typeof step.params !== "object" || step.params === null) return "";
     const m = step.params as Record<string, unknown>;
     switch (step.kind) {
         case "action":
         case "custom_action":
-        case "ref":
-            return String(m.name ?? "");
+        case "ref": {
+            const name = String(m.name ?? "");
+            const rest = mapParamsSummary(m, new Set(["name"]));
+            return rest ? `${name}(${rest})` : name;
+        }
         case "set_var":
         case "set_run_state":
         case "set_world_state":
@@ -43,16 +69,10 @@ function getStepSummary(step: StepNode): string {
             return m.max ? `${m.when ?? ""} (max ${m.max})` : String(m.when ?? "");
         case "switch":
             return `on ${m.on ?? "?"}` + (Array.isArray(m.cases) ? ` (${m.cases.length} cases)` : "");
-        case "focused_sequence":
-            return String(m.target ?? m.entity ?? "");
-        case "teleport_player":
-            return String(m.to_entity ?? m.to_reference ?? "");
-        case "pick_dialogue":
-        case "pick_chatter":
-        case "pick_self_dialogue":
-            return String(m.list ?? "");
-        default:
-            return "";
+        default: {
+            const s = mapParamsSummary(m);
+            return s ? `(${s})` : "";
+        }
     }
 }
 
@@ -273,7 +293,7 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                     </div>
                 ) : (
                     summary && !expanded && (
-                        <span className="flex-1 min-w-0 truncate text-xs text-muted-foreground font-mono">
+                        <span className="flex-1 min-w-0 truncate text-[11px] text-muted-foreground font-mono">
                             {summary}
                             {(step.kind === "action" || step.kind === "ref") && summary && (
                                 <span className="inline-flex ml-1 align-middle" onClick={(e) => e.stopPropagation()}>
