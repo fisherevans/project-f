@@ -7,56 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var validStepKinds = map[string]bool{
-	"dialogue":              true,
-	"self_dialogue":         true,
-	"chatter":               true,
-	"timer":                 true,
-	"play_sound":            true,
-	"set_world_state":       true,
-	"set_run_state":         true,
-	"delete_entity":         true,
-	"face_direction":        true,
-	"face_entity":           true,
-	"scripted_motion":       true,
-	"push_behavior":         true,
-	"pop_behavior":          true,
-	"disable_behavior":      true,
-	"enable_behavior":       true,
-	"reset_movement":        true,
-	"trigger_movement":      true,
-	"set_mode":              true,
-	"set_blocking":          true,
-	"reset_animation":       true,
-	"change_player_renderer": true,
-	"override_camera":       true,
-	"pop_camera":            true,
-	"mutate_camera":         true,
-	"teleport_player":       true,
-	"load_map":              true,
-	"fade":                  true,
-	"deactivate_fade":       true,
-	"yield_elythium":        true,
-	"tooltip":               true,
-	"broadcast":             true,
-	"wait_for":              true,
-	"wait_for_animation":    true,
-	"action":                true,
-	"parallel":              true,
-	"focused_sequence":      true,
-	"pick_dialogue":         true,
-	"pick_self_dialogue":    true,
-	"pick_chatter":          true,
-	"configure_mode_entity": true,
-	"ref":                   true,
-	"set_var":               true,
-	"if":                    true,
-	"switch":                true,
-	"while":                 true,
-	"custom_action":         true,
-	"return":                true,
-}
-
 var builtinConditionKinds = map[string]bool{
 	"all":         true,
 	"any":         true,
@@ -159,7 +109,7 @@ func validateSteps(steps []*StepNode) []string {
 func validateStep(step *StepNode) []string {
 	var errors []string
 
-	if !validStepKinds[step.Kind] {
+	if _, ok := stepConverters[step.Kind]; !ok {
 		errors = append(errors, fmt.Sprintf("unknown step kind %q", step.Kind))
 		return errors
 	}

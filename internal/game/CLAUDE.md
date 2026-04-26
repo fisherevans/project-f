@@ -142,10 +142,11 @@ Key test files and what they cover:
 - `script_schema_test.go` - validates that all registered step kinds, actions,
   and conditions have matching entries in `script_schema.json`.
 
-When adding a new step kind: add it to `validStepKinds`, add a case in
-`convertStep`, add it to `script_schema.json`, add it to `knownStepKinds`
-in `script_schema_test.go`, and regenerate docs with
-`go run ./cmd/gen_script_docs`.
+When adding a new step kind: call `registerStepConverter` in an `init()`
+in the appropriate `effect_*.go` file, add it to `script_schema.json`,
+and regenerate docs with `go run ./cmd/gen_script_docs`. The
+`stepConverters` registry drives both conversion and validation - no
+separate lists to maintain.
 
 ## Save data
 

@@ -2,11 +2,120 @@ package adventure
 
 import (
 	"fisherevans.com/project/f/internal/util/highlighter"
+	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-// Effect is the interface that all effect types must implement
+func init() {
+	registerStepConverter("set_world_state", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewSetWorldStateEffect(mapStr(m, "key"), m["value"])}
+	})
+	registerStepConverter("set_run_state", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewSetRunStateEffect(mapStr(m, "key"), m["value"])}
+	})
+	registerStepConverter("broadcast", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		var data any
+		if d, ok := m["data"]; ok {
+			data = d
+		}
+		return []Effect{NewSendBroadcastEffect(mapStr(m, "id"), data)}
+	})
+	registerStepConverter("wait_for", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		condName := mapStr(m, "condition")
+		fn, ok := getScriptConditionFactory(condName)
+		if !ok {
+			log.Warn().Str("condition", condName).Msg("unknown script condition in wait_for")
+			return nil
+		}
+		return []Effect{NewWaitForConditionEffect(fn(m))}
+	})
+	registerStepConverter("wait_for_animation", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewWaitForAnimationComplete(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("tooltip", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewPushTooltipEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("highlight_sequence", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		targetsRaw, ok := m["targets"].([]any)
+		if !ok {
+			log.Warn().Msg("highlight_sequence: targets must be a list")
+			return nil
+		}
+		var targets []highlighter.Target
+		for _, raw := range targetsRaw {
+			tm, ok := raw.(map[string]any)
+			if !ok {
+				continue
+			}
+			regionMap, _ := tm["region"].(map[string]any)
+			area := pixel.R(
+				toFloat64(regionMap["x"]),
+				toFloat64(regionMap["y"]),
+				toFloat64(regionMap["x"])+toFloat64(regionMap["w"]),
+				toFloat64(regionMap["y"])+toFloat64(regionMap["h"]),
+			)
+			t := highlighter.NewTarget(area)
+			if msgMap, ok := tm["message"].(map[string]any); ok {
+				text, _ := msgMap["text"].(string)
+				placement := parseMessagePlacement(mapStr(msgMap, "placement"))
+				msg := highlighter.NewMessage(tc.Resolve(text), placement)
+				if wrap := mapInt(msgMap, "wrap", 0); wrap > 0 {
+					msg = msg.Wrapped(wrap)
+				}
+				t = t.WithMessage(msg)
+			}
+			if badgeMap, ok := tm["badge"].(map[string]any); ok {
+				placement := parseBadgePlacement(mapStr(badgeMap, "placement"))
+				badge := highlighter.NewBadge(placement)
+				if label := mapStr(badgeMap, "label"); label != "" {
+					badge = badge.WithLabel(tc.Resolve(label))
+				}
+				t = t.WithBadge(badge)
+			}
+			if noPad, ok := tm["no_padding"].(bool); ok && noPad {
+				t = t.NoPadding()
+			}
+			targets = append(targets, t)
+		}
+		if len(targets) == 0 {
+			return nil
+		}
+		return []Effect{NewSetHighlightSequenceEffect(targets)}
+	})
+}
+
+func parseMessagePlacement(s string) highlighter.MessagePlacement {
+	switch s {
+	case "top":
+		return highlighter.MessageOnTop
+	case "left":
+		return highlighter.MessageOnLeft
+	case "right":
+		return highlighter.MessageOnRight
+	default:
+		return highlighter.MessageOnBottom
+	}
+}
+
+func parseBadgePlacement(s string) highlighter.BadgePlacement {
+	switch s {
+	case "top_right":
+		return highlighter.BadgeInTopRight
+	case "bottom_right":
+		return highlighter.BadgeInBottomRight
+	case "top_middle":
+		return highlighter.BadgeOnTopMiddle
+	default:
+		return highlighter.BadgeOnBottomMiddle
+	}
+}
+
 type Effect interface {
 	FillDefaultsAndValidate() error
 	Process(source EntityReader, s *State) bool

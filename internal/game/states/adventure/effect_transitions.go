@@ -5,6 +5,53 @@ import (
 	"github.com/gopxl/pixel/v2"
 )
 
+func init() {
+	registerStepConverter("teleport_player", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewTeleportPlayerEffect()
+		if ref := mapStr(m, "to_reference"); ref != "" {
+			e = e.WithToReference(ref)
+		}
+		if toEntity := mapStr(m, "to_entity"); toEntity != "" {
+			e = e.WithToEntityId(toEntity)
+		}
+		if style := mapStr(m, "transition_style"); style != "" {
+			e = e.WithTransitionStyle(style)
+		}
+		if interstitialSteps, ok := m["interstitial"].([]any); ok {
+			var interstitialEffects []Effect
+			for _, rawStep := range interstitialSteps {
+				stepMap, ok := rawStep.(map[string]any)
+				if !ok {
+					continue
+				}
+				for k, v := range stepMap {
+					interstitialEffects = append(interstitialEffects, convertStep(&StepNode{Kind: k, Params: v}, tc, sequences)...)
+				}
+			}
+			e = e.WithInterstitialEffects(interstitialEffects)
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("fade", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewFadeEffect(mapFloat(m, "duration", 0.33), mapInt(m, "transitions", 1))
+		if from := mapStr(m, "from_color"); from != "" {
+			e = e.WithFromColor(from)
+		}
+		if to := mapStr(m, "to_color"); to != "" {
+			e = e.WithToColor(to)
+		}
+		if mapHas(m, "auto_deactivate") {
+			e = e.WithAutoDeactivate(mapBool(m, "auto_deactivate"))
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("deactivate_fade", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewDeactivateFadeEffect(resolveString(step.Params, tc))}
+	})
+}
+
 type EffectFade struct {
 	FadeId          string `auto_generate:"true"`
 	DurationSeconds float64

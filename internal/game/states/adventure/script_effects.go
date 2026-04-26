@@ -20,281 +20,8 @@ func convertSteps(steps []*StepNode, tc *TemplateContext, sequences map[string]*
 	return effects
 }
 
-func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
-	switch step.Kind {
-	case "dialogue":
-		text := resolveString(step.Params, tc)
-		return []Effect{NewDialogueEffect(text)}
-
-	case "self_dialogue":
-		text := resolveString(step.Params, tc)
-		return []Effect{NewSelfDialogueEffect(text)}
-
-	case "chatter":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		duration := mapFloat(m, "duration", 3)
-		message := mapStr(m, "message")
-		return []Effect{NewChatterEffect(entityId, duration, message)}
-
-	case "timer":
-		switch v := step.Params.(type) {
-		case float64:
-			return []Effect{NewTimerEffect(v)}
-		case int:
-			return []Effect{NewTimerEffect(float64(v))}
-		default:
-			m := resolveMap(step.Params, tc)
-			duration := mapFloat(m, "duration", 1)
-			e := NewTimerEffect(duration)
-			if id := mapStr(m, "id"); id != "" {
-				e = e.WithTimerId(id)
-			}
-			return []Effect{e}
-		}
-
-	case "play_sound":
-		sound := resolveString(step.Params, tc)
-		return []Effect{NewPlaySoundEffect(sound)}
-
-	case "set_world_state":
-		m := resolveMap(step.Params, tc)
-		key := mapStr(m, "key")
-		value := m["value"]
-		return []Effect{NewSetWorldStateEffect(key, value)}
-
-	case "set_run_state":
-		m := resolveMap(step.Params, tc)
-		key := mapStr(m, "key")
-		value := m["value"]
-		return []Effect{NewSetRunStateEffect(key, value)}
-
-	case "delete_entity":
-		entityId := resolveString(step.Params, tc)
-		return []Effect{NewDeleteEntityEffect(entityId)}
-
-	case "face_direction":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		e := NewEntityFaceDirectionEffect(entityId)
-		if dir := mapStr(m, "direction"); dir != "" {
-			d := input.DirectionFromString(dir)
-			e = e.WithDirection(d)
-		}
-		return []Effect{e}
-
-	case "face_entity":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		targetEntity := mapStr(m, "target")
-		return []Effect{NewEntityFaceDirectionEffect(entityId).WithTargetEntity(targetEntity)}
-
-	case "scripted_motion":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		e := NewStartScriptedMotionEffect(entityId)
-		if toEntity := mapStr(m, "to_entity"); toEntity != "" {
-			e = e.WithToEntityId(toEntity)
-		}
-		return []Effect{e}
-
-	case "push_behavior":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		e := NewPushEntityBehaviorEffect(entityId)
-		if mapBool(m, "scripted_motion") {
-			zone := mapStr(m, "active_player_zone")
-			e = e.WithScriptedMotion(EntityBehaviorScriptedMotion{ActivePlayerZone: zone})
-		}
-		if facingEntity := mapStr(m, "facing_entity"); facingEntity != "" {
-			e = e.WithFacingEntityId(facingEntity)
-		}
-		return []Effect{e}
-
-	case "pop_behavior":
-		entityId := resolveString(step.Params, tc)
-		return []Effect{NewPopEntityBehaviorEffect(entityId)}
-
-	case "disable_behavior":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		by := mapStr(m, "by")
-		return []Effect{NewMutateEntityBehaviorEffect(entityId).WithDisableBy(by)}
-
-	case "enable_behavior":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		by := mapStr(m, "by")
-		return []Effect{NewMutateEntityBehaviorEffect(entityId).WithEnableBy(by)}
-
-	case "reset_movement":
-		entityId := resolveString(step.Params, tc)
-		return []Effect{NewResetMovementEffect(entityId)}
-
-	case "trigger_movement":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		e := NewTriggerMovementEffect(entityId)
-		if dir := mapStr(m, "direction"); dir != "" {
-			d := input.DirectionFromString(dir)
-			e = e.WithDirection(d)
-		}
-		return []Effect{e}
-
-	case "set_mode":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		mode := mapStr(m, "mode")
-		return []Effect{NewMutateModeBasedEntityEffect(entityId).WithMode(mode)}
-
-	case "set_blocking":
-		m := resolveMap(step.Params, tc)
-		entityId := mapStr(m, "entity")
-		blocking := mapBool(m, "is_blocking")
-		return []Effect{NewMutateBlockingPresenceEffect(entityId).WithIsBlockingIngress(blocking)}
-
-	case "reset_animation":
-		entityId := resolveString(step.Params, tc)
-		return []Effect{NewResetModeBasedEntityAnimationEffect(entityId)}
-
-	case "change_player_renderer":
-		style := resolveString(step.Params, tc)
-		return []Effect{NewChangePlayerRendererEffect(style)}
-
-	case "override_camera":
-		m := resolveMap(step.Params, tc)
-		e := NewOverrideCameraEffect()
-		if followMap, ok := m["follow"].(map[string]any); ok {
-			fc := FollowCamera{
-				ResetPosition: mapBool(followMap, "reset_position"),
-			}
-			if eid := mapStr(followMap, "entity"); eid != "" {
-				fc.EntityId = &eid
-			}
-			e = e.WithFollow(fc)
-		}
-		return []Effect{e}
-
-	case "pop_camera":
-		maintain := false
-		if b, ok := step.Params.(bool); ok {
-			maintain = b
-		} else {
-			m := resolveMap(step.Params, tc)
-			maintain = mapBool(m, "maintain_location")
-		}
-		return []Effect{NewPopCameraOverrideEffect(maintain)}
-
-	case "mutate_camera":
-		m := resolveMap(step.Params, tc)
-		e := NewMutateFollowCameraEffect()
-		if eid := mapStr(m, "follow_entity"); eid != "" {
-			e = e.WithFollowEntityId(eid)
-		}
-		if mapHas(m, "reset_position") {
-			e = e.WithResetPosition(mapBool(m, "reset_position"))
-		}
-		return []Effect{e}
-
-	case "teleport_player":
-		m := resolveMap(step.Params, tc)
-		e := NewTeleportPlayerEffect()
-		if ref := mapStr(m, "to_reference"); ref != "" {
-			e = e.WithToReference(ref)
-		}
-		if toEntity := mapStr(m, "to_entity"); toEntity != "" {
-			e = e.WithToEntityId(toEntity)
-		}
-		if style := mapStr(m, "transition_style"); style != "" {
-			e = e.WithTransitionStyle(style)
-		}
-		if interstitialSteps, ok := m["interstitial"].([]any); ok {
-			var interstitialEffects []Effect
-			for _, rawStep := range interstitialSteps {
-				stepMap, ok := rawStep.(map[string]any)
-				if !ok {
-					continue
-				}
-				for k, v := range stepMap {
-					subStep := &StepNode{Kind: k, Params: v}
-					interstitialEffects = append(interstitialEffects, convertStep(subStep, tc, sequences)...)
-				}
-			}
-			e = e.WithInterstitialEffects(interstitialEffects)
-		}
-		return []Effect{e}
-
-	case "load_map":
-		m := resolveMap(step.Params, tc)
-		mapName := mapStr(m, "map")
-		e := NewLoadMapEffect(mapName)
-		if wp := mapStr(m, "waypoint"); wp != "" {
-			e = e.WithWaypoint(wp)
-		}
-		return []Effect{e}
-
-	case "fade":
-		m := resolveMap(step.Params, tc)
-		duration := mapFloat(m, "duration", 0.33)
-		transitions := mapInt(m, "transitions", 1)
-		e := NewFadeEffect(duration, transitions)
-		if from := mapStr(m, "from_color"); from != "" {
-			e = e.WithFromColor(from)
-		}
-		if to := mapStr(m, "to_color"); to != "" {
-			e = e.WithToColor(to)
-		}
-		if mapHas(m, "auto_deactivate") {
-			e = e.WithAutoDeactivate(mapBool(m, "auto_deactivate"))
-		}
-		return []Effect{e}
-
-	case "deactivate_fade":
-		fadeId := resolveString(step.Params, tc)
-		return []Effect{NewDeactivateFadeEffect(fadeId)}
-
-	case "yield_elythium":
-		amount := 0
-		switch v := step.Params.(type) {
-		case int:
-			amount = v
-		case float64:
-			amount = int(v)
-		default:
-			m := resolveMap(step.Params, tc)
-			amount = mapInt(m, "amount", 0)
-		}
-		return []Effect{NewYieldElythiumEffect(amount)}
-
-	case "tooltip":
-		message := resolveString(step.Params, tc)
-		return []Effect{NewPushTooltipEffect(message)}
-
-	case "broadcast":
-		m := resolveMap(step.Params, tc)
-		id := mapStr(m, "id")
-		var data any
-		if d, ok := m["data"]; ok {
-			data = d
-		}
-		return []Effect{NewSendBroadcastEffect(id, data)}
-
-	case "wait_for":
-		m := resolveMap(step.Params, tc)
-		condName := mapStr(m, "condition")
-		fn, ok := getScriptConditionFactory(condName)
-		if !ok {
-			log.Warn().Str("condition", condName).Msg("unknown script condition in wait_for")
-			return nil
-		}
-		check := fn(m)
-		return []Effect{NewWaitForConditionEffect(check)}
-
-	case "wait_for_animation":
-		entityId := resolveString(step.Params, tc)
-		return []Effect{NewWaitForAnimationComplete(entityId)}
-
-	case "action":
+func init() {
+	registerStepConverter("action", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
 		switch v := step.Params.(type) {
 		case string:
 			return convertAction(v, nil, tc)
@@ -310,8 +37,8 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 			}
 			return convertAction(name, m, tc)
 		}
-
-	case "parallel":
+	})
+	registerStepConverter("parallel", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
 		items, ok := step.Params.([]any)
 		if !ok {
 			log.Warn().Msg("parallel step requires a list of steps")
@@ -327,25 +54,12 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 				subSteps = append(subSteps, &StepNode{Kind: k, Params: v})
 			}
 		}
-		children := convertSteps(subSteps, tc, sequences)
-		return []Effect{NewParallelPlan(children...)}
-
-	case "focused_sequence":
+		return []Effect{NewParallelPlan(convertSteps(subSteps, tc, sequences)...)}
+	})
+	registerStepConverter("focused_sequence", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
 		return convertFocusedSequence(step.Params, tc, sequences)
-
-	case "pick_dialogue":
-		return convertPickDialogue(step, tc)
-
-	case "pick_self_dialogue":
-		return convertPickSelfDialogue(step, tc)
-
-	case "pick_chatter":
-		return convertPickChatter(step, tc)
-
-	case "configure_mode_entity":
-		return convertConfigureModeEntity(step, tc)
-
-	case "ref":
+	})
+	registerStepConverter("ref", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
 		m := resolveMap(step.Params, tc)
 		seqName := mapStr(m, "name")
 		seq, ok := sequences[seqName]
@@ -358,57 +72,13 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 		for k, v := range tc.Params {
 			childTC.Params[k] = v
 		}
-		if withMap, ok := m["params"].(map[string]any); ok {
-			for k, v := range withMap {
+		if paramMap, ok := m["params"].(map[string]any); ok {
+			for k, v := range paramMap {
 				childTC.Params[k] = fmt.Sprintf("%v", v)
 			}
 		}
 		return convertSteps(seq.Steps, &childTC, sequences)
-
-	case "set_var":
-		m := resolveMap(step.Params, tc)
-		key := mapStr(m, "key")
-		valueExpr := mapStr(m, "value")
-		if key == "" || valueExpr == "" {
-			log.Warn().Msg("set_var requires 'key' and 'value'")
-			return nil
-		}
-		handlerState := tc.handlerState
-		return []Effect{NewFunctionEffect(func(_ EntityReader, s *State) {
-			prog, err := CompileExpr(valueExpr)
-			if err != nil {
-				log.Warn().Err(err).Str("expr", valueExpr).Msg("set_var: failed to compile value expression")
-				return
-			}
-			env := tc.getExprEnv()
-			env.Var = handlerState
-			result, err := EvalExpr(prog, env)
-			if err != nil {
-				log.Warn().Err(err).Str("expr", valueExpr).Msg("set_var: failed to evaluate value expression")
-				return
-			}
-			handlerState[key] = result
-		})}
-
-	case "if":
-		return convertIfStep(step.Params, tc, sequences)
-
-	case "switch":
-		return convertSwitchStep(step.Params, tc, sequences)
-
-	case "while":
-		return convertWhileStep(step.Params, tc, sequences)
-
-	case "custom_action":
-		return convertCustomActionStep(step.Params, tc, sequences)
-
-	case "return":
-		return []Effect{newReturnEffect(tc.returnScope)}
-
-	default:
-		log.Error().Str("kind", step.Kind).Msg("unknown step kind (should have been caught by validation)")
-		return nil
-	}
+	})
 }
 
 func convertAction(name string, params map[string]any, tc *TemplateContext) []Effect {

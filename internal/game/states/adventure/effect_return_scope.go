@@ -5,6 +5,12 @@ import (
 	"sync/atomic"
 )
 
+func init() {
+	registerStepConverter("return", func(_ *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{newReturnEffect(tc.returnScope)}
+	})
+}
+
 var scopeIdCounter uint64
 
 func nextScopeId(prefix string) string {

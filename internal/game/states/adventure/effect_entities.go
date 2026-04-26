@@ -6,6 +6,60 @@ import (
 	"fisherevans.com/project/f/internal/util"
 )
 
+func init() {
+	registerStepConverter("delete_entity", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewDeleteEntityEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("face_direction", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewEntityFaceDirectionEffect(mapStr(m, "entity"))
+		if dir := mapStr(m, "direction"); dir != "" {
+			e = e.WithDirection(input.DirectionFromString(dir))
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("face_entity", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewEntityFaceDirectionEffect(mapStr(m, "entity")).WithTargetEntity(mapStr(m, "target"))}
+	})
+	registerStepConverter("scripted_motion", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewStartScriptedMotionEffect(mapStr(m, "entity"))
+		if toEntity := mapStr(m, "to_entity"); toEntity != "" {
+			e = e.WithToEntityId(toEntity)
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("reset_movement", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewResetMovementEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("trigger_movement", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewTriggerMovementEffect(mapStr(m, "entity"))
+		if dir := mapStr(m, "direction"); dir != "" {
+			e = e.WithDirection(input.DirectionFromString(dir))
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("set_mode", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewMutateModeBasedEntityEffect(mapStr(m, "entity")).WithMode(mapStr(m, "mode"))}
+	})
+	registerStepConverter("set_blocking", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewMutateBlockingPresenceEffect(mapStr(m, "entity")).WithIsBlockingIngress(mapBool(m, "is_blocking"))}
+	})
+	registerStepConverter("reset_animation", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewResetModeBasedEntityAnimationEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("change_player_renderer", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewChangePlayerRendererEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("configure_mode_entity", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return convertConfigureModeEntity(step, tc)
+	})
+}
+
 type EffectDeleteEntity struct {
 	instantEffect
 	EntityId string

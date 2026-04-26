@@ -6,6 +6,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func init() {
+	registerStepConverter("custom_action", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
+		return convertCustomActionStep(step.Params, tc, sequences)
+	})
+}
+
 const maxCustomActionDepth = 10
 
 func convertCustomActionStep(params any, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {

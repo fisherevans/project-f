@@ -8,6 +8,36 @@ import (
 	"fisherevans.com/project/f/internal/util"
 )
 
+func init() {
+	registerStepConverter("load_map", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewLoadMapEffect(mapStr(m, "map"))
+		if wp := mapStr(m, "waypoint"); wp != "" {
+			e = e.WithWaypoint(wp)
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("trigger_combat", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewTriggerCombatEffect(mapStr(m, "background"))
+		if id := mapStr(m, "combat_id"); id != "" {
+			e = e.WithCombatId(id)
+		}
+		opponentType := mapStr(m, "opponent_type")
+		if opponentType != "" {
+			opponent := game.CombatOpponent{
+				Type:      rpg.PrimortalType(opponentType),
+				Archetype: mapStr(m, "opponent_archetype"),
+			}
+			e = e.WithOpponent(opponent)
+		}
+		if ts := mapStr(m, "training_sequence"); ts != "" {
+			e = e.WithTrainingSequence(ts)
+		}
+		return []Effect{e}
+	})
+}
+
 type EffectTriggerCombat struct {
 	CombatId         string `auto_generate:"true"`
 	Opponent         *game.CombatOpponent

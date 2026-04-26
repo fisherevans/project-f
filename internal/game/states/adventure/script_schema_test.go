@@ -6,25 +6,6 @@ import (
 	"fisherevans.com/project/f/internal/schema"
 )
 
-var knownStepKinds = []string{
-	"dialogue", "self_dialogue", "chatter", "timer", "play_sound",
-	"set_world_state", "set_run_state", "delete_entity",
-	"face_direction", "face_entity", "scripted_motion",
-	"push_behavior", "pop_behavior", "disable_behavior", "enable_behavior",
-	"reset_movement", "trigger_movement",
-	"set_mode", "set_blocking", "reset_animation", "change_player_renderer",
-	"override_camera", "pop_camera", "mutate_camera",
-	"teleport_player", "load_map",
-	"fade", "deactivate_fade",
-	"yield_elythium", "tooltip", "broadcast",
-	"wait_for", "wait_for_animation",
-	"action", "parallel", "focused_sequence", "ref",
-	"highlight_sequence", "trigger_combat",
-	"set_var", "if", "switch", "while", "custom_action", "return",
-	"pick_dialogue", "pick_self_dialogue", "pick_chatter",
-	"configure_mode_entity",
-}
-
 var knownBuiltinConditions = []string{
 	"all", "any", "not",
 	"expr",
@@ -69,21 +50,14 @@ func TestAllConditionsHaveSchema(t *testing.T) {
 
 func TestAllStepKindsHaveSchema(t *testing.T) {
 	s := loadSchema(t)
-	for _, name := range knownStepKinds {
+	for name := range stepConverters {
 		if _, ok := s.StepKinds[name]; !ok {
-			t.Errorf("step kind %q is in knownStepKinds but missing from schema JSON", name)
+			t.Errorf("step kind %q is registered in Go but missing from schema JSON", name)
 		}
 	}
 	for name := range s.StepKinds {
-		found := false
-		for _, known := range knownStepKinds {
-			if known == name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("schema JSON has step kind %q but it is not in knownStepKinds list", name)
+		if _, ok := stepConverters[name]; !ok {
+			t.Errorf("schema JSON has step kind %q but it is not registered in Go", name)
 		}
 	}
 }

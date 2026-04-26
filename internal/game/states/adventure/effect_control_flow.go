@@ -4,6 +4,43 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func init() {
+	registerStepConverter("if", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
+		return convertIfStep(step.Params, tc, sequences)
+	})
+	registerStepConverter("switch", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
+		return convertSwitchStep(step.Params, tc, sequences)
+	})
+	registerStepConverter("while", func(step *StepNode, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
+		return convertWhileStep(step.Params, tc, sequences)
+	})
+	registerStepConverter("set_var", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		key := mapStr(m, "key")
+		valueExpr := mapStr(m, "value")
+		if key == "" || valueExpr == "" {
+			log.Warn().Msg("set_var requires 'key' and 'value'")
+			return nil
+		}
+		handlerState := tc.handlerState
+		return []Effect{NewFunctionEffect(func(_ EntityReader, s *State) {
+			prog, err := CompileExpr(valueExpr)
+			if err != nil {
+				log.Warn().Err(err).Str("expr", valueExpr).Msg("set_var: failed to compile value expression")
+				return
+			}
+			env := tc.getExprEnv()
+			env.Var = handlerState
+			result, err := EvalExpr(prog, env)
+			if err != nil {
+				log.Warn().Err(err).Str("expr", valueExpr).Msg("set_var: failed to evaluate value expression")
+				return
+			}
+			handlerState[key] = result
+		})}
+	})
+}
+
 func convertIfStep(params any, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
 	m, ok := params.(map[string]any)
 	if !ok {

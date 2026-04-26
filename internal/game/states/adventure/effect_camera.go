@@ -1,5 +1,41 @@
 package adventure
 
+func init() {
+	registerStepConverter("override_camera", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewOverrideCameraEffect()
+		if followMap, ok := m["follow"].(map[string]any); ok {
+			fc := FollowCamera{ResetPosition: mapBool(followMap, "reset_position")}
+			if eid := mapStr(followMap, "entity"); eid != "" {
+				fc.EntityId = &eid
+			}
+			e = e.WithFollow(fc)
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("pop_camera", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		maintain := false
+		if b, ok := step.Params.(bool); ok {
+			maintain = b
+		} else {
+			m := resolveMap(step.Params, tc)
+			maintain = mapBool(m, "maintain_location")
+		}
+		return []Effect{NewPopCameraOverrideEffect(maintain)}
+	})
+	registerStepConverter("mutate_camera", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewMutateFollowCameraEffect()
+		if eid := mapStr(m, "follow_entity"); eid != "" {
+			e = e.WithFollowEntityId(eid)
+		}
+		if mapHas(m, "reset_position") {
+			e = e.WithResetPosition(mapBool(m, "reset_position"))
+		}
+		return []Effect{e}
+	})
+}
+
 type EffectOverrideCamera struct {
 	instantEffect
 	Follow *FollowCamera `one_of:"type"`

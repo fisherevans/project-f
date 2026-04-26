@@ -1,5 +1,27 @@
 package adventure
 
+func init() {
+	registerStepConverter("dialogue", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewDialogueEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("self_dialogue", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewSelfDialogueEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("chatter", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewChatterEffect(mapStr(m, "entity"), mapFloat(m, "duration", 3), mapStr(m, "message"))}
+	})
+	registerStepConverter("pick_dialogue", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return convertPickDialogue(step, tc)
+	})
+	registerStepConverter("pick_self_dialogue", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return convertPickSelfDialogue(step, tc)
+	})
+	registerStepConverter("pick_chatter", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return convertPickChatter(step, tc)
+	})
+}
+
 type EffectDialogue struct {
 	DialogueId string `auto_generate:"true"`
 	Text       string

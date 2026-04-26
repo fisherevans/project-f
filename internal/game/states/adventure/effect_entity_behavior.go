@@ -2,6 +2,31 @@ package adventure
 
 import "fisherevans.com/project/f/internal/game/input"
 
+func init() {
+	registerStepConverter("push_behavior", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		e := NewPushEntityBehaviorEffect(mapStr(m, "entity"))
+		if mapBool(m, "scripted_motion") {
+			e = e.WithScriptedMotion(EntityBehaviorScriptedMotion{ActivePlayerZone: mapStr(m, "active_player_zone")})
+		}
+		if facingEntity := mapStr(m, "facing_entity"); facingEntity != "" {
+			e = e.WithFacingEntityId(facingEntity)
+		}
+		return []Effect{e}
+	})
+	registerStepConverter("pop_behavior", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		return []Effect{NewPopEntityBehaviorEffect(resolveString(step.Params, tc))}
+	})
+	registerStepConverter("disable_behavior", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewMutateEntityBehaviorEffect(mapStr(m, "entity")).WithDisableBy(mapStr(m, "by"))}
+	})
+	registerStepConverter("enable_behavior", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		m := resolveMap(step.Params, tc)
+		return []Effect{NewMutateEntityBehaviorEffect(mapStr(m, "entity")).WithEnableBy(mapStr(m, "by"))}
+	})
+}
+
 type EffectEntityFaceDirection struct {
 	instantEffect
 	EntityId     string
