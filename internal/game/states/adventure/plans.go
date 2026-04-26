@@ -262,6 +262,28 @@ func (pe *PlanExecutor) markCompleteInternal(completionIds ...string) {
 	}
 }
 
+// AbortScope aborts all active batches that belong to the given scope.
+// Sets each matching batch to "completed" by advancing past all effects and
+// clearing pending completions. Normal cleanup then propagates completion to parents.
+func (pe *PlanExecutor) AbortScope(scopeId string) {
+	if scopeId == "" {
+		return
+	}
+	pe.mu.Lock()
+	defer pe.mu.Unlock()
+	for _, ab := range pe.activeBatches {
+		if ab.batch.ScopeId == scopeId {
+			log.Info().
+				Str("batchId", ab.batch.BatchId).
+				Str("scopeId", scopeId).
+				Msg("Aborting batch via scope")
+			ab.nextEffectIndex = len(ab.batch.Effects)
+			ab.waitingFor = make(map[string]bool)
+		}
+	}
+	pe.cleanupCompletedBatches()
+}
+
 // cleanupCompletedBatches removes batches that have finished and marks them as complete
 // Must be called with pe.mu held
 func (pe *PlanExecutor) cleanupCompletedBatches() {

@@ -24,6 +24,9 @@ func convertIfStep(params any, tc *TemplateContext, sequences map[string]*Sequen
 
 	return []Effect{&EffectDeferredBatch{
 		BuildEffects: func(source EntityReader, s *State) []Effect {
+			if tc.returnScope.isReturned() {
+				return nil
+			}
 			prog, err := CompileExpr(whenExpr)
 			if err != nil {
 				log.Warn().Err(err).Str("expr", whenExpr).Msg("if: failed to compile condition")
@@ -74,6 +77,9 @@ func convertSwitchStep(params any, tc *TemplateContext, sequences map[string]*Se
 
 	return []Effect{&EffectDeferredBatch{
 		BuildEffects: func(source EntityReader, s *State) []Effect {
+			if tc.returnScope.isReturned() {
+				return nil
+			}
 			onProg, err := CompileExpr(onExpr)
 			if err != nil {
 				log.Warn().Err(err).Str("expr", onExpr).Msg("switch: failed to compile 'on' expression")
@@ -130,6 +136,9 @@ func convertWhileStep(params any, tc *TemplateContext, sequences map[string]*Seq
 
 	return []Effect{&EffectDeferredBatch{
 		BuildEffects: func(source EntityReader, s *State) []Effect {
+			if tc.returnScope.isReturned() {
+				return nil
+			}
 			prog, err := CompileExpr(whenExpr)
 			if err != nil {
 				log.Warn().Err(err).Str("expr", whenExpr).Msg("while: failed to compile condition")
@@ -139,6 +148,9 @@ func convertWhileStep(params any, tc *TemplateContext, sequences map[string]*Seq
 
 			var allEffects []Effect
 			for i := 0; i < maxIterations; i++ {
+				if tc.returnScope.isReturned() {
+					break
+				}
 				if !EvalExprBool(prog, env) {
 					break
 				}
@@ -146,6 +158,15 @@ func convertWhileStep(params any, tc *TemplateContext, sequences map[string]*Seq
 				for _, effect := range bodyEffects {
 					if fn, ok := effect.(*EffectFunction); ok {
 						fn.Process(source, s)
+						if tc.returnScope.isReturned() {
+							break
+						}
+					} else if ret, ok := effect.(*EffectReturn); ok {
+						allEffects = append(allEffects, ret)
+						if ret.scope != nil {
+							ret.scope.returned = true
+						}
+						break
 					}
 					allEffects = append(allEffects, effect)
 				}

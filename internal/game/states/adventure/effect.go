@@ -94,6 +94,7 @@ type EffectBatch struct {
 	BatchId           string `auto_generate:"true"`
 	Effects           []Effect
 	ExecuteInParallel *bool // defaults to false (serial)
+	ScopeId           string
 }
 
 func (e *EffectBatch) CompletionID() string {

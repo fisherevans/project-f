@@ -20,7 +20,7 @@ var knownStepKinds = []string{
 	"wait_for", "wait_for_animation",
 	"action", "parallel", "focused_sequence", "ref",
 	"highlight_sequence", "trigger_combat",
-	"set_var", "if", "switch", "while", "custom_action",
+	"set_var", "if", "switch", "while", "custom_action", "return",
 	"pick_dialogue", "pick_self_dialogue", "pick_chatter",
 	"configure_mode_entity",
 }

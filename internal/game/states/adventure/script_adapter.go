@@ -166,6 +166,8 @@ func (h *ScriptHandler) processRules(rules []*RuleDef, event any, tc *TemplateCo
 			continue
 		}
 
+		scope := &ReturnScope{Id: nextScopeId("rule")}
+		tc.returnScope = scope
 		effects := convertSteps(rule.Steps, tc, h.sequences)
 		if len(effects) == 0 && len(rule.SetState) == 0 {
 			continue
@@ -179,7 +181,9 @@ func (h *ScriptHandler) processRules(rules []*RuleDef, event any, tc *TemplateCo
 
 		output := NewOutput()
 		if len(effects) > 0 {
-			output = output.WithSerialPlan(effects...)
+			plan := NewSerialPlan(effects...)
+			plan.ScopeId = scope.Id
+			output = output.WithEffects(plan)
 		}
 		output = output.WithState(h.handlerState)
 		return output

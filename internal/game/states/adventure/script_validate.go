@@ -54,6 +54,7 @@ var validStepKinds = map[string]bool{
 	"switch":                true,
 	"while":                 true,
 	"custom_action":         true,
+	"return":                true,
 }
 
 var builtinConditionKinds = map[string]bool{

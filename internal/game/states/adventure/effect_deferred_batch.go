@@ -16,6 +16,7 @@ var deferredBatchCounter atomic.Uint64
 // available at script load time.
 type EffectDeferredBatch struct {
 	BatchId      string
+	ScopeId      string
 	BuildEffects func(source EntityReader, s *State) []Effect
 }
 
@@ -42,6 +43,7 @@ func (e *EffectDeferredBatch) Process(source EntityReader, s *State) bool {
 	}
 	batch := NewSerialPlan(effects...)
 	batch.BatchId = e.BatchId
+	batch.ScopeId = e.ScopeId
 	if err := batch.FillDefaultsAndValidate(); err != nil {
 		log.Error().Err(err).Str("batchId", e.BatchId).Msg("deferred batch: invalid child effects")
 		s.planExecutor.MarkComplete(e.CompletionID())

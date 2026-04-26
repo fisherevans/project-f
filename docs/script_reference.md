@@ -291,6 +291,12 @@ Include a named sequence inline with optional parameter substitution
 - `name` (string (required)): Name of the sequence to reference
 - `with` (map): Parameter values to pass to the referenced sequence
 
+#### `return`
+
+Exit the current scope early. Inside a custom action, exits the action (caller continues). At the handler rule level, exits the rule's step list. Inside control flow (if/switch/while), propagates up to the nearest scope boundary.
+
+- **Param style:** value
+
 #### `switch`
 
 Multi-branch step - evaluates an expression and matches against case values

@@ -402,6 +402,9 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 	case "custom_action":
 		return convertCustomActionStep(step.Params, tc, sequences)
 
+	case "return":
+		return []Effect{newReturnEffect(tc.returnScope)}
+
 	default:
 		log.Error().Str("kind", step.Kind).Msg("unknown step kind (should have been caught by validation)")
 		return nil

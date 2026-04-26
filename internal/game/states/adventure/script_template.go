@@ -16,9 +16,10 @@ type TemplateContext struct {
 	Properties map[string]any
 	Globals    StateGlobalsReader
 
-	handlerState      map[string]any
-	customActionDepth int
+	handlerState       map[string]any
+	customActionDepth  int
 	customActionParams map[string]any
+	returnScope        *ReturnScope
 }
 
 func templateContextFromProps(props *util.Properties) map[string]string {
@@ -64,6 +65,7 @@ func (tc *TemplateContext) withCustomActionParams(params map[string]any) *Templa
 	child := *tc
 	child.customActionDepth = tc.customActionDepth + 1
 	child.customActionParams = params
+	child.returnScope = nil
 	return &child
 }
 

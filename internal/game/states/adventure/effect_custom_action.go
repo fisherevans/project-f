@@ -32,8 +32,16 @@ func convertCustomActionStep(params any, tc *TemplateContext, sequences map[stri
 
 	withMap, _ := m["with"].(map[string]any)
 
+	scope := &ReturnScope{Id: nextScopeId("custom_action")}
+
+	parentScope := tc.returnScope
+
 	return []Effect{&EffectDeferredBatch{
+		ScopeId: scope.Id,
 		BuildEffects: func(source EntityReader, s *State) []Effect {
+			if parentScope.isReturned() {
+				return nil
+			}
 			depth := tc.getCustomActionDepth()
 			if depth >= maxCustomActionDepth {
 				log.Warn().Str("name", name).Int("depth", depth).Msg("custom action recursion limit reached")
@@ -66,6 +74,7 @@ func convertCustomActionStep(params any, tc *TemplateContext, sequences map[stri
 			}
 
 			childTC := tc.withCustomActionParams(evaluatedParams)
+			childTC.returnScope = scope
 			return convertSteps(actionDef.Steps, childTC, sequences)
 		},
 	}}

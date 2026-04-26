@@ -836,6 +836,13 @@
         }
       ]
     },
+    "return": {
+      "name": "return",
+      "description": "Exit the current scope early. Inside a custom action, exits the action (caller continues). At the handler rule level, exits the rule's step list. Inside control flow (if/switch/while), propagates up to the nearest scope boundary.",
+      "category": "flow",
+      "paramStyle": "value",
+      "params": []
+    },
     "highlight_sequence": {
       "name": "highlight_sequence",
       "description": "Display a series of UI highlights with messages, used for tutorials",
