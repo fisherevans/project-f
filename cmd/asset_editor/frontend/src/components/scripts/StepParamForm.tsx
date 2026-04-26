@@ -67,72 +67,11 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys, schema 
         );
     }
 
-    if (style === "string_or_map") {
-        if (typeof params === "string" || typeof params === "number" || typeof params === "boolean") {
-            const hasMapParams = (stepKind.params?.length ?? 0) > 1;
-            const isActionLike = stepKind.name === "action" || stepKind.name === "ref";
-            const inlineInput = stepKind.name === "play_sound" ? (
-                <SoundPicker value={String(params)} onChange={onChange} />
-            ) : stepKind.name === "custom_action" ? (
-                <CustomActionRefInput value={String(params)} onChange={(v) => onChange(v || undefined)} />
-            ) : isActionLike ? (
-                <HandlerRefInput value={String(params)} onChange={(v) => onChange(v || undefined)} schema={schema} />
-            ) : (
-                <Input
-                    className="h-6 text-xs font-mono"
-                    value={String(params)}
-                    onChange={(e) => {
-                        let v: unknown = e.target.value;
-                        if (!isNaN(Number(v)) && v !== "") v = Number(v);
-                        onChange(v);
-                    }}
-                    placeholder={stepKind.params?.[0]?.description}
-                />
-            );
-            return (
-                <div className="space-y-1">
-                    {inlineInput}
-                    {hasMapParams && (
-                        <button
-                            className="text-[10px] text-muted-foreground hover:text-foreground"
-                            onClick={() => {
-                                const mapParams: Record<string, unknown> = {};
-                                const firstParam = stepKind.params?.[0];
-                                if (firstParam) mapParams[firstParam.name] = params;
-                                onChange(mapParams);
-                            }}
-                        >
-                            Show all options
-                        </button>
-                    )}
-                </div>
-            );
-        }
-        // Fall through to map rendering
-    }
-
     if (style === "map" || style === "string_or_map") {
         const mapParams = (typeof params === "object" && params !== null && !Array.isArray(params))
             ? params as Record<string, unknown>
             : {};
         const defs = (stepKind.params ?? []).filter((p) => p.type !== "steps" && !(excludeKeys?.has(p.name)));
-
-        if (style === "string_or_map" && defs.length > 0) {
-            return (
-                <div className="space-y-1">
-                    <MapParamFields defs={defs} params={mapParams} onChange={(updated) => onChange(updated)} stepKindName={stepKind.name} schema={schema} />
-                    <button
-                        className="text-[10px] text-muted-foreground hover:text-foreground"
-                        onClick={() => {
-                            const firstParam = stepKind.params?.[0];
-                            onChange(firstParam ? mapParams[firstParam.name] ?? "" : "");
-                        }}
-                    >
-                        Collapse
-                    </button>
-                </div>
-            );
-        }
 
         return <MapParamFields defs={defs} params={mapParams} onChange={(updated) => onChange(updated)} stepKindName={stepKind.name} schema={schema} />;
     }

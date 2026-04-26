@@ -59,7 +59,10 @@ function getStepSummary(step: StepNode): string {
 function hasExpandableContent(step: StepNode, stepDef?: StepKindDef): boolean {
     if (!stepDef) return typeof step.params === "object" && step.params !== null;
     if (stepDef.paramStyle === "list") return true;
-    if (stepDef.paramStyle === "map" || stepDef.paramStyle === "string_or_map") {
+    if (stepDef.paramStyle === "string_or_map") {
+        return (stepDef.params?.length ?? 0) > 1 || (typeof step.params === "object" && step.params !== null);
+    }
+    if (stepDef.paramStyle === "map") {
         if (typeof step.params === "object" && step.params !== null && !Array.isArray(step.params)) return true;
     }
     if (stepDef.acceptsSubSteps) return true;
@@ -211,8 +214,7 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
     const subStepKeys = new Set(subStepGroups.map((g) => g.key));
     const isList = stepDef?.paramStyle === "list";
 
-    const isSimpleInline = stepDef && (stepDef.paramStyle === "string" || stepDef.paramStyle === "number" ||
-        (stepDef.paramStyle === "string_or_map" && (typeof step.params === "string" || typeof step.params === "number")));
+    const isSimpleInline = stepDef && (stepDef.paramStyle === "string" || stepDef.paramStyle === "number");
 
     const borderColor = CATEGORY_BORDER_COLORS[category] ?? "border-l-border";
 
@@ -226,7 +228,15 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
             <div className="flex items-center gap-1 px-1.5 py-1 min-h-[28px]">
                 <span className="text-[10px] text-muted-foreground/50 w-4 shrink-0 text-right tabular-nums">{stepIndex + 1}</span>
                 {expandable && (
-                    <button className="shrink-0 text-muted-foreground hover:text-foreground" onClick={() => setExpanded(!expanded)}>
+                    <button className="shrink-0 text-muted-foreground hover:text-foreground" onClick={() => {
+                        if (!expanded && stepDef?.paramStyle === "string_or_map" && typeof step.params !== "object") {
+                            const mapParams: Record<string, unknown> = {};
+                            const firstParam = stepDef.params?.[0];
+                            if (firstParam && step.params != null) mapParams[firstParam.name] = step.params;
+                            onChange({ ...step, params: mapParams });
+                        }
+                        setExpanded(!expanded);
+                    }}>
                         {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     </button>
                 )}
