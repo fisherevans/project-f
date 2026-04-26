@@ -127,7 +127,7 @@ function CompactParamTable({ params }: { params: ParamDef[] }) {
 
 function MiniYaml({ code }: { code: string }) {
     return (
-        <pre className="bg-canvas text-[10px] font-mono leading-relaxed px-2 py-1.5 rounded border border-border/30 overflow-x-auto text-foreground/80">
+        <pre className="bg-muted/30 text-[10px] font-mono leading-relaxed px-2 py-1.5 rounded border border-border/30 overflow-x-auto text-foreground/80">
             {code}
         </pre>
     );
