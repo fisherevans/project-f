@@ -4,11 +4,15 @@
 //
 // Install: run sync.sh to copy to Tiled's extensions directory.
 // Requires the asset editor server to be running.
+//
+// Note: Tiled's scripting engine (Qt QJSEngine) does not provide
+// setTimeout/setInterval. The plugin polls for commands on each
+// selection change. Use Edit > Poll Companion Commands (or the
+// shortcut) to manually poll if commands were queued without a
+// selection change.
 
 var BRIDGE_URL = "http://localhost:8090/api/v1/tiled-bridge";
-var HEARTBEAT_INTERVAL_MS = 3000;
 var bridgeEnabled = true;
-var heartbeatTimerId = null;
 
 function getMapFile() {
     var a = tiled.activeAsset;
@@ -91,10 +95,12 @@ function pushSelection() {
         mapFile: getMapFile(),
         objects: serializeSelectedObjects()
     });
+    // POST selection doubles as heartbeat (server updates lastHeartbeat)
     httpPost("/selection", payload);
+    pollCommands();
 }
 
-function heartbeat() {
+function pollCommands() {
     if (!bridgeEnabled) return;
     var output = httpPostWithResponse("/heartbeat", "{}");
     if (!output || output.trim() === "") return;
@@ -167,30 +173,16 @@ function applyCommands(commands) {
     sendAcks(acks);
 
     // Push updated state after applying
-    pushSelection();
+    var payload = JSON.stringify({
+        mapFile: getMapFile(),
+        objects: serializeSelectedObjects()
+    });
+    httpPost("/selection", payload);
 }
 
 function sendAcks(acks) {
     if (!acks || acks.length === 0) return;
     httpPost("/ack", JSON.stringify(acks));
-}
-
-// Heartbeat loop using setTimeout recursion to avoid overlapping calls
-function startHeartbeat() {
-    stopHeartbeat();
-    function tick() {
-        if (!bridgeEnabled) return;
-        heartbeat();
-        heartbeatTimerId = setTimeout(tick, HEARTBEAT_INTERVAL_MS);
-    }
-    heartbeatTimerId = setTimeout(tick, HEARTBEAT_INTERVAL_MS);
-}
-
-function stopHeartbeat() {
-    if (heartbeatTimerId !== null) {
-        clearTimeout(heartbeatTimerId);
-        heartbeatTimerId = null;
-    }
 }
 
 // Watch selection changes on the active asset
@@ -217,10 +209,8 @@ var toggleAction = tiled.registerAction("ToggleCompanionBridge", function () {
     toggleAction.checked = bridgeEnabled;
     if (bridgeEnabled) {
         connectAsset(tiled.activeAsset);
-        startHeartbeat();
         tiled.log("[companion] Bridge enabled");
     } else {
-        stopHeartbeat();
         tiled.log("[companion] Bridge disabled");
     }
 });
@@ -237,9 +227,9 @@ var openCompanionAction = tiled.registerAction("OpenCompanionPage", function () 
 openCompanionAction.text = "Open Companion Page";
 openCompanionAction.shortcut = "Ctrl+Shift+T";
 
-// Manual poll action (useful if commands were queued while no selection changed)
+// Manual poll action
 var pollAction = tiled.registerAction("PollCompanionCommands", function () {
-    heartbeat();
+    pollCommands();
     tiled.log("[companion] Polled for commands");
 });
 pollAction.text = "Poll Companion Commands";
@@ -253,5 +243,4 @@ tiled.extendMenu("Edit", [
 
 // Start
 connectAsset(tiled.activeAsset);
-startHeartbeat();
-tiled.log("[companion] Companion bridge loaded (heartbeat mode)");
+tiled.log("[companion] Companion bridge loaded");
