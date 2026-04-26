@@ -1196,18 +1196,22 @@ function RenderModeSection({
                     <div className="space-y-1.5">
                         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Animations</span>
                         {animations.map((entry, i) => (
-                            <div key={i} className="border border-border rounded p-1.5 space-y-1 group relative">
-                                <button
-                                    className="absolute top-1 right-1 text-muted-foreground hover:text-accent-red opacity-0 group-hover:opacity-100"
-                                    onClick={() => onRemoveAnimation(i)}
-                                >
-                                    <Plus className="h-3 w-3 rotate-45" />
-                                </button>
-                                <AnimationPicker
-                                    value={entry.name}
-                                    onChange={(name) => onUpdateAnimation(i, { ...entry, name })}
-                                    placeholder="sprites/path:animation"
-                                />
+                            <div key={i} className="border border-border rounded p-1.5 space-y-1 group">
+                                <div className="flex items-start gap-1">
+                                    <div className="flex-1">
+                                        <AnimationPicker
+                                            value={entry.name}
+                                            onChange={(name) => onUpdateAnimation(i, { ...entry, name })}
+                                            placeholder="sprites/path:animation"
+                                        />
+                                    </div>
+                                    <button
+                                        className="mt-0.5 text-muted-foreground hover:text-accent-red opacity-0 group-hover:opacity-100 shrink-0"
+                                        onClick={() => onRemoveAnimation(i)}
+                                    >
+                                        <Plus className="h-3 w-3 rotate-45" />
+                                    </button>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center gap-1 flex-1">
                                         <span className="text-[10px] text-muted-foreground shrink-0">tint</span>

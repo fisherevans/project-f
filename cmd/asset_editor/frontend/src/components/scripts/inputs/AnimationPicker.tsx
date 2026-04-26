@@ -53,33 +53,37 @@ export function AnimationPicker({ value, onChange, placeholder }: AnimationPicke
     const parsedRef = parseAnimRef(value);
 
     return (
-        <div ref={containerRef} className="relative space-y-1">
-            <Input
-                className="h-6 flex-1 text-xs font-mono"
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setOpen(true); setExpandedSheet(null); }}
-                onFocus={() => setOpen(true)}
-                onBlur={() => { setTimeout(() => { if (search !== value) onChange(search); }, 200); }}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter") { onChange(search); setOpen(false); }
-                    if (e.key === "Escape") { setSearch(value); setOpen(false); }
-                }}
-                placeholder={placeholder ?? "sprites/path:animation"}
-            />
+        <div ref={containerRef} className="space-y-1">
+            {/* Input + dropdown wrapper */}
+            <div className="relative">
+                <Input
+                    className="h-6 flex-1 text-xs font-mono"
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setOpen(true); setExpandedSheet(null); }}
+                    onFocus={() => setOpen(true)}
+                    onBlur={() => { setTimeout(() => { if (search !== value) onChange(search); }, 200); }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") { onChange(search); setOpen(false); }
+                        if (e.key === "Escape") { setSearch(value); setOpen(false); }
+                    }}
+                    placeholder={placeholder ?? "sprites/path:animation"}
+                />
+                {open && filtered.length > 0 && (
+                    <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg max-h-56 overflow-y-auto">
+                        {filtered.map((path) => (
+                            <SheetDropdownItem
+                                key={path}
+                                path={path}
+                                expanded={expandedSheet === path}
+                                onExpand={() => setExpandedSheet(expandedSheet === path ? null : path)}
+                                onSelect={(ref) => commit(ref)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+            {/* Preview below, outside the dropdown positioning context */}
             {parsedRef && <AnimationMiniPreview sheetPath={parsedRef.sheet} animName={parsedRef.anim} />}
-            {open && filtered.length > 0 && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg max-h-56 overflow-y-auto">
-                    {filtered.map((path) => (
-                        <SheetDropdownItem
-                            key={path}
-                            path={path}
-                            expanded={expandedSheet === path}
-                            onExpand={() => setExpandedSheet(expandedSheet === path ? null : path)}
-                            onSelect={(ref) => commit(ref)}
-                        />
-                    ))}
-                </div>
-            )}
         </div>
     );
 }
@@ -157,7 +161,7 @@ export function AnimationMiniPreview({ sheetPath, animName }: { sheetPath: strin
     useEffect(() => {
         if (!detail || !animConfig) return;
         const img = new Image();
-        img.src = apiImageUrl(`sprites/${sheetPath}.png`);
+        img.src = apiImageUrl(sheetPath);
         img.onload = () => {
             imageRef.current = img;
             const frames = resolveFrames(animConfig, totalCols, totalRows);
