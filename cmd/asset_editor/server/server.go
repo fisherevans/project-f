@@ -108,6 +108,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/v1/tiled-bridge/selection", s.handleTiledBridgeGetSelection)
 	s.mux.HandleFunc("GET /api/v1/tiled-bridge/commands", s.handleTiledBridgeCommands)
 	s.mux.HandleFunc("POST /api/v1/tiled-bridge/commands", s.handleTiledBridgeEnqueueCommand)
+	s.mux.HandleFunc("POST /api/v1/tiled-bridge/heartbeat", s.handleTiledBridgeHeartbeat)
+	s.mux.HandleFunc("POST /api/v1/tiled-bridge/ack", s.handleTiledBridgeAck)
 	s.mux.HandleFunc("GET /api/v1/tiled-bridge/status", s.handleTiledBridgeStatus)
 
 	s.mux.HandleFunc("GET /api/v1/ws", s.handleWebSocket)

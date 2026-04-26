@@ -13,10 +13,11 @@ import (
 // polls for commands; the companion page subscribes via WebSocket and
 // enqueues commands.
 type TiledBridge struct {
-	mu        sync.Mutex
-	selection *TiledSelection
-	commands  []TiledCommand
-	listeners []chan TiledBridgeEvent
+	mu            sync.Mutex
+	selection     *TiledSelection
+	commands      []TiledCommand
+	listeners     []chan TiledBridgeEvent
+	lastHeartbeat time.Time
 }
 
 type TiledSelection struct {
@@ -45,6 +46,12 @@ type TiledCommand struct {
 	Timestamp time.Time      `json:"timestamp"`
 }
 
+type TiledCommandAck struct {
+	ID      string `json:"id"`
+	OK      bool   `json:"ok"`
+	Message string `json:"message,omitempty"`
+}
+
 type TiledBridgeEvent struct {
 	Type string `json:"type"`
 	Data any    `json:"data"`
@@ -58,6 +65,7 @@ func (tb *TiledBridge) SetSelection(sel *TiledSelection) {
 	tb.mu.Lock()
 	sel.Time = time.Now()
 	tb.selection = sel
+	tb.lastHeartbeat = sel.Time
 	event := TiledBridgeEvent{Type: "tiled-selection", Data: sel}
 	for _, ch := range tb.listeners {
 		select {
@@ -90,6 +98,33 @@ func (tb *TiledBridge) DrainCommands() []TiledCommand {
 	cmds := tb.commands
 	tb.commands = nil
 	return cmds
+}
+
+func (tb *TiledBridge) Heartbeat() []TiledCommand {
+	tb.mu.Lock()
+	defer tb.mu.Unlock()
+	tb.lastHeartbeat = time.Now()
+	cmds := tb.commands
+	tb.commands = nil
+	return cmds
+}
+
+func (tb *TiledBridge) AckCommands(acks []TiledCommandAck) {
+	tb.mu.Lock()
+	event := TiledBridgeEvent{Type: "tiled-command-ack", Data: acks}
+	for _, ch := range tb.listeners {
+		select {
+		case ch <- event:
+		default:
+		}
+	}
+	tb.mu.Unlock()
+}
+
+func (tb *TiledBridge) IsConnected() bool {
+	tb.mu.Lock()
+	defer tb.mu.Unlock()
+	return !tb.lastHeartbeat.IsZero() && time.Since(tb.lastHeartbeat) < 10*time.Second
 }
 
 func (tb *TiledBridge) Subscribe() chan TiledBridgeEvent {
@@ -161,11 +196,33 @@ func (s *Server) handleTiledBridgeEnqueueCommand(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) handleTiledBridgeHeartbeat(w http.ResponseWriter, r *http.Request) {
+	cmds := s.tiledBridge.Heartbeat()
+	if cmds == nil {
+		cmds = []TiledCommand{}
+	}
+	writeJSON(w, cmds)
+}
+
+func (s *Server) handleTiledBridgeAck(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "read body", http.StatusBadRequest)
+		return
+	}
+	var acks []TiledCommandAck
+	if err := json.Unmarshal(body, &acks); err != nil {
+		http.Error(w, "invalid json: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	s.tiledBridge.AckCommands(acks)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) handleTiledBridgeStatus(w http.ResponseWriter, r *http.Request) {
 	sel := s.tiledBridge.GetSelection()
-	connected := sel != nil && time.Since(sel.Time) < 10*time.Second
 	writeJSON(w, map[string]any{
-		"connected": connected,
+		"connected": s.tiledBridge.IsConnected(),
 		"lastSeen":  sel,
 	})
 }

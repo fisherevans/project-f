@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import YAML from "yaml";
@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useScripts, useScript, useSaveScript, useScriptSchema, useTiledUsages } from "@/api/scripts";
-import { useTiledBridgeStatus, sendTiledCommand, tiledBridgeKeys } from "@/api/tiled-bridge";
-import type { TiledSelection, TiledSelectedObject } from "@/api/tiled-bridge";
+import { useTiledBridgeStatus, sendTiledCommand, tiledBridgeKeys, setCommandTracker } from "@/api/tiled-bridge";
+import type { TiledSelection, TiledSelectedObject, TiledCommandAck } from "@/api/tiled-bridge";
 import type { HandlerPropDef, ScriptFileEntry, ScriptFileDetail, ParsedScript, HandlerDef, ScriptSchema } from "@/types/scripts";
 import { parseScript, stringifyScript } from "@/lib/scriptUtils";
 import { apiFetch } from "@/api/client";
@@ -29,40 +29,117 @@ import {
     Crosshair,
     Plus,
     Pencil,
+    X,
 } from "lucide-react";
 import { AnimationPicker } from "@/components/scripts/inputs/AnimationPicker";
 import { ColorInput } from "@/components/scripts/inputs/ColorInput";
 
+interface PendingCommand {
+    id: string;
+    description: string;
+    timestamp: number;
+}
+
+interface FailedCommand {
+    id: string;
+    description: string;
+    message: string;
+    timestamp: number;
+}
+
 export function TiledCompanion() {
     const [selection, setSelection] = useState<TiledSelection | null>(null);
+    const [failedCommands, setFailedCommands] = useState<FailedCommand[]>([]);
+    const pendingRef = useRef<PendingCommand[]>([]);
     const { data: status } = useTiledBridgeStatus();
     const queryClient = useQueryClient();
 
-    // WebSocket listener for real-time selection updates
+    // WebSocket listener with auto-reconnect
     useEffect(() => {
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const ws = new WebSocket(`${protocol}//${window.location.host}/api/v1/ws`);
+        let ws: WebSocket | null = null;
+        let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+        let closed = false;
 
-        ws.onmessage = (event) => {
-            try {
-                const msg = JSON.parse(event.data);
-                if (msg.type === "tiled-selection") {
-                    setSelection(msg.data);
-                    queryClient.invalidateQueries({ queryKey: tiledBridgeKeys.status() });
+        function connect() {
+            if (closed) return;
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            ws = new WebSocket(`${protocol}//${window.location.host}/api/v1/ws`);
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === "tiled-selection") {
+                        setSelection(msg.data);
+                        queryClient.invalidateQueries({ queryKey: tiledBridgeKeys.status() });
+                    } else if (msg.type === "tiled-command-ack") {
+                        const acks = msg.data as TiledCommandAck[];
+                        const ackedIds = new Set(acks.map((a) => a.id));
+                        pendingRef.current = pendingRef.current.filter((p) => !ackedIds.has(p.id));
+                        const failures = acks.filter((a) => !a.ok);
+                        if (failures.length > 0) {
+                            setFailedCommands((prev) => [
+                                ...prev,
+                                ...failures.map((f) => ({
+                                    id: f.id,
+                                    description: pendingRef.current.find((p) => p.id === f.id)?.description ?? f.id,
+                                    message: f.message ?? "Unknown error",
+                                    timestamp: Date.now(),
+                                })),
+                            ]);
+                        }
+                    }
+                } catch {
+                    // ignore
                 }
-            } catch {
-                // ignore
+            };
+
+            ws.onclose = () => {
+                ws = null;
+                if (!closed) {
+                    reconnectTimer = setTimeout(connect, 2000);
+                }
+            };
+        }
+
+        connect();
+
+        // Expire stale pending commands (no ack after 15 seconds)
+        const expireInterval = setInterval(() => {
+            const cutoff = Date.now() - 15000;
+            const expired = pendingRef.current.filter((p) => p.timestamp < cutoff);
+            if (expired.length > 0) {
+                pendingRef.current = pendingRef.current.filter((p) => p.timestamp >= cutoff);
+                setFailedCommands((prev) => [
+                    ...prev,
+                    ...expired.map((p) => ({
+                        id: p.id,
+                        description: p.description,
+                        message: "Tiled did not acknowledge the change (plugin may not be running)",
+                        timestamp: Date.now(),
+                    })),
+                ]);
             }
-        };
+        }, 5000);
 
-        ws.onclose = () => {
-            setTimeout(() => {
-                // Reconnect handled by parent WebSocketProvider
-            }, 3000);
+        return () => {
+            closed = true;
+            clearTimeout(reconnectTimer);
+            clearInterval(expireInterval);
+            ws?.close();
         };
-
-        return () => ws.close();
     }, [queryClient]);
+
+    // Register module-level command tracker
+    useEffect(() => {
+        setCommandTracker((id, description) => {
+            pendingRef.current = [...pendingRef.current, { id, description, timestamp: Date.now() }];
+        });
+        return () => setCommandTracker(null);
+    }, []);
+
+    const dismissFailure = useCallback((id: string) => {
+        setFailedCommands((prev) => prev.filter((f) => f.id !== id));
+    }, []);
 
     const connected = status?.connected ?? false;
     const objects = selection?.objects ?? [];
@@ -71,6 +148,9 @@ export function TiledCompanion() {
     return (
         <div className="flex h-full flex-col overflow-hidden">
             <Header connected={connected} mapFile={mapFile} objectCount={objects.length} />
+            {failedCommands.length > 0 && (
+                <FailedCommandsBanner failures={failedCommands} onDismiss={dismissFailure} />
+            )}
             <div className="flex-1 overflow-hidden">
                 {objects.length === 0 ? (
                     <EmptyState connected={connected} />
@@ -80,6 +160,26 @@ export function TiledCompanion() {
                     <MultiObjectView objects={objects} />
                 )}
             </div>
+        </div>
+    );
+}
+
+function FailedCommandsBanner({ failures, onDismiss }: { failures: FailedCommand[]; onDismiss: (id: string) => void }) {
+    return (
+        <div className="border-b border-accent-red-edge bg-accent-red-tint px-3 py-1.5 space-y-1">
+            {failures.map((f) => (
+                <div key={f.id} className="flex items-start gap-2 text-xs">
+                    <AlertTriangle className="h-3 w-3 text-accent-red shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                        <span className="text-accent-red font-medium">Failed: </span>
+                        <span className="text-foreground">{f.description}</span>
+                        <span className="text-muted-foreground"> - {f.message}</span>
+                    </div>
+                    <button className="shrink-0 text-muted-foreground hover:text-foreground" onClick={() => onDismiss(f.id)}>
+                        <X className="h-3 w-3" />
+                    </button>
+                </div>
+            ))}
         </div>
     );
 }

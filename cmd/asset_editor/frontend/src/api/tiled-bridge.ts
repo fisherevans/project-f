@@ -24,10 +24,17 @@ export interface TiledBridgeStatus {
 }
 
 export interface TiledCommand {
+    id?: string;
     objectId: number;
     action: "setProperty" | "removeProperty";
     name: string;
     value?: string;
+}
+
+export interface TiledCommandAck {
+    id: string;
+    ok: boolean;
+    message?: string;
 }
 
 export const tiledBridgeKeys = {
@@ -44,9 +51,22 @@ export function useTiledBridgeStatus() {
     });
 }
 
-export async function sendTiledCommand(cmd: TiledCommand): Promise<void> {
+let commandCounter = 0;
+let commandTracker: ((id: string, description: string) => void) | null = null;
+
+export function setCommandTracker(tracker: ((id: string, description: string) => void) | null) {
+    commandTracker = tracker;
+}
+
+export async function sendTiledCommand(cmd: TiledCommand, description?: string): Promise<string> {
+    const id = `web-${Date.now()}-${++commandCounter}`;
     await apiFetch<void>("/tiled-bridge/commands", {
         method: "POST",
-        body: JSON.stringify(cmd),
+        body: JSON.stringify({ ...cmd, id }),
     });
+    if (commandTracker) {
+        const desc = description ?? `${cmd.action} ${cmd.name} on obj#${cmd.objectId}`;
+        commandTracker(id, desc);
+    }
+    return id;
 }
