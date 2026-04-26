@@ -9,6 +9,7 @@ import { SoundPicker } from "./inputs/SoundPicker";
 import { GlobalKeyInput } from "./inputs/GlobalKeyInput";
 import { EntityRefInput } from "./inputs/EntityRefInput";
 import { HandlerRefInput } from "./inputs/HandlerRefInput";
+import { CustomActionRefInput } from "./inputs/CustomActionRefInput";
 import { ZoneIdInput } from "./inputs/ZoneIdInput";
 import { ExpressionInput } from "./inputs/ExpressionInput";
 import { SchemaSelect } from "./inputs/SchemaSelect";
@@ -28,7 +29,7 @@ const ENTITY_PARAM_NAMES = new Set(["entity", "target", "to_entity", "entity_id"
 const ZONE_PARAM_NAMES = new Set(["zone", "zone_id", "active_player_zone"]);
 const SOUND_PARAM_NAMES = new Set(["sound"]);
 const GLOBAL_KEY_STEP_KINDS = new Set(["set_world_state", "set_run_state"]);
-const ACTION_NAME_STEP_KINDS = new Set(["action", "ref", "custom_action"]);
+const ACTION_NAME_STEP_KINDS = new Set(["action", "ref"]);
 const EXPR_PARAM_HINTS: Record<string, Set<string>> = {
     "set_var": new Set(["value"]),
     "if": new Set(["when"]),
@@ -69,9 +70,11 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys, schema 
     if (style === "string_or_map") {
         if (typeof params === "string" || typeof params === "number" || typeof params === "boolean") {
             const hasMapParams = (stepKind.params?.length ?? 0) > 1;
-            const isActionLike = stepKind.name === "action" || stepKind.name === "ref" || stepKind.name === "custom_action";
+            const isActionLike = stepKind.name === "action" || stepKind.name === "ref";
             const inlineInput = stepKind.name === "play_sound" ? (
                 <SoundPicker value={String(params)} onChange={onChange} />
+            ) : stepKind.name === "custom_action" ? (
+                <CustomActionRefInput value={String(params)} onChange={(v) => onChange(v || undefined)} />
             ) : isActionLike ? (
                 <HandlerRefInput value={String(params)} onChange={(v) => onChange(v || undefined)} schema={schema} />
             ) : (
@@ -389,6 +392,15 @@ function ParamField({ def, value, onChange, stepKindName, schema, parentParams }
             <div className="flex items-center gap-1.5">
                 <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
                 <div className="flex-1"><HandlerRefInput value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} schema={schema} /></div>
+            </div>
+        );
+    }
+
+    if (def.name === "name" && stepKindName === "custom_action") {
+        return (
+            <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+                <div className="flex-1"><CustomActionRefInput value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} /></div>
             </div>
         );
     }
