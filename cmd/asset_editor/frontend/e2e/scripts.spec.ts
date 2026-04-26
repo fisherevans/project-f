@@ -30,16 +30,16 @@ test.describe("script editor", () => {
         await expect(page.getByText("on_interact_self")).toBeVisible();
     });
 
-    test("raw YAML tab shows editable textarea", async ({ page }) => {
+    test("raw YAML tab shows editable code editor", async ({ page }) => {
         await page.getByRole("tab", { name: "Raw YAML" }).click();
-        const textarea = page.locator("textarea");
-        await expect(textarea).toBeVisible();
-        await expect(textarea).toContainText("handlers:");
+        const editor = page.locator(".cm-editor");
+        await expect(editor).toBeVisible();
+        await expect(page.locator(".cm-content")).toContainText("handlers:");
     });
 
     test("switching back to structured tab preserves content", async ({ page }) => {
         await page.getByRole("tab", { name: "Raw YAML" }).click();
-        await expect(page.locator("textarea")).toBeVisible();
+        await expect(page.locator(".cm-editor")).toBeVisible();
         await page.getByRole("tab", { name: "Structured" }).click();
         await expect(page.getByRole("button", { name: "hq.xenolog" })).toBeVisible();
     });

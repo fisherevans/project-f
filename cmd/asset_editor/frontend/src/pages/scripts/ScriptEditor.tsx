@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useScript, useSaveScript, useScriptSchema } from "@/api/scripts";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { YamlEditor } from "@/components/ui/yaml-editor";
 import { ArrowLeft, Save, GitCompare, X } from "lucide-react";
 import { HandlerList } from "@/components/scripts/HandlerList";
 import { HandlerDetail } from "@/components/scripts/HandlerDetail";
@@ -420,14 +421,12 @@ export function ScriptEditor() {
                 </TabsContent>
 
                 <TabsContent value="raw" className="flex-1 overflow-hidden m-0 p-0 min-h-0">
-                    <textarea
-                        className="h-full w-full resize-none bg-background p-4 font-mono text-xs leading-relaxed outline-none"
+                    <YamlEditor
                         value={rawContent}
-                        onChange={(e) => {
-                            setRawContent(e.target.value);
+                        onChange={(v) => {
+                            setRawContent(v);
                             setDirty(true);
                         }}
-                        spellCheck={false}
                     />
                 </TabsContent>
             </Tabs>

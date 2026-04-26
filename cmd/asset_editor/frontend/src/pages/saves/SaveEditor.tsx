@@ -5,6 +5,7 @@ import { useSave, useSaveSave, useDeleteSave } from "@/api/saves"
 import { usePageTitle } from "@/hooks/usePageTitle"
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges"
 import { Save, Trash2, ArrowLeft } from "lucide-react"
+import { YamlEditor } from "@/components/ui/yaml-editor"
 
 export function SaveEditor() {
     const params = useParams()
@@ -86,12 +87,12 @@ export function SaveEditor() {
                         <p><span className="font-medium">system_settings</span> - lighting, combat speed, retro frame, audio, display options</p>
                     </div>
                 </div>
-                <textarea
-                    className="flex-1 w-full rounded-md border bg-card p-3 font-mono text-xs leading-relaxed resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={yaml}
-                    onChange={e => { setYaml(e.target.value); setDirty(true) }}
-                    spellCheck={false}
-                />
+                <div className="flex-1 w-full rounded-md border bg-card overflow-hidden">
+                    <YamlEditor
+                        value={yaml}
+                        onChange={(v) => { setYaml(v); setDirty(true) }}
+                    />
+                </div>
             </div>
         </div>
     )

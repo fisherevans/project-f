@@ -19,7 +19,7 @@ const exprTheme = EditorView.theme({
     },
     ".cm-content": {
         padding: "3px 0",
-        caretColor: "oklch(0.985 0 0)",
+        caretColor: "oklch(0.15 0 0)",
         minHeight: "20px",
     },
     "&.cm-focused": {
@@ -32,47 +32,51 @@ const exprTheme = EditorView.theme({
         overflow: "hidden",
         lineHeight: "1.4",
     },
+    ".cm-cursor": {
+        borderLeftColor: "oklch(0.15 0 0)",
+    },
     ".cm-tooltip.cm-tooltip-autocomplete": {
-        backgroundColor: "oklch(0.21 0.006 285.75)",
-        border: "1px solid oklch(0.35 0.006 285.75)",
+        backgroundColor: "oklch(0.98 0 0)",
+        border: "1px solid oklch(0.85 0 0)",
         borderRadius: "6px",
         fontSize: "11px",
         fontFamily: "var(--font-mono, ui-monospace, monospace)",
         maxHeight: "180px",
+        boxShadow: "0 4px 12px oklch(0 0 0 / 0.12)",
     },
     ".cm-tooltip-autocomplete ul li": {
         padding: "2px 8px",
     },
     ".cm-tooltip-autocomplete ul li[aria-selected]": {
-        backgroundColor: "oklch(0.30 0.010 285.75)",
+        backgroundColor: "oklch(0.93 0.01 260)",
     },
     ".cm-completionLabel": {
-        color: "oklch(0.90 0 0)",
+        color: "oklch(0.15 0 0)",
     },
     ".cm-completionDetail": {
-        color: "oklch(0.55 0 0)",
+        color: "oklch(0.50 0 0)",
         marginLeft: "8px",
         fontStyle: "normal",
     },
     ".cm-completionMatchedText": {
         textDecoration: "none",
-        color: "oklch(0.75 0.15 300)",
+        color: "oklch(0.45 0.20 300)",
         fontWeight: "600",
     },
     ".cm-diagnostic-error": {
-        borderLeft: "2px solid oklch(0.65 0.2 25)",
-        backgroundColor: "oklch(0.25 0.04 25 / 0.3)",
+        borderLeft: "2px solid oklch(0.55 0.2 25)",
+        backgroundColor: "oklch(0.95 0.03 25)",
         padding: "2px 6px",
         fontSize: "10px",
         borderRadius: "0 4px 4px 0",
     },
     ".cm-lintRange-error": {
         backgroundImage: "none",
-        textDecoration: "underline wavy oklch(0.65 0.2 25)",
+        textDecoration: "underline wavy oklch(0.55 0.2 25)",
         textUnderlineOffset: "2px",
     },
     ".cm-placeholder": {
-        color: "oklch(0.45 0 0)",
+        color: "oklch(0.55 0 0)",
         fontStyle: "normal",
     },
 });
@@ -184,15 +188,15 @@ function tokenize(text: string): Token[] {
 }
 
 const TOKEN_MARKS: Record<TokenType, string> = {
-    keyword: "oklch(0.75 0.15 300)",
-    function: "oklch(0.80 0.14 190)",
-    number: "oklch(0.75 0.15 170)",
-    string: "oklch(0.75 0.12 140)",
-    operator: "oklch(0.70 0.15 50)",
-    envRoot: "oklch(0.80 0.14 260)",
-    paren: "oklch(0.55 0 0)",
-    bracket: "oklch(0.55 0 0)",
-    property: "oklch(0.85 0 0)",
+    keyword: "oklch(0.45 0.18 300)",
+    function: "oklch(0.45 0.16 190)",
+    number: "oklch(0.45 0.18 170)",
+    string: "oklch(0.45 0.14 140)",
+    operator: "oklch(0.40 0.18 50)",
+    envRoot: "oklch(0.45 0.16 260)",
+    paren: "oklch(0.40 0 0)",
+    bracket: "oklch(0.40 0 0)",
+    property: "oklch(0.30 0 0)",
 };
 
 const tokenDecorations = Object.fromEntries(
