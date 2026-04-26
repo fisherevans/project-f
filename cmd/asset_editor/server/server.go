@@ -13,17 +13,18 @@ import (
 
 // Server is the asset editor HTTP server.
 type Server struct {
-	mux        *http.ServeMux
-	assetsDir  string
-	devMode    bool
-	sprites    *SpriteService
-	audio      *AudioService
-	scripts    *ScriptService
-	rpg        *RPGService
-	saves      *SaveService
-	tiled      *TiledService
-	hub        *Hub
-	frontendFS fs.FS
+	mux         *http.ServeMux
+	assetsDir   string
+	devMode     bool
+	sprites     *SpriteService
+	audio       *AudioService
+	scripts     *ScriptService
+	rpg         *RPGService
+	saves       *SaveService
+	tiled       *TiledService
+	tiledBridge *TiledBridge
+	hub         *Hub
+	frontendFS  fs.FS
 }
 
 // New creates a configured Server. The assetsDir is the root of the game's
@@ -31,17 +32,18 @@ type Server struct {
 // filesystem (or nil in dev mode).
 func New(assetsDir string, devMode bool, frontendFS fs.FS) *Server {
 	s := &Server{
-		mux:        http.NewServeMux(),
-		assetsDir:  assetsDir,
-		devMode:    devMode,
-		sprites:    NewSpriteService(assetsDir),
-		audio:      NewAudioService(assetsDir),
-		scripts:    NewScriptService(assetsDir),
-		rpg:        NewRPGService(assetsDir),
-		saves:      NewSaveService(assetsDir),
-		tiled:      NewTiledService(assetsDir),
-		hub:        NewHub(assetsDir),
-		frontendFS: frontendFS,
+		mux:         http.NewServeMux(),
+		assetsDir:   assetsDir,
+		devMode:     devMode,
+		sprites:     NewSpriteService(assetsDir),
+		audio:       NewAudioService(assetsDir),
+		scripts:     NewScriptService(assetsDir),
+		rpg:         NewRPGService(assetsDir),
+		saves:       NewSaveService(assetsDir),
+		tiled:       NewTiledService(assetsDir),
+		tiledBridge: NewTiledBridge(),
+		hub:         NewHub(assetsDir),
+		frontendFS:  frontendFS,
 	}
 	s.routes()
 	go s.hub.Run()
@@ -101,6 +103,12 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/v1/saves/{id}/clone", s.handleCloneSave)
 
 	s.mux.HandleFunc("GET /api/v1/tiled/usages", s.handleListTiledUsages)
+
+	s.mux.HandleFunc("POST /api/v1/tiled-bridge/selection", s.handleTiledBridgeSelection)
+	s.mux.HandleFunc("GET /api/v1/tiled-bridge/selection", s.handleTiledBridgeGetSelection)
+	s.mux.HandleFunc("GET /api/v1/tiled-bridge/commands", s.handleTiledBridgeCommands)
+	s.mux.HandleFunc("POST /api/v1/tiled-bridge/commands", s.handleTiledBridgeEnqueueCommand)
+	s.mux.HandleFunc("GET /api/v1/tiled-bridge/status", s.handleTiledBridgeStatus)
 
 	s.mux.HandleFunc("GET /api/v1/ws", s.handleWebSocket)
 

@@ -170,9 +170,28 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	s.hub.addClient(conn)
 
+	// Subscribe to tiled bridge events for this connection.
+	bridgeCh := s.tiledBridge.Subscribe()
+	go func() {
+		for event := range bridgeCh {
+			data, err := json.Marshal(event)
+			if err != nil {
+				continue
+			}
+			s.hub.mu.Lock()
+			if _, ok := s.hub.clients[conn]; ok {
+				_ = conn.WriteMessage(websocket.TextMessage, data)
+			}
+			s.hub.mu.Unlock()
+		}
+	}()
+
 	// Read loop - just drain messages so we detect close.
 	go func() {
-		defer s.hub.removeClient(conn)
+		defer func() {
+			s.tiledBridge.Unsubscribe(bridgeCh)
+			s.hub.removeClient(conn)
+		}()
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
 				return

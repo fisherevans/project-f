@@ -21,6 +21,7 @@ import { DebugOverview } from "@/pages/debug/DebugOverview";
 import { DebugGlobals } from "@/pages/debug/DebugGlobals";
 import { DebugCommands } from "@/pages/debug/DebugCommands";
 import { DebugEntities } from "@/pages/debug/DebugEntities";
+import { TiledCompanion } from "@/pages/tiled/TiledCompanion";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -50,6 +51,7 @@ const router = createBrowserRouter([
             { path: "/rpg/combat", element: <Navigate to="/combat" replace /> },
             { path: "/saves", element: <SaveBrowser /> },
             { path: "/saves/:id", element: <SaveEditor /> },
+            { path: "/tiled", element: <TiledCompanion /> },
             { path: "/reference", element: <ScriptReference /> },
             {
                 path: "/debug",
