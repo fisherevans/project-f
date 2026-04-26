@@ -200,6 +200,12 @@ export function stringifyScript(script: ParsedScript): string {
     return YAML.stringify(obj, { indent: 2, lineWidth: 0 });
 }
 
+export function normalizeYaml(yamlStr: string): string {
+    const parsed = YAML.parse(yamlStr);
+    if (parsed == null) return "";
+    return YAML.stringify(parsed, { indent: 2, lineWidth: 0 });
+}
+
 function serializeHandler(handler: HandlerDef): Record<string, unknown> {
     const obj: Record<string, unknown> = {};
     if (handler.props && handler.props.length > 0) {

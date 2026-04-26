@@ -12,7 +12,7 @@ import { SequenceDetail } from "@/components/scripts/SequenceDetail";
 import { ConstDetail } from "@/components/scripts/ConstDetail";
 import { PropertyTemplateDetail } from "@/components/scripts/PropertyTemplateDetail";
 import { ExprContextProvider } from "@/components/scripts/ExprContext";
-import { parseScript, stringifyScript } from "@/lib/scriptUtils";
+import { parseScript, stringifyScript, normalizeYaml } from "@/lib/scriptUtils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import type { ParsedScript, ScriptItemSelection, ScriptSchema } from "@/types/scripts";
@@ -294,7 +294,7 @@ export function ScriptEditor() {
     const diffLines = useMemo(() => {
         if (!showDiff || !script) return [];
         const currentContent = activeTab === "structured" ? stringifyScript(parsed) : rawContent;
-        return computeUnifiedDiff(script.rawYaml, currentContent);
+        return computeUnifiedDiff(normalizeYaml(script.rawYaml), normalizeYaml(currentContent));
     }, [showDiff, script, activeTab, parsed, rawContent]);
 
     if (isLoading) return <div className="p-4 text-muted-foreground">Loading...</div>;
