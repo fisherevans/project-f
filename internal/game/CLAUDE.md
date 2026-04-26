@@ -115,6 +115,38 @@ The runtime handles the pixel-grid canvas scaling and shader, the debug
 overlay, and the dev-mode HUD. Don't re-implement window-level compositing in
 a state.
 
+## Script engine testing
+
+The adventure script engine (`states/adventure/`) has test suites covering
+the core execution pipeline. Run them after any change to effects, the plan
+executor, control flow, custom actions, or the script adapter:
+
+```
+go test ./internal/game/states/adventure/...
+```
+
+Key test files and what they cover:
+
+- `plans_test.go` - PlanExecutor serial/parallel dispatch, blocking, nested
+  completion, scope abort.
+- `effect_control_flow_test.go` - if/switch/while step conversion, condition
+  evaluation, while loop iteration and max cap.
+- `effect_custom_action_test.go` - custom action parameter passing, recursion
+  cap, scope isolation.
+- `effect_deferred_batch_test.go` - deferred batch lifecycle, empty batch
+  completion, scope propagation.
+- `script_adapter_test.go` - ScriptHandler rule matching, condition
+  evaluation, event filtering, handler state mutations.
+- `effect_return_scope_test.go` - return step behavior at handler, custom
+  action, if-branch, and while-loop levels.
+- `script_schema_test.go` - validates that all registered step kinds, actions,
+  and conditions have matching entries in `script_schema.json`.
+
+When adding a new step kind: add it to `validStepKinds`, add a case in
+`convertStep`, add it to `script_schema.json`, add it to `knownStepKinds`
+in `script_schema_test.go`, and regenerate docs with
+`go run ./cmd/gen_script_docs`.
+
 ## Save data
 
 `rpg.GameSave` is the persisted root. Load is automatic in `Initialize`;
