@@ -1,102 +1,39 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Image, Volume2, ScrollText, Swords, Bug, HardDrive, BookOpen } from "lucide-react";
+import { Image, Volume2, ScrollText, Swords, Shield, Crosshair, HardDrive, BookOpen, Bug } from "lucide-react";
+
+const NAV_ITEMS = [
+    { to: "/sprites", label: "Sprites", icon: Image },
+    { to: "/audio", label: "Audio", icon: Volume2 },
+    { to: "/scripts", label: "Scripts", icon: ScrollText },
+    { to: "/skills", label: "Skills", icon: Swords },
+    { to: "/primortals", label: "Primortals", icon: Shield },
+    { to: "/combat", label: "Combat", icon: Crosshair },
+    { to: "/saves", label: "Saves", icon: HardDrive },
+    { to: "/reference", label: "Reference", icon: BookOpen },
+    { to: "/debug", label: "Debug", icon: Bug },
+];
 
 export function AppLayout() {
     return (
         <div className="flex h-screen overflow-hidden bg-background text-foreground">
-            <nav className="flex w-12 flex-col items-center gap-2 border-r border-border bg-muted/40 py-3">
-                <NavLink
-                    to="/sprites"
-                    className={({ isActive }) =>
-                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                            isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`
-                    }
-                    title="Sprites"
-                >
-                    <Image className="h-4 w-4" />
-                </NavLink>
-                <NavLink
-                    to="/audio"
-                    className={({ isActive }) =>
-                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                            isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`
-                    }
-                    title="Audio"
-                >
-                    <Volume2 className="h-4 w-4" />
-                </NavLink>
-                <NavLink
-                    to="/scripts"
-                    className={({ isActive }) =>
-                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                            isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`
-                    }
-                    title="Scripts"
-                >
-                    <ScrollText className="h-4 w-4" />
-                </NavLink>
-                <NavLink
-                    to="/rpg"
-                    className={({ isActive }) =>
-                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                            isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`
-                    }
-                    title="RPG"
-                >
-                    <Swords className="h-4 w-4" />
-                </NavLink>
-                <NavLink
-                    to="/saves"
-                    className={({ isActive }) =>
-                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                            isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`
-                    }
-                    title="Saves"
-                >
-                    <HardDrive className="h-4 w-4" />
-                </NavLink>
-                <NavLink
-                    to="/reference"
-                    className={({ isActive }) =>
-                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                            isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`
-                    }
-                    title="Reference"
-                >
-                    <BookOpen className="h-4 w-4" />
-                </NavLink>
-                <div className="mt-auto" />
-                <NavLink
-                    to="/debug"
-                    className={({ isActive }) =>
-                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                            isActive
-                                ? "bg-primary text-primary-foreground"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`
-                    }
-                    title="Debug"
-                >
-                    <Bug className="h-4 w-4" />
-                </NavLink>
+            <nav className="flex w-36 flex-col gap-0.5 border-r border-border bg-muted/40 px-2 py-3">
+                {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+                    <NavLink
+                        key={to}
+                        to={to}
+                        title={label}
+                        className={({ isActive }) =>
+                            `flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+                                isActive
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            }`
+                        }
+                    >
+                        <Icon className="h-3.5 w-3.5 shrink-0" />
+                        {label}
+                    </NavLink>
+                ))}
             </nav>
             <main className="flex-1 overflow-hidden">
                 <Outlet />

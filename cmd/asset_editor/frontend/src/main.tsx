@@ -10,7 +10,6 @@ import { AudioBrowser } from "@/pages/audio/AudioBrowser";
 import { AudioEditor } from "@/pages/audio/AudioEditor";
 import { ScriptBrowser } from "@/pages/scripts/ScriptBrowser";
 import { ScriptEditor } from "@/pages/scripts/ScriptEditor";
-import { RpgLayout } from "@/pages/rpg/RpgLayout";
 import { SkillBrowser } from "@/pages/rpg/SkillBrowser";
 import { PrimortalBrowser } from "@/pages/rpg/PrimortalBrowser";
 import { CombatBrowser } from "@/pages/rpg/CombatBrowser";
@@ -43,15 +42,12 @@ const router = createBrowserRouter([
             { path: "/audio/*", element: <AudioEditor /> },
             { path: "/scripts", element: <ScriptBrowser /> },
             { path: "/scripts/*", element: <ScriptEditor /> },
-            {
-                path: "/rpg",
-                element: <RpgLayout />,
-                children: [
-                    { index: true, element: <SkillBrowser /> },
-                    { path: "primortals", element: <PrimortalBrowser /> },
-                    { path: "combat", element: <CombatBrowser /> },
-                ],
-            },
+            { path: "/skills", element: <SkillBrowser /> },
+            { path: "/primortals", element: <PrimortalBrowser /> },
+            { path: "/combat", element: <CombatBrowser /> },
+            { path: "/rpg", element: <Navigate to="/skills" replace /> },
+            { path: "/rpg/primortals", element: <Navigate to="/primortals" replace /> },
+            { path: "/rpg/combat", element: <Navigate to="/combat" replace /> },
             { path: "/saves", element: <SaveBrowser /> },
             { path: "/saves/:id", element: <SaveEditor /> },
             { path: "/reference", element: <ScriptReference /> },

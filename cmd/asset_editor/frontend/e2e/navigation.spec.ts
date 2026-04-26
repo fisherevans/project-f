@@ -13,8 +13,12 @@ test.describe("navigation", () => {
             { title: "Sprites", url: /\/sprites/ },
             { title: "Audio", url: /\/audio/ },
             { title: "Scripts", url: /\/scripts/ },
-            { title: "RPG", url: /\/rpg/ },
+            { title: "Skills", url: /\/skills/ },
+            { title: "Primortals", url: /\/primortals/ },
+            { title: "Combat", url: /\/combat/ },
             { title: "Saves", url: /\/saves/ },
+            { title: "Reference", url: /\/reference/ },
+            { title: "Debug", url: /\/debug/ },
         ];
 
         for (const section of sections) {
