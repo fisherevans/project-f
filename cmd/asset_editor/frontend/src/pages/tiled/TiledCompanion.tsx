@@ -30,6 +30,8 @@ import {
     Plus,
     Pencil,
 } from "lucide-react";
+import { AnimationPicker } from "@/components/scripts/inputs/AnimationPicker";
+import { ColorInput } from "@/components/scripts/inputs/ColorInput";
 
 export function TiledCompanion() {
     const [selection, setSelection] = useState<TiledSelection | null>(null);
@@ -1191,26 +1193,37 @@ function RenderModeSection({
             {expanded && (
                 <div className="p-2 space-y-2">
                     {/* Animations */}
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Animations</span>
                         {animations.map((entry, i) => (
-                            <div key={i} className="flex items-start gap-1 group">
-                                <div className="flex-1 space-y-0.5">
-                                    <Input
-                                        className="h-6 text-xs font-mono"
-                                        value={entry.name}
-                                        onChange={(e) => onUpdateAnimation(i, { ...entry, name: e.target.value })}
-                                        placeholder="sprites/path:animation"
-                                    />
-                                    <div className="flex items-center gap-1">
-                                        <Input
-                                            className="h-5 w-20 text-[10px] font-mono"
+                            <div key={i} className="border border-border rounded p-1.5 space-y-1 group relative">
+                                <button
+                                    className="absolute top-1 right-1 text-muted-foreground hover:text-accent-red opacity-0 group-hover:opacity-100"
+                                    onClick={() => onRemoveAnimation(i)}
+                                >
+                                    <Plus className="h-3 w-3 rotate-45" />
+                                </button>
+                                <AnimationPicker
+                                    value={entry.name}
+                                    onChange={(name) => onUpdateAnimation(i, { ...entry, name })}
+                                    placeholder="sprites/path:animation"
+                                />
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1 flex-1">
+                                        <span className="text-[10px] text-muted-foreground shrink-0">tint</span>
+                                        <ColorInput
                                             value={entry.colorMask ?? ""}
-                                            onChange={(e) => onUpdateAnimation(i, { ...entry, colorMask: e.target.value || undefined })}
-                                            placeholder="colorMask"
+                                            onChange={(v) => onUpdateAnimation(i, { ...entry, colorMask: v || undefined })}
+                                            placeholder="none"
                                         />
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-muted-foreground shrink-0">offset</span>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[10px] text-muted-foreground">x</span>
                                         <Input
-                                            className="h-5 w-12 text-[10px] font-mono"
+                                            className="h-5 w-14 text-[10px] font-mono"
                                             type="number"
                                             step="0.125"
                                             value={entry.offset?.x ?? ""}
@@ -1219,10 +1232,11 @@ function RenderModeSection({
                                                 const y = entry.offset?.y ?? 0;
                                                 onUpdateAnimation(i, { ...entry, offset: (x || y) ? { x, y } : undefined });
                                             }}
-                                            placeholder="oX"
+                                            placeholder="0"
                                         />
+                                        <span className="text-[10px] text-muted-foreground">y</span>
                                         <Input
-                                            className="h-5 w-12 text-[10px] font-mono"
+                                            className="h-5 w-14 text-[10px] font-mono"
                                             type="number"
                                             step="0.125"
                                             value={entry.offset?.y ?? ""}
@@ -1231,16 +1245,11 @@ function RenderModeSection({
                                                 const x = entry.offset?.x ?? 0;
                                                 onUpdateAnimation(i, { ...entry, offset: (x || y) ? { x, y } : undefined });
                                             }}
-                                            placeholder="oY"
+                                            placeholder="0"
                                         />
+                                        <span className="text-[10px] text-muted-foreground ml-1">tiles</span>
                                     </div>
                                 </div>
-                                <button
-                                    className="mt-1 text-muted-foreground hover:text-accent-red opacity-0 group-hover:opacity-100"
-                                    onClick={() => onRemoveAnimation(i)}
-                                >
-                                    <Plus className="h-3 w-3 rotate-45" />
-                                </button>
                             </div>
                         ))}
                         <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5 gap-0.5" onClick={onAddAnimation}>
@@ -1249,35 +1258,33 @@ function RenderModeSection({
                     </div>
 
                     {/* Lights */}
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Lights</span>
                         {lights.map((entry, i) => (
-                            <div key={i} className="flex items-center gap-1 group">
-                                <Input
-                                    className="h-6 w-16 text-xs font-mono"
-                                    value={entry.color}
-                                    onChange={(e) => onUpdateLight(i, { ...entry, color: e.target.value })}
-                                    placeholder="#fff"
-                                />
-                                <div
-                                    className="h-5 w-5 rounded border border-border shrink-0"
-                                    style={{ backgroundColor: entry.color }}
-                                />
-                                <Input
-                                    className="h-6 w-14 text-xs font-mono"
-                                    type="number"
-                                    step="0.25"
-                                    min="0"
-                                    value={entry.size}
-                                    onChange={(e) => onUpdateLight(i, { ...entry, size: parseFloat(e.target.value) || 0 })}
-                                    placeholder="size"
-                                />
+                            <div key={i} className="flex items-center gap-1.5 group">
+                                <div className="flex-1">
+                                    <ColorInput
+                                        value={entry.color}
+                                        onChange={(v) => onUpdateLight(i, { ...entry, color: v || "#fff" })}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-0.5">
+                                    <span className="text-[10px] text-muted-foreground">r</span>
+                                    <Input
+                                        className="h-6 w-12 text-xs font-mono"
+                                        type="number"
+                                        step="0.25"
+                                        min="0"
+                                        value={entry.size}
+                                        onChange={(e) => onUpdateLight(i, { ...entry, size: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
                                 <select
-                                    className="h-6 text-[10px] font-mono rounded border border-border bg-background px-1 flex-1"
+                                    className="h-6 text-[10px] font-mono rounded border border-border bg-background px-1"
                                     value={entry.modifier ?? ""}
                                     onChange={(e) => onUpdateLight(i, { ...entry, modifier: e.target.value || undefined })}
                                 >
-                                    <option value="">no modifier</option>
+                                    <option value="">static</option>
                                     {LIGHT_MODIFIERS.filter(Boolean).map((m) => <option key={m} value={m}>{m}</option>)}
                                 </select>
                                 <button
