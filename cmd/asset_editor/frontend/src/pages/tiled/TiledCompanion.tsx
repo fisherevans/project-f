@@ -8,8 +8,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useScripts, useScript, useSaveScript, useScriptSchema, useTiledUsages } from "@/api/scripts";
 import { useTiledBridgeStatus, sendTiledCommand, tiledBridgeKeys } from "@/api/tiled-bridge";
 import type { TiledSelection, TiledSelectedObject } from "@/api/tiled-bridge";
-import type { HandlerPropDef, ScriptFileEntry, ParsedScript, HandlerDef, ScriptSchema } from "@/types/scripts";
+import type { HandlerPropDef, ScriptFileEntry, ScriptFileDetail, ParsedScript, HandlerDef, ScriptSchema } from "@/types/scripts";
 import { parseScript, stringifyScript } from "@/lib/scriptUtils";
+import { apiFetch } from "@/api/client";
 import { HandlerDetail } from "@/components/scripts/HandlerDetail";
 import { ExprContextProvider } from "@/components/scripts/ExprContext";
 import type { CrossFileEntry } from "@/components/scripts/ExprContext";
@@ -26,6 +27,7 @@ import {
     Save,
     Users,
     Crosshair,
+    Plus,
 } from "lucide-react";
 
 export function TiledCompanion() {
@@ -234,12 +236,18 @@ function HandlerSection({
     scriptPath: string | null;
     scripts: ScriptFileEntry[];
 }) {
-    const [editing, setEditing] = useState(false);
+    const [mode, setMode] = useState<"view" | "assign" | "create">("view");
     const [search, setSearch] = useState(scriptRef);
+    const [newName, setNewName] = useState("");
+    const [targetFile, setTargetFile] = useState("");
+    const [fileSearch, setFileSearch] = useState("");
+    const [creating, setCreating] = useState(false);
+    const [createError, setCreateError] = useState("");
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         setSearch(scriptRef);
-        setEditing(false);
+        setMode("view");
     }, [scriptRef]);
 
     const allHandlers = useMemo(() => {
@@ -259,6 +267,16 @@ function HandlerSection({
         return allHandlers.filter((h) => h.name.toLowerCase().includes(q) || h.file.toLowerCase().includes(q)).slice(0, 30);
     }, [allHandlers, search]);
 
+    const scriptFiles = useMemo(() => {
+        return scripts.map((s) => s.path).sort();
+    }, [scripts]);
+
+    const filteredFiles = useMemo(() => {
+        const q = fileSearch.toLowerCase();
+        if (!q) return scriptFiles.slice(0, 20);
+        return scriptFiles.filter((f) => f.toLowerCase().includes(q)).slice(0, 20);
+    }, [scriptFiles, fileSearch]);
+
     const handleAssign = useCallback(
         (handlerName: string) => {
             sendTiledCommand({
@@ -267,16 +285,52 @@ function HandlerSection({
                 name: "script_ref",
                 value: handlerName,
             });
-            setEditing(false);
+            setMode("view");
         },
         [object.id],
     );
+
+    const handleCreate = useCallback(async () => {
+        if (!newName.trim() || !targetFile) return;
+        const name = newName.trim();
+        setCreating(true);
+        setCreateError("");
+        try {
+            const detail = await apiFetch<ScriptFileDetail>(`/scripts/${targetFile}`);
+            const parsed = parseScript(detail.rawYaml);
+            if (parsed.handlers[name]) {
+                setCreateError(`Handler "${name}" already exists in this file`);
+                setCreating(false);
+                return;
+            }
+            parsed.handlers[name] = {};
+            const content = stringifyScript(parsed);
+            await apiFetch(`/scripts/${targetFile}`, {
+                method: "PUT",
+                body: JSON.stringify({ content }),
+            });
+            queryClient.invalidateQueries({ queryKey: ["scripts"] });
+            handleAssign(name);
+        } catch (e) {
+            setCreateError(e instanceof Error ? e.message : "Failed to create handler");
+        } finally {
+            setCreating(false);
+        }
+    }, [newName, targetFile, queryClient, handleAssign]);
+
+    const resetCreate = useCallback(() => {
+        setMode("view");
+        setNewName("");
+        setTargetFile("");
+        setFileSearch("");
+        setCreateError("");
+    }, []);
 
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2 border-b border-border pb-1">
                 <span className="text-sm font-semibold">Handler</span>
-                {scriptPath && (
+                {scriptPath && mode === "view" && (
                     <Link
                         to={`/scripts/${scriptPath}`}
                         className="ml-auto text-[10px] text-accent-violet hover:underline flex items-center gap-0.5"
@@ -286,7 +340,7 @@ function HandlerSection({
                 )}
             </div>
 
-            {!editing ? (
+            {mode === "view" && (
                 <div className="flex items-center gap-2">
                     {scriptRef ? (
                         <>
@@ -301,11 +355,18 @@ function HandlerSection({
                     ) : (
                         <span className="text-xs text-muted-foreground italic">No handler assigned</span>
                     )}
-                    <Button variant="outline" size="sm" className="ml-auto h-6 text-[10px] px-2" onClick={() => setEditing(true)}>
-                        {scriptRef ? "Change" : "Assign"}
-                    </Button>
+                    <div className="ml-auto flex items-center gap-1">
+                        <Button variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => setMode("assign")}>
+                            {scriptRef ? "Change" : "Assign"}
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-0.5" onClick={() => setMode("create")}>
+                            <Plus className="h-3 w-3" /> New
+                        </Button>
+                    </div>
                 </div>
-            ) : (
+            )}
+
+            {mode === "assign" && (
                 <div className="space-y-1">
                     <Input
                         className="h-7 text-xs font-mono"
@@ -315,7 +376,7 @@ function HandlerSection({
                         autoFocus
                         onKeyDown={(e) => {
                             if (e.key === "Escape") {
-                                setEditing(false);
+                                setMode("view");
                                 setSearch(scriptRef);
                             }
                             if (e.key === "Enter" && search) {
@@ -340,8 +401,80 @@ function HandlerSection({
                         )}
                     </div>
                     <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => { setEditing(false); setSearch(scriptRef); }}>
+                        <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => { setMode("view"); setSearch(scriptRef); }}>
                             Cancel
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {mode === "create" && (
+                <div className="space-y-2">
+                    <div className="space-y-1">
+                        <label className="text-[11px] font-medium">Handler name</label>
+                        <Input
+                            className="h-7 text-xs font-mono"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            placeholder="my_handler_name"
+                            autoFocus
+                            onKeyDown={(e) => {
+                                if (e.key === "Escape") resetCreate();
+                            }}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[11px] font-medium">Script file</label>
+                        {targetFile ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono truncate flex-1">{targetFile}</span>
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1" onClick={() => setTargetFile("")}>
+                                    change
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                <Input
+                                    className="h-7 text-xs font-mono"
+                                    value={fileSearch}
+                                    onChange={(e) => setFileSearch(e.target.value)}
+                                    placeholder="Search script files..."
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Escape") resetCreate();
+                                    }}
+                                />
+                                <div className="border border-border rounded-md max-h-36 overflow-y-auto">
+                                    {filteredFiles.map((f) => (
+                                        <button
+                                            key={f}
+                                            className="flex w-full items-center px-2 py-1 text-left text-xs font-mono hover:bg-accent border-b border-border last:border-b-0"
+                                            onClick={() => { setTargetFile(f); setFileSearch(""); }}
+                                        >
+                                            <span className="truncate">{f}</span>
+                                        </button>
+                                    ))}
+                                    {filteredFiles.length === 0 && (
+                                        <p className="px-2 py-2 text-[10px] text-muted-foreground">No files match</p>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    {createError && (
+                        <p className="text-[10px] text-accent-red">{createError}</p>
+                    )}
+                    <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={resetCreate}>
+                            Cancel
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="h-6 text-[10px] px-2 gap-0.5"
+                            disabled={!newName.trim() || !targetFile || creating}
+                            onClick={handleCreate}
+                        >
+                            <Plus className="h-3 w-3" />
+                            {creating ? "Creating..." : "Create & Assign"}
                         </Button>
                     </div>
                 </div>
@@ -777,7 +910,7 @@ function RenderConfigEditor({ object }: { object: TiledSelectedObject }) {
                             {Object.entries(config.animations).map(([mode, entries]) => (
                                 <div key={mode} className="ml-2 space-y-0.5">
                                     <span className="text-[10px] font-mono text-accent-teal">{mode}</span>
-                                    {entries.map((entry, i) => (
+                                    {(entries ?? []).map((entry, i) => (
                                         <div key={i} className="flex items-center gap-1 ml-2 text-[10px] font-mono text-muted-foreground">
                                             <span>{entry.name}</span>
                                             {entry.colorMask && <span className="text-accent-amber">mask={entry.colorMask}</span>}
@@ -794,7 +927,7 @@ function RenderConfigEditor({ object }: { object: TiledSelectedObject }) {
                             {Object.entries(config.lights).map(([mode, entries]) => (
                                 <div key={mode} className="ml-2 space-y-0.5">
                                     <span className="text-[10px] font-mono text-accent-teal">{mode}</span>
-                                    {entries.map((entry, i) => (
+                                    {(entries ?? []).map((entry, i) => (
                                         <div key={i} className="flex items-center gap-1 ml-2 text-[10px] font-mono text-muted-foreground">
                                             <span className="text-accent-amber">{entry.color}</span>
                                             <span>size={entry.size}</span>
