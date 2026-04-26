@@ -289,6 +289,8 @@ export function createEmptyStep(kind: string, schema?: StepKindDef): StepNode {
             return { kind, params: [] };
         case "string_or_map":
             return { kind, params: "" };
+        case "value":
+            return { kind, params: true };
         default:
             return { kind, params: null };
     }

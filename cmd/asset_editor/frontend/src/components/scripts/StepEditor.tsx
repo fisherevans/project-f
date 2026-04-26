@@ -21,13 +21,38 @@ interface StepEditorProps {
 }
 
 function getStepSummary(step: StepNode): string {
+    if (step.kind === "return") return "";
     if (typeof step.params === "string") return step.params;
     if (typeof step.params === "number") return String(step.params);
     if (typeof step.params === "boolean") return String(step.params);
-    if (step.kind === "action" && typeof step.params === "object" && step.params !== null) {
-        return String((step.params as Record<string, unknown>).name ?? "");
+    if (typeof step.params !== "object" || step.params === null) return "";
+    const m = step.params as Record<string, unknown>;
+    switch (step.kind) {
+        case "action":
+        case "custom_action":
+        case "ref":
+            return String(m.name ?? "");
+        case "set_var":
+        case "set_run_state":
+        case "set_world_state":
+            return `${m.key ?? "?"} = ${m.value ?? "?"}`;
+        case "if":
+            return String(m.when ?? "");
+        case "while":
+            return m.max ? `${m.when ?? ""} (max ${m.max})` : String(m.when ?? "");
+        case "switch":
+            return `on ${m.on ?? "?"}` + (Array.isArray(m.cases) ? ` (${m.cases.length} cases)` : "");
+        case "focused_sequence":
+            return String(m.target ?? m.entity ?? "");
+        case "teleport_player":
+            return String(m.to_entity ?? m.to_reference ?? "");
+        case "pick_dialogue":
+        case "pick_chatter":
+        case "pick_self_dialogue":
+            return String(m.list ?? "");
+        default:
+            return "";
     }
-    return "";
 }
 
 function hasExpandableContent(step: StepNode, stepDef?: StepKindDef): boolean {
