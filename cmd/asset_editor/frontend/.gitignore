@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 asset_editor
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/

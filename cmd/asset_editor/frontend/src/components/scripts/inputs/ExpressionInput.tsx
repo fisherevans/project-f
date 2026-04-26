@@ -1,9 +1,12 @@
 import { useEffect, useRef } from "react";
-import { EditorView, ViewPlugin, Decoration, DecorationSet, keymap, placeholder as cmPlaceholder, ViewUpdate } from "@codemirror/view";
+import { EditorView, ViewPlugin, Decoration, keymap, placeholder as cmPlaceholder } from "@codemirror/view";
+import type { DecorationSet, ViewUpdate } from "@codemirror/view";
 import { EditorState, Compartment, RangeSetBuilder } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { autocompletion, CompletionContext, CompletionResult } from "@codemirror/autocomplete";
-import { linter, Diagnostic } from "@codemirror/lint";
+import { autocompletion } from "@codemirror/autocomplete";
+import type { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { linter } from "@codemirror/lint";
+import type { Diagnostic } from "@codemirror/lint";
 import { validateExpr } from "@/api/scripts";
 
 // --- Theme ---

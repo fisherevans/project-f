@@ -24,6 +24,42 @@ Flags: `-dev` enables CORS + Vite reverse proxy, `-port N` changes the
 listen port (default 8090), `-assets-dir` overrides the assets path
 (defaults to `assets.LocalFolderPath()`).
 
+## E2E tests (Playwright)
+
+```bash
+cd cmd/asset_editor/frontend
+
+# Run all tests (starts Go backend + Vite automatically):
+npm run test:e2e
+
+# Interactive UI mode (pick/debug individual tests):
+npm run test:e2e:ui
+
+# Headed mode (watch the browser):
+npm run test:e2e:headed
+```
+
+Tests live in `e2e/` and require both the Go backend (:8090) and Vite
+(:5173). The Playwright config (`playwright.config.ts`) starts both
+servers automatically via `webServer`. If they're already running,
+Playwright reuses them (`reuseExistingServer: true`).
+
+Test files:
+- `navigation.spec.ts` - nav rail links, root redirect
+- `scripts.spec.ts` - script browser listing, editor tabs, handler selection
+- `expression-api.spec.ts` - direct API tests for `POST /api/v1/scripts/_validate-expr`
+- `expression-editor.spec.ts` - CodeMirror expression input: autocomplete, linting, help modal
+
+Playwright runs Chromium only. Screenshots and traces are captured on
+failure (saved to `test-results/`). Add new test files to `e2e/` -
+they're auto-discovered.
+
+When writing new e2e tests:
+- Use `page.locator(".cm-editor")` / `.cm-content` / `.cm-tooltip-autocomplete` for CodeMirror elements
+- Expression lint errors render as `.cm-lintRange-error` (wait up to 5s for debounce + network)
+- The step kind picker opens as a dialog - search for step names with the search input
+- API tests can use `request.post()` directly against `http://localhost:8090`
+
 ## Architecture
 
 ### Go backend (`cmd/asset_editor/server/`)
