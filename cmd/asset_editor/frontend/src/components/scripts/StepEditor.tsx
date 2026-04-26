@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus, Eye } from "lucide-react";
+import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus } from "lucide-react";
 import { getCategoryColor } from "./StepKindPicker";
 import { StepParamForm } from "./StepParamForm";
 import { StepList } from "./StepList";
@@ -81,7 +81,7 @@ const CATEGORY_BORDER_COLORS: Record<string, string> = {
     combat: "border-l-accent-red-edge",
 };
 
-function CustomActionPreviewModal({ action, actionName, schema, onClose }: {
+function CustomActionStepsModal({ action, actionName, schema, onClose }: {
     action: CustomActionDef;
     actionName: string;
     schema: ScriptSchema;
@@ -101,38 +101,59 @@ function CustomActionPreviewModal({ action, actionName, schema, onClose }: {
                         <X className="h-4 w-4" />
                     </button>
                 </div>
-                <div className="overflow-y-auto p-3 space-y-3">
-                    {action.params && action.params.length > 0 && (
-                        <div>
-                            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Parameters</div>
-                            <div className="space-y-1">
-                                {action.params.map((p) => (
-                                    <div key={p.name} className="flex items-baseline gap-2 text-xs">
-                                        <code className="font-mono text-accent-violet">{p.name}</code>
-                                        {p.default !== undefined && (
-                                            <span className="text-muted-foreground/60">= {String(p.default)}</span>
-                                        )}
-                                        {p.default === undefined && (
-                                            <span className="text-accent-amber text-[10px]">required</span>
-                                        )}
-                                        {p.description && (
-                                            <span className="text-muted-foreground">{p.description}</span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    <div>
-                        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">
-                            Steps ({action.steps.length})
-                        </div>
-                        <div className="pointer-events-none opacity-80">
-                            <StepList steps={action.steps} schema={schema} onChange={() => {}} />
-                        </div>
+                <div className="overflow-y-auto p-3">
+                    <div className="pointer-events-none opacity-80">
+                        <StepList steps={action.steps} schema={schema} onChange={() => {}} />
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function CustomActionInlinePreview({ action, actionName, schema }: {
+    action: CustomActionDef;
+    actionName: string;
+    schema: ScriptSchema;
+}) {
+    const [showSteps, setShowSteps] = useState(false);
+
+    return (
+        <div className="rounded border border-accent-violet-edge/30 bg-accent-violet-tint/30 px-2 py-1.5 space-y-1.5">
+            <div className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-accent-violet/60">Definition</span>
+                {action.description && (
+                    <span className="text-[10px] text-muted-foreground truncate">{action.description}</span>
+                )}
+            </div>
+            {action.params && action.params.length > 0 && (
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                    {action.params.map((p) => (
+                        <span key={p.name} className="text-[10px]">
+                            <code className="font-mono text-accent-violet">{p.name}</code>
+                            {p.default !== undefined ? (
+                                <span className="text-muted-foreground/60"> = {String(p.default)}</span>
+                            ) : (
+                                <span className="text-accent-amber"> *</span>
+                            )}
+                        </span>
+                    ))}
+                </div>
+            )}
+            <button
+                className="text-[10px] text-accent-violet hover:text-accent-violet/80 font-medium"
+                onClick={() => setShowSteps(true)}
+            >
+                View {action.steps.length} step{action.steps.length !== 1 ? "s" : ""}
+            </button>
+            {showSteps && (
+                <CustomActionStepsModal
+                    action={action}
+                    actionName={actionName}
+                    schema={schema}
+                    onClose={() => setShowSteps(false)}
+                />
+            )}
         </div>
     );
 }
@@ -184,6 +205,7 @@ function SwitchCasesEditor({ step, schema, onChange }: { step: StepNode; schema:
                                 placeholder="Expression (e.g. 'intro')"
                                 handlerVarKeys={exprCtx.handlerVarKeys}
                                 constKeys={exprCtx.constKeys}
+                                otherConstKeys={exprCtx.otherConstKeys}
                             />
                         </div>
                         <button className="text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeCase(i)}>
@@ -207,7 +229,6 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
     const category = stepDef?.category ?? "unknown";
     const expandable = hasExpandableContent(step, stepDef);
     const [expanded, setExpanded] = useState(expandable && (stepDef?.acceptsSubSteps || stepDef?.paramStyle === "list"));
-    const [showPreview, setShowPreview] = useState(false);
 
     const summary = getStepSummary(step);
     const subStepGroups = getStepSubSteps(step);
@@ -264,11 +285,6 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                     </span>
                 )}
                 <div className="flex items-center shrink-0">
-                    {actionDef && (
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => setShowPreview(true)} title="Preview action">
-                            <Eye className="h-3 w-3" />
-                        </Button>
-                    )}
                     {onMoveUp && (
                         <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-0 group-hover/step:opacity-100 text-muted-foreground hover:text-foreground" onClick={onMoveUp}>
                             <ArrowUp className="h-3 w-3" />
@@ -283,14 +299,6 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                         <X className="h-3 w-3" />
                     </Button>
                 </div>
-                {showPreview && actionDef && (
-                    <CustomActionPreviewModal
-                        action={actionDef}
-                        actionName={actionName}
-                        schema={schema}
-                        onClose={() => setShowPreview(false)}
-                    />
-                )}
             </div>
             {expanded && isList && (
                 <div className="border-t border-border/30 px-2 py-1.5">
@@ -327,6 +335,9 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                             />
                         </div>
                     ))}
+                    {actionDef && (
+                        <CustomActionInlinePreview action={actionDef} actionName={actionName} schema={schema} />
+                    )}
                 </div>
             )}
         </div>

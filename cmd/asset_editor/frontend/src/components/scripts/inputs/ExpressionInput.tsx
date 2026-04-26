@@ -8,6 +8,7 @@ import type { CompletionContext, CompletionResult } from "@codemirror/autocomple
 import { linter } from "@codemirror/lint";
 import type { Diagnostic } from "@codemirror/lint";
 import { validateExpr } from "@/api/scripts";
+import type { CrossFileEntry } from "@/components/scripts/ExprContext";
 
 // --- Theme ---
 
@@ -240,7 +241,7 @@ interface CompletionItem {
     boost?: number;
 }
 
-function buildCompletions(handlerVarKeys?: string[], constKeys?: string[]): CompletionItem[] {
+function buildCompletions(handlerVarKeys?: string[], constKeys?: string[], otherConstKeys?: CrossFileEntry[]): CompletionItem[] {
     const items: CompletionItem[] = [];
 
     items.push({ label: "var", detail: "handler-local state", type: "variable", boost: 10 });
@@ -279,6 +280,15 @@ function buildCompletions(handlerVarKeys?: string[], constKeys?: string[]): Comp
     if (constKeys) {
         for (const k of constKeys) {
             items.push({ label: `const.${k}`, detail: "constant", type: "property", boost: 6 });
+        }
+    }
+
+    if (otherConstKeys) {
+        const seen = new Set(constKeys ?? []);
+        for (const entry of otherConstKeys) {
+            if (seen.has(entry.name)) continue;
+            seen.add(entry.name);
+            items.push({ label: `const.${entry.name}`, detail: entry.file, type: "property", boost: 3 });
         }
     }
 
@@ -353,6 +363,7 @@ interface ExpressionInputProps {
     placeholder?: string;
     handlerVarKeys?: string[];
     constKeys?: string[];
+    otherConstKeys?: CrossFileEntry[];
     singleLine?: boolean;
 }
 
@@ -362,6 +373,7 @@ export function ExpressionInput({
     placeholder = "expression",
     handlerVarKeys,
     constKeys,
+    otherConstKeys,
     singleLine = true,
 }: ExpressionInputProps) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -373,8 +385,8 @@ export function ExpressionInput({
     const completionCompartment = useRef(new Compartment());
 
     useEffect(() => {
-        completionItems.current = buildCompletions(handlerVarKeys, constKeys);
-    }, [handlerVarKeys, constKeys]);
+        completionItems.current = buildCompletions(handlerVarKeys, constKeys, otherConstKeys);
+    }, [handlerVarKeys, constKeys, otherConstKeys]);
 
     useEffect(() => {
         if (!containerRef.current) return;

@@ -215,6 +215,7 @@ function CustomActionParamsEditor({ value, onChange, actionName }: {
                             placeholder={p.default !== undefined ? `default: ${p.default}` : undefined}
                             handlerVarKeys={exprCtx.handlerVarKeys}
                             constKeys={exprCtx.constKeys}
+                            otherConstKeys={exprCtx.otherConstKeys}
                         />
                         {p.description && (
                             <div className="text-[10px] text-muted-foreground/60 leading-tight">{p.description}</div>
@@ -237,6 +238,7 @@ function CustomActionParamsEditor({ value, onChange, actionName }: {
                             onChange={(v) => updateField(key, v || undefined)}
                             handlerVarKeys={exprCtx.handlerVarKeys}
                             constKeys={exprCtx.constKeys}
+                            otherConstKeys={exprCtx.otherConstKeys}
                         />
                     </div>
                     <button className="text-muted-foreground hover:text-destructive shrink-0" onClick={() => {
@@ -282,6 +284,7 @@ function ParamField({ def, value, onChange, stepKindName, schema, parentParams }
                             placeholder={def.default !== undefined ? String(def.default) : def.description}
                             handlerVarKeys={exprCtx.handlerVarKeys}
                             constKeys={exprCtx.constKeys}
+                            otherConstKeys={exprCtx.otherConstKeys}
                         />
                     </div>
                 </div>

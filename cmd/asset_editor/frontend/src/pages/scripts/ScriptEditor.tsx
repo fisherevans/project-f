@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useScript, useSaveScript, useScriptSchema } from "@/api/scripts";
+import { useScript, useScripts, useSaveScript, useScriptSchema } from "@/api/scripts";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YamlEditor } from "@/components/ui/yaml-editor";
@@ -16,6 +16,7 @@ import { parseScript, stringifyScript, normalizeYaml } from "@/lib/scriptUtils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import type { ParsedScript, ScriptItemSelection, ScriptSchema } from "@/types/scripts";
+import type { CrossFileEntry } from "@/components/scripts/ExprContext";
 
 function renderDetail(
     parsed: ParsedScript,
@@ -186,6 +187,7 @@ export function ScriptEditor() {
 
     const { data: script, isLoading, error } = useScript(path);
     const { data: schema } = useScriptSchema();
+    const { data: allScripts } = useScripts();
     const saveScript = useSaveScript();
 
     const [rawContent, setRawContent] = useState("");
@@ -202,6 +204,24 @@ export function ScriptEditor() {
     const fileName = path.split("/").pop()?.replace(/\.ya?ml$/, "") ?? path;
     usePageTitle(`${fileName} - Scripts`);
     useUnsavedChanges(dirty);
+
+    const { otherConstKeys, otherCustomActionNames } = useMemo(() => {
+        if (!allScripts) return { otherConstKeys: [] as CrossFileEntry[], otherCustomActionNames: [] as CrossFileEntry[] };
+        const localConsts = new Set(parsed.consts ? Object.keys(parsed.consts) : []);
+        const localActions = new Set(parsed.custom_actions ? Object.keys(parsed.custom_actions) : []);
+        const consts: CrossFileEntry[] = [];
+        const actions: CrossFileEntry[] = [];
+        for (const s of allScripts) {
+            if (s.path === path) continue;
+            for (const name of s.constNames ?? []) {
+                if (!localConsts.has(name)) consts.push({ name, file: s.path });
+            }
+            for (const name of s.customActionNames ?? []) {
+                if (!localActions.has(name)) actions.push({ name, file: s.path });
+            }
+        }
+        return { otherConstKeys: consts, otherCustomActionNames: actions };
+    }, [allScripts, path, parsed.consts, parsed.custom_actions]);
 
     useEffect(() => {
         if (script) {
@@ -388,6 +408,8 @@ export function ScriptEditor() {
                         <ExprContextProvider
                             handlerVarKeys={selection?.type === "handler" && parsed.handlers[selection.name]?.var ? Object.keys(parsed.handlers[selection.name].var!) : []}
                             constKeys={parsed.consts ? Object.keys(parsed.consts) : []}
+                            otherConstKeys={otherConstKeys}
+                            otherCustomActionNames={otherCustomActionNames}
                             customActions={parsed.custom_actions}
                         >
                             <div className="flex h-full min-h-0 overflow-hidden">

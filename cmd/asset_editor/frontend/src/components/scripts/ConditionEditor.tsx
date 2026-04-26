@@ -241,6 +241,7 @@ function ConditionParams({ condition, schema, onChange, depth }: {
                     placeholder='e.g. var.count > 3 && global.quest_stage == "complete"'
                     handlerVarKeys={exprCtx.handlerVarKeys}
                     constKeys={exprCtx.constKeys}
+                    otherConstKeys={exprCtx.otherConstKeys}
                 />
                 <ExprHint />
             </div>
