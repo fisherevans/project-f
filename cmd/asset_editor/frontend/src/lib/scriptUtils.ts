@@ -96,8 +96,19 @@ function parseHandler(raw: Record<string, unknown>): HandlerDef {
         handler.var = raw.var as Record<string, unknown>;
     }
     for (const [key, value] of Object.entries(raw)) {
-        if (isEventHookKey(key) && Array.isArray(value)) {
-            handler[key] = value.map((r) => parseRule(r as Record<string, unknown>));
+        if (!isEventHookKey(key)) continue;
+        if (Array.isArray(value)) {
+            handler[key] = {
+                rules: value.map((r) => parseRule(r as Record<string, unknown>)),
+            };
+        } else if (value && typeof value === "object" && !Array.isArray(value)) {
+            const hookObj = value as Record<string, unknown>;
+            handler[key] = {
+                mode: hookObj.mode as import("@/types/scripts").HookDef["mode"],
+                rules: Array.isArray(hookObj.rules)
+                    ? (hookObj.rules as unknown[]).map((r) => parseRule(r as Record<string, unknown>))
+                    : [],
+            };
         }
     }
     return handler;
@@ -211,9 +222,16 @@ function serializeHandler(handler: HandlerDef): Record<string, unknown> {
     if (handler.var && Object.keys(handler.var).length > 0) {
         obj.var = handler.var;
     }
-    for (const [key, rules] of Object.entries(handler)) {
-        if (isEventHookKey(key)) {
-            obj[key] = (rules as RuleDef[]).map(serializeRule);
+    for (const [key, value] of Object.entries(handler)) {
+        if (!isEventHookKey(key)) continue;
+        const hook = value as import("@/types/scripts").HookDef;
+        if (hook.mode === "all") {
+            obj[key] = {
+                mode: "all",
+                rules: hook.rules.map(serializeRule),
+            };
+        } else {
+            obj[key] = hook.rules.map(serializeRule);
         }
     }
     return obj;

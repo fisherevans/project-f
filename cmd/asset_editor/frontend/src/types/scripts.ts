@@ -125,8 +125,13 @@ export interface CustomActionParam {
     default?: unknown;
 }
 
+export interface HookDef {
+    mode?: "first_match" | "all";
+    rules: RuleDef[];
+}
+
 export type HandlerDef = {
-    [hookKey: string]: RuleDef[];
+    [hookKey: string]: HookDef;
 } & {
     props?: HandlerPropDef[];
     var?: Record<string, unknown>;

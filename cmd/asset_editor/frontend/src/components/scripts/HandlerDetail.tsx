@@ -6,7 +6,7 @@ import { ChevronDown, ChevronRight, Plus, Trash2, X, MapPin } from "lucide-react
 import { HookSection } from "./HookSection";
 import { getHandlerHookKeys, getAvailableHooks } from "@/lib/scriptUtils";
 import { useTiledUsages } from "@/api/scripts";
-import type { HandlerDef, HandlerPropDef, RuleDef, ScriptSchema, TiledEntityRef } from "@/types/scripts";
+import type { HandlerDef, HandlerPropDef, ScriptSchema, TiledEntityRef } from "@/types/scripts";
 
 interface HandlerDetailProps {
     handlerName: string;
@@ -272,7 +272,7 @@ export function HandlerDetail({ handlerName, handler, schema, onChange }: Handle
     const [showHookPicker, setShowHookPicker] = useState(false);
 
     const handleAddHook = (hookKey: string) => {
-        onChange({ ...handler, [hookKey]: [] });
+        onChange({ ...handler, [hookKey]: { rules: [] } });
         setShowHookPicker(false);
     };
 
@@ -282,8 +282,8 @@ export function HandlerDetail({ handlerName, handler, schema, onChange }: Handle
         onChange(next);
     };
 
-    const handleUpdateHook = (hookKey: string, rules: RuleDef[]) => {
-        onChange({ ...handler, [hookKey]: rules });
+    const handleUpdateHook = (hookKey: string, hook: import("@/types/scripts").HookDef) => {
+        onChange({ ...handler, [hookKey]: hook });
     };
 
     return (
@@ -375,9 +375,9 @@ export function HandlerDetail({ handlerName, handler, schema, onChange }: Handle
                                 key={hookKey}
                                 hookKey={hookKey}
                                 hookDef={hookDef}
-                                rules={handler[hookKey]}
+                                hook={handler[hookKey]}
                                 schema={schema}
-                                onChange={(rules) => handleUpdateHook(hookKey, rules)}
+                                onChange={(hook) => handleUpdateHook(hookKey, hook)}
                                 onRemove={() => handleRemoveHook(hookKey)}
                             />
                         );

@@ -10,7 +10,7 @@ func TestScriptHandler_ProcessRules_FirstMatchWins(t *testing.T) {
 	})
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
 					Kind:   "global_gt",
@@ -25,7 +25,7 @@ func TestScriptHandler_ProcessRules_FirstMatchWins(t *testing.T) {
 					{Kind: "dialogue", Params: "first visit"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -45,7 +45,6 @@ func TestScriptHandler_ProcessRules_FirstMatchWins(t *testing.T) {
 		t.Fatalf("got %d effects, want 1", len(output.Effects))
 	}
 
-	// The effect should be a serial plan containing the first matching rule's dialogue
 	batch, ok := output.Effects[0].(*EffectBatch)
 	if !ok {
 		t.Fatalf("effect = %T, want *EffectBatch", output.Effects[0])
@@ -66,7 +65,7 @@ func TestScriptHandler_ProcessRules_NoMatch(t *testing.T) {
 	globals := newTestGlobals(map[string]any{})
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
 					Kind:   "global_eq",
@@ -76,7 +75,7 @@ func TestScriptHandler_ProcessRules_NoMatch(t *testing.T) {
 					{Kind: "dialogue", Params: "ready"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -98,14 +97,14 @@ func TestScriptHandler_ProcessRules_SetVar(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{
 					{Kind: "set_var", Params: map[string]any{"key": "talked", "value": "true"}},
 					{Kind: "dialogue", Params: "hello"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -131,7 +130,7 @@ func TestScriptHandler_ProcessRules_SetVarUsedInCondition(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
 					Kind:   "handler_state_eq",
@@ -147,7 +146,7 @@ func TestScriptHandler_ProcessRules_SetVarUsedInCondition(t *testing.T) {
 					{Kind: "dialogue", Params: "first time"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -156,20 +155,18 @@ func TestScriptHandler_ProcessRules_SetVarUsedInCondition(t *testing.T) {
 	entity := &NullEntity{id: "npc"}
 	event := &EventOnInteract{TargetId: "npc", SourceId: "player"}
 
-	// First interaction
 	output1 := handler.HandleEvent(entity, globals, nil, event)
 	if output1 == nil {
 		t.Fatal("first interaction: expected output")
 	}
 	batch1 := output1.Effects[0].(*EffectBatch)
-	// Effects: [set_var(talked=true), dialogue("first time")]
 	d1 := batch1.Effects[1].(*EffectDialogue)
 	if d1.Text != "first time" {
 		t.Errorf("first interaction: text = %q, want %q", d1.Text, "first time")
 	}
 
-	// Second interaction: set_var runs as an effect during plan execution,
-	// so output1.State won't contain the mutation yet. Simulate post-execution state.
+	// set_var runs as an effect during plan execution, so output1.State
+	// won't contain the mutation yet. Simulate post-execution state.
 	output2 := handler.HandleEvent(entity, globals, map[string]any{"talked": true}, event)
 	if output2 == nil {
 		t.Fatal("second interaction: expected output")
@@ -189,7 +186,7 @@ func TestScriptHandler_VarInitialization(t *testing.T) {
 			"mood":  "neutral",
 			"count": 0,
 		},
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				When: &ConditionNode{
 					Kind:   "handler_state_eq",
@@ -199,7 +196,7 @@ func TestScriptHandler_VarInitialization(t *testing.T) {
 					{Kind: "dialogue", Params: "I'm feeling neutral"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -226,14 +223,14 @@ func TestScriptHandler_Filter(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnBroadcast: []*RuleDef{
+		OnBroadcast: &HookDef{Rules: []*RuleDef{
 			{
 				Filter: map[string]any{"id": "alert"},
 				Steps: []*StepNode{
 					{Kind: "dialogue", Params: "alert received"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -264,7 +261,7 @@ func TestScriptHandler_OnInit(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInit: []*RuleDef{
+		OnInit: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{
 					{Kind: "set_world_state", Params: map[string]any{
@@ -273,7 +270,7 @@ func TestScriptHandler_OnInit(t *testing.T) {
 					}},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -291,7 +288,7 @@ func TestScriptHandler_EmptyStepsSkipped(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{},
 			},
@@ -300,7 +297,7 @@ func TestScriptHandler_EmptyStepsSkipped(t *testing.T) {
 					{Kind: "dialogue", Params: "fallback"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -325,11 +322,11 @@ func TestScriptHandler_EmptyStepsRuleSkipped(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -349,10 +346,52 @@ func TestScriptHandler_UnhandledEventType(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{
 					{Kind: "dialogue", Params: "hello"},
+				},
+			},
+		}},
+	}
+
+	handler := NewScriptHandler("npc", def, nil)
+	handler.Init(&NullEntity{id: "npc"}, globals, nil)
+
+	output := handler.HandleEvent(
+		&NullEntity{id: "npc"}, globals, nil,
+		&EventBroadcast{Id: "something"},
+	)
+
+	if output != nil {
+		t.Error("expected nil output for unhandled event type")
+	}
+}
+
+func TestScriptHandler_AllMode(t *testing.T) {
+	globals := newTestGlobals(nil)
+
+	def := &HandlerDef{
+		OnBroadcast: &HookDef{
+			Mode: HookModeAll,
+			Rules: []*RuleDef{
+				{
+					Filter: map[string]any{"id": "alert"},
+					Steps: []*StepNode{
+						{Kind: "dialogue", Params: "handler A"},
+					},
+				},
+				{
+					Filter: map[string]any{"id": "alert"},
+					Steps: []*StepNode{
+						{Kind: "dialogue", Params: "handler B"},
+					},
+				},
+				{
+					Filter: map[string]any{"id": "other"},
+					Steps: []*StepNode{
+						{Kind: "dialogue", Params: "should not match"},
+					},
 				},
 			},
 		},
@@ -361,13 +400,57 @@ func TestScriptHandler_UnhandledEventType(t *testing.T) {
 	handler := NewScriptHandler("npc", def, nil)
 	handler.Init(&NullEntity{id: "npc"}, globals, nil)
 
-	// Send an event type that this handler doesn't handle
 	output := handler.HandleEvent(
 		&NullEntity{id: "npc"}, globals, nil,
-		&EventBroadcast{Id: "something"},
+		&EventBroadcast{Id: "alert"},
+	)
+
+	if output == nil {
+		t.Fatal("expected output")
+	}
+	if len(output.Effects) != 2 {
+		t.Fatalf("got %d effects, want 2 (both matching rules)", len(output.Effects))
+	}
+
+	batchA := output.Effects[0].(*EffectBatch)
+	dA := batchA.Effects[0].(*EffectDialogue)
+	if dA.Text != "handler A" {
+		t.Errorf("first effect: text = %q, want %q", dA.Text, "handler A")
+	}
+
+	batchB := output.Effects[1].(*EffectBatch)
+	dB := batchB.Effects[0].(*EffectDialogue)
+	if dB.Text != "handler B" {
+		t.Errorf("second effect: text = %q, want %q", dB.Text, "handler B")
+	}
+}
+
+func TestScriptHandler_AllMode_NoMatch(t *testing.T) {
+	globals := newTestGlobals(nil)
+
+	def := &HandlerDef{
+		OnBroadcast: &HookDef{
+			Mode: HookModeAll,
+			Rules: []*RuleDef{
+				{
+					Filter: map[string]any{"id": "alert"},
+					Steps: []*StepNode{
+						{Kind: "dialogue", Params: "alert"},
+					},
+				},
+			},
+		},
+	}
+
+	handler := NewScriptHandler("npc", def, nil)
+	handler.Init(&NullEntity{id: "npc"}, globals, nil)
+
+	output := handler.HandleEvent(
+		&NullEntity{id: "npc"}, globals, nil,
+		&EventBroadcast{Id: "other"},
 	)
 
 	if output != nil {
-		t.Error("expected nil output for unhandled event type")
+		t.Error("expected nil output when no rules match in all mode")
 	}
 }

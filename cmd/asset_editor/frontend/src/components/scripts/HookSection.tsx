@@ -1,22 +1,28 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import { RuleEditor } from "./RuleEditor";
-import { createEmptyRule } from "@/lib/scriptUtils";
-import type { RuleDef, ScriptSchema, EventHookDef } from "@/types/scripts";
+import { createEmptyRule, moveItem } from "@/lib/scriptUtils";
+import type { HookDef, ScriptSchema, EventHookDef } from "@/types/scripts";
 
 interface HookSectionProps {
     hookKey: string;
     hookDef?: EventHookDef;
-    rules: RuleDef[];
+    hook: HookDef;
     schema: ScriptSchema;
-    onChange: (rules: RuleDef[]) => void;
+    onChange: (hook: HookDef) => void;
     onRemove: () => void;
 }
 
-export function HookSection({ hookKey, hookDef, rules, schema, onChange, onRemove }: HookSectionProps) {
+export function HookSection({ hookKey, hookDef, hook, schema, onChange, onRemove }: HookSectionProps) {
     const [expanded, setExpanded] = useState(true);
+    const rules = hook.rules;
+    const isAllMode = hook.mode === "all";
+
+    const updateRules = (newRules: typeof rules) => {
+        onChange({ ...hook, rules: newRules });
+    };
 
     return (
         <div className="rounded-md border border-border">
@@ -26,6 +32,17 @@ export function HookSection({ hookKey, hookDef, rules, schema, onChange, onRemov
                 </button>
                 <code className="text-xs font-mono font-semibold">{hookKey}</code>
                 <Badge variant="outline" className="text-[10px] px-1 py-0">{rules.length} rule{rules.length !== 1 ? "s" : ""}</Badge>
+                <button
+                    className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                        isAllMode
+                            ? "bg-accent-teal-tint text-accent-teal"
+                            : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={() => onChange({ ...hook, mode: isAllMode ? undefined : "all" })}
+                    title={isAllMode ? "All matching rules run" : "First matching rule wins"}
+                >
+                    {isAllMode ? "all" : "first match"}
+                </button>
                 {hookDef && (
                     <span className="text-[10px] text-muted-foreground truncate">{hookDef.description}</span>
                 )}
@@ -46,16 +63,18 @@ export function HookSection({ hookKey, hookDef, rules, schema, onChange, onRemov
                             onChange={(updated) => {
                                 const next = [...rules];
                                 next[i] = updated;
-                                onChange(next);
+                                updateRules(next);
                             }}
-                            onRemove={() => onChange(rules.filter((_, j) => j !== i))}
+                            onRemove={() => updateRules(rules.filter((_, j) => j !== i))}
+                            onMoveUp={i > 0 ? () => updateRules(moveItem(rules, i, i - 1)) : undefined}
+                            onMoveDown={i < rules.length - 1 ? () => updateRules(moveItem(rules, i, i + 1)) : undefined}
                         />
                     ))}
                     <Button
                         variant="ghost"
                         size="sm"
                         className="h-6 text-xs text-muted-foreground"
-                        onClick={() => onChange([...rules, createEmptyRule()])}
+                        onClick={() => updateRules([...rules, createEmptyRule()])}
                     >
                         <Plus className="mr-1 h-3 w-3" />
                         Add rule

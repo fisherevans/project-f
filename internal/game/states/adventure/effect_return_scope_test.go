@@ -39,7 +39,7 @@ func TestReturn_AtHandlerLevel(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{
 					{Kind: "dialogue", Params: "before return"},
@@ -47,7 +47,7 @@ func TestReturn_AtHandlerLevel(t *testing.T) {
 					{Kind: "dialogue", Params: "after return"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -115,14 +115,14 @@ func TestReturn_InCustomAction_CallerContinues(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{
 					{Kind: "custom_action", Params: map[string]any{"name": "check"}},
 					{Kind: "dialogue", Params: "after action"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("npc", def, nil)
@@ -232,14 +232,14 @@ func TestReturn_InIfBranch_InsideCustomAction(t *testing.T) {
 
 	def := &HandlerDef{
 		Var: map[string]any{"door_open": true},
-		OnInteractSelf: []*RuleDef{
+		OnInteractSelf: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{
 					{Kind: "custom_action", Params: map[string]any{"name": "check_door"}},
 					{Kind: "dialogue", Params: "after check"},
 				},
 			},
-		},
+		}},
 	}
 
 	handler := NewScriptHandler("door", def, nil)

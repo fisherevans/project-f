@@ -103,7 +103,7 @@ func validateScriptFiles() {
 
 func validateHandler(handler *HandlerDef) []string {
 	var errors []string
-	allRules := [][]*RuleDef{
+	allHooks := []*HookDef{
 		handler.OnInteractSelf,
 		handler.OnInteract,
 		handler.OnZoneActivity,
@@ -116,8 +116,11 @@ func validateHandler(handler *HandlerDef) []string {
 		handler.OnMotionCompleteSelf,
 		handler.OnMotionComplete,
 	}
-	for _, rules := range allRules {
-		for _, rule := range rules {
+	for _, hook := range allHooks {
+		if !hook.HasRules() {
+			continue
+		}
+		for _, rule := range hook.Rules {
 			errors = append(errors, validateCondition(rule.When)...)
 			errors = append(errors, validateSteps(rule.Steps)...)
 		}

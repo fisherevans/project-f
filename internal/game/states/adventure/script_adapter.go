@@ -90,17 +90,16 @@ func (h *ScriptHandler) Init(thisEntity EntityReader, globals StateGlobalsReader
 			h.handlerState = s
 		}
 	}
-	// Initialize var defaults if handler defines them and state is fresh
 	if h.def.Var != nil && len(h.handlerState) == 0 {
 		for k, v := range h.def.Var {
 			h.handlerState[k] = deepCloneAny(v)
 		}
 	}
-	if len(h.def.OnInit) == 0 {
+	if !h.def.OnInit.HasRules() {
 		return nil
 	}
 	tc := h.templateContext(thisEntity, globals)
-	return h.processRules(h.def.OnInit, nil, tc, globals)
+	return h.processHook(h.def.OnInit, nil, tc, globals)
 }
 
 func (h *ScriptHandler) HandleEvent(thisEntity EntityReader, globals StateGlobalsReader, state any, event any) *HandlerOutput {
@@ -113,51 +112,58 @@ func (h *ScriptHandler) HandleEvent(thisEntity EntityReader, globals StateGlobal
 		}
 	}
 
-	var rules []*RuleDef
+	var hook *HookDef
 	tc := h.templateContext(thisEntity, globals)
 
 	switch e := event.(type) {
 	case *EventOnInteract:
-		if e.TargetId == h.entityId && len(h.def.OnInteractSelf) > 0 {
+		if e.TargetId == h.entityId && h.def.OnInteractSelf.HasRules() {
 			tc.SourceId = e.SourceId
-			if out := h.processRules(h.def.OnInteractSelf, event, tc, globals); out != nil {
+			if out := h.processHook(h.def.OnInteractSelf, event, tc, globals); out != nil {
 				return out
 			}
 		}
-		if len(h.def.OnInteract) > 0 {
+		if h.def.OnInteract.HasRules() {
 			tc.SourceId = e.SourceId
-			rules = h.def.OnInteract
+			hook = h.def.OnInteract
 		}
 	case *EventEntityZoneActivity:
-		rules = h.def.OnZoneActivity
+		hook = h.def.OnZoneActivity
 	case *EventBroadcast:
-		rules = h.def.OnBroadcast
+		hook = h.def.OnBroadcast
 	case *EventGlobalVariableUpdated:
-		rules = h.def.OnGlobalUpdated
+		hook = h.def.OnGlobalUpdated
 	case *EventOnStateEnter:
-		rules = h.def.OnStateEnter
+		hook = h.def.OnStateEnter
 	case *EventCombatComplete:
-		rules = h.def.OnCombatComplete
+		hook = h.def.OnCombatComplete
 	case *EventTimerComplete:
-		rules = h.def.OnTimerComplete
+		hook = h.def.OnTimerComplete
 	case *EventScriptedMotionComplete:
-		if e.EntityId == h.entityId && len(h.def.OnMotionCompleteSelf) > 0 {
-			if out := h.processRules(h.def.OnMotionCompleteSelf, event, tc, globals); out != nil {
+		if e.EntityId == h.entityId && h.def.OnMotionCompleteSelf.HasRules() {
+			if out := h.processHook(h.def.OnMotionCompleteSelf, event, tc, globals); out != nil {
 				return out
 			}
 		}
-		if len(h.def.OnMotionComplete) > 0 {
-			rules = h.def.OnMotionComplete
+		if h.def.OnMotionComplete.HasRules() {
+			hook = h.def.OnMotionComplete
 		}
 	}
 
-	if len(rules) == 0 {
+	if !hook.HasRules() {
 		return nil
 	}
-	return h.processRules(rules, event, tc, globals)
+	return h.processHook(hook, event, tc, globals)
 }
 
-func (h *ScriptHandler) processRules(rules []*RuleDef, event any, tc *TemplateContext, globals StateGlobalsReader) *HandlerOutput {
+func (h *ScriptHandler) processHook(hook *HookDef, event any, tc *TemplateContext, globals StateGlobalsReader) *HandlerOutput {
+	if hook.IsAllMode() {
+		return h.processRulesAll(hook.Rules, event, tc, globals)
+	}
+	return h.processRulesFirstMatch(hook.Rules, event, tc, globals)
+}
+
+func (h *ScriptHandler) processRulesFirstMatch(rules []*RuleDef, event any, tc *TemplateContext, globals StateGlobalsReader) *HandlerOutput {
 	for _, rule := range rules {
 		if !evaluateFilter(rule.Filter, event, tc) {
 			continue
@@ -174,15 +180,43 @@ func (h *ScriptHandler) processRules(rules []*RuleDef, event any, tc *TemplateCo
 		}
 
 		output := NewOutput()
-		if len(effects) > 0 {
-			plan := NewSerialPlan(effects...)
-			plan.ScopeId = scope.Id
-			output = output.WithEffects(plan)
-		}
+		plan := NewSerialPlan(effects...)
+		plan.ScopeId = scope.Id
+		output = output.WithEffects(plan)
 		output = output.WithState(h.handlerState)
 		return output
 	}
 	return nil
+}
+
+func (h *ScriptHandler) processRulesAll(rules []*RuleDef, event any, tc *TemplateContext, globals StateGlobalsReader) *HandlerOutput {
+	var allEffects []Effect
+	for _, rule := range rules {
+		if !evaluateFilter(rule.Filter, event, tc) {
+			continue
+		}
+		if !evaluateCondition(rule.When, globals, h.handlerState, tc) {
+			continue
+		}
+
+		scope := &ReturnScope{Id: nextScopeId("rule")}
+		tc.returnScope = scope
+		effects := convertSteps(rule.Steps, tc, h.sequences)
+		if len(effects) == 0 {
+			continue
+		}
+
+		plan := NewSerialPlan(effects...)
+		plan.ScopeId = scope.Id
+		allEffects = append(allEffects, plan)
+	}
+	if len(allEffects) == 0 {
+		return nil
+	}
+	output := NewOutput()
+	output = output.WithEffects(allEffects...)
+	output = output.WithState(h.handlerState)
+	return output
 }
 
 func deepCloneAny(v any) any {

@@ -40,27 +40,61 @@ type HandlerPropDef struct {
 	Description string `yaml:"description"`
 }
 
+const (
+	HookModeFirstMatch = ""
+	HookModeAll        = "all"
+)
+
+type HookDef struct {
+	Mode  string     `yaml:"mode,omitempty"`
+	Rules []*RuleDef `yaml:"rules"`
+}
+
+func (h *HookDef) HasRules() bool {
+	return h != nil && len(h.Rules) > 0
+}
+
+func (h *HookDef) IsAllMode() bool {
+	return h != nil && h.Mode == HookModeAll
+}
+
+func (h *HookDef) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.SequenceNode {
+		h.Mode = HookModeFirstMatch
+		return value.Decode(&h.Rules)
+	}
+	if value.Kind == yaml.MappingNode {
+		type hookAlias HookDef
+		var alias hookAlias
+		if err := value.Decode(&alias); err != nil {
+			return err
+		}
+		*h = HookDef(alias)
+		return nil
+	}
+	return fmt.Errorf("hook must be a list of rules or a map with mode+rules, got kind %d", value.Kind)
+}
+
 type HandlerDef struct {
 	Props                []*HandlerPropDef `yaml:"props,omitempty"`
-	Var                  map[string]any `yaml:"var,omitempty"`
-	OnInteractSelf       []*RuleDef `yaml:"on_interact_self"`
-	OnInteract           []*RuleDef `yaml:"on_interact"`
-	OnZoneActivity       []*RuleDef `yaml:"on_zone_activity"`
-	OnBroadcast          []*RuleDef `yaml:"on_broadcast"`
-	OnGlobalUpdated      []*RuleDef `yaml:"on_global_updated"`
-	OnInit               []*RuleDef `yaml:"on_init"`
-	OnStateEnter         []*RuleDef `yaml:"on_state_enter"`
-	OnCombatComplete     []*RuleDef `yaml:"on_combat_complete"`
-	OnTimerComplete      []*RuleDef `yaml:"on_timer_complete"`
-	OnMotionCompleteSelf []*RuleDef `yaml:"on_motion_complete_self"`
-	OnMotionComplete     []*RuleDef `yaml:"on_motion_complete"`
+	Var                  map[string]any    `yaml:"var,omitempty"`
+	OnInteractSelf       *HookDef `yaml:"on_interact_self,omitempty"`
+	OnInteract           *HookDef `yaml:"on_interact,omitempty"`
+	OnZoneActivity       *HookDef `yaml:"on_zone_activity,omitempty"`
+	OnBroadcast          *HookDef `yaml:"on_broadcast,omitempty"`
+	OnGlobalUpdated      *HookDef `yaml:"on_global_updated,omitempty"`
+	OnInit               *HookDef `yaml:"on_init,omitempty"`
+	OnStateEnter         *HookDef `yaml:"on_state_enter,omitempty"`
+	OnCombatComplete     *HookDef `yaml:"on_combat_complete,omitempty"`
+	OnTimerComplete      *HookDef `yaml:"on_timer_complete,omitempty"`
+	OnMotionCompleteSelf *HookDef `yaml:"on_motion_complete_self,omitempty"`
+	OnMotionComplete     *HookDef `yaml:"on_motion_complete,omitempty"`
 }
 
 type RuleDef struct {
-	When     *ConditionNode     `yaml:"when"`
-	Filter   map[string]any     `yaml:"filter"`
-	Steps    []*StepNode        `yaml:"steps"`
-	SetState map[string]any     `yaml:"set_state"`
+	When   *ConditionNode `yaml:"when"`
+	Filter map[string]any `yaml:"filter"`
+	Steps  []*StepNode    `yaml:"steps"`
 }
 
 type StepNode struct {

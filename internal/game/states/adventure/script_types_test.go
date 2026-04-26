@@ -23,10 +23,10 @@ handlers:
 	if h == nil {
 		t.Fatal("handler 'test_entity' not found")
 	}
-	if len(h.OnInteractSelf) != 1 {
-		t.Fatalf("expected 1 rule, got %d", len(h.OnInteractSelf))
+	if len(h.OnInteractSelf.Rules) != 1 {
+		t.Fatalf("expected 1 rule, got %d", len(h.OnInteractSelf.Rules))
 	}
-	rule := h.OnInteractSelf[0]
+	rule := h.OnInteractSelf.Rules[0]
 	if len(rule.Steps) != 1 {
 		t.Fatalf("expected 1 step, got %d", len(rule.Steps))
 	}
@@ -62,17 +62,17 @@ handlers:
 		t.Fatalf("parse error: %v", err)
 	}
 	h := sf.Handlers["test"]
-	if len(h.OnInteractSelf) != 2 {
-		t.Fatalf("expected 2 rules, got %d", len(h.OnInteractSelf))
+	if len(h.OnInteractSelf.Rules) != 2 {
+		t.Fatalf("expected 2 rules, got %d", len(h.OnInteractSelf.Rules))
 	}
-	r1 := h.OnInteractSelf[0]
+	r1 := h.OnInteractSelf.Rules[0]
 	if r1.When == nil {
 		t.Fatal("expected when condition on rule 1")
 	}
 	if r1.When.Kind != "global_eq" {
 		t.Errorf("expected 'global_eq', got %q", r1.When.Kind)
 	}
-	r2 := h.OnInteractSelf[1]
+	r2 := h.OnInteractSelf.Rules[1]
 	if r2.When == nil {
 		t.Fatal("expected when condition on rule 2")
 	}
@@ -100,7 +100,7 @@ handlers:
 		t.Fatalf("parse error: %v", err)
 	}
 	h := sf.Handlers["test"]
-	r := h.OnInteractSelf[0]
+	r := h.OnInteractSelf.Rules[0]
 	if r.When.Kind != "all" {
 		t.Errorf("expected 'all', got %q", r.When.Kind)
 	}
@@ -130,7 +130,7 @@ handlers:
 		t.Fatalf("parse error: %v", err)
 	}
 	h := sf.Handlers["test"]
-	r := h.OnZoneActivity[0]
+	r := h.OnZoneActivity.Rules[0]
 	if r.Filter["zone"] != "my_zone" {
 		t.Errorf("expected zone 'my_zone', got %v", r.Filter["zone"])
 	}
@@ -156,7 +156,7 @@ handlers:
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	steps := sf.Handlers["test"].OnInteractSelf[0].Steps
+	steps := sf.Handlers["test"].OnInteractSelf.Rules[0].Steps
 	if len(steps) != 4 {
 		t.Fatalf("expected 4 steps, got %d", len(steps))
 	}
@@ -191,7 +191,7 @@ handlers:
 	if err != nil {
 		t.Fatalf("parse error: %v", err)
 	}
-	steps := sf.Handlers["test"].OnInteractSelf[0].Steps
+	steps := sf.Handlers["test"].OnInteractSelf.Rules[0].Steps
 	if len(steps) != 1 {
 		t.Fatalf("expected 1 step, got %d", len(steps))
 	}
@@ -214,20 +214,19 @@ handlers:
 	}
 }
 
-func TestParseScriptFile_HandlerState(t *testing.T) {
+func TestParseScriptFile_MultipleHooks(t *testing.T) {
 	yaml := `
 handlers:
   test:
     on_init:
-      - set_state:
-          ready: true
-        steps: []
+      - steps:
+          - set_var:
+              key: ready
+              value: "true"
     on_zone_activity:
       - when:
           handler_state_eq:
             ready: true
-        set_state:
-          ready: false
         steps:
           - dialogue: "Triggered"
 `
@@ -236,16 +235,48 @@ handlers:
 		t.Fatalf("parse error: %v", err)
 	}
 	h := sf.Handlers["test"]
-	if len(h.OnInit) != 1 {
-		t.Fatalf("expected 1 on_init rule, got %d", len(h.OnInit))
+	if len(h.OnInit.Rules) != 1 {
+		t.Fatalf("expected 1 on_init rule, got %d", len(h.OnInit.Rules))
 	}
-	initRule := h.OnInit[0]
-	if initRule.SetState["ready"] != true {
-		t.Errorf("expected set_state ready=true, got %v", initRule.SetState["ready"])
+	initRule := h.OnInit.Rules[0]
+	if len(initRule.Steps) != 1 {
+		t.Fatalf("expected 1 step in on_init, got %d", len(initRule.Steps))
 	}
-	zoneRule := h.OnZoneActivity[0]
-	if zoneRule.SetState["ready"] != false {
-		t.Errorf("expected set_state ready=false, got %v", zoneRule.SetState["ready"])
+	zoneRule := h.OnZoneActivity.Rules[0]
+	if zoneRule.When == nil {
+		t.Fatal("expected when condition on zone rule")
+	}
+}
+
+func TestParseScriptFile_HookWithMode(t *testing.T) {
+	yaml := `
+handlers:
+  test:
+    on_broadcast:
+      mode: all
+      rules:
+        - filter:
+            id: alert
+          steps:
+            - dialogue: "handler A"
+        - filter:
+            id: alert
+          steps:
+            - dialogue: "handler B"
+`
+	sf, err := ParseScriptFile([]byte(yaml))
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+	h := sf.Handlers["test"]
+	if h.OnBroadcast == nil {
+		t.Fatal("expected on_broadcast hook")
+	}
+	if h.OnBroadcast.Mode != HookModeAll {
+		t.Errorf("mode = %q, want %q", h.OnBroadcast.Mode, HookModeAll)
+	}
+	if len(h.OnBroadcast.Rules) != 2 {
+		t.Fatalf("expected 2 rules, got %d", len(h.OnBroadcast.Rules))
 	}
 }
 

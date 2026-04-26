@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
 import { StepList } from "./StepList";
 import { ConditionEditor, createEmptyCondition } from "./ConditionEditor";
 import { ZoneIdInput } from "./inputs/ZoneIdInput";
@@ -13,18 +13,32 @@ interface RuleEditorProps {
     schema: ScriptSchema;
     onChange: (rule: RuleDef) => void;
     onRemove: () => void;
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
 }
 
-export function RuleEditor({ rule, ruleIndex, hookDef, schema, onChange, onRemove }: RuleEditorProps) {
+export function RuleEditor({ rule, ruleIndex, hookDef, schema, onChange, onRemove, onMoveUp, onMoveDown }: RuleEditorProps) {
     const hasFilterFields = hookDef?.filterFields && hookDef.filterFields.length > 0;
 
     return (
         <div className="rounded border border-border/50 bg-muted/10">
             <div className="flex items-center justify-between border-b border-border/30 px-2 py-1">
                 <span className="text-xs font-medium text-muted-foreground">Rule {ruleIndex + 1}</span>
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive" onClick={onRemove}>
-                    <Trash2 className="h-3 w-3" />
-                </Button>
+                <div className="flex items-center">
+                    {onMoveUp && (
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={onMoveUp}>
+                            <ArrowUp className="h-3 w-3" />
+                        </Button>
+                    )}
+                    {onMoveDown && (
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={onMoveDown}>
+                            <ArrowDown className="h-3 w-3" />
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive" onClick={onRemove}>
+                        <Trash2 className="h-3 w-3" />
+                    </Button>
+                </div>
             </div>
             <div className="space-y-2 p-2">
                 {hasFilterFields && (
