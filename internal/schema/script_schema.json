@@ -1576,7 +1576,7 @@
     },
     {
       "pattern": "{{<param>}}",
-      "description": "Custom parameter from a sequence ref's 'with' map or a sequence's declared params"
+      "description": "Custom parameter from a sequence ref's 'params' map or a custom action's declared params"
     }
   ]
 }

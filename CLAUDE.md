@@ -222,10 +222,23 @@ string lists. Co-locate consts, custom actions, and handlers in the same
 file when they're only used by that file's handlers.
 
 Handlers have event hook fields (`on_interact_self`, `on_broadcast`, etc.)
-containing rules with optional filters, conditions, steps (effects), and
-handler state mutations. Handlers can declare a `var` block with initial
-values for handler-local state, mutable via the `set_var` step and
-accessible as `var.*` in expressions.
+containing rules with optional filters, conditions, and steps (effects).
+Hooks default to `first_match` mode (first matching rule wins). Set
+`mode: all` to run every matching rule:
+
+```yaml
+on_interact_self:
+  mode: all
+  rules:
+    - when: ...
+      steps: [...]
+    - when: ...
+      steps: [...]
+```
+
+The legacy list-of-rules format is equivalent to `first_match`. Handlers
+can declare a `var` block with initial values for handler-local state,
+mutable via the `set_var` step and accessible as `var.*` in expressions.
 
 **Expression engine:** String interpolation uses `expr-lang/expr`
 (`github.com/expr-lang/expr`). Expressions in `{{...}}` blocks are
@@ -237,8 +250,9 @@ parameters). Built-in functions: `len`, `min`, `max`, `clamp`, `str`,
 `int`, `float`, `rand`, `randf`, `keys`, `values`, `hasKey`.
 
 **Control flow steps:** `if` (conditional with then/else), `switch`
-(multi-branch matching), `while` (loop with safety cap). Conditions are
-expr expressions evaluated at runtime.
+(multi-branch matching), `while` (loop with safety cap), `return` (exit
+current scope - custom action or handler rule). Conditions are expr
+expressions evaluated at runtime.
 
 **Custom actions:** YAML-defined reusable step sequences with parameters.
 Defined in `custom_actions:` blocks, invoked via the `custom_action` step

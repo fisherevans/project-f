@@ -882,5 +882,5 @@ Available in all string values via `{{variable}}` syntax.
 - `{{source}}` - ID of the entity that triggered the event (e.g. the interacting entity)
 - `{{instance_id}}` - Unique ID for the current game session (changes on restart)
 - `{{prop.*}}` - Entity property value from the Tiled map (e.g. {{prop.chatters}} reads the 'chatters' custom property)
-- `{{<param>}}` - Custom parameter from a sequence ref's 'with' map or a sequence's declared params
+- `{{<param>}}` - Custom parameter from a sequence ref's 'params' map or a custom action's declared params
 

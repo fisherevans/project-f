@@ -323,6 +323,70 @@ func TestReturn_InWhileLoop(t *testing.T) {
 	}
 }
 
+func TestReturn_InAllModeHook(t *testing.T) {
+	h := newPlanTestHarness()
+	globals := newTestGlobals(nil)
+
+	def := &HandlerDef{
+		OnBroadcast: &HookDef{
+			Mode: HookModeAll,
+			Rules: []*RuleDef{
+				{
+					Filter: map[string]any{"id": "alert"},
+					Steps: []*StepNode{
+						{Kind: "dialogue", Params: "rule A before"},
+						{Kind: "return", Params: true},
+						{Kind: "dialogue", Params: "rule A after"},
+					},
+				},
+				{
+					Filter: map[string]any{"id": "alert"},
+					Steps: []*StepNode{
+						{Kind: "dialogue", Params: "rule B"},
+					},
+				},
+			},
+		},
+	}
+
+	handler := NewScriptHandler("npc", def, nil)
+	handler.Init(&NullEntity{id: "npc"}, globals, nil)
+
+	output := handler.HandleEvent(
+		&NullEntity{id: "npc"}, globals, nil,
+		&EventBroadcast{Id: "alert"},
+	)
+
+	if output == nil {
+		t.Fatal("expected output")
+	}
+
+	for _, e := range output.Effects {
+		e.FillDefaultsAndValidate()
+		h.pe.StartPlan(nil, e.(*EffectBatch))
+	}
+
+	dialogues := collectDialogues(h)
+	has := func(text string) bool {
+		for _, d := range dialogues {
+			if d == text {
+				return true
+			}
+		}
+		return false
+	}
+
+	if !has("rule A before") {
+		t.Error("'rule A before' should be dispatched")
+	}
+	if has("rule A after") {
+		t.Error("'rule A after' should NOT be dispatched (return exits rule A)")
+	}
+	if !has("rule B") {
+		t.Error("'rule B' should be dispatched (return in rule A does not affect rule B)")
+	}
+}
+
 func TestReturn_NilScope(t *testing.T) {
 	h := newPlanTestHarness()
 

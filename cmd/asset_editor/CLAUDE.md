@@ -196,7 +196,7 @@ src/
       HandlerList.tsx          # left panel: handler names, add/rename/delete + sequences/consts/custom actions
       HandlerDetail.tsx        # right panel: var section + hook sections for selected handler
       HookSection.tsx          # collapsible section per event hook with rules
-      RuleEditor.tsx           # single rule: filter + condition + set_state + steps
+      RuleEditor.tsx           # single rule: filter + condition + steps
       StepList.tsx             # ordered step list with add/remove/reorder
       StepEditor.tsx           # single step: kind badge + inline/expanded params + switch cases
       StepKindPicker.tsx       # schema-driven step kind selector grouped by category

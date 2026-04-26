@@ -280,6 +280,77 @@ handlers:
 	}
 }
 
+func TestHookDef_YAMLRoundTrip_ModePreserved(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantMode string
+		wantLen  int
+	}{
+		{
+			name: "list format defaults to first_match",
+			input: `
+handlers:
+  test:
+    on_interact_self:
+      - steps:
+          - dialogue: "hello"
+`,
+			wantMode: HookModeFirstMatch,
+			wantLen:  1,
+		},
+		{
+			name: "map format with mode all",
+			input: `
+handlers:
+  test:
+    on_interact_self:
+      mode: all
+      rules:
+        - steps:
+            - dialogue: "hello"
+        - steps:
+            - dialogue: "world"
+`,
+			wantMode: HookModeAll,
+			wantLen:  2,
+		},
+		{
+			name: "map format with explicit first_match",
+			input: `
+handlers:
+  test:
+    on_interact_self:
+      mode: first_match
+      rules:
+        - steps:
+            - dialogue: "hello"
+`,
+			wantMode: "first_match",
+			wantLen:  1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sf, err := ParseScriptFile([]byte(tt.input))
+			if err != nil {
+				t.Fatalf("parse error: %v", err)
+			}
+			hook := sf.Handlers["test"].OnInteractSelf
+			if hook == nil {
+				t.Fatal("expected on_interact_self hook")
+			}
+			if hook.Mode != tt.wantMode {
+				t.Errorf("mode = %q, want %q", hook.Mode, tt.wantMode)
+			}
+			if len(hook.Rules) != tt.wantLen {
+				t.Errorf("rules count = %d, want %d", len(hook.Rules), tt.wantLen)
+			}
+		})
+	}
+}
+
 func TestParseScriptFile_Sequences(t *testing.T) {
 	yaml := `
 sequences:
