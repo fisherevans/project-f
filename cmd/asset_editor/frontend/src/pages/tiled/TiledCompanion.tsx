@@ -1,14 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import YAML from "yaml";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useScripts, useScript } from "@/api/scripts";
+import { useScripts, useScript, useSaveScript, useScriptSchema, useTiledUsages } from "@/api/scripts";
 import { useTiledBridgeStatus, sendTiledCommand, tiledBridgeKeys } from "@/api/tiled-bridge";
 import type { TiledSelection, TiledSelectedObject } from "@/api/tiled-bridge";
-import type { HandlerPropDef, ScriptFileEntry } from "@/types/scripts";
-import { parseScript } from "@/lib/scriptUtils";
+import type { HandlerPropDef, ScriptFileEntry, ParsedScript, HandlerDef, ScriptSchema } from "@/types/scripts";
+import { parseScript, stringifyScript } from "@/lib/scriptUtils";
+import { HandlerDetail } from "@/components/scripts/HandlerDetail";
+import { ExprContextProvider } from "@/components/scripts/ExprContext";
+import type { CrossFileEntry } from "@/components/scripts/ExprContext";
 import {
     Circle,
     ExternalLink,
@@ -19,6 +23,9 @@ import {
     PlugZap,
     ChevronDown,
     ChevronRight,
+    Save,
+    Users,
+    Crosshair,
 } from "lucide-react";
 
 export function TiledCompanion() {
@@ -185,6 +192,9 @@ function SingleObjectView({ object }: { object: TiledSelectedObject }) {
                     />
                 )}
                 {!isZone && scriptPath && <HandlerPropsSection object={object} scriptPath={scriptPath} scriptRef={scriptRef} />}
+                {!isZone && scriptPath && <HandlerDefinitionSection scriptPath={scriptPath} scriptRef={scriptRef} scripts={scripts ?? []} />}
+                <StructuredConfigSection object={object} />
+                <RelatedEntitiesSection object={object} scriptRef={scriptRef} />
                 <AllPropertiesSection object={object} />
             </div>
         </ScrollArea>
@@ -456,6 +466,478 @@ function PropEditor({ prop, object }: { prop: HandlerPropDef; object: TiledSelec
     );
 }
 
+// --- Handler Definition Section (inline editor) ---
+
+function HandlerDefinitionSection({
+    scriptPath,
+    scriptRef,
+    scripts,
+}: {
+    scriptPath: string;
+    scriptRef: string;
+    scripts: ScriptFileEntry[];
+}) {
+    const { data: scriptDetail } = useScript(scriptPath);
+    const { data: schema } = useScriptSchema();
+    const { data: allScripts } = useScripts();
+    const saveScript = useSaveScript();
+
+    const [expanded, setExpanded] = useState(false);
+    const [editedParsed, setEditedParsed] = useState<ParsedScript | null>(null);
+    const [dirty, setDirty] = useState(false);
+
+    // Parse the script when data arrives or changes
+    const baseParsed = useMemo((): ParsedScript | null => {
+        if (!scriptDetail?.rawYaml) return null;
+        try {
+            return parseScript(scriptDetail.rawYaml);
+        } catch {
+            return null;
+        }
+    }, [scriptDetail]);
+
+    // Reset edited state when the base changes (e.g. after save or reload)
+    useEffect(() => {
+        setEditedParsed(null);
+        setDirty(false);
+    }, [baseParsed]);
+
+    const currentParsed = editedParsed ?? baseParsed;
+    const handler = currentParsed?.handlers[scriptRef] ?? null;
+
+    const handleChange = useCallback(
+        (updated: HandlerDef) => {
+            if (!currentParsed) return;
+            const next: ParsedScript = { ...currentParsed, handlers: { ...currentParsed.handlers, [scriptRef]: updated } };
+            setEditedParsed(next);
+            setDirty(true);
+        },
+        [currentParsed, scriptRef],
+    );
+
+    const handleSave = useCallback(() => {
+        if (!editedParsed) return;
+        const content = stringifyScript(editedParsed);
+        saveScript.mutate(
+            { path: scriptPath, content },
+            { onSuccess: () => setDirty(false) },
+        );
+    }, [editedParsed, scriptPath, saveScript]);
+
+    // ExprContext values
+    const handlerVarKeys = useMemo(() => {
+        if (!handler?.var) return [];
+        return Object.keys(handler.var);
+    }, [handler]);
+
+    const constKeys = useMemo(() => {
+        if (!currentParsed?.consts) return [];
+        return Object.keys(currentParsed.consts);
+    }, [currentParsed]);
+
+    const { otherConstKeys, otherCustomActionNames } = useMemo(() => {
+        if (!allScripts) return { otherConstKeys: [] as CrossFileEntry[], otherCustomActionNames: [] as CrossFileEntry[] };
+        const localConsts = new Set(currentParsed?.consts ? Object.keys(currentParsed.consts) : []);
+        const localActions = new Set(currentParsed?.custom_actions ? Object.keys(currentParsed.custom_actions) : []);
+        const consts: CrossFileEntry[] = [];
+        const actions: CrossFileEntry[] = [];
+        for (const s of allScripts) {
+            if (s.path === scriptPath) continue;
+            for (const name of s.constNames ?? []) {
+                if (!localConsts.has(name)) consts.push({ name, file: s.path });
+            }
+            for (const name of s.customActionNames ?? []) {
+                if (!localActions.has(name)) actions.push({ name, file: s.path });
+            }
+        }
+        return { otherConstKeys: consts, otherCustomActionNames: actions };
+    }, [allScripts, scriptPath, currentParsed?.consts, currentParsed?.custom_actions]);
+
+    if (!handler || !schema) return null;
+
+    return (
+        <div className="space-y-2">
+            <button
+                className="flex items-center gap-1 text-sm font-semibold border-b border-border pb-1 w-full text-left"
+                onClick={() => setExpanded(!expanded)}
+            >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Handler Definition
+                {dirty && <span className="text-[10px] font-normal text-accent-amber ml-1">(unsaved)</span>}
+            </button>
+            {expanded && (
+                <div className="space-y-2">
+                    {dirty && (
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                className="h-6 text-[10px] px-2 gap-1"
+                                disabled={saveScript.isPending}
+                                onClick={handleSave}
+                            >
+                                <Save className="h-3 w-3" />
+                                {saveScript.isPending ? "Saving..." : "Save"}
+                            </Button>
+                            <span className="text-[10px] text-muted-foreground">Changes to {scriptPath}</span>
+                        </div>
+                    )}
+                    <div className="border border-border rounded-md overflow-hidden">
+                        <ExprContextProvider
+                            handlerVarKeys={handlerVarKeys}
+                            constKeys={constKeys}
+                            otherConstKeys={otherConstKeys}
+                            otherCustomActionNames={otherCustomActionNames}
+                            customActions={currentParsed?.custom_actions}
+                        >
+                            <HandlerDetail
+                                handlerName={scriptRef}
+                                handler={handler}
+                                schema={schema}
+                                onChange={handleChange}
+                            />
+                        </ExprContextProvider>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- Structured Config Section ---
+
+interface PresenceConfig {
+    block_ingress?: boolean;
+    is_interactable?: boolean;
+    impedance?: number;
+}
+
+interface AnimationEntry {
+    name: string;
+    colorMask?: string;
+    offset?: { x: number; y: number };
+}
+
+interface LightEntry {
+    color: string;
+    size: number;
+    modifier?: string;
+}
+
+interface RenderConfig {
+    mode?: string;
+    animations?: Record<string, AnimationEntry[]>;
+    lights?: Record<string, LightEntry[]>;
+}
+
+function StructuredConfigSection({ object }: { object: TiledSelectedObject }) {
+    const hasPresence = "presence_config" in object.properties;
+    const hasRender = "render_config" in object.properties;
+
+    if (!hasPresence && !hasRender) return null;
+
+    return (
+        <div className="space-y-4">
+            {hasPresence && <PresenceConfigEditor object={object} />}
+            {hasRender && <RenderConfigEditor object={object} />}
+        </div>
+    );
+}
+
+function PresenceConfigEditor({ object }: { object: TiledSelectedObject }) {
+    const [expanded, setExpanded] = useState(true);
+
+    const config = useMemo((): PresenceConfig => {
+        try {
+            const raw = object.properties.presence_config;
+            if (!raw) return {};
+            return (YAML.parse(raw) ?? {}) as PresenceConfig;
+        } catch {
+            return {};
+        }
+    }, [object.properties.presence_config]);
+
+    const commitConfig = useCallback(
+        (updated: PresenceConfig) => {
+            const yamlStr = YAML.stringify(updated, { indent: 2, lineWidth: 0 }).trim();
+            sendTiledCommand({
+                objectId: object.id,
+                action: "setProperty",
+                name: "presence_config",
+                value: yamlStr,
+            });
+        },
+        [object.id],
+    );
+
+    return (
+        <div className="space-y-2">
+            <button
+                className="flex items-center gap-1 text-sm font-semibold border-b border-border pb-1 w-full text-left"
+                onClick={() => setExpanded(!expanded)}
+            >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Presence Config
+            </button>
+            {expanded && (
+                <div className="space-y-2 pl-1">
+                    <label className="flex items-center gap-2 text-xs">
+                        <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5"
+                            checked={config.block_ingress ?? true}
+                            onChange={(e) => commitConfig({ ...config, block_ingress: e.target.checked })}
+                        />
+                        <span>block_ingress</span>
+                        <span className="text-[10px] text-muted-foreground">(default: true)</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs">
+                        <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5"
+                            checked={config.is_interactable ?? false}
+                            onChange={(e) => commitConfig({ ...config, is_interactable: e.target.checked })}
+                        />
+                        <span>is_interactable</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs shrink-0">impedance</label>
+                        <Input
+                            className="h-6 w-20 text-xs font-mono"
+                            type="number"
+                            step="0.1"
+                            value={config.impedance ?? ""}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                const next = { ...config };
+                                if (v === "") {
+                                    delete next.impedance;
+                                } else {
+                                    next.impedance = parseFloat(v);
+                                }
+                                commitConfig(next);
+                            }}
+                            placeholder="0"
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function RenderConfigEditor({ object }: { object: TiledSelectedObject }) {
+    const [expanded, setExpanded] = useState(true);
+
+    const config = useMemo((): RenderConfig => {
+        try {
+            const raw = object.properties.render_config;
+            if (!raw) return {};
+            return (YAML.parse(raw) ?? {}) as RenderConfig;
+        } catch {
+            return {};
+        }
+    }, [object.properties.render_config]);
+
+    const commitConfig = useCallback(
+        (updated: RenderConfig) => {
+            const yamlStr = YAML.stringify(updated, { indent: 2, lineWidth: 0 }).trim();
+            sendTiledCommand({
+                objectId: object.id,
+                action: "setProperty",
+                name: "render_config",
+                value: yamlStr,
+            });
+        },
+        [object.id],
+    );
+
+    return (
+        <div className="space-y-2">
+            <button
+                className="flex items-center gap-1 text-sm font-semibold border-b border-border pb-1 w-full text-left"
+                onClick={() => setExpanded(!expanded)}
+            >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Render Config
+            </button>
+            {expanded && (
+                <div className="space-y-2 pl-1">
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs shrink-0">mode</label>
+                        <Input
+                            className="h-6 flex-1 text-xs font-mono"
+                            value={config.mode ?? ""}
+                            onChange={(e) => commitConfig({ ...config, mode: e.target.value || undefined })}
+                            placeholder="default"
+                        />
+                    </div>
+                    {config.animations && Object.keys(config.animations).length > 0 && (
+                        <div className="space-y-1">
+                            <span className="text-[11px] font-medium">animations</span>
+                            {Object.entries(config.animations).map(([mode, entries]) => (
+                                <div key={mode} className="ml-2 space-y-0.5">
+                                    <span className="text-[10px] font-mono text-accent-teal">{mode}</span>
+                                    {entries.map((entry, i) => (
+                                        <div key={i} className="flex items-center gap-1 ml-2 text-[10px] font-mono text-muted-foreground">
+                                            <span>{entry.name}</span>
+                                            {entry.colorMask && <span className="text-accent-amber">mask={entry.colorMask}</span>}
+                                            {entry.offset && <span>+({entry.offset.x},{entry.offset.y})</span>}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {config.lights && Object.keys(config.lights).length > 0 && (
+                        <div className="space-y-1">
+                            <span className="text-[11px] font-medium">lights</span>
+                            {Object.entries(config.lights).map(([mode, entries]) => (
+                                <div key={mode} className="ml-2 space-y-0.5">
+                                    <span className="text-[10px] font-mono text-accent-teal">{mode}</span>
+                                    {entries.map((entry, i) => (
+                                        <div key={i} className="flex items-center gap-1 ml-2 text-[10px] font-mono text-muted-foreground">
+                                            <span className="text-accent-amber">{entry.color}</span>
+                                            <span>size={entry.size}</span>
+                                            {entry.modifier && <span>mod={entry.modifier}</span>}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- Related Entities Section ---
+
+function RelatedEntitiesSection({ object, scriptRef }: { object: TiledSelectedObject; scriptRef: string }) {
+    const { data: usages } = useTiledUsages();
+    const [expanded, setExpanded] = useState(false);
+
+    const { sameHandler, nearby } = useMemo(() => {
+        const sameHandler: { mapFile: string; objectId: number; entityId?: string; objectType?: string; x: number; y: number }[] = [];
+        const nearby: { mapFile: string; objectId: number; entityId?: string; objectType?: string; x: number; y: number; distance: number; handlerName?: string }[] = [];
+
+        if (!usages) return { sameHandler, nearby };
+
+        // Collect entities with the same handler
+        if (scriptRef) {
+            const usage = usages.find((u) => u.handlerName === scriptRef);
+            if (usage) {
+                for (const ent of usage.entities) {
+                    if (ent.objectId === object.id) continue;
+                    sameHandler.push({
+                        mapFile: ent.mapFile,
+                        objectId: ent.objectId,
+                        entityId: ent.entityId,
+                        objectType: ent.objectType,
+                        x: ent.x,
+                        y: ent.y,
+                    });
+                }
+            }
+        }
+
+        // Collect nearby entities (within 100px)
+        const threshold = 100;
+        for (const usage of usages) {
+            for (const ent of usage.entities) {
+                if (ent.objectId === object.id) continue;
+                const dx = ent.x - object.x;
+                const dy = ent.y - object.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist <= threshold) {
+                    // Avoid duplicates if already in sameHandler
+                    const alreadyListed = sameHandler.some((s) => s.objectId === ent.objectId && s.mapFile === ent.mapFile);
+                    if (!alreadyListed) {
+                        nearby.push({
+                            mapFile: ent.mapFile,
+                            objectId: ent.objectId,
+                            entityId: ent.entityId,
+                            objectType: ent.objectType,
+                            x: ent.x,
+                            y: ent.y,
+                            distance: Math.round(dist),
+                            handlerName: usage.handlerName,
+                        });
+                    }
+                }
+            }
+        }
+
+        nearby.sort((a, b) => a.distance - b.distance);
+        return { sameHandler, nearby };
+    }, [usages, scriptRef, object.id, object.x, object.y]);
+
+    const total = sameHandler.length + nearby.length;
+    if (total === 0) return null;
+
+    return (
+        <div className="space-y-2">
+            <button
+                className="flex items-center gap-1 text-sm font-semibold border-b border-border pb-1 w-full text-left"
+                onClick={() => setExpanded(!expanded)}
+            >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Related Entities
+                <span className="text-[10px] font-normal text-muted-foreground ml-1">({total})</span>
+            </button>
+            {expanded && (
+                <div className="space-y-3">
+                    {sameHandler.length > 0 && (
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-accent-violet">
+                                <Users className="h-3 w-3" />
+                                Same handler ({sameHandler.length})
+                            </div>
+                            {sameHandler.map((ent, i) => (
+                                <div key={i} className="flex items-center gap-2 text-[10px] pl-2">
+                                    <span className="font-mono text-muted-foreground">obj#{ent.objectId}</span>
+                                    {ent.objectType && (
+                                        <span className="px-1 rounded bg-accent-teal-tint text-accent-teal">{ent.objectType}</span>
+                                    )}
+                                    {ent.entityId && (
+                                        <span className="font-mono text-foreground">{ent.entityId}</span>
+                                    )}
+                                    <span className="text-muted-foreground ml-auto">({Math.round(ent.x)}, {Math.round(ent.y)})</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {nearby.length > 0 && (
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-[11px] font-medium text-accent-orange">
+                                <Crosshair className="h-3 w-3" />
+                                Nearby ({nearby.length})
+                            </div>
+                            {nearby.map((ent, i) => (
+                                <div key={i} className="flex items-center gap-2 text-[10px] pl-2">
+                                    <span className="font-mono text-muted-foreground">obj#{ent.objectId}</span>
+                                    {ent.objectType && (
+                                        <span className="px-1 rounded bg-accent-teal-tint text-accent-teal">{ent.objectType}</span>
+                                    )}
+                                    {ent.entityId && (
+                                        <span className="font-mono text-foreground">{ent.entityId}</span>
+                                    )}
+                                    {ent.handlerName && (
+                                        <span className="font-mono text-accent-violet">{ent.handlerName}</span>
+                                    )}
+                                    <span className="text-muted-foreground ml-auto">{ent.distance}px</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- Zone Section ---
+
 function ZoneSection({
     object,
     zoneId,
@@ -537,6 +1019,8 @@ function ZoneSection({
         </div>
     );
 }
+
+// --- All Properties Section ---
 
 function AllPropertiesSection({ object }: { object: TiledSelectedObject }) {
     const [expanded, setExpanded] = useState(false);

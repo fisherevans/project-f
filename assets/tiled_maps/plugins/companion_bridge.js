@@ -1,15 +1,12 @@
 // Companion Bridge - syncs Tiled selection state with the asset editor's
-// companion page via HTTP. The asset editor server at localhost:8090 acts
-// as the message broker.
+// companion page via HTTP (using curl). The asset editor server at
+// localhost:8090 acts as the message broker.
 //
 // Install: run sync.sh to copy to Tiled's extensions directory.
 // Requires the asset editor server to be running.
 
-const BRIDGE_URL = "http://localhost:8090/api/v1/tiled-bridge";
-const POLL_INTERVAL_MS = 300;
-
+var BRIDGE_URL = "http://localhost:8090/api/v1/tiled-bridge";
 var bridgeEnabled = true;
-var pollTimer = null;
 
 function getMapFile() {
     var a = tiled.activeAsset;
@@ -28,10 +25,9 @@ function serializeSelectedObjects() {
     for (var i = 0; i < objects.length; i++) {
         var obj = objects[i];
         var props = {};
-        var propNames = Object.keys(obj.resolvedProperties());
-        for (var j = 0; j < propNames.length; j++) {
-            var name = propNames[j];
-            var val = obj.resolvedProperty(name);
+        var resolved = obj.resolvedProperties();
+        for (var name in resolved) {
+            var val = resolved[name];
             if (val !== undefined && val !== null && val !== "") {
                 props[name] = String(val);
             }
@@ -50,34 +46,60 @@ function serializeSelectedObjects() {
     return result;
 }
 
+function httpPost(path, payload) {
+    var proc = new Process();
+    try {
+        proc.exec("curl", [
+            "-s", "-X", "POST",
+            "-H", "Content-Type: application/json",
+            "-d", payload,
+            "--connect-timeout", "1",
+            "--max-time", "2",
+            BRIDGE_URL + path
+        ]);
+    } catch (e) {
+        // Server not running - silently ignore
+    }
+    proc.close();
+}
+
+function httpGet(path) {
+    var proc = new Process();
+    var output = "";
+    try {
+        proc.exec("curl", [
+            "-s",
+            "--connect-timeout", "1",
+            "--max-time", "2",
+            BRIDGE_URL + path
+        ]);
+        output = proc.readStdOut();
+    } catch (e) {
+        // Server not running - silently ignore
+    }
+    proc.close();
+    return output;
+}
+
 function pushSelection() {
     if (!bridgeEnabled) return;
     var payload = JSON.stringify({
         mapFile: getMapFile(),
         objects: serializeSelectedObjects()
     });
-    try {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", BRIDGE_URL + "/selection", false);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.send(payload);
-    } catch (e) {
-        // Server not running - silently ignore
-    }
+    httpPost("/selection", payload);
+    pollCommands();
 }
 
 function pollCommands() {
     if (!bridgeEnabled) return;
+    var output = httpGet("/commands");
+    if (!output || output.trim() === "") return;
     try {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", BRIDGE_URL + "/commands", false);
-        xhr.send();
-        if (xhr.status === 200) {
-            var commands = JSON.parse(xhr.responseText);
-            applyCommands(commands);
-        }
+        var commands = JSON.parse(output);
+        applyCommands(commands);
     } catch (e) {
-        // Server not running - silently ignore
+        // parse error or empty response
     }
 }
 
@@ -86,7 +108,6 @@ function applyCommands(commands) {
     var a = tiled.activeAsset;
     if (!a) return;
 
-    // Build object lookup from all object layers
     var objectMap = {};
     for (var li = 0; li < a.layerCount; li++) {
         var layer = a.layerAt(li);
@@ -114,22 +135,12 @@ function applyCommands(commands) {
         }
     }
 
-    // Push updated selection state after applying commands
-    pushSelection();
-}
-
-function startPolling() {
-    if (pollTimer) return;
-    pollTimer = setInterval(function () {
-        pollCommands();
-    }, POLL_INTERVAL_MS);
-}
-
-function stopPolling() {
-    if (pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-    }
+    // Push updated state after applying
+    var payload = JSON.stringify({
+        mapFile: getMapFile(),
+        objects: serializeSelectedObjects()
+    });
+    httpPost("/selection", payload);
 }
 
 // Watch selection changes on the active asset
@@ -155,11 +166,9 @@ var toggleAction = tiled.registerAction("ToggleCompanionBridge", function () {
     bridgeEnabled = !bridgeEnabled;
     toggleAction.checked = bridgeEnabled;
     if (bridgeEnabled) {
-        startPolling();
         connectAsset(tiled.activeAsset);
         tiled.log("[companion] Bridge enabled");
     } else {
-        stopPolling();
         tiled.log("[companion] Bridge disabled");
     }
 });
@@ -176,13 +185,20 @@ var openCompanionAction = tiled.registerAction("OpenCompanionPage", function () 
 openCompanionAction.text = "Open Companion Page";
 openCompanionAction.shortcut = "Ctrl+Shift+T";
 
+// Manual poll action (useful if commands were queued while no selection changed)
+var pollAction = tiled.registerAction("PollCompanionCommands", function () {
+    pollCommands();
+    tiled.log("[companion] Polled for commands");
+});
+pollAction.text = "Poll Companion Commands";
+
 tiled.extendMenu("Edit", [
     { separator: true },
     { action: "ToggleCompanionBridge" },
-    { action: "OpenCompanionPage" }
+    { action: "OpenCompanionPage" },
+    { action: "PollCompanionCommands" }
 ]);
 
 // Start
 connectAsset(tiled.activeAsset);
-startPolling();
-tiled.log("[companion] Companion bridge loaded");
+tiled.log("[companion] Companion bridge loaded (curl mode)");
