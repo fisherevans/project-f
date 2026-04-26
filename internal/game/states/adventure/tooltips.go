@@ -59,7 +59,7 @@ func (t *Tooltips) OnTick(target pixel.Target, timeDelta float64) {
 		t.dy = 0
 		return
 	}
-	topMiddle := gfx.Moved(game.GameWidth/2, game.GameHeight-30).Moved(pixel.V(0, -math.Round(t.dy)))
+	topMiddle := gfx.Moved(game.GameWidth/2, game.GameHeight-20).Moved(pixel.V(0, -math.Round(t.dy)))
 	for _, tt := range t.active {
 		maskAlpha := 1.0
 		if tt.age < tooltipFadeDuration {
