@@ -28,6 +28,7 @@ import {
     Users,
     Crosshair,
     Plus,
+    Pencil,
 } from "lucide-react";
 
 export function TiledCompanion() {
@@ -196,6 +197,7 @@ function SingleObjectView({ object }: { object: TiledSelectedObject }) {
                 {!isZone && scriptPath && <HandlerPropsSection object={object} scriptPath={scriptPath} scriptRef={scriptRef} />}
                 {!isZone && scriptPath && <HandlerDefinitionSection scriptPath={scriptPath} scriptRef={scriptRef} scripts={scripts ?? []} />}
                 <StructuredConfigSection object={object} />
+                <ClassPropertiesSection object={object} />
                 <RelatedEntitiesSection object={object} scriptRef={scriptRef} />
                 <AllPropertiesSection object={object} />
             </div>
@@ -203,24 +205,141 @@ function SingleObjectView({ object }: { object: TiledSelectedObject }) {
     );
 }
 
+const ENTITY_CLASSES = ["ModeBasedEntity", "NPC", "DirectInteraction", "ShadowMob", "Zone"];
+
 function ObjectIdentity({ object }: { object: TiledSelectedObject }) {
+    const { data: usages } = useTiledUsages();
+    const [editingId, setEditingId] = useState(false);
+    const [editingClass, setEditingClass] = useState(false);
+    const [idValue, setIdValue] = useState(object.properties.entity_id ?? "");
+    const [classValue, setClassValue] = useState(object.className);
+
+    useEffect(() => {
+        setIdValue(object.properties.entity_id ?? "");
+        setEditingId(false);
+    }, [object.properties.entity_id]);
+
+    useEffect(() => {
+        setClassValue(object.className);
+        setEditingClass(false);
+    }, [object.className]);
+
+    const idConflict = useMemo(() => {
+        const currentId = idValue.trim();
+        if (!currentId || !usages) return null;
+        for (const usage of usages) {
+            for (const ent of usage.entities) {
+                if (ent.entityId === currentId && ent.objectId !== object.id) {
+                    return { mapFile: ent.mapFile, objectId: ent.objectId };
+                }
+            }
+        }
+        return null;
+    }, [usages, idValue, object.id]);
+
+    const commitEntityId = useCallback((val: string) => {
+        const trimmed = val.trim();
+        if (trimmed === (object.properties.entity_id ?? "")) {
+            setEditingId(false);
+            return;
+        }
+        if (trimmed) {
+            sendTiledCommand({ objectId: object.id, action: "setProperty", name: "entity_id", value: trimmed });
+        } else {
+            sendTiledCommand({ objectId: object.id, action: "removeProperty", name: "entity_id" });
+        }
+        setEditingId(false);
+    }, [object.id, object.properties.entity_id]);
+
+    const commitClass = useCallback((val: string) => {
+        if (val === object.className) {
+            setEditingClass(false);
+            return;
+        }
+        sendTiledCommand({ objectId: object.id, action: "setProperty", name: "class", value: val });
+        setEditingClass(false);
+    }, [object.id, object.className]);
+
     return (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
             <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold">Object #{object.id}</span>
-                {object.className && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-teal-tint text-accent-teal font-medium">
-                        {object.className}
-                    </span>
+                <p className="text-[10px] text-muted-foreground">
+                    ({Math.round(object.x)}, {Math.round(object.y)})
+                    {object.width > 0 && ` ${Math.round(object.width)}x${Math.round(object.height)}`}
+                </p>
+            </div>
+
+            {/* Entity class */}
+            <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-muted-foreground w-10 shrink-0">class</span>
+                {!editingClass ? (
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        {object.className ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent-teal-tint text-accent-teal font-medium">
+                                {object.className}
+                            </span>
+                        ) : (
+                            <span className="text-[10px] text-muted-foreground italic">none</span>
+                        )}
+                        <button className="text-muted-foreground hover:text-foreground" onClick={() => setEditingClass(true)}>
+                            <Pencil className="h-2.5 w-2.5" />
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-1 flex-1">
+                        <select
+                            className="h-6 flex-1 text-xs font-mono rounded border border-border bg-background px-1"
+                            value={classValue}
+                            autoFocus
+                            onChange={(e) => { setClassValue(e.target.value); commitClass(e.target.value); }}
+                            onBlur={() => setEditingClass(false)}
+                            onKeyDown={(e) => { if (e.key === "Escape") setEditingClass(false); }}
+                        >
+                            <option value="">-- none --</option>
+                            {ENTITY_CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
                 )}
             </div>
-            {object.properties.entity_id && (
-                <p className="text-xs font-mono text-muted-foreground">{object.properties.entity_id}</p>
-            )}
-            <p className="text-[10px] text-muted-foreground">
-                Position: ({Math.round(object.x)}, {Math.round(object.y)})
-                {object.width > 0 && ` - Size: ${Math.round(object.width)}x${Math.round(object.height)}`}
-            </p>
+
+            {/* Entity ID */}
+            <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-muted-foreground w-10 shrink-0">id</span>
+                {!editingId ? (
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        {object.properties.entity_id ? (
+                            <span className="text-xs font-mono truncate">{object.properties.entity_id}</span>
+                        ) : (
+                            <span className="text-[10px] text-muted-foreground italic">none</span>
+                        )}
+                        <button className="text-muted-foreground hover:text-foreground" onClick={() => setEditingId(true)}>
+                            <Pencil className="h-2.5 w-2.5" />
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex-1 space-y-0.5">
+                        <Input
+                            className="h-6 text-xs font-mono"
+                            value={idValue}
+                            onChange={(e) => setIdValue(e.target.value)}
+                            autoFocus
+                            placeholder="map.entity_name"
+                            onBlur={() => commitEntityId(idValue)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") commitEntityId(idValue);
+                                if (e.key === "Escape") { setEditingId(false); setIdValue(object.properties.entity_id ?? ""); }
+                            }}
+                        />
+                        {idConflict && (
+                            <p className="text-[10px] text-accent-red flex items-center gap-0.5">
+                                <AlertTriangle className="h-2.5 w-2.5" />
+                                Conflict: obj#{idConflict.objectId} in {idConflict.mapFile}
+                            </p>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -763,15 +882,18 @@ interface RenderConfig {
 }
 
 function StructuredConfigSection({ object }: { object: TiledSelectedObject }) {
+    const isModeEntity = object.className === "ModeBasedEntity";
     const hasPresence = "presence_config" in object.properties;
     const hasRender = "render_config" in object.properties;
+    const showPresence = hasPresence || isModeEntity || object.className === "NPC";
+    const showRender = hasRender || isModeEntity;
 
-    if (!hasPresence && !hasRender) return null;
+    if (!showPresence && !showRender) return null;
 
     return (
         <div className="space-y-4">
-            {hasPresence && <PresenceConfigEditor object={object} />}
-            {hasRender && <RenderConfigEditor object={object} />}
+            {showPresence && <PresenceConfigEditor object={object} />}
+            {showRender && <RenderConfigEditor object={object} />}
         </div>
     );
 }
@@ -858,8 +980,12 @@ function PresenceConfigEditor({ object }: { object: TiledSelectedObject }) {
     );
 }
 
+const LIGHT_MODIFIERS = ["", "flicker", "pulse_slow", "pulse_medium", "pulse_fast"];
+
 function RenderConfigEditor({ object }: { object: TiledSelectedObject }) {
     const [expanded, setExpanded] = useState(true);
+    const [addingMode, setAddingMode] = useState(false);
+    const [newModeName, setNewModeName] = useState("");
 
     const config = useMemo((): RenderConfig => {
         try {
@@ -873,7 +999,11 @@ function RenderConfigEditor({ object }: { object: TiledSelectedObject }) {
 
     const commitConfig = useCallback(
         (updated: RenderConfig) => {
-            const yamlStr = YAML.stringify(updated, { indent: 2, lineWidth: 0 }).trim();
+            const cleaned: RenderConfig = {};
+            if (updated.mode) cleaned.mode = updated.mode;
+            if (updated.animations && Object.keys(updated.animations).length > 0) cleaned.animations = updated.animations;
+            if (updated.lights && Object.keys(updated.lights).length > 0) cleaned.lights = updated.lights;
+            const yamlStr = YAML.stringify(cleaned, { indent: 2, lineWidth: 0 }).trim();
             sendTiledCommand({
                 objectId: object.id,
                 action: "setProperty",
@@ -884,6 +1014,67 @@ function RenderConfigEditor({ object }: { object: TiledSelectedObject }) {
         [object.id],
     );
 
+    const allModes = useMemo(() => {
+        const modes = new Set<string>();
+        if (config.animations) Object.keys(config.animations).forEach((m) => modes.add(m));
+        if (config.lights) Object.keys(config.lights).forEach((m) => modes.add(m));
+        return Array.from(modes).sort((a, b) => {
+            if (a === "") return -1;
+            if (b === "") return 1;
+            return a.localeCompare(b);
+        });
+    }, [config]);
+
+    const handleAddMode = useCallback(() => {
+        const name = newModeName.trim();
+        const anims = { ...config.animations, [name]: [] };
+        commitConfig({ ...config, animations: anims });
+        setNewModeName("");
+        setAddingMode(false);
+    }, [newModeName, config, commitConfig]);
+
+    const handleRemoveMode = useCallback((mode: string) => {
+        const anims = { ...config.animations };
+        const lights = { ...config.lights };
+        delete anims[mode];
+        delete lights[mode];
+        commitConfig({ ...config, animations: anims, lights: lights });
+    }, [config, commitConfig]);
+
+    const updateAnimation = useCallback((mode: string, index: number, entry: AnimationEntry) => {
+        const entries = [...(config.animations?.[mode] ?? [])];
+        entries[index] = entry;
+        commitConfig({ ...config, animations: { ...config.animations, [mode]: entries } });
+    }, [config, commitConfig]);
+
+    const addAnimation = useCallback((mode: string) => {
+        const entries = [...(config.animations?.[mode] ?? []), { name: "" }];
+        commitConfig({ ...config, animations: { ...config.animations, [mode]: entries } });
+    }, [config, commitConfig]);
+
+    const removeAnimation = useCallback((mode: string, index: number) => {
+        const entries = [...(config.animations?.[mode] ?? [])];
+        entries.splice(index, 1);
+        commitConfig({ ...config, animations: { ...config.animations, [mode]: entries } });
+    }, [config, commitConfig]);
+
+    const updateLight = useCallback((mode: string, index: number, entry: LightEntry) => {
+        const entries = [...(config.lights?.[mode] ?? [])];
+        entries[index] = entry;
+        commitConfig({ ...config, lights: { ...config.lights, [mode]: entries } });
+    }, [config, commitConfig]);
+
+    const addLight = useCallback((mode: string) => {
+        const entries = [...(config.lights?.[mode] ?? []), { color: "#fff", size: 1 }];
+        commitConfig({ ...config, lights: { ...config.lights, [mode]: entries } });
+    }, [config, commitConfig]);
+
+    const removeLight = useCallback((mode: string, index: number) => {
+        const entries = [...(config.lights?.[mode] ?? [])];
+        entries.splice(index, 1);
+        commitConfig({ ...config, lights: { ...config.lights, [mode]: entries } });
+    }, [config, commitConfig]);
+
     return (
         <div className="space-y-2">
             <button
@@ -892,54 +1083,502 @@ function RenderConfigEditor({ object }: { object: TiledSelectedObject }) {
             >
                 {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                 Render Config
+                {allModes.length > 0 && (
+                    <span className="text-[10px] font-normal text-muted-foreground ml-1">({allModes.length} modes)</span>
+                )}
             </button>
             {expanded && (
-                <div className="space-y-2 pl-1">
+                <div className="space-y-3 pl-1">
+                    {/* Default mode */}
                     <div className="flex items-center gap-2">
-                        <label className="text-xs shrink-0">mode</label>
+                        <label className="text-xs shrink-0">default mode</label>
                         <Input
                             className="h-6 flex-1 text-xs font-mono"
                             value={config.mode ?? ""}
                             onChange={(e) => commitConfig({ ...config, mode: e.target.value || undefined })}
-                            placeholder="default"
+                            placeholder="(empty = first)"
                         />
                     </div>
-                    {config.animations && Object.keys(config.animations).length > 0 && (
-                        <div className="space-y-1">
-                            <span className="text-[11px] font-medium">animations</span>
-                            {Object.entries(config.animations).map(([mode, entries]) => (
-                                <div key={mode} className="ml-2 space-y-0.5">
-                                    <span className="text-[10px] font-mono text-accent-teal">{mode}</span>
-                                    {(entries ?? []).map((entry, i) => (
-                                        <div key={i} className="flex items-center gap-1 ml-2 text-[10px] font-mono text-muted-foreground">
-                                            <span>{entry.name}</span>
-                                            {entry.colorMask && <span className="text-accent-amber">mask={entry.colorMask}</span>}
-                                            {entry.offset && <span>+({entry.offset.x},{entry.offset.y})</span>}
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    {config.lights && Object.keys(config.lights).length > 0 && (
-                        <div className="space-y-1">
-                            <span className="text-[11px] font-medium">lights</span>
-                            {Object.entries(config.lights).map(([mode, entries]) => (
-                                <div key={mode} className="ml-2 space-y-0.5">
-                                    <span className="text-[10px] font-mono text-accent-teal">{mode}</span>
-                                    {(entries ?? []).map((entry, i) => (
-                                        <div key={i} className="flex items-center gap-1 ml-2 text-[10px] font-mono text-muted-foreground">
-                                            <span className="text-accent-amber">{entry.color}</span>
-                                            <span>size={entry.size}</span>
-                                            {entry.modifier && <span>mod={entry.modifier}</span>}
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
+
+                    {/* Mode entries */}
+                    {allModes.map((mode) => (
+                        <RenderModeSection
+                            key={mode}
+                            mode={mode}
+                            animations={config.animations?.[mode] ?? []}
+                            lights={config.lights?.[mode] ?? []}
+                            onUpdateAnimation={(i, e) => updateAnimation(mode, i, e)}
+                            onAddAnimation={() => addAnimation(mode)}
+                            onRemoveAnimation={(i) => removeAnimation(mode, i)}
+                            onUpdateLight={(i, e) => updateLight(mode, i, e)}
+                            onAddLight={() => addLight(mode)}
+                            onRemoveLight={(i) => removeLight(mode, i)}
+                            onRemoveMode={() => handleRemoveMode(mode)}
+                        />
+                    ))}
+
+                    {/* Add mode */}
+                    {!addingMode ? (
+                        <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-0.5" onClick={() => setAddingMode(true)}>
+                            <Plus className="h-3 w-3" /> Add mode
+                        </Button>
+                    ) : (
+                        <div className="flex items-center gap-1">
+                            <Input
+                                className="h-6 flex-1 text-xs font-mono"
+                                value={newModeName}
+                                onChange={(e) => setNewModeName(e.target.value)}
+                                placeholder="mode name (empty = default)"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleAddMode();
+                                    if (e.key === "Escape") { setAddingMode(false); setNewModeName(""); }
+                                }}
+                            />
+                            <Button size="sm" className="h-6 text-[10px] px-2" onClick={handleAddMode}>Add</Button>
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px] px-1" onClick={() => { setAddingMode(false); setNewModeName(""); }}>
+                                Cancel
+                            </Button>
                         </div>
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+function RenderModeSection({
+    mode,
+    animations,
+    lights,
+    onUpdateAnimation,
+    onAddAnimation,
+    onRemoveAnimation,
+    onUpdateLight,
+    onAddLight,
+    onRemoveLight,
+    onRemoveMode,
+}: {
+    mode: string;
+    animations: AnimationEntry[];
+    lights: LightEntry[];
+    onUpdateAnimation: (index: number, entry: AnimationEntry) => void;
+    onAddAnimation: () => void;
+    onRemoveAnimation: (index: number) => void;
+    onUpdateLight: (index: number, entry: LightEntry) => void;
+    onAddLight: () => void;
+    onRemoveLight: (index: number) => void;
+    onRemoveMode: () => void;
+}) {
+    const [expanded, setExpanded] = useState(true);
+
+    return (
+        <div className="border border-border rounded-md overflow-hidden">
+            <div className="flex items-center gap-2 bg-muted/40 px-2 py-1">
+                <button className="flex items-center gap-1 flex-1 text-left" onClick={() => setExpanded(!expanded)}>
+                    {expanded ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
+                    <span className="text-[11px] font-mono font-medium text-accent-teal">
+                        {mode === "" ? "(default)" : mode}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                        {animations.length}a {lights.length}l
+                    </span>
+                </button>
+                <button className="text-[10px] text-muted-foreground hover:text-accent-red" onClick={onRemoveMode}>
+                    remove
+                </button>
+            </div>
+            {expanded && (
+                <div className="p-2 space-y-2">
+                    {/* Animations */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Animations</span>
+                        {animations.map((entry, i) => (
+                            <div key={i} className="flex items-start gap-1 group">
+                                <div className="flex-1 space-y-0.5">
+                                    <Input
+                                        className="h-6 text-xs font-mono"
+                                        value={entry.name}
+                                        onChange={(e) => onUpdateAnimation(i, { ...entry, name: e.target.value })}
+                                        placeholder="sprites/path:animation"
+                                    />
+                                    <div className="flex items-center gap-1">
+                                        <Input
+                                            className="h-5 w-20 text-[10px] font-mono"
+                                            value={entry.colorMask ?? ""}
+                                            onChange={(e) => onUpdateAnimation(i, { ...entry, colorMask: e.target.value || undefined })}
+                                            placeholder="colorMask"
+                                        />
+                                        <Input
+                                            className="h-5 w-12 text-[10px] font-mono"
+                                            type="number"
+                                            step="0.125"
+                                            value={entry.offset?.x ?? ""}
+                                            onChange={(e) => {
+                                                const x = e.target.value ? parseFloat(e.target.value) : 0;
+                                                const y = entry.offset?.y ?? 0;
+                                                onUpdateAnimation(i, { ...entry, offset: (x || y) ? { x, y } : undefined });
+                                            }}
+                                            placeholder="oX"
+                                        />
+                                        <Input
+                                            className="h-5 w-12 text-[10px] font-mono"
+                                            type="number"
+                                            step="0.125"
+                                            value={entry.offset?.y ?? ""}
+                                            onChange={(e) => {
+                                                const y = e.target.value ? parseFloat(e.target.value) : 0;
+                                                const x = entry.offset?.x ?? 0;
+                                                onUpdateAnimation(i, { ...entry, offset: (x || y) ? { x, y } : undefined });
+                                            }}
+                                            placeholder="oY"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    className="mt-1 text-muted-foreground hover:text-accent-red opacity-0 group-hover:opacity-100"
+                                    onClick={() => onRemoveAnimation(i)}
+                                >
+                                    <Plus className="h-3 w-3 rotate-45" />
+                                </button>
+                            </div>
+                        ))}
+                        <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5 gap-0.5" onClick={onAddAnimation}>
+                            <Plus className="h-2.5 w-2.5" /> animation
+                        </Button>
+                    </div>
+
+                    {/* Lights */}
+                    <div className="space-y-1">
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Lights</span>
+                        {lights.map((entry, i) => (
+                            <div key={i} className="flex items-center gap-1 group">
+                                <Input
+                                    className="h-6 w-16 text-xs font-mono"
+                                    value={entry.color}
+                                    onChange={(e) => onUpdateLight(i, { ...entry, color: e.target.value })}
+                                    placeholder="#fff"
+                                />
+                                <div
+                                    className="h-5 w-5 rounded border border-border shrink-0"
+                                    style={{ backgroundColor: entry.color }}
+                                />
+                                <Input
+                                    className="h-6 w-14 text-xs font-mono"
+                                    type="number"
+                                    step="0.25"
+                                    min="0"
+                                    value={entry.size}
+                                    onChange={(e) => onUpdateLight(i, { ...entry, size: parseFloat(e.target.value) || 0 })}
+                                    placeholder="size"
+                                />
+                                <select
+                                    className="h-6 text-[10px] font-mono rounded border border-border bg-background px-1 flex-1"
+                                    value={entry.modifier ?? ""}
+                                    onChange={(e) => onUpdateLight(i, { ...entry, modifier: e.target.value || undefined })}
+                                >
+                                    <option value="">no modifier</option>
+                                    {LIGHT_MODIFIERS.filter(Boolean).map((m) => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                                <button
+                                    className="text-muted-foreground hover:text-accent-red opacity-0 group-hover:opacity-100"
+                                    onClick={() => onRemoveLight(i)}
+                                >
+                                    <Plus className="h-3 w-3 rotate-45" />
+                                </button>
+                            </div>
+                        ))}
+                        <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5 gap-0.5" onClick={onAddLight}>
+                            <Plus className="h-2.5 w-2.5" /> light
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- Class-Specific Properties Section ---
+
+const NPC_MOVEMENTS = ["", "static", "horiz"];
+const NPC_SPEEDS = ["", "fast"];
+const FACING_DIRECTIONS = ["", "up", "down", "left", "right"];
+
+function ClassPropertiesSection({ object }: { object: TiledSelectedObject }) {
+    const cls = object.className;
+    if (cls === "NPC") return <NPCPropertiesEditor object={object} />;
+    if (cls === "DirectInteraction") return <DirectInteractionEditor object={object} />;
+    if (cls === "ShadowMob") return <ShadowMobEditor object={object} />;
+    return <MetadataEditor object={object} />;
+}
+
+function NPCPropertiesEditor({ object }: { object: TiledSelectedObject }) {
+    const [expanded, setExpanded] = useState(true);
+
+    const commitProp = useCallback((name: string, value: string) => {
+        if (value) {
+            sendTiledCommand({ objectId: object.id, action: "setProperty", name, value });
+        } else {
+            sendTiledCommand({ objectId: object.id, action: "removeProperty", name });
+        }
+    }, [object.id]);
+
+    return (
+        <div className="space-y-2">
+            <button
+                className="flex items-center gap-1 text-sm font-semibold border-b border-border pb-1 w-full text-left"
+                onClick={() => setExpanded(!expanded)}
+            >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                NPC Behavior
+            </button>
+            {expanded && (
+                <div className="space-y-2 pl-1">
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs shrink-0 w-28">movement</label>
+                        <select
+                            className="h-6 flex-1 text-xs font-mono rounded border border-border bg-background px-1"
+                            value={object.properties.movement ?? ""}
+                            onChange={(e) => commitProp("movement", e.target.value)}
+                        >
+                            {NPC_MOVEMENTS.map((m) => <option key={m} value={m}>{m || "(default - wanders)"}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs shrink-0 w-28">speed</label>
+                        <select
+                            className="h-6 flex-1 text-xs font-mono rounded border border-border bg-background px-1"
+                            value={object.properties.speed ?? ""}
+                            onChange={(e) => commitProp("speed", e.target.value)}
+                        >
+                            {NPC_SPEEDS.map((s) => <option key={s} value={s}>{s || "(default - normal)"}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs shrink-0 w-28">idle facing</label>
+                        <select
+                            className="h-6 flex-1 text-xs font-mono rounded border border-border bg-background px-1"
+                            value={object.properties.idle_facing_direction ?? ""}
+                            onChange={(e) => commitProp("idle_facing_direction", e.target.value)}
+                        >
+                            {FACING_DIRECTIONS.map((d) => <option key={d} value={d}>{d || "(none)"}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs shrink-0 w-28">active zone</label>
+                        <Input
+                            className="h-6 flex-1 text-xs font-mono"
+                            key={object.properties.active_player_zone ?? ""}
+                            defaultValue={object.properties.active_player_zone ?? ""}
+                            onBlur={(e) => commitProp("active_player_zone", e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                            placeholder="only active when player in zone"
+                        />
+                    </div>
+                    <MetadataEditor object={object} />
+                </div>
+            )}
+        </div>
+    );
+}
+
+function DirectInteractionEditor({ object }: { object: TiledSelectedObject }) {
+    const [expanded, setExpanded] = useState(true);
+
+    return (
+        <div className="space-y-2">
+            <button
+                className="flex items-center gap-1 text-sm font-semibold border-b border-border pb-1 w-full text-left"
+                onClick={() => setExpanded(!expanded)}
+            >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Direct Interaction
+            </button>
+            {expanded && (
+                <div className="space-y-1 pl-1">
+                    <p className="text-[10px] text-muted-foreground">Redirects interactions to another entity</p>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs shrink-0">target</label>
+                        <Input
+                            className="h-6 flex-1 text-xs font-mono"
+                            key={object.properties.target ?? ""}
+                            defaultValue={object.properties.target ?? ""}
+                            onBlur={(e) => {
+                                sendTiledCommand({ objectId: object.id, action: "setProperty", name: "target", value: e.target.value });
+                            }}
+                            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                            placeholder="entity_id to redirect to"
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function ShadowMobEditor({ object }: { object: TiledSelectedObject }) {
+    const [expanded, setExpanded] = useState(true);
+
+    const config = useMemo(() => {
+        try {
+            const raw = object.properties.shadow_mob;
+            if (!raw) return {} as Record<string, string>;
+            const parsed = YAML.parse(raw);
+            if (!parsed || typeof parsed !== "object") return {};
+            const flat: Record<string, string> = {};
+            for (const [k, v] of Object.entries(parsed)) {
+                flat[k] = v != null ? String(v) : "";
+            }
+            return flat;
+        } catch {
+            return {};
+        }
+    }, [object.properties.shadow_mob]);
+
+    const commitConfig = useCallback((key: string, value: string) => {
+        const updated = { ...config };
+        if (value) {
+            updated[key] = value;
+        } else {
+            delete updated[key];
+        }
+        const yamlStr = YAML.stringify(updated, { indent: 2, lineWidth: 0 }).trim();
+        sendTiledCommand({ objectId: object.id, action: "setProperty", name: "shadow_mob", value: yamlStr });
+    }, [object.id, config]);
+
+    const fields = [
+        { key: "combat_id", label: "combat_id", placeholder: "combat encounter id" },
+        { key: "broadcast_id", label: "broadcast_id", placeholder: "broadcast on trigger" },
+        { key: "opponent_pool", label: "opponent_pool", placeholder: "random opponent pool" },
+        { key: "opponent", label: "opponent", placeholder: "primortal type" },
+        { key: "opponent_archetype", label: "archetype", placeholder: "opponent archetype" },
+        { key: "combat_background", label: "background", placeholder: "combat bg" },
+        { key: "leash_radius", label: "leash_radius", placeholder: "5" },
+        { key: "respawn_delay", label: "respawn_delay", placeholder: "10" },
+    ];
+
+    return (
+        <div className="space-y-2">
+            <button
+                className="flex items-center gap-1 text-sm font-semibold border-b border-border pb-1 w-full text-left"
+                onClick={() => setExpanded(!expanded)}
+            >
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Shadow Mob Config
+            </button>
+            {expanded && (
+                <div className="space-y-1.5 pl-1">
+                    {fields.map((f) => (
+                        <div key={f.key} className="flex items-center gap-2">
+                            <label className="text-xs shrink-0 w-24 truncate">{f.label}</label>
+                            <Input
+                                className="h-6 flex-1 text-xs font-mono"
+                                key={`${f.key}-${config[f.key] ?? ""}`}
+                                defaultValue={config[f.key] ?? ""}
+                                onBlur={(e) => commitConfig(f.key, e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                                placeholder={f.placeholder}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+interface TalkerConfig {
+    preset?: string;
+    voice_pitch?: number;
+    energy?: number;
+}
+
+function MetadataEditor({ object }: { object: TiledSelectedObject }) {
+    const rawMeta = object.properties.metadata;
+    const talkerConfig = useMemo((): TalkerConfig => {
+        if (!rawMeta) return {};
+        try {
+            const parsed = YAML.parse(rawMeta);
+            return parsed?.talker_config ?? {};
+        } catch {
+            return {};
+        }
+    }, [rawMeta]);
+
+    const hasTalkerConfig = rawMeta?.includes("talker_config");
+    if (!hasTalkerConfig && !rawMeta) return null;
+
+    const commitTalkerConfig = (updated: TalkerConfig) => {
+        let meta: Record<string, unknown> = {};
+        if (rawMeta) {
+            try { meta = YAML.parse(rawMeta) ?? {}; } catch { meta = {}; }
+        }
+        const cleaned: TalkerConfig = {};
+        if (updated.preset) cleaned.preset = updated.preset;
+        if (updated.voice_pitch != null && updated.voice_pitch !== 0) cleaned.voice_pitch = updated.voice_pitch;
+        if (updated.energy != null && updated.energy !== 0) cleaned.energy = updated.energy;
+        if (Object.keys(cleaned).length > 0) {
+            meta.talker_config = cleaned;
+        } else {
+            delete meta.talker_config;
+        }
+        if (Object.keys(meta).length === 0) {
+            sendTiledCommand({ objectId: object.id, action: "removeProperty", name: "metadata" });
+        } else {
+            const yamlStr = YAML.stringify(meta, { indent: 2, lineWidth: 0 }).trim();
+            sendTiledCommand({ objectId: object.id, action: "setProperty", name: "metadata", value: yamlStr });
+        }
+    };
+
+    return (
+        <div className="space-y-1">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Talker Config</span>
+            <div className="flex items-center gap-2">
+                <label className="text-xs shrink-0 w-20">preset</label>
+                <select
+                    className="h-6 flex-1 text-xs font-mono rounded border border-border bg-background px-1"
+                    value={talkerConfig.preset ?? ""}
+                    onChange={(e) => commitTalkerConfig({ ...talkerConfig, preset: e.target.value || undefined })}
+                >
+                    <option value="">normal</option>
+                    <option value="slow">slow</option>
+                    <option value="kid">kid</option>
+                </select>
+            </div>
+            <div className="flex items-center gap-2">
+                <label className="text-xs shrink-0 w-20">voice_pitch</label>
+                <Input
+                    className="h-6 w-20 text-xs font-mono"
+                    type="number"
+                    step="0.1"
+                    min="-1"
+                    max="1"
+                    value={talkerConfig.voice_pitch ?? ""}
+                    onChange={(e) => {
+                        const v = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                        commitTalkerConfig({ ...talkerConfig, voice_pitch: v });
+                    }}
+                    placeholder="0"
+                />
+                <span className="text-[10px] text-muted-foreground">-1 (deep) to 1 (high)</span>
+            </div>
+            <div className="flex items-center gap-2">
+                <label className="text-xs shrink-0 w-20">energy</label>
+                <Input
+                    className="h-6 w-20 text-xs font-mono"
+                    type="number"
+                    step="0.1"
+                    min="-1"
+                    max="1"
+                    value={talkerConfig.energy ?? ""}
+                    onChange={(e) => {
+                        const v = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                        commitTalkerConfig({ ...talkerConfig, energy: v });
+                    }}
+                    placeholder="0"
+                />
+                <span className="text-[10px] text-muted-foreground">-1 (quiet) to 1 (loud)</span>
+            </div>
         </div>
     );
 }

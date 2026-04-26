@@ -127,8 +127,13 @@ function applyCommands(commands) {
             continue;
         }
         if (cmd.action === "setProperty") {
-            obj.setProperty(cmd.name, cmd.value);
-            tiled.log("[companion] Set " + cmd.name + "=" + cmd.value + " on object " + cmd.objectId);
+            if (cmd.name === "class") {
+                obj.className = cmd.value;
+                tiled.log("[companion] Set className=" + cmd.value + " on object " + cmd.objectId);
+            } else {
+                obj.setProperty(cmd.name, cmd.value);
+                tiled.log("[companion] Set " + cmd.name + "=" + cmd.value + " on object " + cmd.objectId);
+            }
         } else if (cmd.action === "removeProperty") {
             obj.removeProperty(cmd.name);
             tiled.log("[companion] Removed " + cmd.name + " from object " + cmd.objectId);
