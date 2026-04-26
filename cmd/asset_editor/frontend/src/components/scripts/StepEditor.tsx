@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus, Eye } from "lucide-react";
 import { getCategoryColor } from "./StepKindPicker";
 import { StepParamForm } from "./StepParamForm";
@@ -229,9 +230,11 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                         {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     </button>
                 )}
-                <Badge variant="outline" className={`shrink-0 text-[10px] px-1.5 py-0 font-mono ${getCategoryColor(category)}`}>
-                    {step.kind}
-                </Badge>
+                <Link to={`/reference#step-${step.kind}`} className="shrink-0" title={`View ${step.kind} reference`}>
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 font-mono hover:ring-1 hover:ring-accent-violet/30 ${getCategoryColor(category)}`}>
+                        {step.kind}
+                    </Badge>
+                </Link>
                 {isSimpleInline ? (
                     <div className="flex-1 min-w-0">
                         <StepParamForm stepKind={stepDef} params={step.params} onChange={(params) => onChange({ ...step, params })} schema={schema} />

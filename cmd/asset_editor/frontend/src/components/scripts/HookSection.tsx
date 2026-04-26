@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
@@ -30,7 +31,9 @@ export function HookSection({ hookKey, hookDef, hook, schema, onChange, onRemove
                 <button className="shrink-0 text-muted-foreground" onClick={() => setExpanded(!expanded)}>
                     {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                 </button>
-                <code className="text-xs font-mono font-semibold">{hookKey}</code>
+                <Link to={`/reference#hook-${hookKey}`} className="hover:text-accent-violet" title="View hook reference">
+                    <code className="text-xs font-mono font-semibold">{hookKey}</code>
+                </Link>
                 <Badge variant="outline" className="text-[10px] px-1 py-0">{rules.length} rule{rules.length !== 1 ? "s" : ""}</Badge>
                 <button
                     className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${

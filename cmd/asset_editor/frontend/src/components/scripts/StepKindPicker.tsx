@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
+import { X, BookOpen } from "lucide-react";
 import type { ScriptSchema, StepKindDef } from "@/types/scripts";
 
 interface StepKindPickerProps {
@@ -9,7 +10,7 @@ interface StepKindPickerProps {
     onCancel: () => void;
 }
 
-const CATEGORY_ORDER = ["text", "flow", "state", "entity", "camera", "audio", "transition", "rpg", "combat"];
+export const CATEGORY_ORDER = ["text", "flow", "state", "entity", "camera", "audio", "transition", "rpg", "combat"];
 
 const CATEGORY_COLORS: Record<string, string> = {
     text: "bg-accent-blue-tint text-accent-blue",
@@ -130,21 +131,30 @@ export function StepKindPicker({ schema, onSelect, onCancel }: StepKindPickerPro
                         {filtered.get(cat)!.map((def) => {
                             const params = paramSummary(def);
                             return (
-                                <button
-                                    key={def.name}
-                                    className="flex w-full items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent group/item"
-                                    onClick={() => onSelect(def.name)}
-                                >
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <code className="text-xs font-mono font-semibold">{def.name}</code>
-                                            {params && (
-                                                <span className="text-[10px] text-muted-foreground/60 font-mono truncate">({params})</span>
-                                            )}
+                                <div key={def.name} className="flex items-start gap-1 group/item">
+                                    <button
+                                        className="flex-1 min-w-0 flex items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent"
+                                        onClick={() => onSelect(def.name)}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <code className="text-xs font-mono font-semibold">{def.name}</code>
+                                                {params && (
+                                                    <span className="text-[10px] text-muted-foreground/60 font-mono truncate">({params})</span>
+                                                )}
+                                            </div>
+                                            <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{def.description}</div>
                                         </div>
-                                        <div className="text-[11px] text-muted-foreground leading-tight mt-0.5">{def.description}</div>
-                                    </div>
-                                </button>
+                                    </button>
+                                    <Link
+                                        to={`/reference#step-${def.name}`}
+                                        className="shrink-0 mt-1.5 mr-1 opacity-0 group-hover/item:opacity-100 text-muted-foreground/50 hover:text-accent-violet transition-opacity"
+                                        title="View reference"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <BookOpen className="h-3 w-3" />
+                                    </Link>
+                                </div>
                             );
                         })}
                     </div>

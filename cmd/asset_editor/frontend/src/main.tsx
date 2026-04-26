@@ -16,6 +16,7 @@ import { PrimortalBrowser } from "@/pages/rpg/PrimortalBrowser";
 import { CombatBrowser } from "@/pages/rpg/CombatBrowser";
 import { SaveBrowser } from "@/pages/saves/SaveBrowser";
 import { SaveEditor } from "@/pages/saves/SaveEditor";
+import { ScriptReference } from "@/pages/reference/ScriptReference";
 import { DebugLayout } from "@/pages/debug/DebugLayout";
 import { DebugOverview } from "@/pages/debug/DebugOverview";
 import { DebugGlobals } from "@/pages/debug/DebugGlobals";
@@ -53,6 +54,7 @@ const router = createBrowserRouter([
             },
             { path: "/saves", element: <SaveBrowser /> },
             { path: "/saves/:id", element: <SaveEditor /> },
+            { path: "/reference", element: <ScriptReference /> },
             {
                 path: "/debug",
                 element: <DebugLayout />,
