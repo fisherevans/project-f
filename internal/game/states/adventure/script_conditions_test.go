@@ -247,103 +247,31 @@ func (e *testEntity) IsMoving() bool         { return e.moving }
 func (e *testEntity) HasPushedBehavior() bool { return e.hasPushedBehav }
 func (e *testEntity) IsBehaviorEnabled() bool { return !e.behaviorDisabled }
 
-func TestEvaluateCondition_PropExists(t *testing.T) {
+func TestEvaluateCondition_ExprProp(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	tests := []struct {
 		name  string
 		props map[string]any
-		cond  *ConditionNode
+		expr  string
 		want  bool
 	}{
-		{
-			"exists with key param",
-			map[string]any{"color": "red", "size": 5},
-			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"key": "color"}},
-			true,
-		},
-		{
-			"not exists with key param",
-			map[string]any{"color": "red"},
-			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"key": "shape"}},
-			false,
-		},
-		{
-			"exists with compact format",
-			map[string]any{"color": "red"},
-			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"value": "color"}},
-			true,
-		},
-		{
-			"nil properties",
-			nil,
-			&ConditionNode{Kind: "prop_exists", Params: map[string]any{"key": "color"}},
-			false,
-		},
+		{"prop exists", map[string]any{"color": "red", "size": 5}, "hasKey(prop, 'color')", true},
+		{"prop not exists", map[string]any{"color": "red"}, "hasKey(prop, 'shape')", false},
+		{"prop eq string", map[string]any{"color": "red"}, "prop.color == 'red'", true},
+		{"prop ne string", map[string]any{"color": "red"}, "prop.color == 'blue'", false},
+		{"prop eq int", map[string]any{"count": 3}, "prop.count == 3", true},
+		{"nil properties exists", nil, "hasKey(prop, 'color')", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tc := &TemplateContext{Properties: tt.props}
-			got := evaluateCondition(tt.cond, globals, nil, tc)
+			tc := &TemplateContext{Properties: tt.props, Globals: globals}
+			cond := &ConditionNode{Kind: "expr", Params: tt.expr}
+			got := evaluateCondition(cond, globals, nil, tc)
 			if got != tt.want {
 				t.Errorf("got %v, want %v", got, tt.want)
 			}
 		})
-	}
-}
-
-func TestEvaluateCondition_PropEq(t *testing.T) {
-	globals := newTestGlobals(nil)
-	props := map[string]any{"color": "red", "count": 3}
-	tc := &TemplateContext{Properties: props}
-
-	tests := []struct {
-		name string
-		cond *ConditionNode
-		want bool
-	}{
-		{
-			"string match",
-			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "color", "value": "red"}},
-			true,
-		},
-		{
-			"string mismatch",
-			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "color", "value": "blue"}},
-			false,
-		},
-		{
-			"int match",
-			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "count", "value": 3}},
-			true,
-		},
-		{
-			"missing key nil value",
-			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "missing", "value": nil}},
-			true,
-		},
-		{
-			"missing key non-nil value",
-			&ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "missing", "value": "x"}},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := evaluateCondition(tt.cond, globals, nil, tc)
-			if got != tt.want {
-				t.Errorf("got %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestEvaluateCondition_PropEq_NilProperties(t *testing.T) {
-	globals := newTestGlobals(nil)
-	tc := &TemplateContext{Properties: nil}
-	cond := &ConditionNode{Kind: "prop_eq", Params: map[string]any{"key": "color", "value": "red"}}
-	if evaluateCondition(cond, globals, nil, tc) {
-		t.Error("expected false with nil properties")
 	}
 }
 

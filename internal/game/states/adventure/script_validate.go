@@ -58,13 +58,11 @@ var validStepKinds = map[string]bool{
 }
 
 var builtinConditionKinds = map[string]bool{
-	"all":          true,
-	"any":          true,
-	"not":          true,
-	"prop_exists":  true,
-	"prop_eq":      true,
-	"entity_idle":  true,
-	"expr":         true,
+	"all":         true,
+	"any":         true,
+	"not":         true,
+	"entity_idle": true,
+	"expr":        true,
 }
 
 func validateScriptFiles() {

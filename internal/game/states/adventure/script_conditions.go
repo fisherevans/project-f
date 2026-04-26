@@ -54,29 +54,6 @@ func evaluateCondition(node *ConditionNode, globals StateGlobalsReader, handlerS
 			return false
 		}
 		return !evaluateCondition(sub, globals, handlerState, templateCtx)
-	case "prop_exists":
-		m := anyToStringMap(node.Params)
-		key, _ := m["key"].(string)
-		if key == "" {
-			key, _ = m["value"].(string)
-		}
-		if templateCtx == nil || templateCtx.Properties == nil {
-			return false
-		}
-		_, exists := templateCtx.Properties[key]
-		return exists
-	case "prop_eq":
-		m := anyToStringMap(node.Params)
-		key, _ := m["key"].(string)
-		expected := m["value"]
-		if templateCtx == nil || templateCtx.Properties == nil {
-			return false
-		}
-		actual, exists := templateCtx.Properties[key]
-		if !exists {
-			return expected == nil
-		}
-		return fmt.Sprintf("%v", actual) == fmt.Sprintf("%v", expected)
 	case "entity_idle":
 		if templateCtx == nil {
 			return false
