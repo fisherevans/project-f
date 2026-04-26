@@ -27,11 +27,16 @@ const KEY_ONLY_TYPES = new Set(["global_exists", "global_not_exists"]);
 
 const EXPRESSION_TYPES = new Set(["expr"]);
 
-const CONDITION_GROUPS: { label: string; keys: string[] }[] = [
+const DEPRECATED_TYPES = new Set([
+    "global_eq", "global_ne", "global_gt", "global_gte", "global_lt", "global_lte",
+    "global_exists", "global_not_exists", "handler_state_eq", "handler_state_ne",
+]);
+
+const CONDITION_GROUPS: { label: string; keys: string[]; deprecated?: boolean }[] = [
     { label: "Composite", keys: ["all", "any", "not"] },
     { label: "Expression", keys: ["expr"] },
-    { label: "Global State", keys: ["global_eq", "global_ne", "global_gt", "global_gte", "global_lt", "global_lte", "global_exists", "global_not_exists"] },
-    { label: "Handler State", keys: ["handler_state_eq", "handler_state_ne"] },
+    { label: "State (deprecated - use expr)", keys: ["global_eq", "global_ne", "global_gt", "global_gte", "global_lt", "global_lte", "global_exists", "global_not_exists"], deprecated: true },
+    { label: "Handler (deprecated - use expr)", keys: ["handler_state_eq", "handler_state_ne"], deprecated: true },
 ];
 
 function getConditionColor(type: string): string {
@@ -87,9 +92,9 @@ function ConditionTypePicker({ schema, currentType, onSelect, onClose }: {
 
     return (
         <div ref={ref} className="absolute z-50 mt-1 left-0 w-80 rounded-md border border-border bg-popover shadow-lg max-h-72 overflow-y-auto">
-            {CONDITION_GROUPS.map(({ label, keys }) => (
+            {CONDITION_GROUPS.map(({ label, keys, deprecated }) => (
                 <div key={label}>
-                    <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 sticky top-0 bg-popover">
+                    <div className={`px-2 py-1 text-[10px] font-semibold uppercase tracking-wider sticky top-0 bg-popover ${deprecated ? "text-muted-foreground/30" : "text-muted-foreground/60"}`}>
                         {label}
                     </div>
                     {keys.map((key) => {
@@ -97,7 +102,7 @@ function ConditionTypePicker({ schema, currentType, onSelect, onClose }: {
                         return (
                             <button
                                 key={key}
-                                className={`flex w-full items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent ${key === currentType ? "bg-accent/50" : ""}`}
+                                className={`flex w-full items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-accent ${key === currentType ? "bg-accent/50" : ""} ${deprecated ? "opacity-50" : ""}`}
                                 onMouseDown={(e) => {
                                     e.preventDefault();
                                     onSelect(key);
@@ -158,7 +163,7 @@ export function ConditionEditor({ condition, schema, onChange, onRemove, depth =
         if (newType === condition.type) return;
         if (COMPOSITE_TYPES.has(newType)) {
             if (newType === "not") {
-                onChange({ type: newType, params: { type: "global_eq", params: { key: "", value: "" } } });
+                onChange({ type: newType, params: { type: "expr", params: "" } });
             } else {
                 onChange({ type: newType, params: [] });
             }
@@ -187,6 +192,9 @@ export function ConditionEditor({ condition, schema, onChange, onRemove, depth =
                     <code className={`font-mono font-semibold ${getConditionColor(condition.type)}`}>{condition.type}</code>
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </button>
+                {DEPRECATED_TYPES.has(condition.type) && (
+                    <span className="text-[9px] text-accent-amber/60">deprecated</span>
+                )}
                 {desc && <span className="text-[10px] text-muted-foreground truncate">{desc}</span>}
                 <div className="flex-1" />
                 {onRemove && (
@@ -243,7 +251,7 @@ function ConditionParams({ condition, schema, onChange, depth }: {
                     size="sm"
                     className="h-6 text-xs"
                     onClick={() => {
-                        const newChild: ConditionNode = { type: "global_eq", params: { key: "", value: "" } };
+                        const newChild: ConditionNode = { type: "expr", params: "" };
                         onChange({ ...condition, params: [...children, newChild] });
                     }}
                 >
@@ -408,5 +416,5 @@ function RawConditionEditor({ condition, onChange }: { condition: ConditionNode;
 }
 
 export function createEmptyCondition(): ConditionNode {
-    return { type: "global_eq", params: { key: "", value: "" } };
+    return { type: "expr", params: "" };
 }
