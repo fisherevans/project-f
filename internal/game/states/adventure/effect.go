@@ -8,14 +8,13 @@ import (
 )
 
 func init() {
-	registerStepConverter("set_world_state", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+	setGlobalConverter := func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
 		m := resolveMap(step.Params, tc)
-		return []Effect{NewSetWorldStateEffect(mapStr(m, "key"), m["value"])}
-	})
-	registerStepConverter("set_run_state", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
-		m := resolveMap(step.Params, tc)
-		return []Effect{NewSetRunStateEffect(mapStr(m, "key"), m["value"])}
-	})
+		return []Effect{NewSetGlobalEffect(mapStr(m, "key"), m["value"])}
+	}
+	registerStepConverter("set_global", setGlobalConverter)
+	registerStepConverter("set_world_state", setGlobalConverter)
+	registerStepConverter("set_run_state", setGlobalConverter)
 	registerStepConverter("broadcast", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
 		m := resolveMap(step.Params, tc)
 		var data any
@@ -177,24 +176,13 @@ func (e *EffectTimer) Process(source EntityReader, s *State) bool {
 	return true
 }
 
-type EffectSetWorldState struct {
+type EffectSetGlobal struct {
 	instantEffect
 	Key   string
 	Value any
 }
 
-func (e *EffectSetWorldState) Process(source EntityReader, s *State) bool {
-	s.globals.Set(e.Key, e.Value)
-	return true
-}
-
-type EffectSetRunState struct {
-	instantEffect
-	Key   string
-	Value any
-}
-
-func (e *EffectSetRunState) Process(source EntityReader, s *State) bool {
+func (e *EffectSetGlobal) Process(source EntityReader, s *State) bool {
 	s.globals.Set(e.Key, e.Value)
 	return true
 }

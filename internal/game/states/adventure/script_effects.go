@@ -261,7 +261,7 @@ func extractListSelection(m map[string]any, tc *TemplateContext) (message string
 	message = selectFromList(list, mode, counter)
 
 	if increment && counterKey != "" {
-		effects = append(effects, NewSetRunStateEffect(counterKey, counter+1))
+		effects = append(effects, NewSetGlobalEffect(counterKey, counter+1))
 	}
 	return message, effects, nil
 }

@@ -23,7 +23,7 @@ handlers:
                 - dialogue: "Welcome to your crash course training, recruit. I'm sure you're eager to get started."
                 - dialogue: "This series of training rooms will get you ready to venture out into the unknown to explore."
                 - timer: 0.25
-                - set_run_state:
+                - set_global:
                     key: "intro.training.0.door"
                     value: true
                 - timer: 0.25
@@ -48,7 +48,7 @@ handlers:
                 - mutate_camera:
                     follow_entity: "intro.training.10.door"
                 - timer: 1.5
-                - set_world_state:
+                - set_global:
                     key: "intro.training.10.door"
                     value: true
                 - timer: 1.5
@@ -137,7 +137,7 @@ handlers:
           expr: "global['intro.training.2.door'] != true"
         steps:
           - play_sound: "adventure/beeps/success"
-          - set_run_state:
+          - set_global:
               key: "intro.training.2.door"
               value: true
 
@@ -155,7 +155,7 @@ handlers:
                 - dialogue: "Well, at least you can move around in that Animech."
                 - dialogue: "Next, you'll need to know how to battle specimen. Go through to the next room and defeat the little vermin."
                 - timer: 0.25
-                - set_run_state:
+                - set_global:
                     key: "intro.training.3.door"
                     value: true
                 - timer: 0.25
@@ -172,7 +172,7 @@ handlers:
         steps:
           - dialogue: "INTERCOM: Nice job recruit. Most folks curl up in a ball when hey face their first foe."
           - dialogue: "INTERCOM: I don't know why though. That combat dummy can't even attack."
-          - set_run_state:
+          - set_global:
               key: "intro.training.4.door"
               value: true
 
@@ -198,7 +198,7 @@ handlers:
                 - dialogue: "Now that your first battle is under your belt, you've gained some experience. With it, we can enhance the synchronization between your soul and the Animech."
                 - dialogue: "On the table next to me is a Xenolog. A device that allows you to track your explorations and see the status of your Animech."
                 - dialogue: "Try opening it up, and spend those experience points to enhance your Animech's abilities."
-                - set_world_state:
+                - set_global:
                     key: "intro.training.5.xenolog"
                     value: true
     on_state_enter:
@@ -218,7 +218,7 @@ handlers:
                 - mutate_camera:
                     follow_entity: "intro.training.5.door"
                 - timer: 1.5
-                - set_world_state:
+                - set_global:
                     key: "intro.training.5.door"
                     value: true
                 - timer: 1.5
@@ -251,7 +251,7 @@ handlers:
           combat_id: intro.training.6.combat_over
         steps:
           - dialogue: "INTERCOM: Okay, I'll be honest. I expected you to chicken out of that one."
-          - set_run_state:
+          - set_global:
               key: "intro.training.6.door"
               value: true
 
@@ -285,10 +285,10 @@ handlers:
                 - dialogue: "As you battled that specimen, your Animech acquired research points."
                 - dialogue: "Using the Xenolog, you can spend those research points to unlock new skills."
                 - dialogue: "Do that, and equip your new skill."
-                - set_world_state:
+                - set_global:
                     key: "intro.training.5.xenolog"
                     value: true
-                - set_world_state:
+                - set_global:
                     key: "abilities.xenolog_primortals"
                     value: true
     on_state_enter:
@@ -318,10 +318,10 @@ handlers:
               effects:
                 - dialogue: "Now. In order to transfer your soul back to your body, you'll need to gather enough Elythium."
                 - dialogue: "Go gather that crystal over there."
-                - set_run_state:
+                - set_global:
                     key: "intro.control.elythium"
                     value: true
-                - set_world_state:
+                - set_global:
                     key: "elythium_goal"
                     value: 12
     on_broadcast:
@@ -330,7 +330,7 @@ handlers:
         when:
           expr: "global['intro.training.7.elythium.done'] != true"
         steps:
-          - set_world_state:
+          - set_global:
               key: "intro.training.7.elythium.done"
               value: true
           - focused_sequence:
@@ -338,7 +338,7 @@ handlers:
               effects:
                 - dialogue: "You'll need to collect more than that to complete the soul transfer."
                 - dialogue: "Go below and gather enough to trigger the return sequence."
-                - set_run_state:
+                - set_global:
                     key: "intro.training.7.door"
                     value: true
           - timer: 0.5
@@ -399,13 +399,13 @@ handlers:
           - timer: 0.5
           - self_dialogue: "Your limbs are heavy, sluggish. The light hurts your eyes."
           - self_dialogue: "You'r back in your own body."
-          - set_world_state:
+          - set_global:
               key: "abilities.xenolog_access"
               value: true
-          - set_world_state:
+          - set_global:
               key: "intro.control.elythium"
               value: false
-          - set_world_state:
+          - set_global:
               key: "elythium"
               value: 0
           - enable_behavior:

@@ -101,10 +101,31 @@
         }
       ]
     },
+    "set_global": {
+      "name": "set_global",
+      "description": "Set a global state variable (persists in save data). Accessed as global.* in expressions.",
+      "category": "state",
+      "paramStyle": "map",
+      "params": [
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "required": true,
+          "description": "Value to set (null to delete)"
+        }
+      ]
+    },
     "set_world_state": {
       "name": "set_world_state",
-      "description": "Set a persistent world state global variable (persists across save/load)",
+      "description": "Alias for set_global (deprecated)",
       "category": "state",
+      "aliasOf": "set_global",
       "paramStyle": "map",
       "params": [
         {
@@ -123,21 +144,22 @@
     },
     "set_run_state": {
       "name": "set_run_state",
-      "description": "Set a run state variable (persists only during current game session)",
+      "description": "Alias for set_global (deprecated)",
       "category": "state",
+      "aliasOf": "set_global",
       "paramStyle": "map",
       "params": [
         {
           "name": "key",
           "type": "string",
           "required": true,
-          "description": "Run state variable key"
+          "description": "Global variable key"
         },
         {
           "name": "value",
           "type": "any",
           "required": true,
-          "description": "Value to set"
+          "description": "Value to set (null to delete)"
         }
       ]
     },

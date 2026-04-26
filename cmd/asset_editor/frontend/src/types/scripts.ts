@@ -40,6 +40,7 @@ export interface StepKindDef {
     paramStyle: string;
     params?: ParamDef[];
     acceptsSubSteps?: boolean;
+    aliasOf?: string;
 }
 
 export interface CallableDef {

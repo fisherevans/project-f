@@ -363,15 +363,25 @@ Award Elythium currency to the player
 
 ### state
 
-#### `set_run_state`
+#### `set_global`
 
-Set a run state variable (persists only during current game session)
+Set a global state variable (persists in save data). Accessed as global.* in expressions.
 
 - **Param style:** map
 **Parameters:**
 
-- `key` (string (required)): Run state variable key
-- `value` (any (required)): Value to set
+- `key` (string (required)): Global variable key
+- `value` (any (required)): Value to set (null to delete)
+
+#### `set_run_state`
+
+Alias for set_global (deprecated)
+
+- **Param style:** map
+**Parameters:**
+
+- `key` (string (required)): Global variable key
+- `value` (any (required)): Value to set (null to delete)
 
 #### `set_var`
 
@@ -385,7 +395,7 @@ Set a handler-local variable using an expression. The value is evaluated as an e
 
 #### `set_world_state`
 
-Set a persistent world state global variable (persists across save/load)
+Alias for set_global (deprecated)
 
 - **Param style:** map
 **Parameters:**

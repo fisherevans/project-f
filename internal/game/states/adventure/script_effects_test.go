@@ -97,9 +97,9 @@ func TestConvertSteps_PickDialogue(t *testing.T) {
 		if d.Text != "Hi there!" {
 			t.Errorf("text = %q, want %q", d.Text, "Hi there!")
 		}
-		rs, ok := effects[1].(*EffectSetRunState)
+		rs, ok := effects[1].(*EffectSetGlobal)
 		if !ok {
-			t.Fatalf("effect[1] = %T, want *EffectSetRunState", effects[1])
+			t.Fatalf("effect[1] = %T, want *EffectSetGlobal", effects[1])
 		}
 		if rs.Key != "greet_counter" {
 			t.Errorf("key = %q", rs.Key)

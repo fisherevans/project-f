@@ -89,7 +89,7 @@ custom_actions:
             - trigger_movement:
                 entity: "{{player}}"
                 direction: "{{param.walk_back_direction}}"
-            - set_run_state:
+            - set_global:
                 key: intro.do_not_enter.attempts
                 value: "{{global.intro.do_not_enter.attempts + 1}}"
 
@@ -166,7 +166,7 @@ custom_actions:
                 else:
                   - self_dialogue: "Ah, the elusive papers that are actually mine."
       - delete_entity: "{{param.entity_id}}"
-      - set_run_state:
+      - set_global:
           key: intro.has_papers
           value: true
 
@@ -188,7 +188,7 @@ custom_actions:
             - mutate_camera:
                 follow_entity: "intro.papers_door"
             - timer: 1.5
-            - set_run_state:
+            - set_global:
                 key: intro.papers_turned_in
                 value: true
             - timer: 1.5
@@ -224,7 +224,7 @@ custom_actions:
                       else:
                         - play_sound: "adventure/beeps/success"
                         - self_dialogue: "That worked!"
-                        - set_run_state:
+                        - set_global:
                             key: "{{param.run_state_key}}"
                             value: open
 
@@ -240,7 +240,7 @@ handlers:
           not_run_this_instance:
             key: intro.hints.hint.interact
         steps:
-          - set_world_state:
+          - set_global:
               key: intro.hints.hint.interact
               value: "{{instance_id}}"
           - timer: 3
@@ -254,7 +254,7 @@ handlers:
           not_run_this_instance:
             key: intro.hints.hint.interact
         steps:
-          - set_world_state:
+          - set_global:
               key: intro.hints.hint.interact
               value: "{{instance_id}}"
           - timer: 3
@@ -267,7 +267,7 @@ handlers:
           not_run_this_instance:
             key: intro.hints.hint.run
         steps:
-          - set_world_state:
+          - set_global:
               key: intro.hints.hint.run
               value: "{{instance_id}}"
           - timer: 3
@@ -402,7 +402,7 @@ handlers:
               effects:
                 - dialogue: "Ah! Hello. Yes, this is the equipment testing facility. No.. No, I'm not a specialist; they're inside the testing rooms."
                 - dialogue: "Here, take this key card. They're waiting for you in testing room 1."
-                - set_run_state:
+                - set_global:
                     key: intro.has_equipment_key
                     value: true
 

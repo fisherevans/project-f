@@ -141,7 +141,7 @@ handlers:
       - steps:
           - dialogue: "Hello"
           - timer: 0.5
-          - set_run_state:
+          - set_global:
               key: "foo"
               value: true
           - play_sound: "beep"
@@ -159,7 +159,7 @@ handlers:
 	}{
 		{"dialogue"},
 		{"timer"},
-		{"set_run_state"},
+		{"set_global"},
 		{"play_sound"},
 	}
 	for i, tt := range tests {

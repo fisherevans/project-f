@@ -45,7 +45,7 @@ func init() {
 				}
 				return NewOutput().WithEffects(
 					NewMutateModeBasedEntityEffect(thisEntity.GetId()).WithMode(newValue),
-					NewSetWorldStateEffect(doorStateVariable, newValue),
+					NewSetGlobalEffect(doorStateVariable, newValue),
 				)
 			},
 		}.CreateHandler()

@@ -16,7 +16,7 @@ func init() {
 					NewMutateBlockingPresenceEffect(thisEntity.GetId()).WithIsBlockingIngress(false),
 					NewPushEntityBehaviorEffect(controlled).
 						WithScriptedMotion(EntityBehaviorScriptedMotion{}),
-					NewSetRunStateEffect("control_id", controlled),
+					NewSetGlobalEffect("control_id", controlled),
 					NewMutateBlockingPresenceEffect("control_reset").WithIsBlockingIngress(false),
 				)
 			},

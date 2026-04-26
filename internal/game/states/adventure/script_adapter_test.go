@@ -264,7 +264,7 @@ func TestScriptHandler_OnInit(t *testing.T) {
 		OnInit: &HookDef{Rules: []*RuleDef{
 			{
 				Steps: []*StepNode{
-					{Kind: "set_world_state", Params: map[string]any{
+					{Kind: "set_global", Params: map[string]any{
 						"key":   "initialized",
 						"value": true,
 					}},

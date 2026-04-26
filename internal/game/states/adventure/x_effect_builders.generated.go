@@ -29,15 +29,8 @@ func (e *EffectTimer) WithTimerId(timerId string) *EffectTimer {
 	return e
 }
 
-func NewSetWorldStateEffect(key string, value any) *EffectSetWorldState {
-	return &EffectSetWorldState{
-		Key: key,
-		Value: value,
-	}
-}
-
-func NewSetRunStateEffect(key string, value any) *EffectSetRunState {
-	return &EffectSetRunState{
+func NewSetGlobalEffect(key string, value any) *EffectSetGlobal {
+	return &EffectSetGlobal{
 		Key: key,
 		Value: value,
 	}

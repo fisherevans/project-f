@@ -30,10 +30,10 @@ func init() {
 		}
 		var effects []Effect
 		for _, key := range s.globals.baseGlobals.KeysWithPrefix("intro.training.") {
-			effects = append(effects, NewSetWorldStateEffect(key, nil))
+			effects = append(effects, NewSetGlobalEffect(key, nil))
 		}
 		for _, key := range s.globals.baseGlobals.KeysWithPrefix("combat.training.") {
-			effects = append(effects, NewSetWorldStateEffect(key, nil))
+			effects = append(effects, NewSetGlobalEffect(key, nil))
 		}
 		game.CurrentSave().Animech.SkillSet = &rpg.SkillSet{
 			Skill1: "tackle",
@@ -53,10 +53,10 @@ func init() {
 			Visibility:     rpg.PrimortalVisibilityDefeated,
 			ResearchPoints: 5,
 		}
-		effects = append(effects, NewSetWorldStateEffect(globalVariableNameHasXenologAccess, nil))
-		effects = append(effects, NewSetWorldStateEffect(globalVariableNameHasXenologPrimortals, nil))
-		effects = append(effects, NewSetWorldStateEffect(rpg.GlobalKeyElythium, 0))
-		effects = append(effects, NewSetWorldStateEffect(entityId, game.InstanceId))
+		effects = append(effects, NewSetGlobalEffect(globalVariableNameHasXenologAccess, nil))
+		effects = append(effects, NewSetGlobalEffect(globalVariableNameHasXenologPrimortals, nil))
+		effects = append(effects, NewSetGlobalEffect(rpg.GlobalKeyElythium, 0))
+		effects = append(effects, NewSetGlobalEffect(entityId, game.InstanceId))
 		s.ExecuteSystemEffects(effects...)
 	})
 
@@ -70,10 +70,10 @@ func init() {
 		}
 		var effects []Effect
 		for _, key := range s.globals.baseGlobals.KeysWithPrefix("intro.") {
-			effects = append(effects, NewSetWorldStateEffect(key, nil))
+			effects = append(effects, NewSetGlobalEffect(key, nil))
 		}
-		effects = append(effects, NewSetWorldStateEffect(rpg.GlobalKeyElythium, 0))
-		effects = append(effects, NewSetWorldStateEffect(entityId, game.InstanceId))
+		effects = append(effects, NewSetGlobalEffect(rpg.GlobalKeyElythium, 0))
+		effects = append(effects, NewSetGlobalEffect(entityId, game.InstanceId))
 		s.ExecuteSystemEffects(effects...)
 	})
 
@@ -84,7 +84,7 @@ func init() {
 		}
 		var effects []Effect
 		for _, key := range s.globals.baseGlobals.KeysWithPrefix(prefix) {
-			effects = append(effects, NewSetWorldStateEffect(key, nil))
+			effects = append(effects, NewSetGlobalEffect(key, nil))
 		}
 		if len(effects) > 0 {
 			s.ExecuteSystemEffects(effects...)

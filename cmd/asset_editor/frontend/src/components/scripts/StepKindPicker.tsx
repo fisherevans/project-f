@@ -48,6 +48,7 @@ export function StepKindPicker({ schema, onSelect, onCancel }: StepKindPickerPro
     const grouped = useMemo(() => {
         const map = new Map<string, StepKindDef[]>();
         for (const def of Object.values(schema.stepKinds)) {
+            if (def.aliasOf) continue;
             const cat = def.category;
             if (!map.has(cat)) map.set(cat, []);
             map.get(cat)!.push(def);

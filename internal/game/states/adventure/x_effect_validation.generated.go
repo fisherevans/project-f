@@ -40,15 +40,7 @@ func (e *EffectTimer) FillDefaultsAndValidate() error {
 	return reporter.report()
 }
 
-func (e *EffectSetWorldState) FillDefaultsAndValidate() error {
-	reporter := newIssueReporter()
-
-	reporter.requireString("key", e.Key)
-
-	return reporter.report()
-}
-
-func (e *EffectSetRunState) FillDefaultsAndValidate() error {
+func (e *EffectSetGlobal) FillDefaultsAndValidate() error {
 	reporter := newIssueReporter()
 
 	reporter.requireString("key", e.Key)
