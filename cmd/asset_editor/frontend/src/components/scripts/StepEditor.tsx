@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus, Eye } from "lucide-react";
 import { getCategoryColor } from "./StepKindPicker";
 import { StepParamForm } from "./StepParamForm";
 import { StepList } from "./StepList";
 import { ExpressionInput } from "./inputs/ExpressionInput";
 import { useExprContext } from "./ExprContext";
 import { getStepSubSteps, setStepSubSteps, parseSteps, serializeSteps } from "@/lib/scriptUtils";
-import type { StepNode, ScriptSchema, StepKindDef } from "@/types/scripts";
+import type { StepNode, ScriptSchema, StepKindDef, CustomActionDef } from "@/types/scripts";
 
 interface StepEditorProps {
     step: StepNode;
@@ -77,6 +77,62 @@ const CATEGORY_BORDER_COLORS: Record<string, string> = {
     combat: "border-l-accent-red-edge",
 };
 
+function CustomActionPreviewModal({ action, actionName, schema, onClose }: {
+    action: CustomActionDef;
+    actionName: string;
+    schema: ScriptSchema;
+    onClose: () => void;
+}) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+            <div className="bg-popover border border-border rounded-lg shadow-xl w-[500px] max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                    <div>
+                        <code className="text-sm font-mono font-semibold">{actionName}</code>
+                        {action.description && (
+                            <div className="text-xs text-muted-foreground mt-0.5">{action.description}</div>
+                        )}
+                    </div>
+                    <button className="text-muted-foreground hover:text-foreground" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+                <div className="overflow-y-auto p-3 space-y-3">
+                    {action.params && action.params.length > 0 && (
+                        <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">Parameters</div>
+                            <div className="space-y-1">
+                                {action.params.map((p) => (
+                                    <div key={p.name} className="flex items-baseline gap-2 text-xs">
+                                        <code className="font-mono text-accent-violet">{p.name}</code>
+                                        {p.default !== undefined && (
+                                            <span className="text-muted-foreground/60">= {String(p.default)}</span>
+                                        )}
+                                        {p.default === undefined && (
+                                            <span className="text-accent-amber text-[10px]">required</span>
+                                        )}
+                                        {p.description && (
+                                            <span className="text-muted-foreground">{p.description}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">
+                            Steps ({action.steps.length})
+                        </div>
+                        <div className="pointer-events-none opacity-80">
+                            <StepList steps={action.steps} schema={schema} onChange={() => {}} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function SwitchCasesEditor({ step, schema, onChange }: { step: StepNode; schema: ScriptSchema; onChange: (step: StepNode) => void }) {
     const exprCtx = useExprContext();
     const params = step.params as Record<string, unknown>;
@@ -142,10 +198,12 @@ function SwitchCasesEditor({ step, schema, onChange }: { step: StepNode; schema:
 }
 
 export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMoveUp, onMoveDown }: StepEditorProps) {
+    const exprCtx = useExprContext();
     const stepDef = schema.stepKinds[step.kind];
     const category = stepDef?.category ?? "unknown";
     const expandable = hasExpandableContent(step, stepDef);
     const [expanded, setExpanded] = useState(expandable && (stepDef?.acceptsSubSteps || stepDef?.paramStyle === "list"));
+    const [showPreview, setShowPreview] = useState(false);
 
     const summary = getStepSummary(step);
     const subStepGroups = getStepSubSteps(step);
@@ -156,6 +214,11 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
         (stepDef.paramStyle === "string_or_map" && (typeof step.params === "string" || typeof step.params === "number")));
 
     const borderColor = CATEGORY_BORDER_COLORS[category] ?? "border-l-border";
+
+    const actionName = step.kind === "custom_action"
+        ? typeof step.params === "string" ? step.params : String((step.params as Record<string, unknown>)?.name ?? "")
+        : "";
+    const actionDef = actionName ? exprCtx.customActions[actionName] : undefined;
 
     return (
         <div className={`rounded border border-border/40 border-l-2 ${borderColor} bg-background`}>
@@ -182,7 +245,17 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                     <span className="flex-1" />
                 )}
                 {(isSimpleInline || summary || !expandable) && <span className="flex-1 min-w-0" />}
+                {actionDef && !expanded && (
+                    <span className="text-[10px] text-muted-foreground/50 truncate shrink min-w-0">
+                        {actionDef.description}
+                    </span>
+                )}
                 <div className="flex items-center shrink-0">
+                    {actionDef && (
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => setShowPreview(true)} title="Preview action">
+                            <Eye className="h-3 w-3" />
+                        </Button>
+                    )}
                     {onMoveUp && (
                         <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-0 group-hover/step:opacity-100 text-muted-foreground hover:text-foreground" onClick={onMoveUp}>
                             <ArrowUp className="h-3 w-3" />
@@ -197,6 +270,14 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                         <X className="h-3 w-3" />
                     </Button>
                 </div>
+                {showPreview && actionDef && (
+                    <CustomActionPreviewModal
+                        action={actionDef}
+                        actionName={actionName}
+                        schema={schema}
+                        onClose={() => setShowPreview(false)}
+                    />
+                )}
             </div>
             {expanded && isList && (
                 <div className="border-t border-border/30 px-2 py-1.5">
