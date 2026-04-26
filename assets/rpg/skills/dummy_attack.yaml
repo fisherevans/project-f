@@ -1,0 +1,14 @@
+id: dummy_attack
+name: Dummy Attack
+description: not used
+ticks:
+  - {}
+  - {}
+  - effects:
+      - damage:
+          amount: 2
+    animation:
+      source:
+        - type: pounce
+      target:
+        - type: recoil

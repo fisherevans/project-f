@@ -76,7 +76,9 @@ type Overlay struct {
 	dropdownOpts        []string
 	dropdownSel         int
 	dropdownOnSel       func(int)
-	dropdownJustOpened  bool // true for the one frame the dropdown was opened; skips same-frame close
+	dropdownJustOpened   bool // true for the one frame the dropdown was opened; skips same-frame close
+	dropdownScrollIdx    int  // first visible item index when dropdown has overflow
+	dropdownVisibleCount int  // number of items visible in dropdown (capped)
 
 	// content drag-scroll state (touch drag anywhere in content area)
 	contentDragging     bool

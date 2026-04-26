@@ -70,7 +70,7 @@ export function SpriteAliasEditor({
                     </div>
                 </div>
                 {pendingTile && (
-                    <p className="text-xs text-blue-400 mt-1">
+                    <p className="text-xs text-accent-blue mt-1">
                         Click a sprite name to assign tile r{pendingTile.row} c{pendingTile.col}
                     </p>
                 )}
@@ -80,7 +80,7 @@ export function SpriteAliasEditor({
                     {entries.map(([name, coords]) => (
                         <div key={name} className="flex items-center gap-2 text-xs">
                             <button
-                                className={`font-medium min-w-[80px] text-left ${pendingTile ? "text-blue-400 hover:underline cursor-pointer" : ""}`}
+                                className={`font-medium min-w-[80px] text-left ${pendingTile ? "text-accent-blue hover:underline cursor-pointer" : ""}`}
                                 onClick={() => assignTile(name)}
                                 disabled={!pendingTile}
                             >

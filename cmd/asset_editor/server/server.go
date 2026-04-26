@@ -21,6 +21,7 @@ type Server struct {
 	scripts    *ScriptService
 	rpg        *RPGService
 	saves      *SaveService
+	tiled      *TiledService
 	hub        *Hub
 	frontendFS fs.FS
 }
@@ -38,6 +39,7 @@ func New(assetsDir string, devMode bool, frontendFS fs.FS) *Server {
 		scripts:    NewScriptService(assetsDir),
 		rpg:        NewRPGService(assetsDir),
 		saves:      NewSaveService(assetsDir),
+		tiled:      NewTiledService(assetsDir),
 		hub:        NewHub(assetsDir),
 		frontendFS: frontendFS,
 	}
@@ -97,6 +99,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("PUT /api/v1/saves/{id}", s.handleSaveSave)
 	s.mux.HandleFunc("DELETE /api/v1/saves/{id}", s.handleDeleteSave)
 	s.mux.HandleFunc("POST /api/v1/saves/{id}/clone", s.handleCloneSave)
+
+	s.mux.HandleFunc("GET /api/v1/tiled/usages", s.handleListTiledUsages)
 
 	s.mux.HandleFunc("GET /api/v1/ws", s.handleWebSocket)
 

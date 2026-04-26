@@ -9,6 +9,7 @@ func init() {
 		byTile(tiles.LoadMap).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
+			system.SetDebugType(params.EntityId, "trigger")
 			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 			return entity, BasicHandlerBuilder[None]{
 				OnInteract: func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {

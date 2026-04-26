@@ -12,6 +12,9 @@ export default defineConfig({
     },
     server: {
         proxy: {
+            '/api/v1/debug': {
+                target: 'http://localhost:8091',
+            },
             '/api': {
                 target: 'http://localhost:8090',
                 ws: true,

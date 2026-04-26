@@ -196,7 +196,7 @@ export function TilesheetViewer({
                     </span>
                 )}
             </div>
-            <div className={`overflow-auto rounded border border-border ${bgClass ?? "bg-zinc-900"}`}>
+            <div className={`overflow-auto rounded border border-border ${bgClass ?? "bg-canvas"}`}>
                 <canvas
                     ref={canvasRef}
                     width={canvasWidth}

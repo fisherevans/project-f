@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/api/client"
-import type { ScriptFileEntry, ScriptFileDetail, ScriptSchema } from "@/types/scripts"
+import type { ScriptFileEntry, ScriptFileDetail, ScriptSchema, TiledHandlerUsage } from "@/types/scripts"
 
 export const scriptKeys = {
     all: ["scripts"] as const,
     list: () => [...scriptKeys.all, "list"] as const,
     detail: (path: string) => [...scriptKeys.all, "detail", path] as const,
     schema: () => [...scriptKeys.all, "schema"] as const,
+    tiledUsages: () => [...scriptKeys.all, "tiled-usages"] as const,
 }
 
 export function useScriptSchema() {
@@ -51,6 +52,14 @@ export async function validateExpr(expression: string): Promise<{ valid: boolean
     return apiFetch<{ valid: boolean; error?: string }>("/scripts/_validate-expr", {
         method: "POST",
         body: JSON.stringify({ expression }),
+    })
+}
+
+export function useTiledUsages() {
+    return useQuery({
+        queryKey: scriptKeys.tiledUsages(),
+        queryFn: () => apiFetch<TiledHandlerUsage[]>("/tiled/usages"),
+        staleTime: 30_000,
     })
 }
 

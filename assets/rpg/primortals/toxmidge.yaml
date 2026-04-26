@@ -1,0 +1,34 @@
+type: toxmidge
+name: Toxmidge
+description: A menacing aerial predator that secretes highly corrosive enzymes, capable of dissolving even the toughest materials with its acidic spray.
+xeno_log_index: 9
+base_sync: 25
+unlockable_skills:
+  acid_string:
+    cost: 3
+  molt:
+    cost: 7
+    prerequisites:
+      - acid_string
+combat_archetypes:
+  default:
+    additional_sync: 5
+    additional_sync_variance: 5
+    skill_pool:
+      random:
+        weighted_skills:
+          acid_string: 20
+          guard: 20
+          jab: 20
+          molt: 10
+  training.2:
+    additional_sync: 5
+    skill_pool:
+      random:
+        initial_ordered_skills:
+          - guard
+          - guard
+          - acid_string
+        weighted_skills:
+          acid_string: 1
+          guard: 2

@@ -1,0 +1,40 @@
+type: dummy
+name: Dummy
+description: A test robot to hit for fun.
+base_sync: 0
+combat_archetypes:
+  aggressive:
+    additional_sync: 10
+    skill_pool:
+      random:
+        initial_ordered_skills:
+          - guard
+        weighted_skills:
+          jab: 1
+  default:
+    additional_sync: 40
+    skill_pool:
+      random:
+        weighted_skills:
+          brace: 40
+          guard: 20
+          jab: 10
+  onehit:
+    additional_sync: 1
+    skill_pool:
+      random:
+        weighted_skills:
+          do_nothing_5: 1
+  training.1:
+    additional_sync: 40
+    skill_pool:
+      random:
+        initial_ordered_skills:
+          - do_nothing_5
+          - do_nothing_5
+          - do_nothing_5
+          - dummy_defend
+          - do_nothing_5
+        weighted_skills:
+          do_nothing_5: 3
+          dummy_defend: 1

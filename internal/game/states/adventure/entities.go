@@ -29,7 +29,9 @@ type EntitySystem struct {
 	soundProviders map[string][]EntitySoundProvider
 	disabledSounds map[string]map[string]struct{}
 
-	metadata map[string]*EntityMetadata
+	metadata   map[string]*EntityMetadata
+	debugTypes  map[string]string
+	handlerRefs map[string]string
 }
 
 func NewEntitySystem(state *State) *EntitySystem {
@@ -49,7 +51,9 @@ func NewEntitySystem(state *State) *EntitySystem {
 		soundProviders: map[string][]EntitySoundProvider{},
 		disabledSounds: map[string]map[string]struct{}{},
 
-		metadata: map[string]*EntityMetadata{},
+		metadata:   map[string]*EntityMetadata{},
+		debugTypes:  map[string]string{},
+		handlerRefs: map[string]string{},
 	}
 }
 
@@ -63,6 +67,22 @@ func (es *EntitySystem) RegisterEntity(id string, location MapLocation) Entity {
 	return entity
 }
 
+func (es *EntitySystem) SetDebugType(id string, debugType string) {
+	es.debugTypes[id] = debugType
+}
+
+func (es *EntitySystem) GetDebugType(id string) string {
+	return es.debugTypes[id]
+}
+
+func (es *EntitySystem) SetHandlerRef(id string, ref string) {
+	es.handlerRefs[id] = ref
+}
+
+func (es *EntitySystem) GetHandlerRef(id string) string {
+	return es.handlerRefs[id]
+}
+
 func (es *EntitySystem) DeleteEntity(id string) {
 	es.occupations.RemoveEntity(id)
 	delete(es.movements, id)
@@ -72,6 +92,8 @@ func (es *EntitySystem) DeleteEntity(id string) {
 	delete(es.disabledBehaviors, id)
 	delete(es.soundProviders, id)
 	delete(es.disabledSounds, id)
+	delete(es.debugTypes, id)
+	delete(es.handlerRefs, id)
 }
 
 func (es *EntitySystem) GetEntity(id string) (Entity, bool) {

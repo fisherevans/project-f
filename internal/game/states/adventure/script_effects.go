@@ -374,7 +374,7 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 			return nil
 		}
 		handlerState := tc.handlerState
-		return []Effect{NewFunctionEffect(func(s *State) {
+		return []Effect{NewFunctionEffect(func(_ EntityReader, s *State) {
 			prog, err := CompileExpr(valueExpr)
 			if err != nil {
 				log.Warn().Err(err).Str("expr", valueExpr).Msg("set_var: failed to compile value expression")
@@ -403,7 +403,7 @@ func convertStep(step *StepNode, tc *TemplateContext, sequences map[string]*Sequ
 		return convertCustomActionStep(step.Params, tc, sequences)
 
 	default:
-		log.Warn().Str("kind", step.Kind).Msg("unknown step kind")
+		log.Error().Str("kind", step.Kind).Msg("unknown step kind (should have been caught by validation)")
 		return nil
 	}
 }
@@ -414,12 +414,13 @@ func convertAction(name string, params map[string]any, tc *TemplateContext) []Ef
 		log.Warn().Str("name", name).Msg("unknown script action")
 		return nil
 	}
-	return []Effect{NewFunctionEffect(func(s *State) {
-		var source EntityReader
-		if e, ok := s.entities.GetEntity(tc.SelfId); ok {
-			source = e
-		} else {
-			source = &NullEntity{id: tc.SelfId}
+	return []Effect{NewFunctionEffect(func(source EntityReader, s *State) {
+		if source == nil {
+			if e, ok := s.entities.GetEntity(tc.SelfId); ok {
+				source = e
+			} else {
+				source = &NullEntity{id: tc.SelfId}
+			}
 		}
 		fn(s, source, params)
 	})}

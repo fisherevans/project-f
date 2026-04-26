@@ -18,9 +18,9 @@
         },
         "hq.tmx": {
             "expandedGroupLayers": [
-                2,
+                4,
                 3,
-                4
+                2
             ],
             "expandedObjectLayers": [
                 4,
@@ -35,22 +35,22 @@
         },
         "intro.tmx": {
             "expandedGroupLayers": [
-                2,
+                4,
                 3,
-                4
+                2
             ],
             "expandedObjectLayers": [
-                14,
-                12,
                 4,
-                11,
-                13
+                14,
+                13,
+                12,
+                11
             ],
             "scale": 4,
             "selectedLayer": 9,
             "viewCenter": {
-                "x": 1586.875,
-                "y": 3474.5
+                "x": 4000.125,
+                "y": 4000.125
             }
         },
         "map1.tmx": {
@@ -99,8 +99,8 @@
             "scale": 3,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 166.49999999999997,
-                "y": 89.33333333333333
+                "x": 800.1666666666666,
+                "y": 800.1666666666666
             }
         },
         "snowhex_base.tsx": {
@@ -113,8 +113,8 @@
         },
         "sylvoria.tmx": {
             "expandedGroupLayers": [
-                2,
-                4
+                4,
+                2
             ],
             "expandedObjectLayers": [
                 4
@@ -122,8 +122,8 @@
             "scale": 2,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 4745.25,
-                "y": 5569
+                "x": 8000.25,
+                "y": 8000.25
             }
         },
         "sylvoria.tsx": {

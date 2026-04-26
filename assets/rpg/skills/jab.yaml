@@ -1,0 +1,15 @@
+id: jab
+name: Jab
+description: Quick strike that deals light damage
+ticks:
+  - effects:
+      - damage:
+          amount: 5
+          variance: 2
+    animation:
+      source:
+        - type: pounce
+      target:
+        - type: recoil
+  - {}
+  - {}

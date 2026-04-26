@@ -1,0 +1,16 @@
+id: arc_dart
+name: Arc Dart
+description: Launch an electrified dart that ionizes
+ticks:
+  - stance: exposed
+  - stance: exposed
+  - stance: exposed
+  - {}
+  - effects:
+      - status:
+          type: ionized
+          stacks: 6
+          target: opponent
+    animation:
+      source:
+        - type: hop

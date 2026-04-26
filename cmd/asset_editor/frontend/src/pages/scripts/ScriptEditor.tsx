@@ -6,11 +6,102 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Save, GitCompare, X } from "lucide-react";
 import { HandlerList } from "@/components/scripts/HandlerList";
 import { HandlerDetail } from "@/components/scripts/HandlerDetail";
+import { CustomActionDetail } from "@/components/scripts/CustomActionDetail";
+import { SequenceDetail } from "@/components/scripts/SequenceDetail";
+import { ConstDetail } from "@/components/scripts/ConstDetail";
+import { DataListDetail } from "@/components/scripts/DataListDetail";
+import { PropertyTemplateDetail } from "@/components/scripts/PropertyTemplateDetail";
 import { ExprContextProvider } from "@/components/scripts/ExprContext";
 import { parseScript, stringifyScript } from "@/lib/scriptUtils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
-import type { ParsedScript } from "@/types/scripts";
+import type { ParsedScript, ScriptItemSelection, ScriptSchema } from "@/types/scripts";
+
+function renderDetail(
+    parsed: ParsedScript,
+    selection: ScriptItemSelection | null,
+    schema: ScriptSchema,
+    onChange: (script: ParsedScript) => void,
+) {
+    if (!selection) {
+        return (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                Select an item to edit.
+            </div>
+        );
+    }
+    switch (selection.type) {
+        case "handler": {
+            const handler = parsed.handlers[selection.name];
+            if (!handler) return null;
+            return (
+                <HandlerDetail
+                    handlerName={selection.name}
+                    handler={handler}
+                    schema={schema}
+                    onChange={(h) => onChange({ ...parsed, handlers: { ...parsed.handlers, [selection.name]: h } })}
+                />
+            );
+        }
+        case "custom_action": {
+            const action = parsed.custom_actions?.[selection.name];
+            if (!action) return null;
+            return (
+                <CustomActionDetail
+                    name={selection.name}
+                    action={action}
+                    schema={schema}
+                    onChange={(a) => onChange({ ...parsed, custom_actions: { ...parsed.custom_actions, [selection.name]: a } })}
+                />
+            );
+        }
+        case "sequence": {
+            const seq = parsed.sequences?.[selection.name];
+            if (!seq) return null;
+            return (
+                <SequenceDetail
+                    name={selection.name}
+                    sequence={seq}
+                    schema={schema}
+                    onChange={(s) => onChange({ ...parsed, sequences: { ...parsed.sequences, [selection.name]: s } })}
+                />
+            );
+        }
+        case "const": {
+            const value = parsed.consts?.[selection.name];
+            if (value === undefined) return null;
+            return (
+                <ConstDetail
+                    name={selection.name}
+                    value={value}
+                    onChange={(v) => onChange({ ...parsed, consts: { ...parsed.consts, [selection.name]: v } })}
+                />
+            );
+        }
+        case "data": {
+            const items = parsed.data?.[selection.name];
+            if (!items) return null;
+            return (
+                <DataListDetail
+                    name={selection.name}
+                    items={items}
+                    onChange={(list) => onChange({ ...parsed, data: { ...parsed.data, [selection.name]: list } })}
+                />
+            );
+        }
+        case "property_template": {
+            const template = parsed.property_templates?.[selection.name];
+            if (!template) return null;
+            return (
+                <PropertyTemplateDetail
+                    name={selection.name}
+                    template={template}
+                    onChange={(t) => onChange({ ...parsed, property_templates: { ...parsed.property_templates, [selection.name]: t } })}
+                />
+            );
+        }
+    }
+}
 
 interface DiffLine {
     type: "context" | "add" | "remove";
@@ -113,7 +204,10 @@ export function ScriptEditor() {
     const [parseError, setParseError] = useState<string | null>(null);
     const [dirty, setDirty] = useState(false);
     const [activeTab, setActiveTab] = useState<string>(() => searchParams.get("tab") ?? "structured");
-    const [selectedHandler, setSelectedHandler] = useState<string | null>(() => searchParams.get("handler"));
+    const [selection, setSelection] = useState<ScriptItemSelection | null>(() => {
+        const handler = searchParams.get("handler");
+        return handler ? { type: "handler", name: handler } : null;
+    });
     const [showDiff, setShowDiff] = useState(false);
 
     const fileName = path.split("/").pop()?.replace(/\.ya?ml$/, "") ?? path;
@@ -129,10 +223,10 @@ export function ScriptEditor() {
                 setParseError(null);
                 const urlHandler = searchParams.get("handler");
                 if (urlHandler && p.handlers[urlHandler]) {
-                    setSelectedHandler(urlHandler);
+                    setSelection({ type: "handler", name: urlHandler });
                 } else {
-                    const firstHandler = Object.keys(p.handlers)[0] ?? null;
-                    setSelectedHandler(firstHandler);
+                    const firstHandler = Object.keys(p.handlers)[0];
+                    setSelection(firstHandler ? { type: "handler", name: firstHandler } : null);
                 }
             } catch (e) {
                 setParseError(String(e));
@@ -169,8 +263,9 @@ export function ScriptEditor() {
     useEffect(() => {
         const params = new URLSearchParams(searchParams);
         let changed = false;
-        if (selectedHandler) {
-            if (params.get("handler") !== selectedHandler) { params.set("handler", selectedHandler); changed = true; }
+        const handlerName = selection?.type === "handler" ? selection.name : null;
+        if (handlerName) {
+            if (params.get("handler") !== handlerName) { params.set("handler", handlerName); changed = true; }
         } else {
             if (params.has("handler")) { params.delete("handler"); changed = true; }
         }
@@ -180,7 +275,7 @@ export function ScriptEditor() {
             if (params.has("tab")) { params.delete("tab"); changed = true; }
         }
         if (changed) setSearchParams(params, { replace: true });
-    }, [selectedHandler, activeTab]);
+    }, [selection, activeTab]);
 
     const handleTabChange = (tab: string) => {
         if (tab === "structured" && activeTab === "raw") {
@@ -188,8 +283,9 @@ export function ScriptEditor() {
                 const p = parseScript(rawContent);
                 setParsed(p);
                 setParseError(null);
-                if (!selectedHandler || !p.handlers[selectedHandler]) {
-                    setSelectedHandler(Object.keys(p.handlers)[0] ?? null);
+                if (selection?.type === "handler" && !p.handlers[selection.name]) {
+                    const firstHandler = Object.keys(p.handlers)[0];
+                    setSelection(firstHandler ? { type: "handler", name: firstHandler } : null);
                 }
             } catch (e) {
                 setParseError(String(e));
@@ -301,38 +397,20 @@ export function ScriptEditor() {
                 <TabsContent value="structured" className="flex-1 overflow-hidden m-0 p-0 min-h-0">
                     {schema ? (
                         <ExprContextProvider
-                            handlerVarKeys={selectedHandler && parsed.handlers[selectedHandler]?.var ? Object.keys(parsed.handlers[selectedHandler].var!) : []}
+                            handlerVarKeys={selection?.type === "handler" && parsed.handlers[selection.name]?.var ? Object.keys(parsed.handlers[selection.name].var!) : []}
                             constKeys={parsed.consts ? Object.keys(parsed.consts) : []}
                         >
                             <div className="flex h-full min-h-0 overflow-hidden">
                                 <div className="w-64 shrink-0 border-r border-border overflow-hidden">
                                     <HandlerList
                                         script={parsed}
-                                        selectedHandler={selectedHandler}
-                                        onSelect={setSelectedHandler}
+                                        selection={selection}
+                                        onSelect={setSelection}
                                         onChange={handleStructuredChange}
                                     />
                                 </div>
                                 <div className="flex-1 overflow-hidden">
-                                    {selectedHandler && parsed.handlers[selectedHandler] ? (
-                                        <HandlerDetail
-                                            handlerName={selectedHandler}
-                                            handler={parsed.handlers[selectedHandler]}
-                                            schema={schema}
-                                            onChange={(handler) => {
-                                                handleStructuredChange({
-                                                    ...parsed,
-                                                    handlers: { ...parsed.handlers, [selectedHandler]: handler },
-                                                });
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                                            {Object.keys(parsed.handlers).length === 0
-                                                ? "No handlers. Add one from the left panel."
-                                                : "Select a handler to edit."}
-                                        </div>
-                                    )}
+                                    {renderDetail(parsed, selection, schema, handleStructuredChange)}
                                 </div>
                             </div>
                         </ExprContextProvider>

@@ -21,6 +21,8 @@ var knownStepKinds = []string{
 	"action", "parallel", "focused_sequence", "ref",
 	"highlight_sequence", "trigger_combat",
 	"set_var", "if", "switch", "while", "custom_action",
+	"pick_dialogue", "pick_self_dialogue", "pick_chatter",
+	"configure_mode_entity",
 }
 
 var knownBuiltinConditions = []string{

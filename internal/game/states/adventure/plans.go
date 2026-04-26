@@ -75,6 +75,7 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityReader, batch *Effe
 	log.Info().Str("batchId", batch.BatchId).Msg("Executing batch immediately")
 
 	if len(batch.Effects) == 0 {
+		pe.MarkComplete(batch.CompletionID())
 		return effects
 	}
 
@@ -114,6 +115,7 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityReader, batch *Effe
 			}
 		}
 		// All serial effects completed without blocking
+		pe.MarkComplete(batch.CompletionID())
 	} else {
 		// Parallel: dispatch all effects at once
 		for i := range batch.Effects {
@@ -142,6 +144,7 @@ func (pe *PlanExecutor) ExecuteBatchImmediately(source EntityReader, batch *Effe
 	}
 
 	// All effects completed without blocking
+	pe.MarkComplete(batch.CompletionID())
 	return effects
 }
 

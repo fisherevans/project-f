@@ -28,10 +28,14 @@ func logEffectWarnf(source EntityReader, e any, messageFormat string, args ...an
 }
 
 func logEffect(level zerolog.Level, source EntityReader, e any, messageFormat string, args ...any) {
-	log.WithLevel(level).Str("caller", source.GetId()).Interface("e", e).Msgf(messageFormat, args...)
+	callerId := "<system>"
+	if source != nil {
+		callerId = source.GetId()
+	}
+	log.WithLevel(level).Str("caller", callerId).Interface("e", e).Msgf(messageFormat, args...)
 }
 
-type RunnableFunction func(s *State)
+type RunnableFunction func(source EntityReader, s *State)
 
 func (RunnableFunction) String() string {
 	return "<inline function>"
@@ -43,7 +47,7 @@ type EffectFunction struct {
 }
 
 func (e *EffectFunction) Process(source EntityReader, s *State) bool {
-	e.Fn(s)
+	e.Fn(source, s)
 	return true
 }
 

@@ -1,0 +1,22 @@
+type: myceli
+name: Myceli
+description: A mysterious fungal entity with a network of mycelial tendrils that can rapidly regenerate and spread spores with various effects.
+xeno_log_index: 19
+base_sync: 40
+unlockable_skills:
+  mend_spores:
+    cost: 5
+    prerequisites:
+      - photo_surge
+  photo_surge:
+    cost: 4
+combat_archetypes:
+  default:
+    additional_sync_variance: 10
+    skill_pool:
+      random:
+        weighted_skills:
+          brace: 20
+          jab: 20
+          mend_spores: 10
+          photo_surge: 40

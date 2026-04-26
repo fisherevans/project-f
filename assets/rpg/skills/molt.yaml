@@ -1,0 +1,8 @@
+id: molt
+name: Molt
+description: Shed your exoskeleton to remove debuffs
+ticks:
+  - stance: exposed
+  - stance: exposed
+  - stance: exposed
+  - stance: exposed

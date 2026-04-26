@@ -67,7 +67,9 @@ func initializeMap(a *State, m *resources.Map, waypoint string) {
 		a.backgroundColorAreas = append(a.backgroundColorAreas, bgz.Moved(dx, dy))
 	}
 	for _, z := range m.Zones {
-		a.zones.RegisterZone(z.Moved(dx, dy))
+		moved := z.Moved(dx, dy)
+		a.zones.RegisterZone(moved)
+		a.zoneRects = append(a.zoneRects, moved)
 	}
 	a.mapWidth, a.mapHeight = maxX-minX+1, maxY-minY+1
 	for _, group := range m.TileLayerGroups {
@@ -122,6 +124,7 @@ func initializeMap(a *State, m *resources.Map, waypoint string) {
 			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
 			DashGapMetadataKey.Set(entity, DashGapConfig{})
 		}
+		a.entities.SetDebugType(id, "collision")
 	}
 	for entityId, mapEntity := range m.Entities {
 		if mapEntity == nil {

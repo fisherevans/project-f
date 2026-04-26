@@ -54,13 +54,17 @@ type AudioDetail struct {
 }
 
 type ScriptFileEntry struct {
-    Path          string   `json:"path"`
-    Directory     string   `json:"directory"`
-    Name          string   `json:"name"`
-    HandlerCount  int      `json:"handlerCount"`
-    SequenceCount int      `json:"sequenceCount"`
-    HandlerNames  []string `json:"handlerNames"`
-    SequenceNames []string `json:"sequenceNames,omitempty"`
+    Path              string   `json:"path"`
+    Directory         string   `json:"directory"`
+    Name              string   `json:"name"`
+    HandlerCount      int      `json:"handlerCount"`
+    SequenceCount     int      `json:"sequenceCount"`
+    HandlerNames      []string `json:"handlerNames"`
+    SequenceNames     []string `json:"sequenceNames,omitempty"`
+    CustomActionNames []string `json:"customActionNames,omitempty"`
+    ConstNames        []string `json:"constNames,omitempty"`
+    DataListNames            []string `json:"dataListNames,omitempty"`
+    PropertyTemplateNames    []string `json:"propertyTemplateNames,omitempty"`
 }
 
 type ScriptFileDetail struct {

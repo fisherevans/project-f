@@ -1,0 +1,16 @@
+id: shoulder_roll
+name: Shoulder Roll
+description: Roll over your enemy repeatedly
+ticks:
+  - {}
+  - {}
+  - {}
+  - {}
+  - effects:
+      - damage:
+          amount: 10
+    animation:
+      source:
+        - type: pounce
+      target:
+        - type: recoil

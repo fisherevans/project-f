@@ -1,0 +1,34 @@
+type: pumbl
+name: Pumbl
+description: A compact, rock-armored creature that can curl into an impenetrable sphere, using its dense body for both offense and defense.
+xeno_log_index: 3
+base_sync: 30
+unlockable_skills:
+  brace:
+    cost: 5
+    prerequisites:
+      - strike
+  curl_up:
+    cost: 5
+    prerequisites:
+      - shoulder_roll
+  searline:
+    cost: 7
+    prerequisites:
+      - strike
+  shoulder_roll:
+    cost: 2
+  strike:
+    cost: 5
+    prerequisites:
+      - shoulder_roll
+combat_archetypes:
+  default:
+    additional_sync: 10
+    additional_sync_variance: 5
+    skill_pool:
+      random:
+        weighted_skills:
+          curl_up: 40
+          guard: 20
+          shoulder_roll: 40

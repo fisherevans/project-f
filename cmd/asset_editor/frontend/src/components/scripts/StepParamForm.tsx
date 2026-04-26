@@ -4,12 +4,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
+import { useMemo } from "react";
 import { SoundPicker } from "./inputs/SoundPicker";
 import { GlobalKeyInput } from "./inputs/GlobalKeyInput";
 import { EntityRefInput } from "./inputs/EntityRefInput";
 import { HandlerRefInput } from "./inputs/HandlerRefInput";
 import { ZoneIdInput } from "./inputs/ZoneIdInput";
 import { ExpressionInput } from "./inputs/ExpressionInput";
+import { SchemaSelect } from "./inputs/SchemaSelect";
 import { ExprHint } from "./ConditionEditor";
 import { useExprContext } from "./ExprContext";
 import type { ParamDef, StepKindDef, ScriptSchema } from "@/types/scripts";
@@ -22,9 +24,11 @@ interface StepParamFormProps {
     schema?: ScriptSchema;
 }
 
-const ENTITY_PARAM_NAMES = new Set(["entity", "target", "to_entity", "entity_id"]);
+const ENTITY_PARAM_NAMES = new Set(["entity", "target", "to_entity", "entity_id", "follow_entity", "facing_entity", "created_by"]);
 const ZONE_PARAM_NAMES = new Set(["zone", "zone_id", "active_player_zone"]);
+const SOUND_PARAM_NAMES = new Set(["sound"]);
 const GLOBAL_KEY_STEP_KINDS = new Set(["set_world_state", "set_run_state"]);
+const ACTION_NAME_STEP_KINDS = new Set(["action", "ref", "custom_action"]);
 const EXPR_PARAM_HINTS: Record<string, Set<string>> = {
     "set_var": new Set(["value"]),
     "if": new Set(["when"]),
@@ -65,8 +69,11 @@ export function StepParamForm({ stepKind, params, onChange, excludeKeys, schema 
     if (style === "string_or_map") {
         if (typeof params === "string" || typeof params === "number" || typeof params === "boolean") {
             const hasMapParams = (stepKind.params?.length ?? 0) > 1;
+            const isActionLike = stepKind.name === "action" || stepKind.name === "ref" || stepKind.name === "custom_action";
             const inlineInput = stepKind.name === "play_sound" ? (
                 <SoundPicker value={String(params)} onChange={onChange} />
+            ) : isActionLike ? (
+                <HandlerRefInput value={String(params)} onChange={(v) => onChange(v || undefined)} schema={schema} />
             ) : (
                 <Input
                     className="h-6 text-xs font-mono"
@@ -275,13 +282,30 @@ function ParamField({ def, value, onChange, stepKindName, schema }: {
         );
     }
 
-    if (def.name === "name" && stepKindName && (stepKindName === "action" || stepKindName === "ref")) {
+    if (SOUND_PARAM_NAMES.has(def.name)) {
+        return (
+            <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+                <div className="flex-1"><SoundPicker value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} /></div>
+            </div>
+        );
+    }
+
+    if (def.name === "name" && stepKindName && ACTION_NAME_STEP_KINDS.has(stepKindName)) {
         return (
             <div className="flex items-center gap-1.5">
                 <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
                 <div className="flex-1"><HandlerRefInput value={String(value ?? "")} onChange={(v) => onChange(v || undefined)} schema={schema} /></div>
             </div>
         );
+    }
+
+    if (def.name === "condition" && def.type === "string" && schema) {
+        return <ConditionNameField def={def} value={value} onChange={onChange} schema={schema} />;
+    }
+
+    if (def.name === "sequence" && def.type === "string" && schema) {
+        return <SequenceNameField def={def} value={value} onChange={onChange} schema={schema} />;
     }
 
     if (def.type === "map") {
@@ -374,6 +398,71 @@ function ParamField({ def, value, onChange, stepKindName, schema }: {
                 placeholder={def.default !== undefined ? String(def.default) : def.description}
                 onChange={(e) => onChange(e.target.value || undefined)}
             />
+        </div>
+    );
+}
+
+function ConditionNameField({ def, value, onChange, schema }: {
+    def: ParamDef;
+    value: unknown;
+    onChange: (value: unknown) => void;
+    schema: ScriptSchema;
+}) {
+    const options = useMemo(() => {
+        const items: { value: string; label?: string; detail?: string; group?: string }[] = [];
+        for (const [name, cond] of Object.entries(schema.builtinConditions ?? {})) {
+            items.push({ value: name, detail: cond.description, group: cond.isComposite ? "composite" : "builtin" });
+        }
+        for (const [name, cond] of Object.entries(schema.conditions ?? {})) {
+            items.push({ value: name, detail: cond.description, group: "named" });
+        }
+        items.sort((a, b) => a.value.localeCompare(b.value));
+        return items;
+    }, [schema]);
+
+    return (
+        <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+            <div className="flex-1">
+                <SchemaSelect
+                    value={String(value ?? "")}
+                    onChange={(v) => onChange(v || undefined)}
+                    options={options}
+                    placeholder="Condition name"
+                />
+            </div>
+        </div>
+    );
+}
+
+function SequenceNameField({ def, value, onChange, schema }: {
+    def: ParamDef;
+    value: unknown;
+    onChange: (value: unknown) => void;
+    schema: ScriptSchema;
+}) {
+    const options = useMemo(() => {
+        const items: { value: string; detail?: string; group?: string }[] = [];
+        if (schema.actions) {
+            for (const [name, action] of Object.entries(schema.actions)) {
+                items.push({ value: name, detail: action.description, group: "action" });
+            }
+        }
+        items.sort((a, b) => a.value.localeCompare(b.value));
+        return items;
+    }, [schema]);
+
+    return (
+        <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground w-24 shrink-0">{def.name}{def.required ? "*" : ""}</span>
+            <div className="flex-1">
+                <SchemaSelect
+                    value={String(value ?? "")}
+                    onChange={(v) => onChange(v || undefined)}
+                    options={options}
+                    placeholder="Sequence name"
+                />
+            </div>
         </div>
     );
 }

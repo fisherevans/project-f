@@ -20,6 +20,7 @@ func init() {
 		byTile(tiles.Elythium).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
+			system.SetDebugType(params.EntityId, "pickup")
 			cfg := ElythiumParams{
 				ResetTime:       5,
 				ResetTimeJitter: 2,

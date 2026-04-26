@@ -38,8 +38,8 @@ func (g *GameSave) FillDefaults() {
 	if g.ControlledUnlockedSkills == nil {
 		g.ControlledUnlockedSkills = make(map[SkillId]struct{})
 	}
-	if _, ok := g.ControlledUnlockedSkills[Skill_Jab.Id]; !ok {
-		g.ControlledUnlockedSkills[Skill_Jab.Id] = struct{}{}
+	if _, ok := g.ControlledUnlockedSkills["jab"]; !ok {
+		g.ControlledUnlockedSkills["jab"] = struct{}{}
 	}
 	if g.Animech == nil {
 		g.Animech = &Animech{}

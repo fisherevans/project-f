@@ -213,8 +213,13 @@ import these types rather than defining their own.
 Event handlers for adventure entities are defined in YAML files under
 `assets/scripts/`. Each file declares `handlers` (named event handlers
 attached to entities via Tiled map properties) and optional `sequences`
-(reusable step lists), `consts` (shared read-only data), and
-`custom_actions` (reusable parameterized step sequences).
+(reusable step lists), `consts` (shared read-only data accessible as
+`const.*` in expressions), and `custom_actions` (reusable parameterized
+step sequences). A legacy `data` section exists for `[]string` lists
+consumed by `pick_dialogue`/`pick_chatter`/`pick_self_dialogue` steps,
+but `consts` now also serves this purpose - prefer `consts` for new
+string lists. Co-locate consts, custom actions, and handlers in the same
+file when they're only used by that file's handlers.
 
 Handlers have event hook fields (`on_interact_self`, `on_broadcast`, etc.)
 containing rules with optional filters, conditions, steps (effects), and

@@ -6,11 +6,11 @@ animech:
         "2": guard
         "3": ""
         "4": ""
-    experience_points: 50
+    experience_points: 100
     upgrades:
         shield_level: 0
-        sync_level: 1
-    pending_experience: 25
+        sync_level: 0
+    pending_experience: 50
     current_sync: 0
     current_shield: 0
 loadouts: []
@@ -31,11 +31,14 @@ unlocked_skills:
     jab: {}
     tackle: {}
 globals:
+    combat.training.opponent_attacks_while_player_defends: true
+    combat.training.player_attacks_while_opponent_defends: true
     control_id: controlled_npc
     elythium: 0
     elythium_goal: 12
+    intro.do_not_enter.attempts: ""
     player_id: tiled-16
-    tiled-363: 26ae91dc-1c42-4340-aafe-dfc611a4260c
+    tiled-363: e5d2a3e3-fb71-4db2-8e39-3963cfa8249e
 system_settings:
     lighting:
         lighting_composition: full
@@ -45,18 +48,21 @@ system_settings:
         combat_speed: 1
     retro_frame:
         disable_pixel_grid: false
+        override_retro_overlay: false
         scanline_darken: 0.015
         grid_darken_x: 0.05
         grid_darken_y: 0.05
         subpixel_tint: 0.05
     debugging:
         show_pathfinding_debugging: false
+        game_time_speed: 3.384640459947183
     audio:
-        muted: true
-        master_volume: 0.7915410850253807
+        muted: false
+        master_volume: 1
     display:
-        scale_mode: auto
-        fixed_scale: 0
+        scale_mode: fixed
+        fixed_scale: 3
         fullscreen: false
         virtual_gamepad: auto
         virtual_gamepad_opacity: 0.7443061440677967
+        ui_scale: 0.5

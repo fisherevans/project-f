@@ -34,13 +34,13 @@ func Scenes() []runtime.DevScene {
 		{Name: "Training Combat One Hit Win", Factory: func() any {
 			return game.CombatIntent{
 				Opponent: game.CombatOpponent{
-					Type:      rpg.Primortal_Dummy.Type,
+					Type:      "dummy",
 					Archetype: "onehit",
 				},
 				Player: game.CombatPlayer{
 					SkillSet: &rpg.SkillSet{
-						Skill1: rpg.Skill_Tackle.Id,
-						Skill2: rpg.Skill_Guard.Id,
+						Skill1: "tackle",
+						Skill2: "guard",
 					},
 					InitialSync:   25,
 					MaxSync:       25,
@@ -50,7 +50,7 @@ func Scenes() []runtime.DevScene {
 				Reward: game.CombatReward{
 					ExperiencePoints: 10,
 					ResearchPoints:   2,
-					ResearchType:     rpg.Primortal_Dummy.Type,
+					ResearchType:     "dummy",
 				},
 				TrainingSequence: "none",
 				Background:       rpg.CombatBGSpaceBase,
@@ -60,13 +60,13 @@ func Scenes() []runtime.DevScene {
 		{Name: "Training Combat One Hit Loss", Factory: func() any {
 			return game.CombatIntent{
 				Opponent: game.CombatOpponent{
-					Type:      rpg.Primortal_Dummy.Type,
+					Type:      "dummy",
 					Archetype: "aggressive",
 				},
 				Player: game.CombatPlayer{
 					SkillSet: &rpg.SkillSet{
-						Skill1: rpg.Skill_Tackle.Id,
-						Skill2: rpg.Skill_Guard.Id,
+						Skill1: "tackle",
+						Skill2: "guard",
 					},
 					InitialSync:   1,
 					MaxSync:       25,
@@ -76,7 +76,7 @@ func Scenes() []runtime.DevScene {
 				Reward: game.CombatReward{
 					ExperiencePoints: 10,
 					ResearchPoints:   2,
-					ResearchType:     rpg.Primortal_Dummy.Type,
+					ResearchType:     "dummy",
 				},
 				TrainingSequence: "none",
 				Background:       rpg.CombatBGSpaceBase,
@@ -86,13 +86,13 @@ func Scenes() []runtime.DevScene {
 		{Name: "Training Combat 1", Factory: func() any {
 			return game.CombatIntent{
 				Opponent: game.CombatOpponent{
-					Type:      rpg.Primortal_Dummy.Type,
+					Type:      "dummy",
 					Archetype: "training.1",
 				},
 				Player: game.CombatPlayer{
 					SkillSet: &rpg.SkillSet{
-						Skill1: rpg.Skill_Tackle.Id,
-						Skill2: rpg.Skill_Guard.Id,
+						Skill1: "tackle",
+						Skill2: "guard",
 					},
 					InitialSync:   25,
 					MaxSync:       25,
@@ -107,13 +107,13 @@ func Scenes() []runtime.DevScene {
 		{Name: "Training Combat 2", Factory: func() any {
 			return game.CombatIntent{
 				Opponent: game.CombatOpponent{
-					Type:      rpg.Primortal_Toxmidge.Type,
+					Type:      "toxmidge",
 					Archetype: "training.2",
 				},
 				Player: game.CombatPlayer{
 					SkillSet: &rpg.SkillSet{
-						Skill1: rpg.Skill_Tackle.Id,
-						Skill2: rpg.Skill_Guard.Id,
+						Skill1: "tackle",
+						Skill2: "guard",
 					},
 					InitialSync:   25,
 					MaxSync:       25,
@@ -128,12 +128,12 @@ func Scenes() []runtime.DevScene {
 	}
 
 	for _, p := range []rpg.PrimortalType{
-		rpg.Primortal_Dummy.Type,
-		rpg.Primortal_Pumbl.Type,
-		rpg.Primortal_Myceli.Type,
-		rpg.Primortal_Scintail.Type,
-		rpg.Primortal_Toxmidge.Type,
-		rpg.Primortal_Volteel.Type,
+		"dummy",
+		"pumbl",
+		"myceli",
+		"scintail",
+		"toxmidge",
+		"volteel",
 	} {
 		p := p
 		scenes = append(scenes, runtime.DevScene{

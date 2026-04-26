@@ -6,6 +6,10 @@ export interface ScriptFileEntry {
     sequenceCount: number;
     handlerNames: string[];
     sequenceNames?: string[];
+    customActionNames?: string[];
+    constNames?: string[];
+    dataListNames?: string[];
+    propertyTemplateNames?: string[];
 }
 
 export interface ScriptFileDetail extends ScriptFileEntry {
@@ -65,14 +69,49 @@ export interface TemplateVarDef {
     description: string;
 }
 
+// Tiled cross-reference types
+
+export interface TiledEntityRef {
+    mapFile: string;
+    objectId: number;
+    entityId?: string;
+    objectType?: string;
+    x: number;
+    y: number;
+    properties: Record<string, string>;
+}
+
+export interface TiledHandlerUsage {
+    handlerName: string;
+    entities: TiledEntityRef[];
+}
+
 // Parsed script tree types - mirrors the YAML structure
+
+export interface HandlerPropDef {
+    name: string;
+    type: string;
+    required?: boolean;
+    default?: unknown;
+    description?: string;
+}
 
 export interface ParsedScript {
     handlers: Record<string, HandlerDef>;
     sequences?: Record<string, SequenceDef>;
     consts?: Record<string, unknown>;
     custom_actions?: Record<string, CustomActionDef>;
+    data?: Record<string, string[]>;
+    property_templates?: Record<string, Record<string, unknown>>;
 }
+
+export type ScriptItemSelection =
+    | { type: "handler"; name: string }
+    | { type: "custom_action"; name: string }
+    | { type: "sequence"; name: string }
+    | { type: "const"; name: string }
+    | { type: "data"; name: string }
+    | { type: "property_template"; name: string };
 
 export interface CustomActionDef {
     description?: string;
@@ -89,6 +128,7 @@ export interface CustomActionParam {
 export type HandlerDef = {
     [hookKey: string]: RuleDef[];
 } & {
+    props?: HandlerPropDef[];
     var?: Record<string, unknown>;
 };
 

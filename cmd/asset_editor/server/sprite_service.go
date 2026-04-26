@@ -76,6 +76,9 @@ func (s *SpriteService) ListSprites() ([]SpriteEntry, error) {
 
 func (s *SpriteService) GetSprite(name string) (*SpriteDetail, error) {
     root := s.spritesDir()
+    if _, err := safePath(root, name); err != nil {
+        return nil, err
+    }
     pngPath := filepath.Join(root, name+".png")
 
     if _, err := os.Stat(pngPath); err != nil {
@@ -138,6 +141,9 @@ func (s *SpriteService) GetSprite(name string) (*SpriteDetail, error) {
 
 func (s *SpriteService) SaveSprite(name string, meta *schema.SpriteMetadata) error {
     root := s.spritesDir()
+    if _, err := safePath(root, name); err != nil {
+        return err
+    }
     yamlPath := filepath.Join(root, name+".yaml")
 
     dir := filepath.Dir(yamlPath)
@@ -167,6 +173,9 @@ func (s *SpriteService) SaveSprite(name string, meta *schema.SpriteMetadata) err
 
 func (s *SpriteService) DeleteSpriteSidecar(name string) error {
     root := s.spritesDir()
+    if _, err := safePath(root, name); err != nil {
+        return err
+    }
     yamlPath := filepath.Join(root, name+".yaml")
     err := os.Remove(yamlPath)
     if errors.Is(err, fs.ErrNotExist) {

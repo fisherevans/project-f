@@ -193,7 +193,7 @@ func DefaultShadowMobConfig(params ShadowMobParams) ShadowMobConfig {
 				effects = append(effects, triggerCombat)
 			}
 			effects = append(effects,
-				NewFunctionEffect(func(*State) { // remove this mob
+				NewFunctionEffect(func(_ EntityReader, _ *State) {
 					for i, mob := range s.mobs {
 						if mob == m {
 							s.mobs[i] = s.mobs[len(s.mobs)-1]
@@ -206,7 +206,7 @@ func DefaultShadowMobConfig(params ShadowMobParams) ShadowMobConfig {
 			if params.RespawnDelay+params.RespawnJitter > 0 {
 				effects = append(effects,
 					NewTimerEffect(params.RespawnDelay+rand.Float64()*params.RespawnDelay),
-					NewFunctionEffect(func(*State) {
+					NewFunctionEffect(func(_ EntityReader, _ *State) {
 						s.mobs = append(s.mobs, m)
 					}))
 			}

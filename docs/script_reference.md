@@ -73,6 +73,16 @@ Change the player entity's visual style/renderer
 
 - `style` (string (required)): Renderer style name
 
+#### `configure_mode_entity`
+
+Configure an entity's mode-based animations, lights, and sounds
+
+- **Param style:** map
+**Parameters:**
+
+- `entity` (string (required)): Entity ID to configure
+- `modes` (map (required)): Map of mode name to configuration (animations, lights, sounds)
+
 #### `delete_entity`
 
 Remove an entity from the map
@@ -408,6 +418,44 @@ Display a series of UI highlights with messages, used for tutorials
 
 - `targets` (any (required)): List of highlight target definitions (region, message, badge)
 
+#### `pick_chatter`
+
+Select a message from a data list or const and display it as chatter above an entity
+
+- **Param style:** map
+**Parameters:**
+
+- `list` (string (required)): Name of a data list or const containing string messages
+- `entity` (string (required)): Entity ID to show chatter above
+- `duration` (number, default: 3): Duration in seconds to show chatter
+- `select` (string, default: cycling, values: [cycling, random, capped]): Selection mode: cycling, random, or capped
+- `counter_key` (string): Run state key tracking the selection index
+- `increment` (bool, default: true): Whether to auto-increment the counter after selection
+
+#### `pick_dialogue`
+
+Select a message from a data list or const and display it as dialogue
+
+- **Param style:** map
+**Parameters:**
+
+- `list` (string (required)): Name of a data list or const containing string messages
+- `select` (string, default: cycling, values: [cycling, random, capped]): Selection mode: cycling, random, or capped
+- `counter_key` (string): Run state key tracking the selection index
+- `increment` (bool, default: true): Whether to auto-increment the counter after selection
+
+#### `pick_self_dialogue`
+
+Select a message from a data list or const and display it as self-dialogue
+
+- **Param style:** map
+**Parameters:**
+
+- `list` (string (required)): Name of a data list or const containing string messages
+- `select` (string, default: cycling, values: [cycling, random, capped]): Selection mode: cycling, random, or capped
+- `counter_key` (string): Run state key tracking the selection index
+- `increment` (bool, default: true): Whether to auto-increment the counter after selection
+
 #### `self_dialogue`
 
 Display dialogue text as the player character's inner monologue
@@ -477,11 +525,6 @@ Teleport the player to a reference point or entity location
 
 Invoked via `action: name` or `action: {name: ..., param: value}` in YAML steps.
 
-### `animech_level_description`
-
-Show a self-dialogue describing the player's current Animech level
-
-
 ### `clear_globals_prefix`
 
 Delete all global variables matching a key prefix
@@ -489,57 +532,6 @@ Delete all global variables matching a key prefix
 **Parameters:**
 
 - `prefix` (string (required)): Prefix to match (e.g. 'intro.' deletes all intro globals)
-
-### `door_sync_blocking`
-
-Synchronize a door entity's blocking presence and visual mode based on a run state variable. Sets blocking to true when closed, false when open.
-
-**Parameters:**
-
-- `variable` (string (required)): The run state key that controls the door's open/closed state
-
-### `equipment_key_slot_interact`
-
-Handle interaction with a key card slot. Checks if the player has a key card and whether the door is already open.
-
-**Parameters:**
-
-- `run_state_key` (string (required)): Run state key controlling the equipment door state. Use 'not_it' for decoy slots.
-
-### `guarded_entry_chat`
-
-Chat with a guard NPC when interacted with directly (not trying to pass). Shows messages that escalate with the player's entry denial count.
-
-
-### `guarded_entry_deny`
-
-Deny the player entry to a restricted zone. Shows an escalating series of messages and pushes the player back.
-
-**Parameters:**
-
-- `walk_back_direction` (string (required), values: [up, down, left, right]): Direction to push the player back
-
-### `hall_npc_random_chatter`
-
-NPC faces the player and shows a random chatter message from a hardcoded list of dismissive/busy responses
-
-
-### `hall_npc_start_random_motion`
-
-Start random pathfinding motion to one of the predefined hallway endpoints. If the previous motion was canceled, adds a random delay before moving.
-
-**Parameters:**
-
-- `was_canceled` (bool): Whether the previous motion was canceled (passed automatically by motion_complete filter)
-
-### `indexed_self_dialogue`
-
-Cycle through a list of self-dialogue messages based on a counter variable. Each invocation shows the next message and increments the counter.
-
-**Parameters:**
-
-- `counter_key` (string (required)): Run state key used to track the message index
-- `messages` (any (required)): YAML list of message strings to cycle through
 
 ### `open_computer`
 
@@ -550,15 +542,6 @@ Open the research computer interface
 
 Open the Xenolog (creature log) interface
 
-
-### `pick_up_paper`
-
-Pick up a paper entity. Shows context-aware dialogue based on how many wrong papers were picked up, deletes the entity, and sets the 'intro.has_papers' flag.
-
-**Parameters:**
-
-- `attempts_key` (string (required)): Run state key tracking wrong-paper pickup attempts
-- `entity_id` (string (required)): Entity ID to delete after pickup
 
 ### `random_chatter_interact`
 
@@ -606,14 +589,6 @@ Initiate the first training combat against a Dummy opponent. Awards 25 XP. Uses 
 
 Initiate the second training combat against a Toxmidge opponent. Awards 25 XP and 4 research points. Uses combat_id 'intro.training.6.combat_over'.
 
-
-### `turn_in_papers`
-
-Turn in papers to the instructor. Shows context-aware dialogue, pans camera to the papers door, and sets the 'intro.papers_turned_in' flag.
-
-**Parameters:**
-
-- `attempts_key` (string (required)): Run state key tracking wrong-paper pickup attempts (determines dialogue tone)
 
 ## Named Conditions
 

@@ -14,8 +14,8 @@ import (
 func init() {
 	newRegistrarBuilder().byTile(tiles.RedCoin).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
-
 			entity := system.RegisterEntity(params.EntityId, params.Location)
+			system.SetDebugType(params.EntityId, "pickup")
 			entity.SetRenderer(NewBasicEntityRenderer(entity).
 				WithAnimations(anim.RedCoin(atlas)).
 				WithLights(NewLightWithModifier(colors.FromString("#f00"), 0.5, "pulse_slow")))
@@ -24,8 +24,8 @@ func init() {
 		})
 	newRegistrarBuilder().byTile(tiles.Rocket).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
-
 			entity := system.RegisterEntity(params.EntityId, params.Location)
+			system.SetDebugType(params.EntityId, "interactable")
 			entity.SetRenderer(NewBasicEntityRenderer(entity).
 				WithAnimations(anim.NewStaticAnimation(tiles.Rocket.From(atlas))))
 			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
@@ -53,6 +53,7 @@ func init() {
 	newRegistrarBuilder().byTile(tiles.DummyFightRobot).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
+			system.SetDebugType(params.EntityId, "interactable")
 			entity.SetRenderer(NewBasicEntityRenderer(entity).
 				WithAnimations(anim.NewStaticAnimation(atlas.GetSprite("primortals/dummy_entity"))))
 			AttachBlockIngressPresence(entity, true, NewImpassableImpedance())
@@ -94,7 +95,7 @@ func init() {
 						NewMutateEntityBehaviorEffect(globals.Get(globalVariableNamePlayerId).AsString("unknown")).WithDisableBy("robot"),
 						NewTriggerCombatEffect(rpg.CombatBGSpaceBase).
 							WithOpponent(game.CombatOpponent{
-								Type: rpg.Primortal_Dummy.Type,
+								Type: "dummy",
 							}),
 						NewDialogueEffect("Well, butter my bolts... you actually did it."),
 						NewMutateEntityBehaviorEffect(globals.Get(globalVariableNamePlayerId).AsString("unknown")).WithEnableBy("robot"),

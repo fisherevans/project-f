@@ -1,0 +1,10 @@
+id: brace
+name: Brace
+description: Raise defenses after a rest
+ticks:
+  - stance: defending
+  - stance: defending
+  - stance: defending
+  - {}
+  - {}
+  - {}

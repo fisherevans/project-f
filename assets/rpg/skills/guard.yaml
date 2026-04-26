@@ -1,0 +1,9 @@
+id: guard
+name: Guard
+description: Defend yourself for a short time
+ticks:
+  - {}
+  - stance: defending
+  - stance: defending
+  - stance: defending
+  - {}

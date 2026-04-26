@@ -1,0 +1,20 @@
+id: acid_string
+name: Acid String
+description: Spray a stream of corrosive acid at your foe
+ticks:
+  - effects:
+      - damage:
+          amount: 2
+      - status:
+          type: poisoned
+          stacks: 4
+          target: opponent
+    animation:
+      source:
+        - type: hop
+          repetitions: 2
+      target:
+        - type: recoil
+  - {}
+  - {}
+  - {}

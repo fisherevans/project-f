@@ -58,7 +58,7 @@ func (o *Overlay) renderSettingsPanel(win *opengl.Window) {
 	layout := newPL(uiScale)
 	cl := newChromeLayout(wb)
 	panelX := math.Floor(wb.Max.X - layout.W - cl.pad)
-	panelMaxY := math.Floor(wb.Max.Y - cl.pad)
+	panelMaxY := math.Floor(wb.Max.Y - cl.pad - cl.sz - cl.gap)
 	panel := pixel.R(panelX, ChromeAreaBottom(wb), panelX+layout.W, panelMaxY)
 
 	// outer DC: panel bg, border, scrollbar, close-on-outside
@@ -113,18 +113,31 @@ func (o *Overlay) renderSettingsPanel(win *opengl.Window) {
 	// measured content height (applied again after this frame measures) ------
 	o.scrollMax = math.Max(0, o.scrollContentH-visibleH)
 
-	if contains(panel, o.pointer.Pos) {
+	dropdownScrollable := o.dropdownID != "" && o.dropdownVisibleCount < len(o.dropdownOpts)
+	if dropdownScrollable && contains(o.dropdownRect, o.pointer.Pos) {
 		if dy := win.MouseScroll().Y; dy != 0 {
-			// Browsers report raw pixel deltas (~100/notch); desktop GLFW reports
-			// ~1/notch. Normalize anything above 1 down to 1 unit so sensitivity
-			// is consistent, while preserving sub-1 values for trackpad smoothness.
+			if dy > 0 {
+				o.dropdownScrollIdx--
+			} else {
+				o.dropdownScrollIdx++
+			}
+			maxScroll := len(o.dropdownOpts) - o.dropdownVisibleCount
+			if o.dropdownScrollIdx < 0 {
+				o.dropdownScrollIdx = 0
+			}
+			if o.dropdownScrollIdx > maxScroll {
+				o.dropdownScrollIdx = maxScroll
+			}
+		}
+	} else if contains(panel, o.pointer.Pos) {
+		if dy := win.MouseScroll().Y; dy != 0 {
 			if dy > 1 {
 				dy = 1
 			} else if dy < -1 {
 				dy = -1
 			}
 			o.scrollOffset -= dy * layout.ScrollWheelPx
-			o.dropdownID = "" // dropdown anchor moves with scroll; just close it
+			o.dropdownID = ""
 		}
 	}
 
@@ -212,6 +225,7 @@ func (o *Overlay) renderSettingsPanel(win *opengl.Window) {
 	cursor = o.renderDisplaySection(innerDC, bounds, cursor, win, contentRect, layout)
 	cursor = o.renderRetroOverlaySection(innerDC, bounds, cursor, win, layout)
 	cursor = o.renderScenesSection(innerDC, bounds, cursor, contentRect, layout)
+	cursor = o.renderGameplaySection(innerDC, bounds, cursor, layout)
 	cursor = o.renderDebugSection(innerDC, bounds, cursor, contentRect, layout, win)
 	cursor = o.renderSystemSection(innerDC, bounds, cursor, layout)
 
@@ -308,9 +322,8 @@ func (o *Overlay) renderDisplaySection(dc *DrawCtx, panel pixel.Rect, cursorY fl
 	x0, w := panel.Min.X+l.Pad, panel.W()-l.Pad*2
 
 	dc.SectionHeaderWithReset(pixel.R(x0, cursorY-l.HeaderH, x0+w, cursorY), "DISPLAY", func() {
-		// Reset scale to auto. Leave fullscreen as-is (toggling here would hit
-		// the OS in a confusing way — users can toggle it explicitly).
 		o.setScale(0)
+		game.CurrentSave().SystemSettings.Display.UIScale = 1.0
 	})
 	cursorY -= l.HeaderH + l.RowGap
 
@@ -349,10 +362,19 @@ func (o *Overlay) renderDisplaySection(dc *DrawCtx, panel pixel.Rect, cursorY fl
 	}
 	cursorY -= l.RowH + l.RowGap
 
+	// UI Scale
+	d := game.CurrentSave().SystemSettings.Display
+	newUIScale, uiScaleChanged := dc.StepControl(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY),
+		"UI Scale", d.UIScale, 0.5, 2.0, 0.1, 1.0, "%.1fx")
+	if uiScaleChanged {
+		d.UIScale = newUIScale
+		o.markDirty()
+	}
+	cursorY -= l.RowH + l.RowGap
+
 	// Virtual Gamepad
 	vgOpts := []string{"Auto", "On", "Off"}
 	vgVals := []string{rpg.VirtualGamepadAuto, rpg.VirtualGamepadOn, rpg.VirtualGamepadOff}
-	d := game.CurrentSave().SystemSettings.Display
 	vgSel := indexOf(vgVals, d.VirtualGamepad)
 	vgRow := pixel.R(x0, cursorY-l.RowH, x0+w, cursorY)
 	if dc.DropdownSelectRow(vgRow, "Virtual Gamepad", vgOpts[vgSel], o.dropdownID == "vgpad") {
@@ -406,6 +428,30 @@ func (o *Overlay) renderScenesSection(dc *DrawCtx, panel pixel.Rect, cursorY flo
 	cursorY -= l.RowH + l.RowGap
 
 	cursorY -= l.RowGap * 2
+	return cursorY
+}
+
+// ---- GAMEPLAY ---------------------------------------------------------------
+
+func (o *Overlay) renderGameplaySection(dc *DrawCtx, panel pixel.Rect, cursorY float64, l pl) float64 {
+	x0, w := panel.Min.X+l.Pad, panel.W()-l.Pad*2
+	s := game.CurrentSave().SystemSettings
+
+	dc.SectionHeaderWithReset(pixel.R(x0, cursorY-l.HeaderH, x0+w, cursorY), "GAMEPLAY", func() {
+		s.Debugging.GameTimeSpeed = 1.0
+		o.markDirty()
+	})
+	cursorY -= l.HeaderH + l.RowGap
+
+	speedFmt := SliderOpts{Format: "%.2fx"}
+	newSpeed, speedChanged := dc.Slider(pixel.R(x0, cursorY-l.RowH, x0+w, cursorY),
+		"Time Speed", s.Debugging.GameTimeSpeed, 0.05, 10, speedFmt)
+	if speedChanged {
+		s.Debugging.GameTimeSpeed = newSpeed
+		o.markDirty()
+	}
+	cursorY -= l.RowH + l.RowGap*3
+
 	return cursorY
 }
 
@@ -654,19 +700,35 @@ func (o *Overlay) toggleDropdown(id string, windowAnchor pixel.Rect, opts []stri
 	}
 	ps := func(v float64) float64 { return math.Floor(v * o.panelScale) }
 	n := len(opts)
-	h := float64(n)*ps(baseDropdownItemH) + ps(baseDropdownPad)*2
-	panelBot := chromePad + chromeSize + chromeGap // lowest Y the panel reaches
+
+	const maxDropdownVisible = 8
+	visible := n
+	if visible > maxDropdownVisible {
+		visible = maxDropdownVisible
+	}
+
+	h := float64(visible)*ps(baseDropdownItemH) + ps(baseDropdownPad)*2
+	panelBot := chromePad + chromeSize + chromeGap
 
 	var rect pixel.Rect
 	gap := ps(baseDropdownGap)
 	if windowAnchor.Min.Y-gap-h >= panelBot {
-		// open downward (below anchor in screen terms)
 		top := windowAnchor.Min.Y - gap
 		rect = pixel.R(windowAnchor.Min.X, top-h, windowAnchor.Max.X, top)
 	} else {
-		// flip upward (above anchor in screen terms)
 		bot := windowAnchor.Max.Y + gap
 		rect = pixel.R(windowAnchor.Min.X, bot, windowAnchor.Max.X, bot+h)
+	}
+
+	scrollIdx := 0
+	if sel >= 0 && n > visible {
+		scrollIdx = sel - visible/2
+		if scrollIdx < 0 {
+			scrollIdx = 0
+		}
+		if maxScroll := n - visible; scrollIdx > maxScroll {
+			scrollIdx = maxScroll
+		}
 	}
 
 	o.dropdownID = id
@@ -676,6 +738,8 @@ func (o *Overlay) toggleDropdown(id string, windowAnchor pixel.Rect, opts []stri
 	o.dropdownSel = sel
 	o.dropdownOnSel = onSel
 	o.dropdownJustOpened = true
+	o.dropdownScrollIdx = scrollIdx
+	o.dropdownVisibleCount = visible
 }
 
 // dropdownPopoverRect returns the precomputed window-space rect for the open popover.
@@ -684,9 +748,6 @@ func (o *Overlay) dropdownPopoverRect() pixel.Rect {
 }
 
 func (o *Overlay) renderDropdownPopover(dc *DrawCtx) {
-	// Consume and clear the just-opened flag so the close check below is skipped
-	// for the single frame where the same JustUp event that opened the dropdown
-	// would otherwise immediately close it.
 	justOpened := o.dropdownJustOpened
 	o.dropdownJustOpened = false
 
@@ -702,9 +763,16 @@ func (o *Overlay) renderDropdownPopover(dc *DrawCtx) {
 	itemH := dc.sc(baseDropdownItemH)
 	pad := dc.sc(baseDropdownPad)
 	txt := newText()
-	for i, opt := range o.dropdownOpts {
-		top := r.Max.Y - pad - float64(i)*itemH
+
+	endIdx := o.dropdownScrollIdx + o.dropdownVisibleCount
+	if endIdx > len(o.dropdownOpts) {
+		endIdx = len(o.dropdownOpts)
+	}
+
+	for vi, i := 0, o.dropdownScrollIdx; i < endIdx; vi, i = vi+1, i+1 {
+		top := r.Max.Y - pad - float64(vi)*itemH
 		optR := pixel.R(r.Min.X+pad, top-itemH, r.Max.X-pad, top)
+		opt := o.dropdownOpts[i]
 		isSelected := i == o.dropdownSel
 		hover := contains(optR, dc.Ptr.Pos)
 
@@ -740,8 +808,14 @@ func (o *Overlay) renderDropdownPopover(dc *DrawCtx) {
 		}
 	}
 
-	// Close on any click outside the popover. Skip on the opening frame so the
-	// JustUp that triggered toggleDropdown doesn't immediately re-close it.
+	// Scroll overflow indicators
+	if o.dropdownScrollIdx > 0 {
+		dc.fillRect(pixel.R(r.Min.X+pad, r.Max.Y-pad-dc.sc(2), r.Max.X-pad, r.Max.Y-pad), dc.fade(colDim))
+	}
+	if endIdx < len(o.dropdownOpts) {
+		dc.fillRect(pixel.R(r.Min.X+pad, r.Min.Y+pad, r.Max.X-pad, r.Min.Y+pad+dc.sc(2)), dc.fade(colDim))
+	}
+
 	if !justOpened && o.dropdownID != "" && dc.Ptr.JustUp && !contains(r, dc.Ptr.Pos) {
 		o.dropdownID = ""
 	}

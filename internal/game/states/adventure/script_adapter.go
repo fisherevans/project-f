@@ -1,6 +1,6 @@
 package adventure
 
-
+import "fmt"
 
 type ScriptHandler struct {
 	entityId     string
@@ -21,13 +21,47 @@ func NewScriptHandler(entityId string, def *HandlerDef, sequences map[string]*Se
 }
 
 func newScriptHandlerFactory(def *HandlerDef, sequences map[string]*SequenceDef, propParams map[string]string, properties map[string]any) *ScriptHandler {
+	mergedProps := applyPropDefaults(def.Props, properties)
+	mergedPropParams := applyPropDefaultsToParams(def.Props, propParams)
 	return &ScriptHandler{
 		def:          def,
 		sequences:    sequences,
 		handlerState: make(map[string]any),
-		propParams:   propParams,
-		properties:   properties,
+		propParams:   mergedPropParams,
+		properties:   mergedProps,
 	}
+}
+
+func applyPropDefaults(propDefs []*HandlerPropDef, properties map[string]any) map[string]any {
+	if len(propDefs) == 0 {
+		return properties
+	}
+	merged := make(map[string]any)
+	for _, pd := range propDefs {
+		if pd.Default != nil {
+			merged[pd.Name] = pd.Default
+		}
+	}
+	for k, v := range properties {
+		merged[k] = v
+	}
+	return merged
+}
+
+func applyPropDefaultsToParams(propDefs []*HandlerPropDef, params map[string]string) map[string]string {
+	if len(propDefs) == 0 {
+		return params
+	}
+	merged := make(map[string]string)
+	for _, pd := range propDefs {
+		if pd.Default != nil {
+			merged["prop."+pd.Name] = fmt.Sprintf("%v", pd.Default)
+		}
+	}
+	for k, v := range params {
+		merged[k] = v
+	}
+	return merged
 }
 
 func (h *ScriptHandler) templateContext(source EntityReader, globals StateGlobalsReader) *TemplateContext {

@@ -52,13 +52,17 @@ func (s *ScriptService) ListScripts() ([]ScriptFileEntry, error) {
 		summary := parseScriptSummary(data)
 
 		entries = append(entries, ScriptFileEntry{
-			Path:           rel,
-			Directory:      dir,
-			Name:           strings.TrimSuffix(filepath.Base(rel), ext),
-			HandlerCount:   len(summary.Handlers),
-			SequenceCount:  len(summary.Sequences),
-			HandlerNames:   summary.Handlers,
-			SequenceNames:  summary.Sequences,
+			Path:                  rel,
+			Directory:             dir,
+			Name:                  strings.TrimSuffix(filepath.Base(rel), ext),
+			HandlerCount:          len(summary.Handlers),
+			SequenceCount:         len(summary.Sequences),
+			HandlerNames:          summary.Handlers,
+			SequenceNames:         summary.Sequences,
+			CustomActionNames:     summary.CustomActions,
+			ConstNames:            summary.Consts,
+			DataListNames:         summary.DataLists,
+			PropertyTemplateNames: summary.PropertyTemplates,
 		})
 		return nil
 	})
@@ -94,13 +98,17 @@ func (s *ScriptService) GetScript(name string) (*ScriptFileDetail, error) {
 
 	return &ScriptFileDetail{
 		ScriptFileEntry: ScriptFileEntry{
-			Path:          rel,
-			Directory:     dir,
-			Name:          strings.TrimSuffix(filepath.Base(rel), ext),
-			HandlerCount:  len(summary.Handlers),
-			SequenceCount: len(summary.Sequences),
-			HandlerNames:  summary.Handlers,
-			SequenceNames: summary.Sequences,
+			Path:                  rel,
+			Directory:             dir,
+			Name:                  strings.TrimSuffix(filepath.Base(rel), ext),
+			HandlerCount:          len(summary.Handlers),
+			SequenceCount:         len(summary.Sequences),
+			HandlerNames:          summary.Handlers,
+			SequenceNames:         summary.Sequences,
+			CustomActionNames:     summary.CustomActions,
+			ConstNames:            summary.Consts,
+			DataListNames:         summary.DataLists,
+			PropertyTemplateNames: summary.PropertyTemplates,
 		},
 		RawYAML: string(data),
 	}, nil
@@ -154,28 +162,43 @@ func (s *ScriptService) DeleteScript(name string) error {
 }
 
 type scriptSummary struct {
-	Handlers  []string
-	Sequences []string
+	Handlers           []string
+	Sequences          []string
+	CustomActions      []string
+	Consts             []string
+	DataLists          []string
+	PropertyTemplates  []string
 }
 
 func parseScriptSummary(data []byte) scriptSummary {
 	var raw struct {
-		Handlers  yaml.Node `yaml:"handlers"`
-		Sequences yaml.Node `yaml:"sequences"`
+		Handlers           yaml.Node `yaml:"handlers"`
+		Sequences          yaml.Node `yaml:"sequences"`
+		CustomActions      yaml.Node `yaml:"custom_actions"`
+		Consts             yaml.Node `yaml:"consts"`
+		Data               yaml.Node `yaml:"data"`
+		PropertyTemplates  yaml.Node `yaml:"property_templates"`
 	}
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return scriptSummary{}
 	}
 
 	var summary scriptSummary
-	if raw.Handlers.Kind == yaml.MappingNode {
-		for i := 0; i < len(raw.Handlers.Content); i += 2 {
-			summary.Handlers = append(summary.Handlers, raw.Handlers.Content[i].Value)
-		}
-	}
-	if raw.Sequences.Kind == yaml.MappingNode {
-		for i := 0; i < len(raw.Sequences.Content); i += 2 {
-			summary.Sequences = append(summary.Sequences, raw.Sequences.Content[i].Value)
+	for _, node := range []struct {
+		n    *yaml.Node
+		dest *[]string
+	}{
+		{&raw.Handlers, &summary.Handlers},
+		{&raw.Sequences, &summary.Sequences},
+		{&raw.CustomActions, &summary.CustomActions},
+		{&raw.Consts, &summary.Consts},
+		{&raw.Data, &summary.DataLists},
+		{&raw.PropertyTemplates, &summary.PropertyTemplates},
+	} {
+		if node.n.Kind == yaml.MappingNode {
+			for i := 0; i < len(node.n.Content); i += 2 {
+				*node.dest = append(*node.dest, node.n.Content[i].Value)
+			}
 		}
 	}
 	return summary

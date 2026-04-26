@@ -6,15 +6,15 @@ func init() {
 	addOpponentPool("intro.training.8.pool", []opponentPoolMember{
 		{
 			weight:    1,
-			primortal: Primortal_Pumbl.Type,
+			primortal: "pumbl",
 		},
 		{
 			weight:    1,
-			primortal: Primortal_Toxmidge.Type,
+			primortal: "toxmidge",
 		},
 		{
 			weight:    1,
-			primortal: Primortal_Myceli.Type,
+			primortal: "myceli",
 		},
 	})
 }

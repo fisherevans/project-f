@@ -1,0 +1,40 @@
+id: searline
+name: Searline
+description: Channel a searing beam that burns intensely
+ticks:
+  - stance: vulnerable
+  - stance: vulnerable
+  - stance: vulnerable
+  - effects:
+      - damage:
+          amount: 3
+      - status:
+          type: burning
+          stacks: 2
+          target: opponent
+          require: existing_stacks
+    animation:
+      source:
+        - type: hop
+  - effects:
+      - damage:
+          amount: 3
+      - status:
+          type: burning
+          stacks: 2
+          target: opponent
+          require: existing_stacks
+    animation:
+      source:
+        - type: hop
+  - effects:
+      - damage:
+          amount: 3
+      - status:
+          type: burning
+          stacks: 2
+          target: opponent
+          require: existing_stacks
+    animation:
+      source:
+        - type: hop

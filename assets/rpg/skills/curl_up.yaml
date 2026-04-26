@@ -1,0 +1,15 @@
+id: curl_up
+name: Curl Up
+description: Fortify your defences
+ticks:
+  - effects:
+      - status:
+          type: warded
+          stacks: 5
+          target: self
+    animation:
+      source:
+        - type: wiggle
+  - stance: defending
+  - stance: defending
+  - stance: defending

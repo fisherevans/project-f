@@ -88,7 +88,8 @@ type State struct {
 	overlays    *OverlaySystem
 	timers      *timers
 	conditions  *Conditions
-	zones       *zones
+	zones     *zones
+	zoneRects []resources.Zone
 	tooltips    *Tooltips
 	highlighter *highlighter.SequencedDrawer
 
@@ -120,11 +121,14 @@ type State struct {
 	controls *resources.MapControls
 
 	commandRoot *commands.Root
+
+	mapName string
 }
 
 func New(i game.AdventureIntent) game.State {
 	m := resources.GetMap(i.MapName)
 	a := &State{
+		mapName:     i.MapName,
 		teleports:   make(map[TeleportReference]Teleport),
 		camera:      NewStaticCamera(pixel.Vec{}),
 		chatters:    NewChatterSystem(),
@@ -171,6 +175,7 @@ func New(i game.AdventureIntent) game.State {
 	a.hud = NewHud(a)
 	a.eventDispatcher = NewDispatcher(a.globals, a.processEffects)
 	a.eventDispatcher.Register(a.entities.RegisterEntity("system", MapLocation{}), newSystemEventHandler(a))
+	a.entities.SetDebugType("system", "system")
 
 	initializeMap(a, m, i.Waypoint)
 
@@ -191,6 +196,43 @@ func (s *State) Controls() *input.Controls {
 
 func (s *State) Globals() StateGlobalsReader {
 	return s.globals
+}
+
+func (s *State) MapName() string {
+	return s.mapName
+}
+
+func (s *State) MapSize() (int, int) {
+	return s.mapWidth, s.mapHeight
+}
+
+func (s *State) PlayerId() string {
+	return s.player
+}
+
+func (s *State) EntityIds() []string {
+	ids := make([]string, 0, len(s.entities.movements))
+	for id := range s.entities.movements {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids
+}
+
+func (s *State) EntityDebugType(id string) string {
+	return s.entities.GetDebugType(id)
+}
+
+func (s *State) ZoneRects() []resources.Zone {
+	return s.zoneRects
+}
+
+func (s *State) EntityHandlerRef(id string) string {
+	return s.entities.GetHandlerRef(id)
+}
+
+func (s *State) TeleportEntries() map[TeleportReference]Teleport {
+	return s.teleports
 }
 
 func (s *State) ClearColor() pixel.RGBA {

@@ -49,12 +49,14 @@ func (o *Overlay) renderCornerChrome(win *opengl.Window, dt float64) {
 		Scale:  OverlayUIScale(wb),
 	}
 
+	// Gear button at top-right
+	gearX := math.Floor(wb.Max.X - cl.pad - cl.sz)
+	gearY := math.Floor(wb.Max.Y - cl.pad - cl.sz)
+	gearR := pixel.R(gearX, gearY, gearX+cl.sz, gearY+cl.sz)
+
+	// Remaining buttons at bottom-right: fullscreen, scale, volume (right to left)
 	x := math.Floor(wb.Max.X - cl.pad - cl.sz)
 	y := math.Floor(cl.pad)
-
-	// Button rects right-to-left: gear, fullscreen (if supported), scale, volume
-	gearR := pixel.R(x, y, x+cl.sz, y+cl.sz)
-	x -= cl.sz + cl.gap
 	var fullscreenR pixel.Rect
 	if SupportsFullscreen() {
 		fullscreenR = pixel.R(x, y, x+cl.sz, y+cl.sz)
@@ -93,15 +95,10 @@ func (o *Overlay) renderCornerChrome(win *opengl.Window, dt float64) {
 		return func(dc *DrawCtx, r pixel.Rect) { dc.drawIcon(name, r.Center(), r.W()) }
 	}
 	o.drawChromeButton(dc, gearR, drawIconFn("settings"))
-	if dc.clicked(gearR) {
-		if o.panelJustClosed {
-			// renderSettingsPanel already closed the panel this frame (click landed
-			// outside, which includes the gear button). Don't reopen.
-			o.panelJustClosed = false
-		} else {
-			o.panelOpen = !o.panelOpen
-		}
+	if dc.clicked(gearR) && !o.panelJustClosed {
+		o.panelOpen = !o.panelOpen
 	}
+	o.panelJustClosed = false
 
 	if SupportsFullscreen() {
 		o.drawChromeButton(dc, fullscreenR, func(dc *DrawCtx, r pixel.Rect) {

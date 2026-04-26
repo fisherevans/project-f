@@ -3579,7 +3579,7 @@ I think I filled this one out already.</property>
     <properties>
      <property name="entity_id" value="intro.papers_door"/>
      <property name="run_state_key" value="intro.papers_turned_in"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -3845,65 +3845,45 @@ If I see one more checkbox, I’m leaving the planet.</property>
    <object id="138" type="ModeBasedEntity" x="4488" y="2616">
     <properties>
      <property name="entity_id" value=""/>
-     <property name="render_config">animations:
-  &quot;closed&quot;:
-    - name: adventure/doors/sliding_steel:closed
-  &quot;open&quot;:
-    - name: adventure/doors/sliding_steel:closed</property>
      <property name="run_state_key" value="always_locked"/>
      <property name="script_ref" value="door.run_state_based"/>
+     <property name="style" value="sliding_metal"/>
     </properties>
     <point/>
    </object>
    <object id="139" type="ModeBasedEntity" x="4600" y="2616">
     <properties>
      <property name="entity_id" value=""/>
-     <property name="render_config">animations:
-  &quot;closed&quot;:
-    - name: adventure/doors/sliding_steel:closed
-  &quot;open&quot;:
-    - name: adventure/doors/sliding_steel:closed</property>
      <property name="run_state_key" value="always_locked"/>
      <property name="script_ref" value="door.run_state_based"/>
+     <property name="style" value="sliding_metal"/>
     </properties>
     <point/>
    </object>
    <object id="140" type="ModeBasedEntity" x="4376" y="2616">
     <properties>
      <property name="entity_id" value=""/>
-     <property name="render_config">animations:
-  &quot;closed&quot;:
-    - name: adventure/doors/sliding_steel:closed
-  &quot;open&quot;:
-    - name: adventure/doors/sliding_steel:closed</property>
      <property name="run_state_key" value="always_locked"/>
      <property name="script_ref" value="door.run_state_based"/>
+     <property name="style" value="sliding_metal"/>
     </properties>
     <point/>
    </object>
    <object id="141" type="ModeBasedEntity" x="4264" y="2616">
     <properties>
      <property name="entity_id" value=""/>
-     <property name="render_config">animations:
-  &quot;closed&quot;:
-    - name: adventure/doors/sliding_steel:closed
-  &quot;open&quot;:
-    - name: adventure/doors/sliding_steel:closed</property>
      <property name="run_state_key" value="always_locked"/>
      <property name="script_ref" value="door.run_state_based"/>
+     <property name="style" value="sliding_metal"/>
     </properties>
     <point/>
    </object>
    <object id="142" type="ModeBasedEntity" x="4040" y="2616">
     <properties>
      <property name="entity_id" value=""/>
-     <property name="render_config">animations:
-  &quot;closed&quot;:
-    - name: adventure/doors/sliding_steel:closed
-  &quot;open&quot;:
-    - name: adventure/doors/sliding_steel:closed</property>
      <property name="run_state_key" value="always_locked"/>
      <property name="script_ref" value="door.run_state_based"/>
+     <property name="style" value="sliding_metal"/>
     </properties>
     <point/>
    </object>
@@ -3911,7 +3891,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.equipment_door_state"/>
      <property name="run_state_key" value="intro.equipment_door_state"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
      <property name="style" value="sliding_metal"/>
     </properties>
     <point/>
@@ -4062,7 +4042,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.door.training.x"/>
      <property name="run_state_key" value="intro.training_complete.x"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4070,7 +4050,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.door.training.x"/>
      <property name="run_state_key" value="intro.training_complete.x"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4078,7 +4058,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.door.training.x"/>
      <property name="run_state_key" value="intro.training_complete.x"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4086,7 +4066,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.door.training.x"/>
      <property name="run_state_key" value="intro.training_complete.x"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4094,7 +4074,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.door.training.x"/>
      <property name="run_state_key" value="intro.training_complete.x"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4102,7 +4082,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.door.training.x"/>
      <property name="run_state_key" value="intro.training_complete.x"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4154,7 +4134,7 @@ If I see one more checkbox, I’m leaving the planet.</property>
     <properties>
      <property name="entity_id" value="intro.training.0.door"/>
      <property name="run_state_key" value="intro.training.0.door"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4226,7 +4206,7 @@ broadcast_on_break: intro.control.elythium</property>
     <properties>
      <property name="entity_id" value=""/>
      <property name="run_state_key" value="intro.training.2.door"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4234,7 +4214,7 @@ broadcast_on_break: intro.control.elythium</property>
     <properties>
      <property name="entity_id" value=""/>
      <property name="run_state_key" value="intro.training.3.door"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4242,7 +4222,7 @@ broadcast_on_break: intro.control.elythium</property>
     <properties>
      <property name="entity_id" value=""/>
      <property name="run_state_key" value="intro.training.4.door"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
     </properties>
     <point/>
    </object>
@@ -4304,7 +4284,7 @@ lights:
     <properties>
      <property name="entity_id" value="intro.training.5.door"/>
      <property name="run_state_key" value="intro.training.5.door"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
      <property name="style" value="pillar"/>
     </properties>
     <point/>
@@ -4313,7 +4293,7 @@ lights:
     <properties>
      <property name="entity_id" value="intro.training.6.door"/>
      <property name="run_state_key" value="intro.training.6.door"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
      <property name="style" value="pillar"/>
     </properties>
     <point/>
@@ -4337,7 +4317,7 @@ lights:
     <properties>
      <property name="entity_id" value="intro.training.7.door"/>
      <property name="run_state_key" value="intro.training.7.door"/>
-     <property name="script_ref" value="intro.door.run_state_based"/>
+     <property name="script_ref" value="door.run_state_based"/>
      <property name="style" value="pillar"/>
     </properties>
     <point/>
@@ -4359,11 +4339,6 @@ lights:
    <object id="325" type="ModeBasedEntity" x="1688" y="3496">
     <properties>
      <property name="entity_id" value="intro.training.10.door"/>
-     <property name="render_config">animations:
-  &quot;closed&quot;:
-    - name: adventure/doors/sliding_steel:closed
-  &quot;open&quot;:
-    - name: adventure/doors/sliding_steel:open</property>
      <property name="run_state_key" value="intro.training.10.door"/>
      <property name="script_ref" value="door.run_state_based"/>
      <property name="style" value="sliding_metal"/>

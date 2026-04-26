@@ -171,10 +171,14 @@ var BloomModes = []BloomMode{
 }
 
 type SystemSettingsDebugging struct {
-	ShowPathfindingDebugging bool `yaml:"show_pathfinding_debugging"`
+	ShowPathfindingDebugging bool    `yaml:"show_pathfinding_debugging"`
+	GameTimeSpeed            float64 `yaml:"game_time_speed"`
 }
 
 func (s *SystemSettingsDebugging) FillDefaults() {
+	if s.GameTimeSpeed == 0 {
+		s.GameTimeSpeed = 1.0
+	}
 }
 
 type SystemSettingsAudio struct {
@@ -209,6 +213,7 @@ type SystemSettingsDisplay struct {
 	Fullscreen            bool    `yaml:"fullscreen"`
 	VirtualGamepad        string  `yaml:"virtual_gamepad"`         // "auto" | "on" | "off"
 	VirtualGamepadOpacity float64 `yaml:"virtual_gamepad_opacity"` // 0.2 – 1.0
+	UIScale               float64 `yaml:"ui_scale"`                // multiplier on auto-computed overlay scale
 }
 
 func (s *SystemSettingsDisplay) FillDefaults() {
@@ -220,5 +225,8 @@ func (s *SystemSettingsDisplay) FillDefaults() {
 	}
 	if s.VirtualGamepadOpacity <= 0 {
 		s.VirtualGamepadOpacity = 0.85
+	}
+	if s.UIScale == 0 {
+		s.UIScale = 1.0
 	}
 }

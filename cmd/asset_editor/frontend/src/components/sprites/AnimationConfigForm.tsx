@@ -289,7 +289,7 @@ function TilesFields({
                 </Button>
             </div>
             {selectedIndex !== undefined && (
-                <p className="text-xs text-blue-400">
+                <p className="text-xs text-accent-blue">
                     Tile {selectedIndex + 1} selected - click grid to reassign
                 </p>
             )}
@@ -299,7 +299,7 @@ function TilesFields({
                     return (
                         <div
                             key={i}
-                            className={`flex items-center gap-1 text-xs rounded px-1 py-0.5 cursor-pointer ${isSelected ? "bg-blue-500/20 ring-1 ring-blue-500/40" : "hover:bg-muted"}`}
+                            className={`flex items-center gap-1 text-xs rounded px-1 py-0.5 cursor-pointer ${isSelected ? "bg-accent-blue-tint ring-1 ring-accent-blue-edge" : "hover:bg-muted"}`}
                             onClick={() => onSelectIndex?.(isSelected ? undefined : i)}
                         >
                             <span className="text-muted-foreground w-5 text-right shrink-0">{i + 1}.</span>

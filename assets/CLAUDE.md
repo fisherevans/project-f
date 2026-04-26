@@ -13,6 +13,8 @@ Roots, loaders, and naming:
 | `maps/` | `.json` | path without `.json` | custom map format |
 | `tiled_maps/` | `.tmx` | path without `.tmx` | Tiled |
 | `audio/sounds/` | `.wav .mp3 .ogg` | path | audio loader |
+| `rpg/skills/` | `.yaml` | skill ID (filename stem) | `rpg.LoadFromFS`; each file defines one skill |
+| `rpg/primortals/` | `.yaml` | primortal type (filename stem) | `rpg.LoadFromFS`; each file defines one primortal |
 | `songs/` | (handled separately) | - | see `game/audio` |
 
 Filenames must be lowercase - the loader skips any file with an upper-case

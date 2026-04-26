@@ -1,0 +1,24 @@
+id: mend_spores
+name: Mend Spores
+description: Release healing spores that restore health
+ticks:
+  - effects:
+      - status:
+          type: mending
+          stacks: 5
+          target: self
+    animation:
+      source:
+        - type: wiggle
+  - stance: exposed
+  - stance: exposed
+  - stance: exposed
+  - stance: exposed
+  - effects:
+      - status:
+          type: mending
+          stacks: 5
+          target: self
+    animation:
+      source:
+        - type: wiggle

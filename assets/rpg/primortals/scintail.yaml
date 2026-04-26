@@ -1,0 +1,23 @@
+type: scintail
+name: Scintail
+description: A nimble reptilian creature with heat-radiating dorsal fins that pulse with an inner fire, capable of unleashing searing thermal attacks.
+xeno_log_index: 4
+base_sync: 25
+unlockable_skills:
+  cinder:
+    cost: 3
+  searline:
+    cost: 7
+    prerequisites:
+      - cinder
+combat_archetypes:
+  default:
+    additional_sync: 5
+    additional_sync_variance: 10
+    skill_pool:
+      random:
+        weighted_skills:
+          brace: 10
+          cinder: 20
+          searline: 40
+          strike: 20

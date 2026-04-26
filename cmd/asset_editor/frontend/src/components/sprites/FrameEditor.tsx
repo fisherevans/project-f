@@ -134,7 +134,7 @@ export function FrameEditor({ frame, onChange, imageSrc, imageWidth, imageHeight
             </CardHeader>
             <CardContent className="px-4 pb-4 space-y-4">
                 <div className="flex gap-4">
-                    <div className="rounded border border-border bg-zinc-900 overflow-hidden inline-block">
+                    <div className="rounded border border-border bg-canvas overflow-hidden inline-block">
                         <canvas
                             ref={canvasRef}
                             style={{ imageRendering: "pixelated" }}

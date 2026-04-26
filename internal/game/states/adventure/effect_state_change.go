@@ -60,18 +60,18 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 			Transitions:     6,
 		},
 		NewMutateEntityBehaviorEffect(s.player).WithEnableBy("combat"),
-		NewFunctionEffect(func(*State) {
+		NewFunctionEffect(func(_ EntityReader, _ *State) {
 			s.enteringCombat = false
 			var opponent game.CombatOpponent
 			if e.Opponent != nil {
 				opponent = *e.Opponent
 			} else {
 				options := []rpg.PrimortalType{
-					rpg.Primortal_Volteel.Type,
-					rpg.Primortal_Toxmidge.Type,
-					rpg.Primortal_Scintail.Type,
-					rpg.Primortal_Myceli.Type,
-					rpg.Primortal_Pumbl.Type,
+					"volteel",
+					"toxmidge",
+					"scintail",
+					"myceli",
+					"pumbl",
 				}
 				opponent = game.CombatOpponent{
 					Type: options[rand.Intn(len(options))],
@@ -129,7 +129,7 @@ func (e *EffectLoadMap) Process(source EntityReader, s *State) bool {
 			WithAutoDeactivate(false).
 			WithFromColor("#0000").
 			WithToColor("#000f"),
-		NewFunctionEffect(func(*State) {
+		NewFunctionEffect(func(_ EntityReader, _ *State) {
 			waypoint := "default"
 			if e.Waypoint != nil {
 				waypoint = *e.Waypoint

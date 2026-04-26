@@ -1,6 +1,7 @@
 package adventure
 
 import (
+	"fmt"
 	"io/fs"
 	"strings"
 
@@ -10,11 +11,12 @@ import (
 )
 
 var (
-	scriptHandlerDefs  = map[string]*HandlerDef{}
-	scriptSequences    = map[string]*SequenceDef{}
-	scriptDataLists    = map[string][]string{}
-	scriptConsts       = map[string]any{}
-	scriptCustomActions = map[string]*CustomActionDef{}
+	scriptHandlerDefs      = map[string]*HandlerDef{}
+	scriptSequences        = map[string]*SequenceDef{}
+	scriptDataLists        = map[string][]string{}
+	scriptConsts           = map[string]any{}
+	scriptCustomActions    = map[string]*CustomActionDef{}
+	scriptPropertyTemplates = map[string]map[string]any{}
 )
 
 func init() {
@@ -76,18 +78,35 @@ func loadScriptFiles() {
 			scriptCustomActions[name] = action
 			log.Debug().Str("name", name).Str("path", path).Msg("loaded custom action")
 		}
+		for name, tmpl := range sf.PropertyTemplates {
+			if _, exists := scriptPropertyTemplates[name]; exists {
+				log.Fatal().Str("name", name).Str("path", path).Msg("duplicate property template name")
+			}
+			scriptPropertyTemplates[name] = tmpl
+		}
 		return nil
 	})
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to walk scripts directory")
 	}
+	// Merge YAML property templates into Go-side registry
+	for name, tmpl := range scriptPropertyTemplates {
+		if _, exists := entityPropertyTemplates[name]; exists {
+			log.Fatal().Str("name", name).Msg("YAML property template conflicts with Go-registered template")
+		}
+		entityPropertyTemplates[name] = tmpl
+	}
+
 	log.Info().
 		Int("handlers", len(scriptHandlerDefs)).
 		Int("sequences", len(scriptSequences)).
 		Int("data_lists", len(scriptDataLists)).
 		Int("consts", len(scriptConsts)).
 		Int("custom_actions", len(scriptCustomActions)).
+		Int("property_templates", len(scriptPropertyTemplates)).
 		Msg("loaded script files")
+
+	validateScriptFiles()
 }
 
 func registerScriptHandlerFactory() {
@@ -109,6 +128,20 @@ func registerScriptHandlerFactory() {
 }
 
 func getDataList(name string) ([]string, bool) {
-	list, ok := scriptDataLists[name]
-	return list, ok
+	if list, ok := scriptDataLists[name]; ok {
+		return list, true
+	}
+	if val, ok := scriptConsts[name]; ok {
+		if list, ok := val.([]any); ok {
+			strs := make([]string, len(list))
+			for i, v := range list {
+				strs[i] = fmt.Sprintf("%v", v)
+			}
+			return strs, true
+		}
+		if list, ok := val.([]string); ok {
+			return list, true
+		}
+	}
+	return nil, false
 }

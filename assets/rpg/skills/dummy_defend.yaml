@@ -1,0 +1,9 @@
+id: dummy_defend
+name: Dummy Defend
+description: not used
+ticks:
+  - {}
+  - {}
+  - stance: defending
+  - stance: defending
+  - stance: defending

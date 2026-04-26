@@ -28,7 +28,7 @@ func (a *Animech) FillDefaults() {
 	}
 	if a.SkillSet.IsEmpty() {
 		a.SkillSet = &SkillSet{
-			Skill1: Skill_Jab.Id,
+			Skill1: "jab",
 		}
 	}
 	if a.Upgrades == nil {

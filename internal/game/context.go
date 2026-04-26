@@ -160,6 +160,13 @@ func CurrentSave() *rpg.GameSave {
 	return ctx.save
 }
 
+func CurrentSaveOrNil() *rpg.GameSave {
+	if ctx == nil {
+		return nil
+	}
+	return ctx.save
+}
+
 func Utils() ContextUtils {
 	return ctx.utils
 }

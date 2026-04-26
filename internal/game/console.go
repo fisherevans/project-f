@@ -54,6 +54,15 @@ func (c *CommandConsole) GetLastGlobalKey(idx int) string {
 	return c.lastGlobalKeys[idx-1]
 }
 
+func (c *CommandConsole) RunCapture(fn func()) []string {
+	before := len(c.buffer)
+	fn()
+	if len(c.buffer) <= before {
+		return nil
+	}
+	return c.buffer[before:]
+}
+
 func (c *CommandConsole) WriteLines(lines ...string) {
 	for _, line := range lines {
 		line = strings.ReplaceAll(line, "\t", "    ")

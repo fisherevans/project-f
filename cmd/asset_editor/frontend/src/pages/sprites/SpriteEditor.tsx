@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { usePageTitle } from "@/hooks/usePageTitle"
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges"
 import { Save, Trash2, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -73,7 +75,7 @@ function CopyButton({ text }: { text: string }) {
     }
     return (
         <Button variant="ghost" size="sm" className="h-6 px-1.5" onClick={handleCopy} title="Copy sprite path">
-            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+            {copied ? <Check className="h-3 w-3 text-accent-green" /> : <Copy className="h-3 w-3" />}
         </Button>
     )
 }
@@ -104,6 +106,10 @@ export function SpriteEditor() {
     const [editedMeta, setEditedMeta] = useState<SpriteMetadata | null>(null)
     const [dirty, setDirty] = useState(false)
     const [bg, setBg] = useState("checker")
+
+    const spriteName = path.split("/").pop() ?? path
+    usePageTitle(`${spriteName} - Sprites`)
+    useUnsavedChanges(dirty)
 
     useEffect(() => {
         if (sprite?.metadata) {
@@ -206,7 +212,7 @@ export function SpriteEditor() {
                         <SelectItem value="plain">Plain</SelectItem>
                         <SelectItem value="tilesheet">Tilesheet</SelectItem>
                         <SelectItem value="frame">Frame</SelectItem>
-                        <SelectItem value="nonAtlas">Non-Atlas</SelectItem>
+                        {currentType === "nonAtlas" && <SelectItem value="nonAtlas">Non-Atlas</SelectItem>}
                     </SelectContent>
                 </Select>
                 {sprite.hasYaml && (

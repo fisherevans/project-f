@@ -123,6 +123,112 @@ func (dc *DrawCtx) Slider(r pixel.Rect, label string, value, min, max float64, o
 	return newValue, changed
 }
 
+// ---- StepControl ------------------------------------------------------------
+
+// StepControl draws a labelled row with [-] [value] [+] buttons and an optional
+// reset icon (shown when value differs from resetValue). Returns (newValue, changed).
+func (dc *DrawCtx) StepControl(r pixel.Rect, label string, value, min, max, step, resetValue float64, format string) (float64, bool) {
+	btnH := r.H() - dc.sc(8)
+	btnW := dc.sc(22)
+	valW := dc.sc(48)
+	btnPad := dc.sc(2)
+	rightEdge := r.Max.X - dc.sc(8)
+	btnY := math.Floor(r.Center().Y - btnH/2)
+
+	notDefault := math.Abs(value-resetValue) > step/10
+	var resetR pixel.Rect
+	if notDefault {
+		resetR = pixel.R(rightEdge-btnW, btnY, rightEdge, btnY+btnH)
+		rightEdge = resetR.Min.X - btnPad
+	}
+	plusR := pixel.R(rightEdge-btnW, btnY, rightEdge, btnY+btnH)
+	valR := pixel.R(plusR.Min.X-btnPad-valW, btnY, plusR.Min.X-btnPad, btnY+btnH)
+	minusR := pixel.R(valR.Min.X-btnPad-btnW, btnY, valR.Min.X-btnPad, btnY+btnH)
+
+	newValue := value
+	changed := false
+	canDec := value-step >= min-step/10
+	canInc := value+step <= max+step/10
+
+	if dc.clicked(minusR) && canDec {
+		newValue = math.Round((value-step)/step) * step
+		if newValue < min {
+			newValue = min
+		}
+		changed = true
+	}
+	if dc.clicked(plusR) && canInc {
+		newValue = math.Round((value+step)/step) * step
+		if newValue > max {
+			newValue = max
+		}
+		changed = true
+	}
+	if notDefault && dc.clicked(resetR) {
+		newValue = resetValue
+		changed = true
+	}
+
+	dc.rowBg(r)
+
+	drawBtn := func(br pixel.Rect, text string, enabled bool) {
+		hover := contains(br, dc.Ptr.Pos) && enabled
+		var bg pixel.RGBA
+		switch {
+		case hover && dc.Ptr.Down:
+			bg = dc.fade(colPress)
+		case hover:
+			bg = dc.fade(colHover)
+		default:
+			bg = dc.fade(colTrack)
+		}
+		dc.fillRect(br, bg)
+		t := newText()
+		if enabled {
+			t.Color = dc.fade(colText)
+		} else {
+			t.Color = dc.fade(colDim)
+		}
+		t.WriteString(text)
+		tw := t.Bounds().W() * dc.ts()
+		dc.drawText(t, pixel.V(
+			math.Floor(br.Min.X+(br.W()-tw)/2),
+			math.Floor(br.Center().Y-dc.lh()/2),
+		))
+	}
+
+	drawBtn(minusR, "-", canDec)
+	drawBtn(plusR, "+", canInc)
+
+	txt := newText()
+	txt.Color = dc.fade(colText)
+	txt.WriteString(fmt.Sprintf(format, newValue))
+	tw := txt.Bounds().W() * dc.ts()
+	dc.drawText(txt, pixel.V(
+		math.Floor(valR.Min.X+(valR.W()-tw)/2),
+		math.Floor(valR.Center().Y-dc.lh()/2),
+	))
+
+	if notDefault {
+		hover := contains(resetR, dc.Ptr.Pos)
+		if hover {
+			bg := dc.fade(colHover)
+			if dc.Ptr.Down {
+				bg = dc.fade(colPress)
+			}
+			dc.fillRect(resetR, bg)
+		}
+		dc.drawIcon("reset", resetR.Center(), resetR.H())
+	}
+
+	txt = newText()
+	txt.Color = dc.fade(colText)
+	txt.WriteString(label)
+	dc.drawText(txt, pixel.V(r.Min.X+dc.sc(8), r.Center().Y-dc.lh()/2))
+
+	return newValue, changed
+}
+
 // ---- VerticalSlider ---------------------------------------------------------
 
 // VerticalSlider draws a slim vertical slider with the knob at the current value.

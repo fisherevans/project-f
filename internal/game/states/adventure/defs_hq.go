@@ -30,7 +30,7 @@ func init() {
 					NewMutateModeBasedEntityEffect(chairId).WithMode("enter"),
 					NewWaitForAnimationComplete(chairId),
 					NewTimerEffect(0.25),
-					NewFunctionEffect(func(s *State) {
+					NewFunctionEffect(func(_ EntityReader, s *State) {
 						game.SetActiveStateIntent(game.ComputerIntent{
 							Background: s,
 						})
@@ -96,7 +96,7 @@ func init() {
 	registerEventHandler("hq.stars", func(*util.Properties) EventHandler {
 		return BasicHandlerBuilder[None]{
 			Init: func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
-				return NewOutput().WithEffects(NewFunctionEffect(func(s *State) {
+				return NewOutput().WithEffects(NewFunctionEffect(func(_ EntityReader, s *State) {
 					topLeft, _ := s.entities.GetEntity("hq.stars.top_left")
 					bottomLeft, _ := s.entities.GetEntity("hq.stars.bottom_left")
 					topRight, _ := s.entities.GetEntity("hq.stars.top_right")

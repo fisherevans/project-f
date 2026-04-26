@@ -14,6 +14,7 @@ import (
 func init() {
 	newRegistrarBuilder().byClass("NPC").byTile(tiles.NPC).registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 		entity := system.RegisterEntity(params.EntityId, params.Location)
+		system.SetDebugType(params.EntityId, "npc")
 		renderer := AttachMovementBasedEntityRenderer(entity)
 		color := colors.HSLToRGBA(rand.Float64(), 1, 0.65)
 		for moveState, animations := range map[MoveState]map[input.Direction]*anim.AnimatedSprite{

@@ -1,0 +1,16 @@
+id: cinder
+name: Cinder
+description: Ignite your foe with a burning ember
+ticks:
+  - {}
+  - {}
+  - {}
+  - effects:
+      - status:
+          type: burning
+          stacks: 5
+          target: opponent
+    animation:
+      source:
+        - type: wiggle
+  - {}

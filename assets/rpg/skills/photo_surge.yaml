@@ -1,0 +1,19 @@
+id: photo_surge
+name: Photo Surge
+description: Deal more damage if your mending
+ticks:
+  - stance: exposed
+  - stance: exposed
+  - effects:
+      - damage:
+          amount: 5
+          scaled_by:
+            source_status:
+              mending:
+                "1": 1.5
+                "2": 2
+                "3": 3
+    animation:
+      source:
+        - type: hop
+          repetitions: 2

@@ -14,6 +14,7 @@ func init() {
 		byTile(tiles.Torch, tiles.TorchRight, tiles.TorchLeft).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
+			system.SetDebugType(params.EntityId, "light")
 			renderer := NewBasicEntityRenderer(entity)
 			renderer.WithLights(NewLightWithModifier(colors.FromString("#db9a3d"), 2, "flicker"))
 			switch *params.SpriteId {
@@ -35,6 +36,7 @@ func init() {
 		byTile(tiles.LightCircle, tiles.LightTable, tiles.LightTall, tiles.LightWide, tiles.LightFork, tiles.LightDoubleL, tiles.LightDoubleR).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
 			entity := system.RegisterEntity(params.EntityId, params.Location)
+			system.SetDebugType(params.EntityId, "light")
 			renderer := NewBasicEntityRenderer(entity)
 			renderer.WithLights(NewLight(colors.FromString("#fff"), 1.333))
 			renderer.WithAnimations(anim.NewStaticAnimationFromId(atlas, *params.SpriteId))
@@ -47,6 +49,7 @@ func init() {
 	newRegistrarBuilder().
 		byTile(tiles.GlowRed, tiles.GlowOrange, tiles.GlowAqua, tiles.GlowPurple, tiles.GlowPink, tiles.GlowTBD).
 		registrar(func(params NewEntityParams, system *EntitySystem) (Entity, EventHandler) {
+			system.SetDebugType(params.EntityId, "light")
 			colorMask := colors.HexString("#fff")
 			params.Properties.GetFloat("size", 2)
 			switch *params.SpriteId {

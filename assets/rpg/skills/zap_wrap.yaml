@@ -1,0 +1,34 @@
+id: zap_wrap
+name: Zap Wrap
+description: Ionize your foe as you wrap around them
+ticks:
+  - stance: defending
+    effects:
+      - damage:
+          amount: 2
+          variance: 1
+    animation:
+      source:
+        - type: hop
+  - stance: defending
+    effects:
+      - damage:
+          amount: 2
+          variance: 1
+    animation:
+      source:
+        - type: hop
+  - stance: defending
+    effects:
+      - damage:
+          amount: 2
+          variance: 1
+    animation:
+      source:
+        - type: hop
+  - stance: defending
+    effects:
+      - status:
+          type: ionized
+          stacks: 5
+          target: opponent

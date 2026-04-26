@@ -1,0 +1,16 @@
+id: tackle
+name: Tackle
+description: A crude physical attack
+ticks:
+  - {}
+  - {}
+  - effects:
+      - damage:
+          amount: 5
+          variance: 2
+    animation:
+      source:
+        - type: pounce
+      target:
+        - type: recoil
+  - {}

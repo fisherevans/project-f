@@ -1,0 +1,16 @@
+id: strike
+name: Strike
+description: A heavy blow that leaves you exposed
+ticks:
+  - stance: exposed
+  - stance: exposed
+  - stance: exposed
+  - stance: exposed
+  - effects:
+      - damage:
+          amount: 15
+    animation:
+      source:
+        - type: pounce
+      target:
+        - type: recoil

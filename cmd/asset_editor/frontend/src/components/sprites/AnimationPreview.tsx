@@ -186,7 +186,7 @@ export function AnimationPreview({
     return (
         <div className="space-y-3">
             <div className="flex items-start gap-4">
-                <div className={`rounded border border-border overflow-hidden inline-block ${bgClass ?? "bg-zinc-900"}`}>
+                <div className={`rounded border border-border overflow-hidden inline-block ${bgClass ?? "bg-canvas"}`}>
                     <canvas
                         ref={canvasRef}
                         width={tileWidth * previewScale}

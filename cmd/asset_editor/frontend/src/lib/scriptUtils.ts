@@ -51,6 +51,16 @@ export function parseScript(yamlStr: string): ParsedScript {
         }
     }
 
+    let data: Record<string, string[]> | undefined;
+    if (raw.data && typeof raw.data === "object") {
+        data = {};
+        for (const [name, list] of Object.entries(raw.data as Record<string, unknown>)) {
+            if (Array.isArray(list)) {
+                data[name] = list.map(String);
+            }
+        }
+    }
+
     let consts: Record<string, unknown> | undefined;
     if (raw.consts && typeof raw.consts === "object") {
         consts = raw.consts as Record<string, unknown>;
@@ -69,11 +79,19 @@ export function parseScript(yamlStr: string): ParsedScript {
         }
     }
 
-    return { handlers, sequences, consts, custom_actions };
+    let property_templates: Record<string, Record<string, unknown>> | undefined;
+    if (raw.property_templates && typeof raw.property_templates === "object") {
+        property_templates = raw.property_templates as Record<string, Record<string, unknown>>;
+    }
+
+    return { handlers, sequences, consts, custom_actions, data, property_templates };
 }
 
 function parseHandler(raw: Record<string, unknown>): HandlerDef {
     const handler: HandlerDef = {};
+    if (raw.props && Array.isArray(raw.props)) {
+        handler.props = raw.props as import("@/types/scripts").HandlerPropDef[];
+    }
     if (raw.var && typeof raw.var === "object") {
         handler.var = raw.var as Record<string, unknown>;
     }
@@ -140,11 +158,17 @@ export function parseCondition(raw: unknown): ConditionNode {
 export function stringifyScript(script: ParsedScript): string {
     const obj: Record<string, unknown> = {};
 
+    if (script.data && Object.keys(script.data).length > 0) {
+        obj.data = script.data;
+    }
+
     const handlers: Record<string, unknown> = {};
     for (const [name, handler] of Object.entries(script.handlers)) {
         handlers[name] = serializeHandler(handler);
     }
-    obj.handlers = handlers;
+    if (Object.keys(handlers).length > 0) {
+        obj.handlers = handlers;
+    }
 
     if (script.consts && Object.keys(script.consts).length > 0) {
         obj.consts = script.consts;
@@ -175,11 +199,18 @@ export function stringifyScript(script: ParsedScript): string {
         obj.custom_actions = actions;
     }
 
+    if (script.property_templates && Object.keys(script.property_templates).length > 0) {
+        obj.property_templates = script.property_templates;
+    }
+
     return YAML.stringify(obj, { indent: 2, lineWidth: 0 });
 }
 
 function serializeHandler(handler: HandlerDef): Record<string, unknown> {
     const obj: Record<string, unknown> = {};
+    if (handler.props && handler.props.length > 0) {
+        obj.props = handler.props;
+    }
     if (handler.var && Object.keys(handler.var).length > 0) {
         obj.var = handler.var;
     }

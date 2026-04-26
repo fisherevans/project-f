@@ -30,11 +30,23 @@ func (s *State) HandleConsoleInput(cmd string) bool {
 
 func (s *State) newTeleportCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:     "tp [entityId]",
-		Short:   "Teleport to an entity",
+		Use:     "tp [entityId | x y]",
+		Short:   "Teleport to an entity or coordinates",
 		Aliases: []string{"teleport"},
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.RangeArgs(1, 2),
 		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 2 {
+				x, errX := strconv.Atoi(args[0])
+				y, errY := strconv.Atoi(args[1])
+				if errX != nil || errY != nil {
+					game.Console().WriteLines("invalid coordinates")
+					return
+				}
+				s.ExecuteSystemEffectsInOrder(NewTeleportPlayerEffect().
+					WithToLocation(MapLocation{X: x, Y: y}))
+				game.Console().Writef("teleporting to (%d, %d)", x, y)
+				return
+			}
 			target := args[0]
 			if _, ok := s.entities.GetEntity(target); ok {
 				s.ExecuteSystemEffectsInOrder(NewTeleportPlayerEffect().
@@ -46,9 +58,9 @@ func (s *State) newTeleportCommand() *cobra.Command {
 				s.ExecuteSystemEffectsInOrder(NewTeleportPlayerEffect().
 					WithToLocation(ref.Location))
 				game.Console().WriteLines("teleporting to reference")
+				return
 			}
 			game.Console().WriteLines("invalid target")
-			return
 		},
 	}
 }

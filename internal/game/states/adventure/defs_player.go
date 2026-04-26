@@ -10,6 +10,7 @@ import (
 
 func loadPlayerEntity(params NewEntityParams, system *EntitySystem, defaultPlayerMode string) (Entity, EventHandler) {
 	entity := system.RegisterEntity(params.EntityId, params.Location)
+	system.SetDebugType(params.EntityId, "player")
 	switch defaultPlayerMode {
 	case "human":
 		playerHumanRenderer(entity)

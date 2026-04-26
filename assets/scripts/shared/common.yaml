@@ -1,5 +1,103 @@
+custom_actions:
+  door_sync_blocking:
+    description: "Sync door blocking and mode to a run state variable"
+    params:
+      - name: variable
+        description: "Run state key controlling the door"
+    steps:
+      - if:
+          when: "global[param.variable] == true || global[param.variable] == 'open'"
+          then:
+            - set_blocking:
+                entity: "{{self}}"
+                is_blocking: false
+            - set_mode:
+                entity: "{{self}}"
+                mode: open
+          else:
+            - set_blocking:
+                entity: "{{self}}"
+                is_blocking: true
+            - set_mode:
+                entity: "{{self}}"
+                mode: closed
+
+  door_configure_shield:
+    description: "Configure a shield-style door with animations, lights, and sounds"
+    steps:
+      - configure_mode_entity:
+          entity: "{{self}}"
+          modes:
+            closed:
+              animations:
+                - name: "adventure/doors/shield_front_1:closed"
+                - name: "adventure/doors/shield_front_1:waves"
+              lights:
+                - color: "#127fd7"
+                  size: 1.5
+                  modifier: pulse_slow
+              sounds_on_enter:
+                - name: "adventure/props/energy_door_on"
+                  volume: 1.0
+                  falloff: standard
+                - name: "adventure/props/energy_door_hum"
+                  loop: true
+                  falloff: ambient
+                  volume: 0.5
+                  fade_in: 1
+            open:
+              animations:
+                - name: "adventure/doors/shield_front_1:open"
+              sounds_on_enter:
+                - name: "adventure/props/energy_door_off"
+                  volume: 1.0
+                  falloff: standard
+
+  door_configure_sliding_metal:
+    description: "Configure a sliding metal door with animations and sounds"
+    steps:
+      - configure_mode_entity:
+          entity: "{{self}}"
+          modes:
+            closed:
+              animations:
+                - name: "adventure/doors/sliding_steel:closed"
+              sounds_on_enter:
+                - name: "adventure/sealed_door_opens"
+                  volume: 1.0
+                  falloff: standard
+            open:
+              animations:
+                - name: "adventure/doors/sliding_steel:open"
+              sounds_on_enter:
+                - name: "adventure/sealed_door_opens"
+                  volume: 1.0
+                  falloff: standard
+
+  door_configure_pillar:
+    description: "Configure a pillar-style door with animations"
+    steps:
+      - configure_mode_entity:
+          entity: "{{self}}"
+          modes:
+            closed:
+              animations:
+                - name: "space_base_pillar:down"
+            open:
+              animations:
+                - name: "space_base_pillar:up"
+
 handlers:
   random_chatters:
+    props:
+      - name: chatters
+        type: string
+        required: true
+        description: "Newline-separated chatter messages"
+      - name: duration
+        type: number
+        default: 3
+        description: "Duration in seconds to show each chatter"
     on_interact_self:
       - steps:
           - action:
@@ -8,6 +106,11 @@ handlers:
               duration: "{{prop.duration}}"
 
   random_dialogues:
+    props:
+      - name: dialogues
+        type: string
+        required: true
+        description: "Newline-separated dialogue messages"
     on_interact_self:
       - steps:
           - action:
@@ -15,15 +118,37 @@ handlers:
               dialogues: "{{prop.dialogues}}"
 
   door.run_state_based:
+    props:
+      - name: run_state_key
+        type: string
+        required: true
+        description: "Run state key controlling the door's open/closed state"
+      - name: style
+        type: string
+        default: "shield_door"
+        description: "Door visual style - determines animations, lights, and sounds"
     on_init:
       - steps:
-          - action:
+          - switch:
+              on: "prop.style"
+              cases:
+                - value: "'pillar'"
+                  steps:
+                    - custom_action: door_configure_pillar
+                - value: "'sliding_metal'"
+                  steps:
+                    - custom_action: door_configure_sliding_metal
+              default:
+                - custom_action: door_configure_shield
+          - custom_action:
               name: door_sync_blocking
-              variable: "{{prop.run_state_key}}"
+              with:
+                variable: "prop.run_state_key"
     on_global_updated:
       - filter:
           key: "{{prop.run_state_key}}"
         steps:
-          - action:
+          - custom_action:
               name: door_sync_blocking
-              variable: "{{prop.run_state_key}}"
+              with:
+                variable: "prop.run_state_key"

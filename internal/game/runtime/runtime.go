@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"fisherevans.com/project/f/assets"
 	"fisherevans.com/project/f/internal/game/audio"
 	"fisherevans.com/project/f/internal/game/overlay"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -31,6 +32,7 @@ type Instance struct {
 	resetIntentFactory func() any
 	devScenes          []DevScene
 	window             *opengl.Window
+	debugDrain         func()
 }
 
 func NewInstance(saveId string, resetIntentFactory func() any) *Instance {
@@ -44,6 +46,11 @@ func NewInstance(saveId string, resetIntentFactory func() any) *Instance {
 // The overlay's scene-select panel lists these; clicking one calls Factory().
 func (i *Instance) WithDevScenes(scenes []DevScene) *Instance {
 	i.devScenes = scenes
+	return i
+}
+
+func (i *Instance) WithDebugDrain(fn func()) *Instance {
+	i.debugDrain = fn
 	return i
 }
 
@@ -74,6 +81,10 @@ func (i *Instance) initialize() {
 		// Load all resources (fonts, sprites, audio, etc.)
 		// This triggers all deferred initializers registered via resources.RunOnceInitialized()
 		resources.Initialize()
+
+		if err := rpg.LoadFromFS(assets.FS); err != nil {
+			log.Fatal().Err(err).Msg("failed to load RPG data")
+		}
 
 		registerIntents()
 
@@ -248,14 +259,20 @@ func (i *Instance) Run() {
 		// Inject virtual gamepad state before keyboard is merged in UpdateControls
 		game.SetVirtualControls(ov.VirtualControls())
 
+		// Scale game time by the speed setting
+		gameDelta := deltaTime * game.CurrentSave().SystemSettings.Debugging.GameTimeSpeed
+
 		// Update game state
 		game.ApplyIntent()
+		if i.debugDrain != nil {
+			i.debugDrain()
+		}
 		game.UpdateControls(i.window)
-		game.Update(i.window, deltaTime)
+		game.Update(i.window, gameDelta)
 
 		// Render scene to canvas
 		i.renderScene(sceneCanvas, deltaTime)
-		game.GetActiveState().OnTick(sceneCanvas, sceneCanvas.Bounds(), deltaTime)
+		game.GetActiveState().OnTick(sceneCanvas, sceneCanvas.Bounds(), gameDelta)
 
 		// Update canvas scale and pixel grid canvas
 		canvasScale = overlay.GameCanvasScale(i.window.Bounds())

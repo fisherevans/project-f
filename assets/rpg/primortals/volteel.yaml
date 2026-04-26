@@ -1,0 +1,22 @@
+type: volteel
+name: Volteel
+description: An amphibious eel-like creature that generates and stores bioelectricity, using its stubby limbs to maneuver on land and deliver shocking attacks.
+xeno_log_index: 8
+base_sync: 20
+unlockable_skills:
+  arc_dart:
+    cost: 2
+  zap_wrap:
+    cost: 4
+    prerequisites:
+      - arc_dart
+combat_archetypes:
+  default:
+    additional_sync: 10
+    additional_sync_variance: 10
+    skill_pool:
+      random:
+        weighted_skills:
+          arc_dart: 20
+          jab: 40
+          zap_wrap: 10

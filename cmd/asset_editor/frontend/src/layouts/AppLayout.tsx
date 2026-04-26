@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Image, Volume2, ScrollText } from "lucide-react";
+import { Image, Volume2, ScrollText, Swords, Bug, HardDrive } from "lucide-react";
 
 export function AppLayout() {
     return (
@@ -43,6 +43,46 @@ export function AppLayout() {
                     title="Scripts"
                 >
                     <ScrollText className="h-4 w-4" />
+                </NavLink>
+                <NavLink
+                    to="/rpg"
+                    className={({ isActive }) =>
+                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                            isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`
+                    }
+                    title="RPG"
+                >
+                    <Swords className="h-4 w-4" />
+                </NavLink>
+                <NavLink
+                    to="/saves"
+                    className={({ isActive }) =>
+                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                            isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`
+                    }
+                    title="Saves"
+                >
+                    <HardDrive className="h-4 w-4" />
+                </NavLink>
+                <div className="mt-auto" />
+                <NavLink
+                    to="/debug"
+                    className={({ isActive }) =>
+                        `flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                            isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`
+                    }
+                    title="Debug"
+                >
+                    <Bug className="h-4 w-4" />
                 </NavLink>
             </nav>
             <main className="flex-1 overflow-hidden">

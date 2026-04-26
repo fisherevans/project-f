@@ -23,7 +23,13 @@ func IsPortrait(wb pixel.Rect) bool { return wb.H() > wb.W() }
 // landscape and portrait so the corner chrome grows on large windows too.
 func OverlayUIScale(wb pixel.Rect) float64 {
 	s := wb.W() / gamepadReferenceW
-	return math.Max(1.0, math.Min(2.0, s))
+	base := math.Max(1.0, math.Min(2.0, s))
+	if save := game.CurrentSave(); save != nil {
+		if m := save.SystemSettings.Display.UIScale; m > 0 {
+			base *= m
+		}
+	}
+	return base
 }
 
 // GamepadUIScale returns a scale multiplier for the virtual gamepad UI.

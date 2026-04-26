@@ -6,7 +6,12 @@
       "category": "text",
       "paramStyle": "string",
       "params": [
-        {"name": "text", "type": "string", "required": true, "description": "The dialogue text to display"}
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "The dialogue text to display"
+        }
       ]
     },
     "self_dialogue": {
@@ -15,7 +20,12 @@
       "category": "text",
       "paramStyle": "string",
       "params": [
-        {"name": "text", "type": "string", "required": true, "description": "The self-dialogue text to display"}
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "description": "The self-dialogue text to display"
+        }
       ]
     },
     "chatter": {
@@ -24,9 +34,24 @@
       "category": "text",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID to show chatter above"},
-        {"name": "message", "type": "string", "required": true, "description": "The chatter text"},
-        {"name": "duration", "type": "number", "default": 3, "description": "Duration in seconds to show chatter"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to show chatter above"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "required": true,
+          "description": "The chatter text"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 3,
+          "description": "Duration in seconds to show chatter"
+        }
       ]
     },
     "tooltip": {
@@ -35,7 +60,12 @@
       "category": "text",
       "paramStyle": "string",
       "params": [
-        {"name": "message", "type": "string", "required": true, "description": "The tooltip text"}
+        {
+          "name": "message",
+          "type": "string",
+          "required": true,
+          "description": "The tooltip text"
+        }
       ]
     },
     "timer": {
@@ -44,8 +74,17 @@
       "category": "flow",
       "paramStyle": "string_or_map",
       "params": [
-        {"name": "duration", "type": "number", "required": true, "description": "Seconds to wait. Can be provided as a bare number value."},
-        {"name": "id", "type": "string", "description": "Optional timer ID for later reference via on_timer_complete"}
+        {
+          "name": "duration",
+          "type": "number",
+          "required": true,
+          "description": "Seconds to wait. Can be provided as a bare number value."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Optional timer ID for later reference via on_timer_complete"
+        }
       ]
     },
     "play_sound": {
@@ -54,7 +93,12 @@
       "category": "audio",
       "paramStyle": "string",
       "params": [
-        {"name": "sound", "type": "string", "required": true, "description": "Sound resource path (e.g. 'adventure/beeps/success')"}
+        {
+          "name": "sound",
+          "type": "string",
+          "required": true,
+          "description": "Sound resource path (e.g. 'adventure/beeps/success')"
+        }
       ]
     },
     "set_world_state": {
@@ -63,8 +107,18 @@
       "category": "state",
       "paramStyle": "map",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key"},
-        {"name": "value", "type": "any", "required": true, "description": "Value to set (null to delete)"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "required": true,
+          "description": "Value to set (null to delete)"
+        }
       ]
     },
     "set_run_state": {
@@ -73,8 +127,18 @@
       "category": "state",
       "paramStyle": "map",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Run state variable key"},
-        {"name": "value", "type": "any", "required": true, "description": "Value to set"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Run state variable key"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "required": true,
+          "description": "Value to set"
+        }
       ]
     },
     "set_var": {
@@ -83,8 +147,18 @@
       "category": "state",
       "paramStyle": "map",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Variable key in the handler's var map"},
-        {"name": "value", "type": "string", "required": true, "description": "Expression to evaluate and store (e.g. 'var.count + 1')"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Variable key in the handler's var map"
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "description": "Expression to evaluate and store (e.g. 'var.count + 1')"
+        }
       ]
     },
     "delete_entity": {
@@ -93,7 +167,12 @@
       "category": "entity",
       "paramStyle": "string",
       "params": [
-        {"name": "entity_id", "type": "string", "required": true, "description": "ID of the entity to delete"}
+        {
+          "name": "entity_id",
+          "type": "string",
+          "required": true,
+          "description": "ID of the entity to delete"
+        }
       ]
     },
     "face_direction": {
@@ -102,8 +181,23 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID to reorient"},
-        {"name": "direction", "type": "string", "description": "Direction to face", "enum": ["up", "down", "left", "right"]}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to reorient"
+        },
+        {
+          "name": "direction",
+          "type": "string",
+          "description": "Direction to face",
+          "enum": [
+            "up",
+            "down",
+            "left",
+            "right"
+          ]
+        }
       ]
     },
     "face_entity": {
@@ -112,8 +206,18 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID to reorient"},
-        {"name": "target", "type": "string", "required": true, "description": "Entity ID to face toward"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to reorient"
+        },
+        {
+          "name": "target",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to face toward"
+        }
       ]
     },
     "scripted_motion": {
@@ -122,8 +226,17 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID to move"},
-        {"name": "to_entity", "type": "string", "description": "Target entity ID to move toward"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to move"
+        },
+        {
+          "name": "to_entity",
+          "type": "string",
+          "description": "Target entity ID to move toward"
+        }
       ]
     },
     "push_behavior": {
@@ -132,10 +245,27 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID"},
-        {"name": "scripted_motion", "type": "bool", "description": "Enable scripted motion behavior"},
-        {"name": "active_player_zone", "type": "string", "description": "Zone that activates scripted motion (requires scripted_motion: true)"},
-        {"name": "facing_entity", "type": "string", "description": "Entity ID to face continuously"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID"
+        },
+        {
+          "name": "scripted_motion",
+          "type": "bool",
+          "description": "Enable scripted motion behavior"
+        },
+        {
+          "name": "active_player_zone",
+          "type": "string",
+          "description": "Zone that activates scripted motion (requires scripted_motion: true)"
+        },
+        {
+          "name": "facing_entity",
+          "type": "string",
+          "description": "Entity ID to face continuously"
+        }
       ]
     },
     "pop_behavior": {
@@ -144,7 +274,12 @@
       "category": "entity",
       "paramStyle": "string",
       "params": [
-        {"name": "entity_id", "type": "string", "required": true, "description": "Entity ID to pop behavior from"}
+        {
+          "name": "entity_id",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to pop behavior from"
+        }
       ]
     },
     "disable_behavior": {
@@ -153,8 +288,18 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID"},
-        {"name": "by", "type": "string", "required": true, "description": "Lock name for later re-enabling"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID"
+        },
+        {
+          "name": "by",
+          "type": "string",
+          "required": true,
+          "description": "Lock name for later re-enabling"
+        }
       ]
     },
     "enable_behavior": {
@@ -163,8 +308,18 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID"},
-        {"name": "by", "type": "string", "required": true, "description": "Lock name to release (must match the disable_behavior lock)"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID"
+        },
+        {
+          "name": "by",
+          "type": "string",
+          "required": true,
+          "description": "Lock name to release (must match the disable_behavior lock)"
+        }
       ]
     },
     "reset_movement": {
@@ -173,7 +328,12 @@
       "category": "entity",
       "paramStyle": "string",
       "params": [
-        {"name": "entity_id", "type": "string", "required": true, "description": "Entity ID to reset"}
+        {
+          "name": "entity_id",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to reset"
+        }
       ]
     },
     "trigger_movement": {
@@ -182,8 +342,23 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID"},
-        {"name": "direction", "type": "string", "description": "Direction to move", "enum": ["up", "down", "left", "right"]}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID"
+        },
+        {
+          "name": "direction",
+          "type": "string",
+          "description": "Direction to move",
+          "enum": [
+            "up",
+            "down",
+            "left",
+            "right"
+          ]
+        }
       ]
     },
     "set_mode": {
@@ -192,8 +367,18 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID"},
-        {"name": "mode", "type": "string", "required": true, "description": "Mode name to set"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID"
+        },
+        {
+          "name": "mode",
+          "type": "string",
+          "required": true,
+          "description": "Mode name to set"
+        }
       ]
     },
     "set_blocking": {
@@ -202,8 +387,18 @@
       "category": "entity",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID"},
-        {"name": "is_blocking", "type": "bool", "required": true, "description": "Whether the entity should block movement"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID"
+        },
+        {
+          "name": "is_blocking",
+          "type": "bool",
+          "required": true,
+          "description": "Whether the entity should block movement"
+        }
       ]
     },
     "reset_animation": {
@@ -212,7 +407,12 @@
       "category": "entity",
       "paramStyle": "string",
       "params": [
-        {"name": "entity_id", "type": "string", "required": true, "description": "Entity ID to reset animation for"}
+        {
+          "name": "entity_id",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to reset animation for"
+        }
       ]
     },
     "change_player_renderer": {
@@ -221,7 +421,12 @@
       "category": "entity",
       "paramStyle": "string",
       "params": [
-        {"name": "style", "type": "string", "required": true, "description": "Renderer style name"}
+        {
+          "name": "style",
+          "type": "string",
+          "required": true,
+          "description": "Renderer style name"
+        }
       ]
     },
     "override_camera": {
@@ -230,7 +435,12 @@
       "category": "camera",
       "paramStyle": "map",
       "params": [
-        {"name": "follow", "type": "map", "required": true, "description": "Camera follow configuration with 'entity' (string) and optional 'reset_position' (bool)"}
+        {
+          "name": "follow",
+          "type": "map",
+          "required": true,
+          "description": "Camera follow configuration with 'entity' (string) and optional 'reset_position' (bool)"
+        }
       ]
     },
     "pop_camera": {
@@ -239,7 +449,12 @@
       "category": "camera",
       "paramStyle": "string_or_map",
       "params": [
-        {"name": "maintain_location", "type": "bool", "default": false, "description": "If true, the restored camera starts from the overridden camera's current position. Can be provided as a bare bool value."}
+        {
+          "name": "maintain_location",
+          "type": "bool",
+          "default": false,
+          "description": "If true, the restored camera starts from the overridden camera's current position. Can be provided as a bare bool value."
+        }
       ]
     },
     "mutate_camera": {
@@ -248,8 +463,16 @@
       "category": "camera",
       "paramStyle": "map",
       "params": [
-        {"name": "follow_entity", "type": "string", "description": "New entity ID for the camera to follow"},
-        {"name": "reset_position", "type": "bool", "description": "If true, snap camera to the follow target's current position"}
+        {
+          "name": "follow_entity",
+          "type": "string",
+          "description": "New entity ID for the camera to follow"
+        },
+        {
+          "name": "reset_position",
+          "type": "bool",
+          "description": "If true, snap camera to the follow target's current position"
+        }
       ]
     },
     "teleport_player": {
@@ -258,10 +481,26 @@
       "category": "transition",
       "paramStyle": "map",
       "params": [
-        {"name": "to_reference", "type": "string", "description": "Map reference point name to teleport to"},
-        {"name": "to_entity", "type": "string", "description": "Entity ID to teleport to (alternative to to_reference)"},
-        {"name": "transition_style", "type": "string", "description": "Visual transition style"},
-        {"name": "interstitial", "type": "steps", "description": "Steps to execute during the teleport transition (between fade out and fade in)"}
+        {
+          "name": "to_reference",
+          "type": "string",
+          "description": "Map reference point name to teleport to"
+        },
+        {
+          "name": "to_entity",
+          "type": "string",
+          "description": "Entity ID to teleport to (alternative to to_reference)"
+        },
+        {
+          "name": "transition_style",
+          "type": "string",
+          "description": "Visual transition style"
+        },
+        {
+          "name": "interstitial",
+          "type": "steps",
+          "description": "Steps to execute during the teleport transition (between fade out and fade in)"
+        }
       ],
       "acceptsSubSteps": true
     },
@@ -271,8 +510,17 @@
       "category": "transition",
       "paramStyle": "map",
       "params": [
-        {"name": "map", "type": "string", "required": true, "description": "Map name to load"},
-        {"name": "waypoint", "type": "string", "description": "Waypoint name to spawn at in the new map"}
+        {
+          "name": "map",
+          "type": "string",
+          "required": true,
+          "description": "Map name to load"
+        },
+        {
+          "name": "waypoint",
+          "type": "string",
+          "description": "Waypoint name to spawn at in the new map"
+        }
       ]
     },
     "fade": {
@@ -281,11 +529,33 @@
       "category": "transition",
       "paramStyle": "map",
       "params": [
-        {"name": "duration", "type": "number", "default": 0.33, "description": "Fade duration in seconds"},
-        {"name": "transitions", "type": "number", "default": 1, "description": "Number of color transitions"},
-        {"name": "from_color", "type": "string", "description": "Starting color (hex string)"},
-        {"name": "to_color", "type": "string", "description": "Ending color (hex string)"},
-        {"name": "auto_deactivate", "type": "bool", "description": "Whether the fade automatically deactivates when complete"}
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 0.33,
+          "description": "Fade duration in seconds"
+        },
+        {
+          "name": "transitions",
+          "type": "number",
+          "default": 1,
+          "description": "Number of color transitions"
+        },
+        {
+          "name": "from_color",
+          "type": "string",
+          "description": "Starting color (hex string)"
+        },
+        {
+          "name": "to_color",
+          "type": "string",
+          "description": "Ending color (hex string)"
+        },
+        {
+          "name": "auto_deactivate",
+          "type": "bool",
+          "description": "Whether the fade automatically deactivates when complete"
+        }
       ]
     },
     "deactivate_fade": {
@@ -294,7 +564,12 @@
       "category": "transition",
       "paramStyle": "string",
       "params": [
-        {"name": "fade_id", "type": "string", "required": true, "description": "ID of the fade to deactivate"}
+        {
+          "name": "fade_id",
+          "type": "string",
+          "required": true,
+          "description": "ID of the fade to deactivate"
+        }
       ]
     },
     "yield_elythium": {
@@ -303,7 +578,12 @@
       "category": "rpg",
       "paramStyle": "string_or_map",
       "params": [
-        {"name": "amount", "type": "number", "required": true, "description": "Amount of Elythium to award. Can be provided as a bare number value."}
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "description": "Amount of Elythium to award. Can be provided as a bare number value."
+        }
       ]
     },
     "broadcast": {
@@ -312,8 +592,17 @@
       "category": "flow",
       "paramStyle": "map",
       "params": [
-        {"name": "id", "type": "string", "required": true, "description": "Broadcast identifier"},
-        {"name": "data", "type": "any", "description": "Optional data payload"}
+        {
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "description": "Broadcast identifier"
+        },
+        {
+          "name": "data",
+          "type": "any",
+          "description": "Optional data payload"
+        }
       ]
     },
     "wait_for": {
@@ -322,8 +611,17 @@
       "category": "flow",
       "paramStyle": "map",
       "params": [
-        {"name": "condition", "type": "string", "required": true, "description": "Name of a registered script condition to wait for"},
-        {"name": "...", "type": "any", "description": "Additional params are passed through to the condition factory"}
+        {
+          "name": "condition",
+          "type": "string",
+          "required": true,
+          "description": "Name of a registered script condition to wait for"
+        },
+        {
+          "name": "...",
+          "type": "any",
+          "description": "Additional params are passed through to the condition factory"
+        }
       ]
     },
     "wait_for_animation": {
@@ -332,7 +630,12 @@
       "category": "flow",
       "paramStyle": "string",
       "params": [
-        {"name": "entity_id", "type": "string", "required": true, "description": "Entity ID whose animation to wait for"}
+        {
+          "name": "entity_id",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID whose animation to wait for"
+        }
       ]
     },
     "action": {
@@ -341,8 +644,17 @@
       "category": "flow",
       "paramStyle": "string_or_map",
       "params": [
-        {"name": "name", "type": "string", "required": true, "description": "Registered action name. Can be provided as a bare string value."},
-        {"name": "...", "type": "any", "description": "Additional params are passed through to the action function"}
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "description": "Registered action name. Can be provided as a bare string value."
+        },
+        {
+          "name": "...",
+          "type": "any",
+          "description": "Additional params are passed through to the action function"
+        }
       ]
     },
     "parallel": {
@@ -351,7 +663,12 @@
       "category": "flow",
       "paramStyle": "list",
       "params": [
-        {"name": "steps", "type": "steps", "required": true, "description": "List of steps to run in parallel"}
+        {
+          "name": "steps",
+          "type": "steps",
+          "required": true,
+          "description": "List of steps to run in parallel"
+        }
       ],
       "acceptsSubSteps": true
     },
@@ -361,13 +678,44 @@
       "category": "flow",
       "paramStyle": "map",
       "params": [
-        {"name": "entity", "type": "string", "description": "The entity performing the sequence (defaults to {{self}})"},
-        {"name": "target", "type": "string", "description": "The target entity (defaults to {{player}})"},
-        {"name": "move_camera", "type": "bool", "default": false, "description": "Whether to pan the camera to the focused entity"},
-        {"name": "face_player", "type": "bool", "default": false, "description": "Whether the entity should face the player during the sequence"},
-        {"name": "pre_effects", "type": "steps", "description": "Steps to execute before the main effects"},
-        {"name": "effects", "type": "steps", "required": true, "description": "Main steps of the focused sequence"},
-        {"name": "post_effects", "type": "steps", "description": "Steps to execute after the main effects, before restoring state"}
+        {
+          "name": "entity",
+          "type": "string",
+          "description": "The entity performing the sequence (defaults to {{self}})"
+        },
+        {
+          "name": "target",
+          "type": "string",
+          "description": "The target entity (defaults to {{player}})"
+        },
+        {
+          "name": "move_camera",
+          "type": "bool",
+          "default": false,
+          "description": "Whether to pan the camera to the focused entity"
+        },
+        {
+          "name": "face_player",
+          "type": "bool",
+          "default": false,
+          "description": "Whether the entity should face the player during the sequence"
+        },
+        {
+          "name": "pre_effects",
+          "type": "steps",
+          "description": "Steps to execute before the main effects"
+        },
+        {
+          "name": "effects",
+          "type": "steps",
+          "required": true,
+          "description": "Main steps of the focused sequence"
+        },
+        {
+          "name": "post_effects",
+          "type": "steps",
+          "description": "Steps to execute after the main effects, before restoring state"
+        }
       ],
       "acceptsSubSteps": true
     },
@@ -377,8 +725,17 @@
       "category": "flow",
       "paramStyle": "map",
       "params": [
-        {"name": "name", "type": "string", "required": true, "description": "Name of the sequence to reference"},
-        {"name": "with", "type": "map", "description": "Parameter values to pass to the referenced sequence"}
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "description": "Name of the sequence to reference"
+        },
+        {
+          "name": "with",
+          "type": "map",
+          "description": "Parameter values to pass to the referenced sequence"
+        }
       ]
     },
     "if": {
@@ -387,9 +744,23 @@
       "category": "flow",
       "paramStyle": "map",
       "params": [
-        {"name": "when", "type": "string", "required": true, "description": "Expression to evaluate as boolean (e.g. 'var.count > 3')"},
-        {"name": "then", "type": "steps", "required": true, "description": "Steps to execute if the condition is true"},
-        {"name": "else", "type": "steps", "description": "Steps to execute if the condition is false"}
+        {
+          "name": "when",
+          "type": "string",
+          "required": true,
+          "description": "Expression to evaluate as boolean (e.g. 'var.count > 3')"
+        },
+        {
+          "name": "then",
+          "type": "steps",
+          "required": true,
+          "description": "Steps to execute if the condition is true"
+        },
+        {
+          "name": "else",
+          "type": "steps",
+          "description": "Steps to execute if the condition is false"
+        }
       ],
       "acceptsSubSteps": true
     },
@@ -399,9 +770,23 @@
       "category": "flow",
       "paramStyle": "map",
       "params": [
-        {"name": "on", "type": "string", "required": true, "description": "Expression to evaluate (result compared against case values)"},
-        {"name": "cases", "type": "list", "required": true, "description": "List of {value: expr, steps: [...]} case objects"},
-        {"name": "default", "type": "steps", "description": "Steps to execute if no case matches"}
+        {
+          "name": "on",
+          "type": "string",
+          "required": true,
+          "description": "Expression to evaluate (result compared against case values)"
+        },
+        {
+          "name": "cases",
+          "type": "list",
+          "required": true,
+          "description": "List of {value: expr, steps: [...]} case objects"
+        },
+        {
+          "name": "default",
+          "type": "steps",
+          "description": "Steps to execute if no case matches"
+        }
       ],
       "acceptsSubSteps": true
     },
@@ -411,9 +796,24 @@
       "category": "flow",
       "paramStyle": "map",
       "params": [
-        {"name": "when", "type": "string", "required": true, "description": "Expression evaluated before each iteration (e.g. 'var.i < len(var.targets)')"},
-        {"name": "max", "type": "number", "default": 100, "description": "Maximum iteration count (safety cap, hard max 1000)"},
-        {"name": "steps", "type": "steps", "required": true, "description": "Steps to execute each iteration"}
+        {
+          "name": "when",
+          "type": "string",
+          "required": true,
+          "description": "Expression evaluated before each iteration (e.g. 'var.i < len(var.targets)')"
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "default": 100,
+          "description": "Maximum iteration count (safety cap, hard max 1000)"
+        },
+        {
+          "name": "steps",
+          "type": "steps",
+          "required": true,
+          "description": "Steps to execute each iteration"
+        }
       ],
       "acceptsSubSteps": true
     },
@@ -423,8 +823,17 @@
       "category": "flow",
       "paramStyle": "string_or_map",
       "params": [
-        {"name": "name", "type": "string", "required": true, "description": "Name of the custom action to invoke"},
-        {"name": "with", "type": "map", "description": "Map of parameter names to expressions (evaluated before invocation, accessible as param.*)"}
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "description": "Name of the custom action to invoke"
+        },
+        {
+          "name": "with",
+          "type": "map",
+          "description": "Map of parameter names to expressions (evaluated before invocation, accessible as param.*)"
+        }
       ]
     },
     "highlight_sequence": {
@@ -433,7 +842,12 @@
       "category": "text",
       "paramStyle": "map",
       "params": [
-        {"name": "targets", "type": "any", "required": true, "description": "List of highlight target definitions (region, message, badge)"}
+        {
+          "name": "targets",
+          "type": "any",
+          "required": true,
+          "description": "List of highlight target definitions (region, message, badge)"
+        }
       ]
     },
     "trigger_combat": {
@@ -442,11 +856,173 @@
       "category": "combat",
       "paramStyle": "map",
       "params": [
-        {"name": "combat_id", "type": "string", "description": "Identifier for the combat (used in on_combat_complete filter)"},
-        {"name": "background", "type": "string", "required": true, "description": "Combat background scene identifier"},
-        {"name": "opponent_type", "type": "string", "required": true, "description": "Primortal type of the opponent"},
-        {"name": "opponent_archetype", "type": "string", "description": "Combat archetype for the opponent"},
-        {"name": "training_sequence", "type": "string", "description": "Training sequence ID (for tutorial combats)"}
+        {
+          "name": "combat_id",
+          "type": "string",
+          "description": "Identifier for the combat (used in on_combat_complete filter)"
+        },
+        {
+          "name": "background",
+          "type": "string",
+          "required": true,
+          "description": "Combat background scene identifier"
+        },
+        {
+          "name": "opponent_type",
+          "type": "string",
+          "required": true,
+          "description": "Primortal type of the opponent"
+        },
+        {
+          "name": "opponent_archetype",
+          "type": "string",
+          "description": "Combat archetype for the opponent"
+        },
+        {
+          "name": "training_sequence",
+          "type": "string",
+          "description": "Training sequence ID (for tutorial combats)"
+        }
+      ]
+    },
+    "pick_dialogue": {
+      "name": "pick_dialogue",
+      "description": "Select a message from a data list or const and display it as dialogue",
+      "category": "text",
+      "paramStyle": "map",
+      "params": [
+        {
+          "name": "list",
+          "type": "string",
+          "required": true,
+          "description": "Name of a data list or const containing string messages"
+        },
+        {
+          "name": "select",
+          "type": "string",
+          "default": "cycling",
+          "description": "Selection mode: cycling, random, or capped",
+          "enum": [
+            "cycling",
+            "random",
+            "capped"
+          ]
+        },
+        {
+          "name": "counter_key",
+          "type": "string",
+          "description": "Run state key tracking the selection index"
+        },
+        {
+          "name": "increment",
+          "type": "bool",
+          "default": true,
+          "description": "Whether to auto-increment the counter after selection"
+        }
+      ]
+    },
+    "pick_self_dialogue": {
+      "name": "pick_self_dialogue",
+      "description": "Select a message from a data list or const and display it as self-dialogue",
+      "category": "text",
+      "paramStyle": "map",
+      "params": [
+        {
+          "name": "list",
+          "type": "string",
+          "required": true,
+          "description": "Name of a data list or const containing string messages"
+        },
+        {
+          "name": "select",
+          "type": "string",
+          "default": "cycling",
+          "description": "Selection mode: cycling, random, or capped",
+          "enum": [
+            "cycling",
+            "random",
+            "capped"
+          ]
+        },
+        {
+          "name": "counter_key",
+          "type": "string",
+          "description": "Run state key tracking the selection index"
+        },
+        {
+          "name": "increment",
+          "type": "bool",
+          "default": true,
+          "description": "Whether to auto-increment the counter after selection"
+        }
+      ]
+    },
+    "pick_chatter": {
+      "name": "pick_chatter",
+      "description": "Select a message from a data list or const and display it as chatter above an entity",
+      "category": "text",
+      "paramStyle": "map",
+      "params": [
+        {
+          "name": "list",
+          "type": "string",
+          "required": true,
+          "description": "Name of a data list or const containing string messages"
+        },
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to show chatter above"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 3,
+          "description": "Duration in seconds to show chatter"
+        },
+        {
+          "name": "select",
+          "type": "string",
+          "default": "cycling",
+          "description": "Selection mode: cycling, random, or capped",
+          "enum": [
+            "cycling",
+            "random",
+            "capped"
+          ]
+        },
+        {
+          "name": "counter_key",
+          "type": "string",
+          "description": "Run state key tracking the selection index"
+        },
+        {
+          "name": "increment",
+          "type": "bool",
+          "default": true,
+          "description": "Whether to auto-increment the counter after selection"
+        }
+      ]
+    },
+    "configure_mode_entity": {
+      "name": "configure_mode_entity",
+      "description": "Configure an entity's mode-based animations, lights, and sounds",
+      "category": "entity",
+      "paramStyle": "map",
+      "params": [
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to configure"
+        },
+        {
+          "name": "modes",
+          "type": "map",
+          "required": true,
+          "description": "Map of mode name to configuration (animations, lights, sounds)"
+        }
       ]
     }
   },
@@ -458,10 +1034,6 @@
     "save_game": {
       "name": "save_game",
       "description": "Save the current game to disk. Displays success/error feedback to the player."
-    },
-    "animech_level_description": {
-      "name": "animech_level_description",
-      "description": "Show a self-dialogue describing the player's current Animech level"
     },
     "reset_training_state": {
       "name": "reset_training_state",
@@ -477,7 +1049,12 @@
       "name": "clear_globals_prefix",
       "description": "Delete all global variables matching a key prefix",
       "params": [
-        {"name": "prefix", "type": "string", "required": true, "description": "Prefix to match (e.g. 'intro.' deletes all intro globals)"}
+        {
+          "name": "prefix",
+          "type": "string",
+          "required": true,
+          "description": "Prefix to match (e.g. 'intro.' deletes all intro globals)"
+        }
       ]
     },
     "open_computer": {
@@ -492,78 +1069,34 @@
       "name": "trigger_training_combat_2",
       "description": "Initiate the second training combat against a Toxmidge opponent. Awards 25 XP and 4 research points. Uses combat_id 'intro.training.6.combat_over'."
     },
-    "indexed_self_dialogue": {
-      "name": "indexed_self_dialogue",
-      "description": "Cycle through a list of self-dialogue messages based on a counter variable. Each invocation shows the next message and increments the counter.",
-      "params": [
-        {"name": "counter_key", "type": "string", "required": true, "description": "Run state key used to track the message index"},
-        {"name": "messages", "type": "any", "required": true, "description": "YAML list of message strings to cycle through"}
-      ]
-    },
-    "pick_up_paper": {
-      "name": "pick_up_paper",
-      "description": "Pick up a paper entity. Shows context-aware dialogue based on how many wrong papers were picked up, deletes the entity, and sets the 'intro.has_papers' flag.",
-      "params": [
-        {"name": "attempts_key", "type": "string", "required": true, "description": "Run state key tracking wrong-paper pickup attempts"},
-        {"name": "entity_id", "type": "string", "required": true, "description": "Entity ID to delete after pickup"}
-      ]
-    },
-    "turn_in_papers": {
-      "name": "turn_in_papers",
-      "description": "Turn in papers to the instructor. Shows context-aware dialogue, pans camera to the papers door, and sets the 'intro.papers_turned_in' flag.",
-      "params": [
-        {"name": "attempts_key", "type": "string", "required": true, "description": "Run state key tracking wrong-paper pickup attempts (determines dialogue tone)"}
-      ]
-    },
-    "door_sync_blocking": {
-      "name": "door_sync_blocking",
-      "description": "Synchronize a door entity's blocking presence and visual mode based on a run state variable. Sets blocking to true when closed, false when open.",
-      "params": [
-        {"name": "variable", "type": "string", "required": true, "description": "The run state key that controls the door's open/closed state"}
-      ]
-    },
-    "guarded_entry_deny": {
-      "name": "guarded_entry_deny",
-      "description": "Deny the player entry to a restricted zone. Shows an escalating series of messages and pushes the player back.",
-      "params": [
-        {"name": "walk_back_direction", "type": "string", "required": true, "description": "Direction to push the player back", "enum": ["up", "down", "left", "right"]}
-      ]
-    },
-    "guarded_entry_chat": {
-      "name": "guarded_entry_chat",
-      "description": "Chat with a guard NPC when interacted with directly (not trying to pass). Shows messages that escalate with the player's entry denial count."
-    },
-    "hall_npc_random_chatter": {
-      "name": "hall_npc_random_chatter",
-      "description": "NPC faces the player and shows a random chatter message from a hardcoded list of dismissive/busy responses"
-    },
-    "hall_npc_start_random_motion": {
-      "name": "hall_npc_start_random_motion",
-      "description": "Start random pathfinding motion to one of the predefined hallway endpoints. If the previous motion was canceled, adds a random delay before moving.",
-      "params": [
-        {"name": "was_canceled", "type": "bool", "description": "Whether the previous motion was canceled (passed automatically by motion_complete filter)"}
-      ]
-    },
     "random_chatter_interact": {
       "name": "random_chatter_interact",
       "description": "Show a random chatter message when an NPC is interacted with. Requires the entity to have NPCBehavior. Messages are passed as a newline-separated string from entity properties.",
       "params": [
-        {"name": "chatters", "type": "string", "required": true, "description": "Newline-separated list of chatter messages"},
-        {"name": "duration", "type": "number", "default": 4.0, "description": "Duration to show chatter in seconds"}
+        {
+          "name": "chatters",
+          "type": "string",
+          "required": true,
+          "description": "Newline-separated list of chatter messages"
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "default": 4.0,
+          "description": "Duration to show chatter in seconds"
+        }
       ]
     },
     "random_dialogue_interact": {
       "name": "random_dialogue_interact",
       "description": "Show a random dialogue when an NPC is interacted with. Messages are passed as a newline-separated string from entity properties.",
       "params": [
-        {"name": "dialogues", "type": "string", "required": true, "description": "Newline-separated list of dialogue messages"}
-      ]
-    },
-    "equipment_key_slot_interact": {
-      "name": "equipment_key_slot_interact",
-      "description": "Handle interaction with a key card slot. Checks if the player has a key card and whether the door is already open.",
-      "params": [
-        {"name": "run_state_key", "type": "string", "required": true, "description": "Run state key controlling the equipment door state. Use 'not_it' for decoy slots."}
+        {
+          "name": "dialogues",
+          "type": "string",
+          "required": true,
+          "description": "Newline-separated list of dialogue messages"
+        }
       ]
     },
     "show_elythium_highlight": {
@@ -576,49 +1109,84 @@
       "name": "skill_equipped",
       "description": "Check if a skill is equipped in any of the player's skill slots",
       "params": [
-        {"name": "skill", "type": "string", "required": true, "description": "Skill ID to check for"}
+        {
+          "name": "skill",
+          "type": "string",
+          "required": true,
+          "description": "Skill ID to check for"
+        }
       ]
     },
     "animech_upgrade_level_gt": {
       "name": "animech_upgrade_level_gt",
       "description": "Check if the player's Animech upgrade level is greater than a threshold",
       "params": [
-        {"name": "level", "type": "number", "required": true, "description": "Level threshold to compare against"}
+        {
+          "name": "level",
+          "type": "number",
+          "required": true,
+          "description": "Level threshold to compare against"
+        }
       ]
     },
     "upgrade_level_gt": {
       "name": "upgrade_level_gt",
       "description": "Alias for animech_upgrade_level_gt",
       "params": [
-        {"name": "level", "type": "number", "required": true, "description": "Level threshold to compare against"}
+        {
+          "name": "level",
+          "type": "number",
+          "required": true,
+          "description": "Level threshold to compare against"
+        }
       ]
     },
     "entity_not_moving": {
       "name": "entity_not_moving",
       "description": "Check if an entity is currently stationary",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID to check"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to check"
+        }
       ]
     },
     "player_in_zone": {
       "name": "player_in_zone",
       "description": "Check if the player is currently standing in a named zone",
       "params": [
-        {"name": "zone", "type": "string", "required": true, "description": "Zone ID to check"}
+        {
+          "name": "zone",
+          "type": "string",
+          "required": true,
+          "description": "Zone ID to check"
+        }
       ]
     },
     "not_run_this_instance": {
       "name": "not_run_this_instance",
       "description": "Check if a global key does not match the current game instance ID. Used for one-time-per-session initialization.",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global key to check against the current instance ID"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global key to check against the current instance ID"
+        }
       ]
     },
     "has_face_behavior": {
       "name": "has_face_behavior",
       "description": "Check if an entity currently has a FaceEntityBehavior on its behavior stack",
       "params": [
-        {"name": "entity", "type": "string", "required": true, "description": "Entity ID to check"}
+        {
+          "name": "entity",
+          "type": "string",
+          "required": true,
+          "description": "Entity ID to check"
+        }
       ]
     }
   },
@@ -627,78 +1195,168 @@
       "name": "global_eq",
       "description": "Check if a global variable equals a value. Supports both {key: k, value: v} and shorthand {some_key: some_value} syntax.",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key"},
-        {"name": "value", "type": "any", "required": true, "description": "Expected value (compared as strings)"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "required": true,
+          "description": "Expected value (compared as strings)"
+        }
       ]
     },
     "global_ne": {
       "name": "global_ne",
       "description": "Check if a global variable does not equal a value",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key"},
-        {"name": "value", "type": "any", "required": true, "description": "Value to compare against"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "required": true,
+          "description": "Value to compare against"
+        }
       ]
     },
     "global_gt": {
       "name": "global_gt",
       "description": "Check if a global variable is numerically greater than a value",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key"},
-        {"name": "value", "type": "number", "required": true, "description": "Numeric threshold"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "required": true,
+          "description": "Numeric threshold"
+        }
       ]
     },
     "global_gte": {
       "name": "global_gte",
       "description": "Check if a global variable is numerically greater than or equal to a value",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key"},
-        {"name": "value", "type": "number", "required": true, "description": "Numeric threshold"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "required": true,
+          "description": "Numeric threshold"
+        }
       ]
     },
     "global_lt": {
       "name": "global_lt",
       "description": "Check if a global variable is numerically less than a value",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key"},
-        {"name": "value", "type": "number", "required": true, "description": "Numeric threshold"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "required": true,
+          "description": "Numeric threshold"
+        }
       ]
     },
     "global_lte": {
       "name": "global_lte",
       "description": "Check if a global variable is numerically less than or equal to a value",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key"},
-        {"name": "value", "type": "number", "required": true, "description": "Numeric threshold"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key"
+        },
+        {
+          "name": "value",
+          "type": "number",
+          "required": true,
+          "description": "Numeric threshold"
+        }
       ]
     },
     "global_exists": {
       "name": "global_exists",
       "description": "Check if a global variable exists (has been set to any value)",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key to check"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key to check"
+        }
       ]
     },
     "global_not_exists": {
       "name": "global_not_exists",
       "description": "Check if a global variable does not exist (has never been set or was deleted)",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Global variable key to check"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Global variable key to check"
+        }
       ]
     },
     "handler_state_eq": {
       "name": "handler_state_eq",
       "description": "Check if a handler state variable equals a value. Handler state is per-handler, set via set_state in rules.",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Handler state variable key"},
-        {"name": "value", "type": "any", "required": true, "description": "Expected value"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Handler state variable key"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "required": true,
+          "description": "Expected value"
+        }
       ]
     },
     "handler_state_ne": {
       "name": "handler_state_ne",
       "description": "Check if a handler state variable does not equal a value",
       "params": [
-        {"name": "key", "type": "string", "required": true, "description": "Handler state variable key"},
-        {"name": "value", "type": "any", "required": true, "description": "Value to compare against"}
+        {
+          "name": "key",
+          "type": "string",
+          "required": true,
+          "description": "Handler state variable key"
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "required": true,
+          "description": "Value to compare against"
+        }
       ]
     },
     "all": {
@@ -706,7 +1364,12 @@
       "description": "Logical AND - all sub-conditions must be true",
       "isComposite": true,
       "params": [
-        {"name": "conditions", "type": "condition", "required": true, "description": "List of condition nodes that must all evaluate to true"}
+        {
+          "name": "conditions",
+          "type": "condition",
+          "required": true,
+          "description": "List of condition nodes that must all evaluate to true"
+        }
       ]
     },
     "any": {
@@ -714,7 +1377,12 @@
       "description": "Logical OR - at least one sub-condition must be true",
       "isComposite": true,
       "params": [
-        {"name": "conditions", "type": "condition", "required": true, "description": "List of condition nodes where at least one must evaluate to true"}
+        {
+          "name": "conditions",
+          "type": "condition",
+          "required": true,
+          "description": "List of condition nodes where at least one must evaluate to true"
+        }
       ]
     },
     "not": {
@@ -722,14 +1390,24 @@
       "description": "Logical NOT - negate a single sub-condition",
       "isComposite": true,
       "params": [
-        {"name": "condition", "type": "condition", "required": true, "description": "Single condition node to negate"}
+        {
+          "name": "condition",
+          "type": "condition",
+          "required": true,
+          "description": "Single condition node to negate"
+        }
       ]
     },
     "expr": {
       "name": "expr",
       "description": "Evaluate an expression. Supports full expr syntax with access to var, global, const, save, prop, self, player, source.",
       "params": [
-        {"name": "expression", "type": "string", "required": true, "description": "Expression string (e.g. 'var.count > 3 && global.quest_stage == \"complete\"')"}
+        {
+          "name": "expression",
+          "type": "string",
+          "required": true,
+          "description": "Expression string (e.g. 'var.count > 3 && global.quest_stage == \"complete\"')"
+        }
       ]
     }
   },
@@ -758,9 +1436,21 @@
       "description": "Fires when an entity enters or leaves a named zone",
       "eventType": "EventEntityZoneActivity",
       "filterFields": [
-        {"name": "zone", "type": "string", "description": "Zone ID to filter on"},
-        {"name": "entity", "type": "string", "description": "Entity ID to filter on"},
-        {"name": "entering", "type": "bool", "description": "Filter by entering (true) or leaving (false)"}
+        {
+          "name": "zone",
+          "type": "string",
+          "description": "Zone ID to filter on"
+        },
+        {
+          "name": "entity",
+          "type": "string",
+          "description": "Entity ID to filter on"
+        },
+        {
+          "name": "entering",
+          "type": "bool",
+          "description": "Filter by entering (true) or leaving (false)"
+        }
       ]
     },
     "on_broadcast": {
@@ -769,7 +1459,11 @@
       "description": "Fires when a broadcast event is sent",
       "eventType": "EventBroadcast",
       "filterFields": [
-        {"name": "id", "type": "string", "description": "Broadcast ID to filter on"}
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Broadcast ID to filter on"
+        }
       ]
     },
     "on_global_updated": {
@@ -778,7 +1472,11 @@
       "description": "Fires when a global variable is updated",
       "eventType": "EventGlobalVariableUpdated",
       "filterFields": [
-        {"name": "key", "type": "string", "description": "Global variable key to filter on"}
+        {
+          "name": "key",
+          "type": "string",
+          "description": "Global variable key to filter on"
+        }
       ]
     },
     "on_state_enter": {
@@ -793,7 +1491,11 @@
       "description": "Fires when a combat encounter finishes",
       "eventType": "EventCombatComplete",
       "filterFields": [
-        {"name": "combat_id", "type": "string", "description": "Combat ID to filter on"}
+        {
+          "name": "combat_id",
+          "type": "string",
+          "description": "Combat ID to filter on"
+        }
       ]
     },
     "on_timer_complete": {
@@ -802,8 +1504,16 @@
       "description": "Fires when a timer effect completes",
       "eventType": "EventTimerComplete",
       "filterFields": [
-        {"name": "created_by", "type": "string", "description": "Entity that created the timer"},
-        {"name": "timer_id", "type": "string", "description": "Timer ID to filter on"}
+        {
+          "name": "created_by",
+          "type": "string",
+          "description": "Entity that created the timer"
+        },
+        {
+          "name": "timer_id",
+          "type": "string",
+          "description": "Timer ID to filter on"
+        }
       ]
     },
     "on_motion_complete_self": {
@@ -818,18 +1528,48 @@
       "description": "Fires when any entity's scripted motion completes (global listener)",
       "eventType": "EventScriptedMotionComplete",
       "filterFields": [
-        {"name": "entity", "type": "string", "description": "Entity ID to filter on"},
-        {"name": "motion_id", "type": "string", "description": "Motion ID to filter on"},
-        {"name": "was_canceled", "type": "bool", "description": "Filter by whether the motion was canceled"}
+        {
+          "name": "entity",
+          "type": "string",
+          "description": "Entity ID to filter on"
+        },
+        {
+          "name": "motion_id",
+          "type": "string",
+          "description": "Motion ID to filter on"
+        },
+        {
+          "name": "was_canceled",
+          "type": "bool",
+          "description": "Filter by whether the motion was canceled"
+        }
       ]
     }
   },
   "templateVars": [
-    {"pattern": "{{self}}", "description": "ID of the entity that owns this handler"},
-    {"pattern": "{{player}}", "description": "ID of the player entity"},
-    {"pattern": "{{source}}", "description": "ID of the entity that triggered the event (e.g. the interacting entity)"},
-    {"pattern": "{{instance_id}}", "description": "Unique ID for the current game session (changes on restart)"},
-    {"pattern": "{{prop.*}}", "description": "Entity property value from the Tiled map (e.g. {{prop.chatters}} reads the 'chatters' custom property)"},
-    {"pattern": "{{<param>}}", "description": "Custom parameter from a sequence ref's 'with' map or a sequence's declared params"}
+    {
+      "pattern": "{{self}}",
+      "description": "ID of the entity that owns this handler"
+    },
+    {
+      "pattern": "{{player}}",
+      "description": "ID of the player entity"
+    },
+    {
+      "pattern": "{{source}}",
+      "description": "ID of the entity that triggered the event (e.g. the interacting entity)"
+    },
+    {
+      "pattern": "{{instance_id}}",
+      "description": "Unique ID for the current game session (changes on restart)"
+    },
+    {
+      "pattern": "{{prop.*}}",
+      "description": "Entity property value from the Tiled map (e.g. {{prop.chatters}} reads the 'chatters' custom property)"
+    },
+    {
+      "pattern": "{{<param>}}",
+      "description": "Custom parameter from a sequence ref's 'with' map or a sequence's declared params"
+    }
   ]
 }

@@ -22,23 +22,20 @@ func convertIfStep(params any, tc *TemplateContext, sequences map[string]*Sequen
 	thenEffects := convertSteps(thenSteps, tc, sequences)
 	elseEffects := convertSteps(elseSteps, tc, sequences)
 
-	return []Effect{NewFunctionEffect(func(s *State) {
-		prog, err := CompileExpr(whenExpr)
-		if err != nil {
-			log.Warn().Err(err).Str("expr", whenExpr).Msg("if: failed to compile condition")
-			return
-		}
-		env := tc.getExprEnv()
-		if EvalExprBool(prog, env) {
-			if len(thenEffects) > 0 {
-				s.planExecutor.StartPlan(nil, NewSerialPlan(thenEffects...))
+	return []Effect{&EffectDeferredBatch{
+		BuildEffects: func(source EntityReader, s *State) []Effect {
+			prog, err := CompileExpr(whenExpr)
+			if err != nil {
+				log.Warn().Err(err).Str("expr", whenExpr).Msg("if: failed to compile condition")
+				return nil
 			}
-		} else {
-			if len(elseEffects) > 0 {
-				s.planExecutor.StartPlan(nil, NewSerialPlan(elseEffects...))
+			env := tc.getExprEnv()
+			if EvalExprBool(prog, env) {
+				return thenEffects
 			}
-		}
-	})}
+			return elseEffects
+		},
+	}}
 }
 
 func convertSwitchStep(params any, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
@@ -75,44 +72,41 @@ func convertSwitchStep(params any, tc *TemplateContext, sequences map[string]*Se
 	defaultSteps := extractSubSteps(m["default"])
 	defaultEffects := convertSteps(defaultSteps, tc, sequences)
 
-	return []Effect{NewFunctionEffect(func(s *State) {
-		onProg, err := CompileExpr(onExpr)
-		if err != nil {
-			log.Warn().Err(err).Str("expr", onExpr).Msg("switch: failed to compile 'on' expression")
-			return
-		}
-		env := tc.getExprEnv()
-		onResult, err := EvalExpr(onProg, env)
-		if err != nil {
-			log.Warn().Err(err).Str("expr", onExpr).Msg("switch: failed to evaluate 'on' expression")
-			return
-		}
-		onStr := ""
-		if onResult != nil {
-			onStr = EvalExprString(onProg, env)
-		}
-
-		for _, c := range cases {
-			if c.valueExpr == "" {
-				continue
-			}
-			valueProg, err := CompileExpr(c.valueExpr)
+	return []Effect{&EffectDeferredBatch{
+		BuildEffects: func(source EntityReader, s *State) []Effect {
+			onProg, err := CompileExpr(onExpr)
 			if err != nil {
-				log.Warn().Err(err).Str("expr", c.valueExpr).Msg("switch case: failed to compile value")
-				continue
+				log.Warn().Err(err).Str("expr", onExpr).Msg("switch: failed to compile 'on' expression")
+				return nil
 			}
-			caseStr := EvalExprString(valueProg, env)
-			if onStr == caseStr {
-				if len(c.effects) > 0 {
-					s.planExecutor.StartPlan(nil, NewSerialPlan(c.effects...))
+			env := tc.getExprEnv()
+			onResult, err := EvalExpr(onProg, env)
+			if err != nil {
+				log.Warn().Err(err).Str("expr", onExpr).Msg("switch: failed to evaluate 'on' expression")
+				return nil
+			}
+			onStr := ""
+			if onResult != nil {
+				onStr = EvalExprString(onProg, env)
+			}
+
+			for _, c := range cases {
+				if c.valueExpr == "" {
+					continue
 				}
-				return
+				valueProg, err := CompileExpr(c.valueExpr)
+				if err != nil {
+					log.Warn().Err(err).Str("expr", c.valueExpr).Msg("switch case: failed to compile value")
+					continue
+				}
+				caseStr := EvalExprString(valueProg, env)
+				if onStr == caseStr {
+					return c.effects
+				}
 			}
-		}
-		if len(defaultEffects) > 0 {
-			s.planExecutor.StartPlan(nil, NewSerialPlan(defaultEffects...))
-		}
-	})}
+			return defaultEffects
+		},
+	}}
 }
 
 func convertWhileStep(params any, tc *TemplateContext, sequences map[string]*SequenceDef) []Effect {
@@ -134,34 +128,32 @@ func convertWhileStep(params any, tc *TemplateContext, sequences map[string]*Seq
 
 	bodySteps := extractSubSteps(m["steps"])
 
-	return []Effect{NewFunctionEffect(func(s *State) {
-		prog, err := CompileExpr(whenExpr)
-		if err != nil {
-			log.Warn().Err(err).Str("expr", whenExpr).Msg("while: failed to compile condition")
-			return
-		}
-		env := tc.getExprEnv()
+	return []Effect{&EffectDeferredBatch{
+		BuildEffects: func(source EntityReader, s *State) []Effect {
+			prog, err := CompileExpr(whenExpr)
+			if err != nil {
+				log.Warn().Err(err).Str("expr", whenExpr).Msg("while: failed to compile condition")
+				return nil
+			}
+			env := tc.getExprEnv()
 
-		// Re-convert body steps each iteration so set_var mutations are visible
-		// to the condition check between iterations. FunctionEffects (like set_var)
-		// are executed synchronously, so var state is updated before the next
-		// condition evaluation.
-		for i := 0; i < maxIterations; i++ {
-			if !EvalExprBool(prog, env) {
-				break
-			}
-			bodyEffects := convertSteps(bodySteps, tc, sequences)
-			for _, effect := range bodyEffects {
-				if fn, ok := effect.(*EffectFunction); ok {
-					fn.Process(nil, s)
-				} else {
-					s.planExecutor.StartPlan(nil, NewSerialPlan(effect))
+			var allEffects []Effect
+			for i := 0; i < maxIterations; i++ {
+				if !EvalExprBool(prog, env) {
+					break
 				}
+				bodyEffects := convertSteps(bodySteps, tc, sequences)
+				for _, effect := range bodyEffects {
+					if fn, ok := effect.(*EffectFunction); ok {
+						fn.Process(source, s)
+					}
+					allEffects = append(allEffects, effect)
+				}
+				env = tc.getExprEnv()
 			}
-			// Refresh env to pick up var mutations from this iteration
-			env = tc.getExprEnv()
-		}
-	})}
+			return allEffects
+		},
+	}}
 }
 
 func extractSubSteps(raw any) []*StepNode {
