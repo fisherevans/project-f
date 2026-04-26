@@ -122,9 +122,7 @@ function CustomActionStepsModal({ action, actionName, schema, onClose }: {
                     </button>
                 </div>
                 <div className="overflow-y-auto p-3">
-                    <div className="pointer-events-none opacity-80">
-                        <StepList steps={action.steps} schema={schema} onChange={() => {}} />
-                    </div>
+                    <StepList steps={action.steps} schema={schema} onChange={() => {}} />
                 </div>
             </div>
         </div>
