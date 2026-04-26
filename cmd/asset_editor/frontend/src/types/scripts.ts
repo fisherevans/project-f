@@ -136,7 +136,6 @@ export interface RuleDef {
     filter?: Record<string, unknown>;
     when?: ConditionNode;
     steps: StepNode[];
-    set_state?: Record<string, unknown>;
 }
 
 export interface StepNode {

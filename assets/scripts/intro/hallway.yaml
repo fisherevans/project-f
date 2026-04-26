@@ -283,7 +283,7 @@ handlers:
       - steps:
           - custom_action:
               name: indexed_self_dialogue
-              with:
+              params:
                 list: "'not_your_paper_messages'"
                 counter_key: "'intro.not_your_paper.attempts'"
 
@@ -292,7 +292,7 @@ handlers:
       - steps:
           - custom_action:
               name: pick_up_paper
-              with:
+              params:
                 attempts_key: "'intro.not_your_paper.attempts'"
                 entity_id: "self"
 
@@ -317,7 +317,7 @@ handlers:
       - steps:
           - custom_action:
               name: turn_in_papers
-              with:
+              params:
                 attempts_key: "'intro.not_your_paper.attempts'"
     on_zone_activity:
       - filter:
@@ -330,9 +330,10 @@ handlers:
                 blabbed: true
             - global_ne:
                 intro.papers_turned_in: true
-        set_state:
-          blabbed: true
         steps:
+          - set_var:
+              key: blabbed
+              value: "true"
           - focused_sequence:
               target: "{{player}}"
               move_camera: true
@@ -361,7 +362,7 @@ handlers:
         steps:
           - custom_action:
               name: guarded_entry_deny
-              with:
+              params:
                 walk_back_direction: "prop.walk_back_direction"
     on_interact_self:
       - steps:
@@ -388,7 +389,7 @@ handlers:
         steps:
           - custom_action:
               name: hall_npc_start_random_motion
-              with:
+              params:
                 was_canceled: "true"
       - steps:
           - custom_action: hall_npc_start_random_motion
@@ -420,5 +421,5 @@ handlers:
       - steps:
           - custom_action:
               name: equipment_key_slot_interact
-              with:
+              params:
                 run_state_key: "prop.run_state_key"

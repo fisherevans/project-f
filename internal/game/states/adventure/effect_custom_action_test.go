@@ -85,7 +85,7 @@ func TestConvertCustomActionStep_WithParams(t *testing.T) {
 	t.Run("explicit param", func(t *testing.T) {
 		effects := convertCustomActionStep(map[string]any{
 			"name": "greet_named",
-			"with": map[string]any{
+			"params": map[string]any{
 				"name": "'World'",
 			},
 		}, tc, nil)

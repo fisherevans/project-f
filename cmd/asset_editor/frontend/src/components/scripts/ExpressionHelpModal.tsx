@@ -7,7 +7,7 @@ const ENV_VARS = [
     { name: "const", type: "map", desc: "Script-defined constants from consts: blocks. Shared across all handlers." },
     { name: "save", type: "map", desc: "Current game save data. Read-only. Includes save.animech.level, save.character_name, etc." },
     { name: "prop", type: "map", desc: "Entity properties from the Tiled map editor (custom properties on the entity object)." },
-    { name: "param", type: "map", desc: "Parameters passed to this custom action via the 'with' map." },
+    { name: "param", type: "map", desc: "Parameters passed to this custom action via the 'params' map." },
     { name: "self", type: "string", desc: "Entity ID of the handler's owner." },
     { name: "player", type: "string", desc: "Entity ID of the player." },
     { name: "source", type: "string", desc: "Entity ID that triggered the current event." },

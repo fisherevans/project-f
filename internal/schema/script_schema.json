@@ -732,7 +732,7 @@
           "description": "Name of the sequence to reference"
         },
         {
-          "name": "with",
+          "name": "params",
           "type": "map",
           "description": "Parameter values to pass to the referenced sequence"
         }
@@ -830,7 +830,7 @@
           "description": "Name of the custom action to invoke"
         },
         {
-          "name": "with",
+          "name": "params",
           "type": "map",
           "description": "Map of parameter names to expressions (evaluated before invocation, accessible as param.*)"
         }

@@ -286,7 +286,7 @@ branches (then/else, steps) inline. `switch` has a dedicated cases
 editor with per-case value expression inputs and step lists.
 
 **Custom actions:** The `custom_action` step renders with a dynamic
-key-value map editor for the `with` parameter (expression map).
+key-value map editor for the `params` parameter (expression map).
 
 **Left panel sections:** HandlerList shows handlers (editable),
 sequences, custom actions, and constants defined in the file.

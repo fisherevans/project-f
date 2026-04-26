@@ -242,7 +242,7 @@ expr expressions evaluated at runtime.
 
 **Custom actions:** YAML-defined reusable step sequences with parameters.
 Defined in `custom_actions:` blocks, invoked via the `custom_action` step
-with `name` and optional `with` params. Share the caller's var scope;
+with `name` and optional `params`. Share the caller's var scope;
 recursion capped at depth 10.
 
 The complete schema for all step kinds, named actions, conditions, event

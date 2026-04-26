@@ -94,17 +94,15 @@ func TestScriptHandler_ProcessRules_NoMatch(t *testing.T) {
 	}
 }
 
-func TestScriptHandler_ProcessRules_SetState(t *testing.T) {
+func TestScriptHandler_ProcessRules_SetVar(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
 		OnInteractSelf: []*RuleDef{
 			{
 				Steps: []*StepNode{
+					{Kind: "set_var", Params: map[string]any{"key": "talked", "value": "true"}},
 					{Kind: "dialogue", Params: "hello"},
-				},
-				SetState: map[string]any{
-					"talked": true,
 				},
 			},
 		},
@@ -124,17 +122,12 @@ func TestScriptHandler_ProcessRules_SetState(t *testing.T) {
 		t.Fatal("expected output")
 	}
 
-	// Verify handler state was mutated
-	state, ok := output.State.(map[string]any)
-	if !ok {
-		t.Fatalf("state = %T, want map[string]any", output.State)
-	}
-	if state["talked"] != true {
-		t.Errorf("talked = %v, want true", state["talked"])
+	if len(output.Effects) == 0 {
+		t.Fatal("expected effects")
 	}
 }
 
-func TestScriptHandler_ProcessRules_SetStateUsedInCondition(t *testing.T) {
+func TestScriptHandler_ProcessRules_SetVarUsedInCondition(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
@@ -150,9 +143,9 @@ func TestScriptHandler_ProcessRules_SetStateUsedInCondition(t *testing.T) {
 			},
 			{
 				Steps: []*StepNode{
+					{Kind: "set_var", Params: map[string]any{"key": "talked", "value": "true"}},
 					{Kind: "dialogue", Params: "first time"},
 				},
-				SetState: map[string]any{"talked": true},
 			},
 		},
 	}
@@ -169,13 +162,15 @@ func TestScriptHandler_ProcessRules_SetStateUsedInCondition(t *testing.T) {
 		t.Fatal("first interaction: expected output")
 	}
 	batch1 := output1.Effects[0].(*EffectBatch)
-	d1 := batch1.Effects[0].(*EffectDialogue)
+	// Effects: [set_var(talked=true), dialogue("first time")]
+	d1 := batch1.Effects[1].(*EffectDialogue)
 	if d1.Text != "first time" {
 		t.Errorf("first interaction: text = %q, want %q", d1.Text, "first time")
 	}
 
-	// Second interaction (pass state back)
-	output2 := handler.HandleEvent(entity, globals, output1.State, event)
+	// Second interaction: set_var runs as an effect during plan execution,
+	// so output1.State won't contain the mutation yet. Simulate post-execution state.
+	output2 := handler.HandleEvent(entity, globals, map[string]any{"talked": true}, event)
 	if output2 == nil {
 		t.Fatal("second interaction: expected output")
 	}
@@ -326,14 +321,13 @@ func TestScriptHandler_EmptyStepsSkipped(t *testing.T) {
 	}
 }
 
-func TestScriptHandler_SetStateOnlyRule(t *testing.T) {
+func TestScriptHandler_EmptyStepsRuleSkipped(t *testing.T) {
 	globals := newTestGlobals(nil)
 
 	def := &HandlerDef{
 		OnInteractSelf: []*RuleDef{
 			{
-				Steps:    []*StepNode{},
-				SetState: map[string]any{"seen": true},
+				Steps: []*StepNode{},
 			},
 		},
 	}
@@ -346,12 +340,8 @@ func TestScriptHandler_SetStateOnlyRule(t *testing.T) {
 		&EventOnInteract{TargetId: "npc", SourceId: "player"},
 	)
 
-	if output == nil {
-		t.Fatal("expected output (set_state only rule should still produce output)")
-	}
-	state := output.State.(map[string]any)
-	if state["seen"] != true {
-		t.Error("seen should be true")
+	if output != nil {
+		t.Error("empty-steps rule should produce no output")
 	}
 }
 

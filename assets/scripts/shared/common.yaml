@@ -142,7 +142,7 @@ handlers:
                 - custom_action: door_configure_shield
           - custom_action:
               name: door_sync_blocking
-              with:
+              params:
                 variable: "prop.run_state_key"
     on_global_updated:
       - filter:
@@ -150,5 +150,5 @@ handlers:
         steps:
           - custom_action:
               name: door_sync_blocking
-              with:
+              params:
                 variable: "prop.run_state_key"

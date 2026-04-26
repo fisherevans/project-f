@@ -241,7 +241,7 @@ Invoke a YAML-defined reusable action with parameters. Custom actions share the 
 **Parameters:**
 
 - `name` (string (required)): Name of the custom action to invoke
-- `with` (map): Map of parameter names to expressions (evaluated before invocation, accessible as param.*)
+- `params` (map): Map of parameter names to expressions (evaluated before invocation, accessible as param.*)
 
 #### `focused_sequence`
 
@@ -289,7 +289,7 @@ Include a named sequence inline with optional parameter substitution
 **Parameters:**
 
 - `name` (string (required)): Name of the sequence to reference
-- `with` (map): Parameter values to pass to the referenced sequence
+- `params` (map): Parameter values to pass to the referenced sequence
 
 #### `return`
 

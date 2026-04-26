@@ -169,14 +169,8 @@ func (h *ScriptHandler) processRules(rules []*RuleDef, event any, tc *TemplateCo
 		scope := &ReturnScope{Id: nextScopeId("rule")}
 		tc.returnScope = scope
 		effects := convertSteps(rule.Steps, tc, h.sequences)
-		if len(effects) == 0 && len(rule.SetState) == 0 {
+		if len(effects) == 0 {
 			continue
-		}
-
-		if len(rule.SetState) > 0 {
-			for k, v := range rule.SetState {
-				h.handlerState[k] = v
-			}
 		}
 
 		output := NewOutput()

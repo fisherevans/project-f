@@ -113,9 +113,6 @@ function parseRule(raw: Record<string, unknown>): RuleDef {
     if (raw.when) {
         rule.when = parseCondition(raw.when);
     }
-    if (raw.set_state) {
-        rule.set_state = raw.set_state as Record<string, unknown>;
-    }
     return rule;
 }
 
@@ -229,9 +226,6 @@ function serializeRule(rule: RuleDef): Record<string, unknown> {
     }
     if (rule.when) {
         obj.when = serializeCondition(rule.when);
-    }
-    if (rule.set_state && Object.keys(rule.set_state).length > 0) {
-        obj.set_state = rule.set_state;
     }
     obj.steps = serializeSteps(rule.steps);
     return obj;
