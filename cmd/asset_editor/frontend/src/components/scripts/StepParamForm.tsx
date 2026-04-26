@@ -155,7 +155,7 @@ function MapParamFields({ defs, params, onChange, stepKindName, schema }: {
     return (
         <div className="space-y-1">
             {defs.map((p) => (
-                <ParamField key={p.name} def={p} value={params[p.name]} onChange={(v) => updateField(p.name, v)} stepKindName={stepKindName} schema={schema} />
+                <ParamField key={p.name} def={p} value={params[p.name]} onChange={(v) => updateField(p.name, v)} stepKindName={stepKindName} schema={schema} parentParams={params} />
             ))}
         </div>
     );
@@ -225,12 +225,105 @@ function DynamicMapEditor({ value, onChange, valueLabel }: {
     );
 }
 
-function ParamField({ def, value, onChange, stepKindName, schema }: {
+function CustomActionParamsEditor({ value, onChange, actionName }: {
+    value: unknown;
+    onChange: (value: unknown) => void;
+    actionName: string;
+}) {
+    const exprCtx = useExprContext();
+    const actionDef = exprCtx.customActions[actionName];
+
+    const map = (typeof value === "object" && value !== null && !Array.isArray(value))
+        ? value as Record<string, unknown>
+        : {};
+
+    const updateField = (key: string, val: unknown) => {
+        const next = { ...map, [key]: val };
+        if (val === "" || val === undefined || val === null) {
+            delete next[key];
+        }
+        onChange(Object.keys(next).length > 0 ? next : undefined);
+    };
+
+    const declaredParams = actionDef?.params ?? [];
+    const declaredNames = new Set(declaredParams.map((p) => p.name));
+    const extraKeys = Object.keys(map).filter((k) => !declaredNames.has(k));
+
+    if (declaredParams.length === 0 && extraKeys.length === 0) {
+        return (
+            <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">params</span>
+                <DynamicMapEditor value={value} onChange={onChange} valueLabel="value (expression)" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-1">
+            <span className="text-xs text-muted-foreground">params</span>
+            {declaredParams.map((p) => (
+                <div key={p.name} className="flex items-start gap-1.5">
+                    <span className="text-xs text-muted-foreground w-24 shrink-0 pt-1">
+                        {p.name}{p.default === undefined ? "*" : ""}
+                    </span>
+                    <div className="flex-1 space-y-0.5">
+                        <ExpressionInput
+                            value={String(map[p.name] ?? "")}
+                            onChange={(v) => updateField(p.name, v || undefined)}
+                            placeholder={p.default !== undefined ? `default: ${p.default}` : undefined}
+                            handlerVarKeys={exprCtx.handlerVarKeys}
+                            constKeys={exprCtx.constKeys}
+                        />
+                        {p.description && (
+                            <div className="text-[10px] text-muted-foreground/60 leading-tight">{p.description}</div>
+                        )}
+                    </div>
+                </div>
+            ))}
+            {extraKeys.map((key) => (
+                <div key={key} className="flex items-center gap-1.5">
+                    <Input
+                        className="h-6 w-24 text-xs font-mono text-accent-amber"
+                        value={key}
+                        readOnly
+                        title="Unrecognized param"
+                    />
+                    <span className="text-muted-foreground text-[10px]">=</span>
+                    <div className="flex-1">
+                        <ExpressionInput
+                            value={String(map[key] ?? "")}
+                            onChange={(v) => updateField(key, v || undefined)}
+                            handlerVarKeys={exprCtx.handlerVarKeys}
+                            constKeys={exprCtx.constKeys}
+                        />
+                    </div>
+                    <button className="text-muted-foreground hover:text-destructive shrink-0" onClick={() => {
+                        const next = { ...map };
+                        delete next[key];
+                        onChange(Object.keys(next).length > 0 ? next : undefined);
+                    }}>
+                        <X className="h-3 w-3" />
+                    </button>
+                </div>
+            ))}
+            <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => {
+                const key = `param_${Object.keys(map).length}`;
+                onChange({ ...map, [key]: "" });
+            }}>
+                <Plus className="mr-1 h-2.5 w-2.5" />
+                Add extra param
+            </Button>
+        </div>
+    );
+}
+
+function ParamField({ def, value, onChange, stepKindName, schema, parentParams }: {
     def: ParamDef;
     value: unknown;
     onChange: (value: unknown) => void;
     stepKindName?: string;
     schema?: ScriptSchema;
+    parentParams?: Record<string, unknown>;
 }) {
     const exprCtx = useExprContext();
     const isExprField = stepKindName ? EXPR_PARAM_HINTS[stepKindName]?.has(def.name) : false;
@@ -309,6 +402,9 @@ function ParamField({ def, value, onChange, stepKindName, schema }: {
     }
 
     if (def.type === "map") {
+        if (def.name === "params" && stepKindName === "custom_action" && parentParams) {
+            return <CustomActionParamsEditor value={value} onChange={onChange} actionName={String(parentParams.name ?? "")} />;
+        }
         return (
             <div className="space-y-1">
                 <span className="text-xs text-muted-foreground">{def.name}{def.required ? "*" : ""}</span>

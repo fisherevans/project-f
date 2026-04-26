@@ -400,6 +400,7 @@ export function ScriptEditor() {
                         <ExprContextProvider
                             handlerVarKeys={selection?.type === "handler" && parsed.handlers[selection.name]?.var ? Object.keys(parsed.handlers[selection.name].var!) : []}
                             constKeys={parsed.consts ? Object.keys(parsed.consts) : []}
+                            customActions={parsed.custom_actions}
                         >
                             <div className="flex h-full min-h-0 overflow-hidden">
                                 <div className="w-64 shrink-0 border-r border-border overflow-hidden">
