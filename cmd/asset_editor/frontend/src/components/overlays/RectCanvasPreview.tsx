@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from "react"
 import type { OverlayRect } from "@/types/overlays"
+import { useRectDrag } from "./useRectDrag"
 
 const CANVAS_W = 240
 const CANVAS_H = 160
@@ -8,14 +9,20 @@ interface Props {
     rects: Record<string, OverlayRect>
     selectedName: string | null
     onSelectName?: (name: string) => void
+    onRectChange?: (name: string, rect: OverlayRect) => void
 }
 
 function toCanvasY(rect: OverlayRect): number {
     return CANVAS_H - rect.y - rect.h
 }
 
-export function RectCanvasPreview({ rects, selectedName, onSelectName }: Props) {
+export function RectCanvasPreview({ rects, selectedName, onSelectName, onRectChange }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+
+    const getSelectedRect = useCallback((): OverlayRect | null => {
+        if (!selectedName || !rects[selectedName]) return null
+        return rects[selectedName]
+    }, [selectedName, rects])
 
     const getLayout = useCallback(() => {
         const canvas = canvasRef.current
@@ -100,8 +107,26 @@ export function RectCanvasPreview({ rects, selectedName, onSelectName }: Props) 
         return () => window.removeEventListener("resize", draw)
     }, [draw])
 
-    const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!onSelectName) return
+    const handleSelectedRectChange = useCallback((rect: OverlayRect) => {
+        if (selectedName && onRectChange) {
+            onRectChange(selectedName, rect)
+        }
+    }, [selectedName, onRectChange])
+
+    const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } = useRectDrag(
+        canvasRef,
+        getSelectedRect,
+        selectedName ? handleSelectedRectChange : undefined,
+        draw,
+    )
+
+    const onMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        handleMouseDown(e)
+    }, [handleMouseDown])
+
+    const onMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        const wasDragging = handleMouseUp()
+        if (wasDragging || !onSelectName) return
         const canvas = canvasRef.current
         if (!canvas) return
 
@@ -125,14 +150,17 @@ export function RectCanvasPreview({ rects, selectedName, onSelectName }: Props) 
                 return
             }
         }
-    }
+    }, [handleMouseUp, onSelectName, rects, getLayout])
 
     return (
         <canvas
             ref={canvasRef}
-            className="w-full h-full cursor-pointer"
+            className="w-full h-full"
             style={{ imageRendering: "pixelated" }}
-            onClick={handleClick}
+            onMouseDown={onMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={handleMouseLeave}
         />
     )
 }

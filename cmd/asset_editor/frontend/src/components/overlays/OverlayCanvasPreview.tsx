@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from "react"
 import type { OverlayTarget, OverlayRect } from "@/types/overlays"
+import { useRectDrag } from "./useRectDrag"
 
 const CANVAS_W = 240
 const CANVAS_H = 160
@@ -9,6 +10,7 @@ interface Props {
     namedRects: Record<string, OverlayRect>
     activeIndex: number
     onSelectTarget?: (index: number) => void
+    onActiveRectChange?: (rect: OverlayRect) => void
 }
 
 function resolveRect(target: OverlayTarget, namedRects: Record<string, OverlayRect>): OverlayRect | null {
@@ -22,8 +24,16 @@ function toCanvasY(rect: OverlayRect): number {
     return CANVAS_H - rect.y - rect.h
 }
 
-export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelectTarget }: Props) {
+export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelectTarget, onActiveRectChange }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+
+    const getActiveRect = useCallback((): OverlayRect | null => {
+        const target = targets[activeIndex]
+        if (!target) return null
+        if (target.region) return target.region
+        if (target.rect && namedRects[target.rect]) return namedRects[target.rect]
+        return null
+    }, [targets, activeIndex, namedRects])
 
     const draw = useCallback(() => {
         const canvas = canvasRef.current
@@ -121,14 +131,27 @@ export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelec
         return () => window.removeEventListener("resize", draw)
     }, [draw])
 
-    const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!onSelectTarget) return
+    const activeHasInlineRegion = !!targets[activeIndex]?.region
+    const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } = useRectDrag(
+        canvasRef,
+        getActiveRect,
+        activeHasInlineRegion ? onActiveRectChange : undefined,
+        draw,
+    )
+
+    const onMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        handleMouseDown(e)
+    }, [handleMouseDown])
+
+    const onMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        const wasDragging = handleMouseUp()
+        if (wasDragging || !onSelectTarget) return
         const canvas = canvasRef.current
         if (!canvas) return
 
-        const rect = canvas.getBoundingClientRect()
-        const clickX = e.clientX - rect.left
-        const clickY = e.clientY - rect.top
+        const canvasBounds = canvas.getBoundingClientRect()
+        const clickX = e.clientX - canvasBounds.left
+        const clickY = e.clientY - canvasBounds.top
 
         const displayW = canvas.clientWidth
         const displayH = canvas.clientHeight
@@ -148,14 +171,17 @@ export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelec
                 return
             }
         }
-    }
+    }, [handleMouseUp, onSelectTarget, targets, namedRects, canvasRef])
 
     return (
         <canvas
             ref={canvasRef}
-            className="w-full h-full cursor-pointer"
+            className="w-full h-full"
             style={{ imageRendering: "pixelated" }}
-            onClick={handleClick}
+            onMouseDown={onMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={handleMouseLeave}
         />
     )
 }

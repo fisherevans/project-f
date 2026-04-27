@@ -243,6 +243,9 @@ export function OverlayEditor() {
                                 namedRects={namedRects}
                                 activeIndex={activeTarget}
                                 onSelectTarget={setActiveTarget}
+                                onActiveRectChange={rect => {
+                                    updateTarget(activeTarget, t => ({ ...t, region: rect }))
+                                }}
                             />
                         </div>
                     </div>
