@@ -205,18 +205,18 @@ custom_actions:
           when: "global['intro.has_equipment_key'] != true"
           then:
             - self_dialogue: "This looks like a slot for a key card..."
-            - return
+            - return: true
       - if:
           when: "param.run_state_key == '' || param.run_state_key == 'not_it'"
           then:
             - play_sound: "adventure/beeps/error"
             - self_dialogue: "Yeah, that key card doesn't work in this slot..."
-            - return
+            - return: true
       - if:
           when: "global['intro.equipment_door_state'] == 'open' || global['intro.equipment_door_state'] == true"
           then:
             - self_dialogue: "The door is already open."
-            - return
+            - return: true
       - play_sound: "adventure/beeps/success"
       - self_dialogue: "That worked!"
       - set_global:
