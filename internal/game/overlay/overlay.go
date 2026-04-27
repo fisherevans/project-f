@@ -142,6 +142,17 @@ func (o *Overlay) UpdateInput(win *opengl.Window, dt float64) {
 }
 
 func (o *Overlay) Render(win *opengl.Window, dt float64) {
+	// Persist settings even when the overlay is faded out.
+	if o.settingsDirty {
+		o.settingsSaveTimer -= dt
+		if o.settingsSaveTimer <= 0 {
+			if o.hooks.SaveSettings != nil {
+				o.hooks.SaveSettings()
+			}
+			o.settingsDirty = false
+		}
+	}
+
 	// Gamepad renders at its own persisted opacity, never suppressed by the idle fade.
 	o.renderGamepad(win)
 
@@ -152,18 +163,6 @@ func (o *Overlay) Render(win *opengl.Window, dt float64) {
 		o.renderSettingsPanel(win)
 	}
 	o.renderCornerChrome(win, dt)
-
-	// Persist settings with a trailing debounce: any change resets the timer;
-	// the file is written once after the last change settles.
-	if o.settingsDirty {
-		o.settingsSaveTimer -= dt
-		if o.settingsSaveTimer <= 0 {
-			if o.hooks.SaveSettings != nil {
-				o.hooks.SaveSettings()
-			}
-			o.settingsDirty = false
-		}
-	}
 }
 
 const settingsDebounceSeconds = 1.0
