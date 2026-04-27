@@ -80,6 +80,8 @@ Go 1.24 `net/http` with wildcard routing. No framework.
 | `api_expr_validate.go` | POST endpoint to validate expr expressions via expr.Compile |
 | `api_rpg.go` | CRUD handlers for RPG data (skills, primortals, combat) |
 | `rpg_service.go` | RPG YAML file scanning, read/write under `assets/rpg/` |
+| `api_overlays.go` | CRUD handlers for overlay flows and named rects |
+| `overlay_service.go` | Overlay YAML scanning, read/write under `assets/overlays/` |
 | `api_saves.go` | CRUD handlers for game save files |
 | `save_service.go` | Save file scanning, raw YAML read/write under `game_data/saves/` |
 | `ws.go` | WebSocket hub + fsnotify watcher for live reload |
@@ -117,6 +119,13 @@ PUT    /api/v1/rpg/primortals/{type}# write primortal YAML (atomic: temp + renam
 DELETE /api/v1/rpg/primortals/{type}# delete primortal YAML
 GET    /api/v1/rpg/combat           # status effects + combat stances reference
 
+GET    /api/v1/overlays              # list overlay flows (from assets/overlays/)
+GET    /api/v1/overlays/rects        # named rects map + raw YAML
+PUT    /api/v1/overlays/rects        # save named rects YAML
+GET    /api/v1/overlays/{name...}    # flow detail + raw YAML
+PUT    /api/v1/overlays/{name...}    # save flow YAML
+DELETE /api/v1/overlays/{name...}    # delete flow
+
 GET    /api/v1/saves                # list all saves (from game_data/saves/)
 GET    /api/v1/saves/{id}           # save detail + raw YAML
 PUT    /api/v1/saves/{id}           # write save YAML (raw, validated as parseable YAML)
@@ -128,7 +137,7 @@ GET    /api/v1/ws                   # WebSocket file-change events
 
 PNGs and audio files are served from disk so re-exports appear immediately.
 The WebSocket pushes `{type: "change"|"create"|"remove", path: "..."}` events
-debounced at 200ms per path, watching `sprites/`, `audio/`, and `scripts/` directories.
+debounced at 200ms per path, watching `sprites/`, `audio/`, `scripts/`, and `overlays/` directories.
 
 YAML writes use `yaml.NewEncoder` with `SetIndent(2)` for 2-space
 indentation, and write to a temp file then rename for atomicity.
@@ -155,6 +164,7 @@ src/
     scripts.ts           # TanStack Query hooks for scripts + schema
     rpg.ts               # TanStack Query hooks for RPG data (skills, primortals, combat)
     saves.ts             # TanStack Query hooks for game saves
+    overlays.ts          # TanStack Query hooks for overlay flows, named rects, debug preview
     websocket.tsx         # WebSocket provider with auto-reconnect + cache invalidation
   types/
     sprites.ts           # TS interfaces mirroring Go sprite JSON types
@@ -162,6 +172,7 @@ src/
     scripts.ts           # TS interfaces mirroring Go script schema types
     rpg.ts               # TS interfaces for RPG data (skills, primortals, combat)
     saves.ts             # TS interfaces for game save data
+    overlays.ts          # TS interfaces for overlay flows, rects, targets
   layouts/
     AppLayout.tsx         # left nav rail (Sprites, Audio, Scripts, RPG, Saves) + Outlet
   pages/
@@ -180,6 +191,9 @@ src/
       SkillBrowser.tsx    # skill table + editor panel with tick timeline, save/delete
       PrimortalBrowser.tsx # primortal table + editor panel with skill tree + archetypes, save/delete
       CombatBrowser.tsx   # status effects + combat stances reference cards
+    overlays/
+      OverlayBrowser.tsx  # flow list + named rects library editor
+      OverlayEditor.tsx   # flow editor: target list, canvas preview, detail form, debug preview
     saves/
       SaveBrowser.tsx    # save file listing with clone/delete
       SaveEditor.tsx     # raw YAML editor for save files
@@ -206,6 +220,9 @@ src/
       ExpressionHelpModal.tsx   # tabbed modal: env vars, functions, operators, examples
       inputs/
         ExpressionInput.tsx    # CodeMirror 6 editor with syntax highlighting, autocomplete, server-side linting
+    overlays/
+      OverlayCanvasPreview.tsx # 240x160 wireframe canvas: target rects, message/badge indicators
+      NamedRectEditor.tsx      # table editor for _rects.yaml (name, x, y, w, h per row)
     ui/                        # shadcn/ui primitives (button, dialog, input, etc.)
   lib/
     animationEngine.ts   # TypeScript port of Go's animation accumulator
@@ -224,6 +241,8 @@ src/
 /rpg           -> SkillBrowser (editable, from YAML under assets/rpg/skills/)
 /rpg/primortals -> PrimortalBrowser
 /rpg/combat    -> CombatBrowser (statuses + stances reference)
+/overlays      -> OverlayBrowser (flow list + named rects library)
+/overlays/:name -> OverlayEditor (target editor + canvas preview + debug API preview)
 /saves         -> SaveBrowser (list + clone/delete from game_data/saves/)
 /saves/:id     -> SaveEditor (raw YAML editor with field reference)
 ```
