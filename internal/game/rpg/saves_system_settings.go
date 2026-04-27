@@ -182,13 +182,14 @@ func (s *SystemSettingsDebugging) FillDefaults() {
 }
 
 type SystemSettingsAudio struct {
-	Muted        bool    `yaml:"muted"`
-	MasterVolume float64 `yaml:"master_volume"` // linear 0..1
+	Muted        bool     `yaml:"muted"`
+	MasterVolume *float64 `yaml:"master_volume"` // linear 0..1; nil means field was absent
 }
 
 func (s *SystemSettingsAudio) FillDefaults() {
-	if s.MasterVolume == 0 {
-		s.MasterVolume = 1.0
+	if s.MasterVolume == nil {
+		v := 1.0
+		s.MasterVolume = &v
 	}
 }
 

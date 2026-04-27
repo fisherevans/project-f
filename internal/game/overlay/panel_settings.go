@@ -285,7 +285,7 @@ func (o *Overlay) renderAudioSection(dc *DrawCtx, panel pixel.Rect, cursorY floa
 		game.CurrentSave().SystemSettings.Audio.FillDefaults()
 		s := game.CurrentSave().SystemSettings.Audio
 		o.audioMuted = s.Muted
-		o.audioVolume = s.MasterVolume
+		o.audioVolume = *s.MasterVolume
 		if o.hooks.SetAudio != nil {
 			o.hooks.SetAudio(o.audioMuted, o.audioVolume)
 		}

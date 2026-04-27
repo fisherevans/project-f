@@ -181,7 +181,8 @@ func (i *Instance) Run() {
 		SetAudio: func(muted bool, linearVolume float64) {
 			s := game.CurrentSave().SystemSettings.Audio
 			s.Muted = muted
-			s.MasterVolume = linearVolume
+			v := linearVolume
+			s.MasterVolume = &v
 			var dB float64
 			if muted || linearVolume <= 0 {
 				dB = -60
@@ -210,11 +211,12 @@ func (i *Instance) Run() {
 
 	// Seed overlay and apply persisted settings
 	audioS := game.CurrentSave().SystemSettings.Audio
-	ov.InitAudio(audioS.Muted, audioS.MasterVolume)
-	if audioS.Muted || audioS.MasterVolume <= 0 {
+	masterVol := *audioS.MasterVolume
+	ov.InitAudio(audioS.Muted, masterVol)
+	if audioS.Muted || masterVol <= 0 {
 		audio.GetSystem().SetMaster(-60)
 	} else {
-		audio.GetSystem().SetMaster(20 * math.Log10(audioS.MasterVolume))
+		audio.GetSystem().SetMaster(20 * math.Log10(masterVol))
 	}
 
 	displayS := game.CurrentSave().SystemSettings.Display
@@ -307,7 +309,7 @@ func (i *Instance) Run() {
 		i.renderDebugInfo(&m, frameStats, gameLogicStats, deltaTime)
 
 		// Handle capture/recording hotkeys
-		i.handleCaptureHotkeys(sceneCanvas, sceneRecorder, pixelGridRecorder)
+		i.handleCaptureHotkeys(sceneCanvas, pixelGridCanvas, sceneRecorder, pixelGridRecorder)
 
 		// Record frames if active
 		i.captureRecordingFrames(sceneRecorder, pixelGridRecorder, deltaTime)
@@ -369,7 +371,7 @@ func (i *Instance) renderDebugInfo(m *runtime.MemStats, frameStats, gameLogicSta
 	game.Console().OnTick(i.window)
 }
 
-func (i *Instance) handleCaptureHotkeys(sceneCanvas *shaders.Canvas, sceneRecorder, pixelGridRecorder *Recorder) {
+func (i *Instance) handleCaptureHotkeys(sceneCanvas, pixelGridCanvas *shaders.Canvas, sceneRecorder, pixelGridRecorder *Recorder) {
 	if i.window.JustPressed(pixel.KeyP) {
 		if i.window.Pressed(pixel.KeyLeftControl) {
 			sceneRecorder.Toggle()
@@ -382,7 +384,7 @@ func (i *Instance) handleCaptureHotkeys(sceneCanvas *shaders.Canvas, sceneRecord
 		if i.window.Pressed(pixel.KeyLeftControl) {
 			pixelGridRecorder.Toggle()
 		} else {
-			CopyCanvasToClipboard(sceneCanvas.Canvas)
+			CopyCanvasToClipboard(pixelGridCanvas.Canvas)
 		}
 	}
 }
