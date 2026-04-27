@@ -5,8 +5,8 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/overlays"
 	"fisherevans.com/project/f/internal/util"
-	"fisherevans.com/project/f/internal/util/highlighter"
 )
 
 func init() {
@@ -183,17 +183,15 @@ func init() {
 	})
 
 	RegisterScriptAction("show_elythium_highlight", func(s *State, source EntityReader, params map[string]any) {
-		elythiumHighlight := func(msg string) highlighter.Target {
-			return highlighter.NewTarget(util.R(200, 135, 40, 24)).
-				WithMessage(highlighter.NewMessage(msg, highlighter.MessageOnLeft).Wrapped(140)).
-				WithBadge(highlighter.NewBadge(highlighter.BadgeOnBottomMiddle).WithLabel("Okay"))
+		flow, ok := overlays.GetFlow("elythium_intro")
+		if !ok {
+			return
 		}
-		s.ExecuteSystemEffects(
-			NewSetHighlightSequenceEffect([]highlighter.Target{
-				elythiumHighlight("This gauge tells you how much Elythium you've collected."),
-				elythiumHighlight("Once it's full, you're ready to transfer back to your body."),
-			}),
-		)
+		targets, err := overlays.ResolveTargets(flow)
+		if err != nil {
+			return
+		}
+		s.ExecuteSystemEffects(NewSetHighlightSequenceEffect(targets))
 	})
 
 	RegisterScriptCondition("skill_equipped", func(params map[string]any) ConditionCheck {

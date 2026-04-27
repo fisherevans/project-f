@@ -46,4 +46,7 @@ func (s *Server) routes() {
     s.mux.HandleFunc("GET /api/v1/debug/entities/{id}", s.handleGetEntity)
     s.mux.HandleFunc("GET /api/v1/debug/teleports", s.handleListTeleports)
     s.mux.HandleFunc("GET /api/v1/debug/zones", s.handleListZones)
+
+    s.mux.HandleFunc("POST /api/v1/debug/highlight", s.handleSetHighlight)
+    s.mux.HandleFunc("DELETE /api/v1/debug/highlight", s.handleDismissHighlight)
 }

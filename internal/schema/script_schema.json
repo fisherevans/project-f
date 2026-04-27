@@ -875,7 +875,21 @@
           "name": "targets",
           "type": "any",
           "required": true,
-          "description": "List of highlight target definitions (region, message, badge)"
+          "description": "List of highlight target definitions (rect or region, message, badge)"
+        }
+      ]
+    },
+    "highlight_flow": {
+      "name": "highlight_flow",
+      "description": "Display a highlight overlay flow defined in assets/overlays/",
+      "category": "text",
+      "paramStyle": "string",
+      "params": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "description": "Flow name (filename without extension from assets/overlays/)"
         }
       ]
     },

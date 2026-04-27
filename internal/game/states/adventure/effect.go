@@ -1,8 +1,9 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/overlays"
+	"fisherevans.com/project/f/internal/schema"
 	"fisherevans.com/project/f/internal/util/highlighter"
-	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -46,73 +47,66 @@ func init() {
 			log.Warn().Msg("highlight_sequence: targets must be a list")
 			return nil
 		}
-		var targets []highlighter.Target
+		flow := schema.OverlayFlow{}
 		for _, raw := range targetsRaw {
 			tm, ok := raw.(map[string]any)
 			if !ok {
 				continue
 			}
-			regionMap, _ := tm["region"].(map[string]any)
-			area := pixel.R(
-				toFloat64(regionMap["x"]),
-				toFloat64(regionMap["y"]),
-				toFloat64(regionMap["x"])+toFloat64(regionMap["w"]),
-				toFloat64(regionMap["y"])+toFloat64(regionMap["h"]),
-			)
-			t := highlighter.NewTarget(area)
+			ot := schema.OverlayTarget{}
+			if rectName, ok := tm["rect"].(string); ok {
+				ot.Rect = tc.Resolve(rectName)
+			} else if regionMap, ok := tm["region"].(map[string]any); ok {
+				ot.Region = &schema.OverlayRect{
+					X: int(toFloat64(regionMap["x"])),
+					Y: int(toFloat64(regionMap["y"])),
+					W: int(toFloat64(regionMap["w"])),
+					H: int(toFloat64(regionMap["h"])),
+				}
+			}
 			if msgMap, ok := tm["message"].(map[string]any); ok {
 				text, _ := msgMap["text"].(string)
-				placement := parseMessagePlacement(mapStr(msgMap, "placement"))
-				msg := highlighter.NewMessage(tc.Resolve(text), placement)
-				if wrap := mapInt(msgMap, "wrap", 0); wrap > 0 {
-					msg = msg.Wrapped(wrap)
+				ot.Message = &schema.OverlayTargetMessage{
+					Text:      tc.Resolve(text),
+					Placement: mapStr(msgMap, "placement"),
+					Wrap:      mapInt(msgMap, "wrap", 0),
 				}
-				t = t.WithMessage(msg)
 			}
 			if badgeMap, ok := tm["badge"].(map[string]any); ok {
-				placement := parseBadgePlacement(mapStr(badgeMap, "placement"))
-				badge := highlighter.NewBadge(placement)
-				if label := mapStr(badgeMap, "label"); label != "" {
-					badge = badge.WithLabel(tc.Resolve(label))
+				ot.Badge = &schema.OverlayTargetBadge{
+					Placement: mapStr(badgeMap, "placement"),
+					Label:     tc.Resolve(mapStr(badgeMap, "label")),
 				}
-				t = t.WithBadge(badge)
 			}
 			if noPad, ok := tm["no_padding"].(bool); ok && noPad {
-				t = t.NoPadding()
+				ot.NoPadding = true
 			}
-			targets = append(targets, t)
+			flow.Targets = append(flow.Targets, ot)
+		}
+		targets, err := overlays.ResolveTargets(flow)
+		if err != nil {
+			log.Warn().Err(err).Msg("highlight_sequence: failed to resolve targets")
+			return nil
 		}
 		if len(targets) == 0 {
 			return nil
 		}
 		return []Effect{NewSetHighlightSequenceEffect(targets)}
 	})
-}
-
-func parseMessagePlacement(s string) highlighter.MessagePlacement {
-	switch s {
-	case "top":
-		return highlighter.MessageOnTop
-	case "left":
-		return highlighter.MessageOnLeft
-	case "right":
-		return highlighter.MessageOnRight
-	default:
-		return highlighter.MessageOnBottom
-	}
-}
-
-func parseBadgePlacement(s string) highlighter.BadgePlacement {
-	switch s {
-	case "top_right":
-		return highlighter.BadgeInTopRight
-	case "bottom_right":
-		return highlighter.BadgeInBottomRight
-	case "top_middle":
-		return highlighter.BadgeOnTopMiddle
-	default:
-		return highlighter.BadgeOnBottomMiddle
-	}
+	registerStepConverter("highlight_flow", func(step *StepNode, tc *TemplateContext, _ map[string]*SequenceDef) []Effect {
+		name := resolveString(step.Params, tc)
+		flow, ok := overlays.GetFlow(name)
+		if !ok {
+			log.Warn().Str("flow", name).Msg("highlight_flow: unknown flow")
+			return nil
+		}
+		targets, err := overlays.ResolveTargets(flow)
+		if err != nil {
+			log.Warn().Err(err).Str("flow", name).Msg("highlight_flow: resolve failed")
+			return nil
+		}
+		return []Effect{NewSetHighlightSequenceEffect(targets)}
+	})
 }
 
 type Effect interface {

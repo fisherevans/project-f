@@ -1,0 +1,19 @@
+description: "Explains the elythium gauge during intro training"
+targets:
+  - rect: elythium_gauge
+    message:
+      text: "This gauge tells you how much Elythium you've collected."
+      placement: left
+      wrap: 140
+    badge:
+      placement: bottom_middle
+      label: "Okay"
+
+  - rect: elythium_gauge
+    message:
+      text: "Once it's full, you're ready to transfer back to your body."
+      placement: left
+      wrap: 140
+    badge:
+      placement: bottom_middle
+      label: "Okay"

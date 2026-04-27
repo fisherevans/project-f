@@ -425,3 +425,11 @@ func (s *State) processEffects(effects ...DispatchedEffect) {
 func (s *State) ExecuteSystemEffectsInOrder(effects ...Effect) {
 	s.ExecuteSystemEffects(NewSerialPlan(effects...))
 }
+
+func (s *State) SetHighlightSequence(targets []highlighter.Target) {
+	s.highlighter.AppendTargets(targets...)
+}
+
+func (s *State) DismissHighlight() {
+	s.highlighter.Dismiss()
+}

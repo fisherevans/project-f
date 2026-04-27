@@ -20,6 +20,7 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/overlays"
 	"fisherevans.com/project/f/internal/util"
 )
 
@@ -84,6 +85,9 @@ func (i *Instance) initialize() {
 
 		if err := rpg.LoadFromFS(assets.FS); err != nil {
 			log.Fatal().Err(err).Msg("failed to load RPG data")
+		}
+		if err := overlays.LoadFromFS(assets.FS); err != nil {
+			log.Fatal().Err(err).Msg("failed to load overlay flows")
 		}
 
 		registerIntents()

@@ -64,3 +64,8 @@ func (s *SequencedDrawer) AppendTargets(targets ...Target) {
 func (s *SequencedDrawer) IsActive() bool {
 	return len(s.sequence) > 0
 }
+
+func (s *SequencedDrawer) Dismiss() {
+	s.ClearSequence()
+	s.drawer.Dismiss(s.doTransition)
+}
