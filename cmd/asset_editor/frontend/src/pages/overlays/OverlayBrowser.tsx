@@ -15,9 +15,14 @@ export function OverlayBrowser() {
     const [showRects, setShowRects] = useState(true)
 
     const handleCreate = () => {
-        const name = prompt("Flow name (will be the filename without extension):")
+        const name = prompt("Flow name (use / for folders, e.g. combat_training/intro):")
         if (!name) return
-        const sanitized = name.replace(/[^a-z0-9_-]/gi, "_").toLowerCase()
+        const sanitized = name
+            .split("/")
+            .map(seg => seg.replace(/[^a-z0-9_-]/gi, "_").toLowerCase())
+            .filter(Boolean)
+            .join("/")
+        if (!sanitized) return
         navigate(`/overlays/${sanitized}?new=1`)
     }
 
@@ -49,36 +54,50 @@ export function OverlayBrowser() {
                     <p className="text-sm text-muted-foreground">No overlay flows found in assets/overlays/</p>
                 )}
 
-                <div className="space-y-1">
-                    {flows?.map(flow => (
-                        <button
-                            key={flow.name}
-                            onClick={() => navigate(`/overlays/${flow.name}`)}
-                            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
-                        >
-                            <Layers className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            <div className="min-w-0 flex-1">
-                                <div className="font-medium font-mono">{flow.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                    {flow.targetCount} target{flow.targetCount !== 1 ? "s" : ""}
-                                    {flow.description && ` - ${flow.description}`}
-                                </div>
+                {flows && flows.length > 0 && (
+                    <div className="space-y-4">
+                        {groupFlowsByFolder(flows).map(([folder, items]) => (
+                            <div key={folder} className="space-y-1">
+                                {folder && (
+                                    <div className="text-[11px] font-mono text-muted-foreground uppercase tracking-wide px-1">
+                                        {folder}/
+                                    </div>
+                                )}
+                                {items.map(flow => {
+                                    const leaf = flow.name.includes("/") ? flow.name.split("/").pop()! : flow.name
+                                    return (
+                                        <button
+                                            key={flow.name}
+                                            onClick={() => navigate(`/overlays/${flow.name}`)}
+                                            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                                        >
+                                            <Layers className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                            <div className="min-w-0 flex-1">
+                                                <div className="font-medium font-mono">{leaf}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {flow.targetCount} target{flow.targetCount !== 1 ? "s" : ""}
+                                                    {flow.description && ` - ${flow.description}`}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-7 w-7 p-0 text-destructive"
+                                                    onClick={e => handleDelete(flow.name, e)}
+                                                    disabled={deleteMutation.isPending}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
+                                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                        </button>
+                                    )
+                                })}
                             </div>
-                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0 text-destructive"
-                                    onClick={e => handleDelete(flow.name, e)}
-                                    disabled={deleteMutation.isPending}
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                            </div>
-                            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        </button>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className="border-t border-border pt-4">
                     <button
@@ -92,4 +111,26 @@ export function OverlayBrowser() {
             </div>
         </div>
     )
+}
+
+// Groups flows by their parent folder. Root-level flows go under "" (rendered without a header).
+// Returns folder entries sorted alphabetically with root first, items within each folder sorted by name.
+function groupFlowsByFolder(flows: { name: string; description?: string; targetCount: number }[]):
+    [string, typeof flows][] {
+    const groups = new Map<string, typeof flows>()
+    for (const flow of flows) {
+        const idx = flow.name.lastIndexOf("/")
+        const folder = idx >= 0 ? flow.name.slice(0, idx) : ""
+        if (!groups.has(folder)) groups.set(folder, [])
+        groups.get(folder)!.push(flow)
+    }
+    const sorted = Array.from(groups.entries()).sort(([a], [b]) => {
+        if (a === "") return -1
+        if (b === "") return 1
+        return a.localeCompare(b)
+    })
+    for (const [, items] of sorted) {
+        items.sort((a, b) => a.name.localeCompare(b.name))
+    }
+    return sorted
 }

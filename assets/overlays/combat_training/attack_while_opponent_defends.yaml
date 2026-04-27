@@ -1,0 +1,10 @@
+description: "Hint shown when the player attacks while opponent is defending"
+targets:
+  - rect: combat_active
+    message:
+      text: "Don't forget to try and time your attacks to hit when your foe is not DEFENDING."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true

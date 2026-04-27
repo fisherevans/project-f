@@ -1,0 +1,18 @@
+description: "Hint shown the first time the player is mending in combat"
+targets:
+  - rect: combatant_stats_player
+    message:
+      text: "You are now MENDING!"
+      placement: right
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true
+  - rect: combatant_stats_player
+    message:
+      text: "You'll gain some health every few ticks as long as this status is applied."
+      placement: right
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true

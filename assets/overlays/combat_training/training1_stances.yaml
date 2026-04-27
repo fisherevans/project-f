@@ -1,0 +1,26 @@
+description: "Training 1: introduces stances after the player attacks while opponent is in stance"
+targets:
+  - rect: combat_active
+    message:
+      text: "Some skills put a combatant into a STANCE. Stances are a temporary state that can affect the combatant's behavior and skill execution."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true
+  - rect: combat_active
+    message:
+      text: "In this case, you are going to damage your opponent while they are in a DEFENDING stance. This will make your attack less effective."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true
+  - rect: combat_active
+    message:
+      text: "Battling is all about lining up your attacks and stances to maximize damage and minimize vulnerability."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true

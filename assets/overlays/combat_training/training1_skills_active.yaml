@@ -1,0 +1,42 @@
+description: "Training 1: explains how the active skill area works"
+targets:
+  - rect: combat_active
+    message:
+      text: "Both your skills and your opponent's show up here."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true
+  - rect: combat_active
+    message:
+      text: "Both combatant's active skills trigger in parallel."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true
+  - rect: combat_active
+    message:
+      text: "Skills take different amounts of time to execute."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true
+  - rect: combat_active
+    message:
+      text: "Each tick does something different."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true
+  - rect: combat_active
+    message:
+      text: "Use your skills to damage and defeat your opponent!."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true

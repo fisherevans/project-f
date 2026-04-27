@@ -18,36 +18,44 @@ func LoadFromFS(fsys fs.FS) error {
 	NamedRects = map[string]schema.OverlayRect{}
 	Flows = map[string]schema.OverlayFlow{}
 
-	rectsData, err := fs.ReadFile(fsys, "overlays/_rects.yaml")
+	rectsData, err := fs.ReadFile(fsys, "overlays/rects.yaml")
 	if err == nil {
 		if err := yaml.Unmarshal(rectsData, &NamedRects); err != nil {
-			return fmt.Errorf("parsing _rects.yaml: %w", err)
+			return fmt.Errorf("parsing rects.yaml: %w", err)
 		}
 	}
 
-	entries, err := fs.ReadDir(fsys, "overlays")
-	if err != nil {
+	if _, err := fs.Stat(fsys, "overlays"); err != nil {
 		return nil // directory doesn't exist yet
 	}
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
-			continue
-		}
-		if entry.Name() == "_rects.yaml" {
-			continue
-		}
-		data, err := fs.ReadFile(fsys, "overlays/"+entry.Name())
+
+	return fs.WalkDir(fsys, "overlays", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("reading %s: %w", entry.Name(), err)
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(path, ".yaml") {
+			return nil
+		}
+		base := d.Name()
+		if base == "rects.yaml" {
+			return nil
+		}
+		data, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return fmt.Errorf("reading %s: %w", path, err)
 		}
 		var flow schema.OverlayFlow
 		if err := yaml.Unmarshal(data, &flow); err != nil {
-			return fmt.Errorf("parsing %s: %w", entry.Name(), err)
+			return fmt.Errorf("parsing %s: %w", path, err)
 		}
-		name := strings.TrimSuffix(entry.Name(), ".yaml")
+		name := strings.TrimPrefix(path, "overlays/")
+		name = strings.TrimSuffix(name, ".yaml")
 		Flows[name] = flow
-	}
-	return nil
+		return nil
+	})
 }
 
 func GetFlow(name string) (schema.OverlayFlow, bool) {

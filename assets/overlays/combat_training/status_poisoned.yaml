@@ -1,0 +1,18 @@
+description: "Hint shown the first time the player is poisoned in combat"
+targets:
+  - rect: combatant_stats_player
+    message:
+      text: "You've been POISONED!"
+      placement: right
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true
+  - rect: combatant_stats_player
+    message:
+      text: "You'll take damage every few ticks as long as this status is applied."
+      placement: right
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true

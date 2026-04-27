@@ -1,0 +1,10 @@
+description: "Training 2: warns the player that the next foe will fight back"
+targets:
+  - rect: combatant_opponent
+    message:
+      text: "Get ready, this foe will actually attack you!"
+      placement: bottom
+      wrap: 80
+    badge:
+      placement: top_right
+    no_padding: true

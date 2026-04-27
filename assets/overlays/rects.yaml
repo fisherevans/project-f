@@ -1,0 +1,37 @@
+elythium_gauge:
+  x: 207
+  y: 140
+  w: 38
+  h: 24
+
+# Combat layout rects (240x160 canvas). Player on the left, opponent on the right.
+combatant_player:
+  x: 18
+  y: 32
+  w: 60
+  h: 84
+combatant_opponent:
+  x: 162
+  y: 32
+  w: 60
+  h: 84
+combatant_stats_player:
+  x: 0
+  y: 108
+  w: 84
+  h: 44
+combatant_stats_opponent:
+  x: 156
+  y: 108
+  w: 84
+  h: 44
+combat_skills:
+  x: 23
+  y: 0
+  w: 194
+  h: 42
+combat_active:
+  x: 89
+  y: 53
+  w: 64
+  h: 102

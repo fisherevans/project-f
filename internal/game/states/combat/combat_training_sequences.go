@@ -5,49 +5,24 @@ import (
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/overlays"
 	"fisherevans.com/project/f/internal/util/highlighter"
-	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 )
 
-func r(x, y, w, h int) pixel.Rect {
-	return pixel.R(float64(x), float64(y), float64(x+w), float64(y+h))
-}
-
-func highlightTargetCombatant(msg string, isPlayer bool) highlighter.Target {
-	x := 18
-	w := 60
-	if !isPlayer {
-		x = game.GameWidth - x - w
+// trainingTargets loads the highlighter targets for a training overlay flow.
+// Fatal on missing/invalid flow - these are developer-authored assets loaded
+// at startup, so a failure here is a build error, not a runtime condition.
+func trainingTargets(flowName string) []highlighter.Target {
+	flow, ok := overlays.GetFlow(flowName)
+	if !ok {
+		log.Fatal().Str("flow", flowName).Msg("combat training: missing overlay flow")
 	}
-	return highlighter.NewTarget(r(x, 32, w, 84)).
-		WithMessage(highlighter.NewMessage(msg, highlighter.MessageOnBottom).Wrapped(80)).
-		WithBadge(highlighter.NewBadge(highlighter.BadgeInTopRight)).
-		NoPadding()
-}
-func highlightTargetCombatantStats(msg string, isPlayer bool) highlighter.Target {
-	x := 0
-	w := 84
-	messagePlacement := highlighter.MessageOnRight
-	if !isPlayer {
-		x = game.GameWidth - w
-		messagePlacement = highlighter.MessageOnLeft
+	targets, err := overlays.ResolveTargets(flow)
+	if err != nil {
+		log.Fatal().Err(err).Str("flow", flowName).Msg("combat training: resolve failed")
 	}
-	return highlighter.NewTarget(r(x, 108, w, 44)).
-		WithBadge(highlighter.NewBadge(highlighter.BadgeOnBottomMiddle)).
-		WithMessage(highlighter.NewMessage(msg, messagePlacement).Wrapped(100)).
-		NoPadding()
-}
-func highlightTargetSkills(msg string) highlighter.Target {
-	return highlighter.NewTarget(r(23, 0, 194, 42)).
-		WithMessage(highlighter.NewMessage(msg, highlighter.MessageOnTop).Wrapped(140)).
-		WithBadge(highlighter.NewBadge(highlighter.BadgeInTopRight))
-}
-func highlightTargetActive(msg string) highlighter.Target {
-	return highlighter.NewTarget(r(89, 53, 64, 102)).
-		WithMessage(highlighter.NewMessage(msg, highlighter.MessageOnBottom).Wrapped(140)).
-		WithBadge(highlighter.NewBadge(highlighter.BadgeOnTopMiddle)).
-		NoPadding()
+	return targets
 }
 
 func (s *State) loadTrainingSequence(sequence string) {
@@ -90,29 +65,19 @@ func (s *State) loadTrainingSequenceDefault() {
 
 	// status hints
 
-	addPlayerStatusTraining := func(statusType rpg.StatusType, targets ...highlighter.Target) {
+	addPlayerStatusTraining := func(statusType rpg.StatusType, flowName string) {
 		triggerOnce(strings.ToLower("player_status."+string(statusType)),
 			NewTrainingSequence().
 				WithReadyToQueue(WaitSomeTicks(standardDelay, func(state *State) bool {
 					return state.Player.GetStatuses().HasStatus(statusType)
 				})).
-				WithTargets(targets...))
+				WithTargets(trainingTargets(flowName)...))
 	}
-	addPlayerStatusTraining(rpg.StatusPoisoned,
-		highlightTargetCombatantStats("You've been POISONED!", true),
-		highlightTargetCombatantStats("You'll take damage every few ticks as long as this status is applied.", true))
-	addPlayerStatusTraining(rpg.StatusBurning,
-		highlightTargetCombatantStats("You've been BURNED!", true),
-		highlightTargetCombatantStats("You'll take damage every few ticks as long as this status is applied.", true))
-	addPlayerStatusTraining(rpg.StatusMending,
-		highlightTargetCombatantStats("You are now MENDING!", true),
-		highlightTargetCombatantStats("You'll gain some health every few ticks as long as this status is applied.", true))
-	addPlayerStatusTraining(rpg.StatusIonized,
-		highlightTargetCombatantStats("You are now IONIZED!", true),
-		highlightTargetCombatantStats("Your next attack will deal extra damage.", true))
-	addPlayerStatusTraining(rpg.StatusWarded,
-		highlightTargetCombatantStats("You are now WARDED!", true),
-		highlightTargetCombatantStats("You'll take less damage while this status is applied.", true))
+	addPlayerStatusTraining(rpg.StatusPoisoned, "combat_training/status_poisoned")
+	addPlayerStatusTraining(rpg.StatusBurning, "combat_training/status_burning")
+	addPlayerStatusTraining(rpg.StatusMending, "combat_training/status_mending")
+	addPlayerStatusTraining(rpg.StatusIonized, "combat_training/status_ionized")
+	addPlayerStatusTraining(rpg.StatusWarded, "combat_training/status_warded")
 
 	// opponent-in-stance hints
 
@@ -126,9 +91,7 @@ func (s *State) loadTrainingSequenceDefault() {
 				}
 				return false
 			}).Check)).
-		WithTargets(
-			highlightTargetActive("Don't forget to try and time your attacks to hit when your foe is not DEFENDING."),
-		))
+		WithTargets(trainingTargets("combat_training/attack_while_opponent_defends")...))
 
 	// player-in-stance hints
 
@@ -142,42 +105,24 @@ func (s *State) loadTrainingSequenceDefault() {
 				}
 				return false
 			}).Check)).
-		WithTargets(
-			highlightTargetActive("Defending goes both ways. Try to guard yourself against your opponents attacks."),
-		))
+		WithTargets(trainingTargets("combat_training/defend_against_opponent_attack")...))
 }
 
 func (s *State) loadTrainingSequenceTraining1() {
 	s.training.WithOrdered(true)
 	s.training.Add(NewTrainingSequence().
-		WithTargets(
-			highlightTargetCombatant("This is your Animech!", true),
-			highlightTargetCombatantStats("Your SHIELD protects you and regenerates between combat.", true),
-			highlightTargetCombatantStats("Your SYNC is how aligned your soul is with your Animech.", true),
-			highlightTargetCombatantStats("Taking damage depletes your SHIELD, and then your SYNC.", true),
-			highlightTargetCombatant("This is your opponent!", false),
-			highlightTargetCombatantStats("Deplete their HEALTH to win.", false),
-			highlightTargetSkills("These are your combat skills. Use the D-Pad to select one."),
-		))
+		WithTargets(trainingTargets("combat_training/training1_layout")...))
 	s.training.Add(NewTrainingSequence().
 		WithReadyToQueue(func(s *State) bool {
 			return s.Player.NextSkill != nil
 		}).
-		WithTargets(
-			highlightTargetActive("You can see your selected skill here. It's just pending. To select it, press A."),
-		))
+		WithTargets(trainingTargets("combat_training/training1_select_skill")...))
 	s.training.Add(NewTrainingSequence().
 		WithReadyToQueue(func(s *State) bool {
 			return s.Player.NextSkillCommitted
 		}).
 		WithPauseCombat(false).
-		WithTargets(
-			highlightTargetActive("Both your skills and your opponent's show up here."),
-			highlightTargetActive("Both combatant's active skills trigger in parallel."),
-			highlightTargetActive("Skills take different amounts of time to execute."),
-			highlightTargetActive("Each tick does something different."),
-			highlightTargetActive("Use your skills to damage and defeat your opponent!."),
-		))
+		WithTargets(trainingTargets("combat_training/training1_skills_active")...))
 	stanceCondition := NewSkillCondition().
 		WithOnPlayerTick(func(t rpg.SkillTick, a CheckAgainst) bool {
 			for _, e := range t.Effects {
@@ -189,18 +134,12 @@ func (s *State) loadTrainingSequenceTraining1() {
 		})
 	s.training.Add(NewTrainingSequence().
 		WithReadyToQueue(WaitSomeTicks(10, stanceCondition.Check)).
-		WithTargets(
-			highlightTargetActive("Some skills put a combatant into a STANCE. Stances are a temporary state that can affect the combatant's behavior and skill execution."),
-			highlightTargetActive("In this case, you are going to damage your opponent while they are in a DEFENDING stance. This will make your attack less effective."),
-			highlightTargetActive("Battling is all about lining up your attacks and stances to maximize damage and minimize vulnerability."),
-		))
+		WithTargets(trainingTargets("combat_training/training1_stances")...))
 }
 
 func (s *State) loadTrainingSequenceTraining2() {
 	s.training.WithOrdered(false)
 	s.training.Add(NewTrainingSequence().
-		WithTargets(
-			highlightTargetCombatant("Get ready, this foe will actually attack you!", false),
-		))
+		WithTargets(trainingTargets("combat_training/training2_intro")...))
 	s.loadTrainingSequenceDefault()
 }

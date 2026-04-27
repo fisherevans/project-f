@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,31 +22,46 @@ func (s *OverlayService) overlaysDir() string {
 }
 
 func (s *OverlayService) ListFlows() ([]OverlayFlowEntry, error) {
-	entries, err := os.ReadDir(s.overlaysDir())
-	if err != nil {
+	root := s.overlaysDir()
+	if _, err := os.Stat(root); err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
 		return nil, err
 	}
 	var flows []OverlayFlowEntry
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
-			continue
-		}
-		if entry.Name() == "_rects.yaml" {
-			continue
-		}
-		name := strings.TrimSuffix(entry.Name(), ".yaml")
-		flow, err := readYAML[schema.OverlayFlow](filepath.Join(s.overlaysDir(), entry.Name()))
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			continue
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(path, ".yaml") {
+			return nil
+		}
+		base := d.Name()
+		if base == "rects.yaml" {
+			return nil
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return nil
+		}
+		name := strings.TrimSuffix(filepath.ToSlash(rel), ".yaml")
+		flow, err := readYAML[schema.OverlayFlow](path)
+		if err != nil {
+			return nil
 		}
 		flows = append(flows, OverlayFlowEntry{
 			Name:        name,
 			Description: flow.Description,
 			TargetCount: len(flow.Targets),
 		})
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	return flows, nil
 }
@@ -94,7 +110,7 @@ func (s *OverlayService) DeleteFlow(name string) error {
 }
 
 func (s *OverlayService) GetNamedRects() (*NamedRectsDetail, error) {
-	path := filepath.Join(s.overlaysDir(), "_rects.yaml")
+	path := filepath.Join(s.overlaysDir(), "rects.yaml")
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -116,7 +132,7 @@ func (s *OverlayService) GetNamedRects() (*NamedRectsDetail, error) {
 }
 
 func (s *OverlayService) SaveNamedRects(content string) error {
-	path := filepath.Join(s.overlaysDir(), "_rects.yaml")
+	path := filepath.Join(s.overlaysDir(), "rects.yaml")
 	return atomicWrite(path, []byte(content))
 }
 

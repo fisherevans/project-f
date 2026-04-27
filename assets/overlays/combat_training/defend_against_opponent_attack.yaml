@@ -1,0 +1,10 @@
+description: "Hint shown when the opponent attacks the player while not defending"
+targets:
+  - rect: combat_active
+    message:
+      text: "Defending goes both ways. Try to guard yourself against your opponents attacks."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true

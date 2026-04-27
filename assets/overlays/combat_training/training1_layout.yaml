@@ -1,0 +1,57 @@
+description: "Training 1: combat layout walkthrough (combatants, stats, skills)"
+targets:
+  - rect: combatant_player
+    message:
+      text: "This is your Animech!"
+      placement: bottom
+      wrap: 80
+    badge:
+      placement: top_right
+    no_padding: true
+  - rect: combatant_stats_player
+    message:
+      text: "Your SHIELD protects you and regenerates between combat."
+      placement: right
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true
+  - rect: combatant_stats_player
+    message:
+      text: "Your SYNC is how aligned your soul is with your Animech."
+      placement: right
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true
+  - rect: combatant_stats_player
+    message:
+      text: "Taking damage depletes your SHIELD, and then your SYNC."
+      placement: right
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true
+  - rect: combatant_opponent
+    message:
+      text: "This is your opponent!"
+      placement: bottom
+      wrap: 80
+    badge:
+      placement: top_right
+    no_padding: true
+  - rect: combatant_stats_opponent
+    message:
+      text: "Deplete their HEALTH to win."
+      placement: left
+      wrap: 100
+    badge:
+      placement: bottom_middle
+    no_padding: true
+  - rect: combat_skills
+    message:
+      text: "These are your combat skills. Use the D-Pad to select one."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_right

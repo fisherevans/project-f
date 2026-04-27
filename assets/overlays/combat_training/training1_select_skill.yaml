@@ -1,0 +1,10 @@
+description: "Training 1: explains pending skill selection"
+targets:
+  - rect: combat_active
+    message:
+      text: "You can see your selected skill here. It's just pending. To select it, press A."
+      placement: bottom
+      wrap: 140
+    badge:
+      placement: top_middle
+    no_padding: true
