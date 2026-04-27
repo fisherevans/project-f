@@ -21,6 +21,7 @@ type Server struct {
 	scripts     *ScriptService
 	rpg         *RPGService
 	saves       *SaveService
+	overlays    *OverlayService
 	tiled       *TiledService
 	tiledBridge *TiledBridge
 	hub         *Hub
@@ -40,6 +41,7 @@ func New(assetsDir string, devMode bool, frontendFS fs.FS) *Server {
 		scripts:     NewScriptService(assetsDir),
 		rpg:         NewRPGService(assetsDir),
 		saves:       NewSaveService(assetsDir),
+		overlays:    NewOverlayService(assetsDir),
 		tiled:       NewTiledService(assetsDir),
 		tiledBridge: NewTiledBridge(),
 		hub:         NewHub(assetsDir),
@@ -87,6 +89,13 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("DELETE /api/v1/scripts/{name...}", s.handleDeleteScript)
 
 	s.mux.HandleFunc("GET /api/v1/templates", s.handleListPropertyTemplates)
+
+	s.mux.HandleFunc("GET /api/v1/overlays", s.handleListOverlays)
+	s.mux.HandleFunc("GET /api/v1/overlays/rects", s.handleGetNamedRects)
+	s.mux.HandleFunc("PUT /api/v1/overlays/rects", s.handleSaveNamedRects)
+	s.mux.HandleFunc("GET /api/v1/overlays/{name...}", s.handleGetOverlay)
+	s.mux.HandleFunc("PUT /api/v1/overlays/{name...}", s.handleSaveOverlay)
+	s.mux.HandleFunc("DELETE /api/v1/overlays/{name...}", s.handleDeleteOverlay)
 
 	s.mux.HandleFunc("GET /api/v1/rpg/skills", s.handleListSkills)
 	s.mux.HandleFunc("GET /api/v1/rpg/skills/{id}", s.handleGetSkill)

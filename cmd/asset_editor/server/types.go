@@ -76,3 +76,20 @@ type PropertyTemplateEntry struct {
     Properties map[string]any `json:"properties"`
     ScriptFile string         `json:"scriptFile"`
 }
+
+type OverlayFlowEntry struct {
+    Name        string `json:"name"`
+    Description string `json:"description,omitempty"`
+    TargetCount int    `json:"targetCount"`
+}
+
+type OverlayFlowDetail struct {
+    OverlayFlowEntry
+    Flow    schema.OverlayFlow `json:"flow"`
+    RawYaml string             `json:"rawYaml"`
+}
+
+type NamedRectsDetail struct {
+    Rects   map[string]schema.OverlayRect `json:"rects"`
+    RawYaml string                        `json:"rawYaml"`
+}

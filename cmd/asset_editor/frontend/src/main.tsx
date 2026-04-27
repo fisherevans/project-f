@@ -22,6 +22,8 @@ import { DebugGlobals } from "@/pages/debug/DebugGlobals";
 import { DebugCommands } from "@/pages/debug/DebugCommands";
 import { DebugEntities } from "@/pages/debug/DebugEntities";
 import { TiledCompanion } from "@/pages/tiled/TiledCompanion";
+import { OverlayBrowser } from "@/pages/overlays/OverlayBrowser";
+import { OverlayEditor } from "@/pages/overlays/OverlayEditor";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -49,6 +51,8 @@ const router = createBrowserRouter([
             { path: "/rpg", element: <Navigate to="/skills" replace /> },
             { path: "/rpg/primortals", element: <Navigate to="/primortals" replace /> },
             { path: "/rpg/combat", element: <Navigate to="/combat" replace /> },
+            { path: "/overlays", element: <OverlayBrowser /> },
+            { path: "/overlays/*", element: <OverlayEditor /> },
             { path: "/saves", element: <SaveBrowser /> },
             { path: "/saves/:id", element: <SaveEditor /> },
             { path: "/tiled", element: <TiledCompanion /> },

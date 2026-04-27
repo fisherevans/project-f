@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { spriteKeys } from "@/api/sprites";
 import { audioKeys } from "@/api/audio";
 import { scriptKeys } from "@/api/scripts";
+import { overlayKeys } from "@/api/overlays";
 
 interface WebSocketState {
     connected: boolean;
@@ -37,6 +38,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
                         queryClient.invalidateQueries({ queryKey: spriteKeys.all });
                         queryClient.invalidateQueries({ queryKey: audioKeys.all });
                         queryClient.invalidateQueries({ queryKey: scriptKeys.all });
+                        queryClient.invalidateQueries({ queryKey: overlayKeys.all });
                     }
                 } catch {
                     // ignore malformed messages

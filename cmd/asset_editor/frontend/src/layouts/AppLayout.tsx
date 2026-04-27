@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Image, Volume2, ScrollText, Swords, Shield, Crosshair, HardDrive, BookOpen, Bug, Map } from "lucide-react";
+import { Image, Volume2, ScrollText, Swords, Shield, Crosshair, HardDrive, BookOpen, Bug, Map, Layers } from "lucide-react";
 
 const NAV_ITEMS = [
     { to: "/sprites", label: "Sprites", icon: Image },
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
     { to: "/skills", label: "Skills", icon: Swords },
     { to: "/primortals", label: "Primortals", icon: Shield },
     { to: "/combat", label: "Combat", icon: Crosshair },
+    { to: "/overlays", label: "Overlays", icon: Layers },
     { to: "/saves", label: "Saves", icon: HardDrive },
     { to: "/tiled", label: "Tiled", icon: Map },
     { to: "/reference", label: "Reference", icon: BookOpen },

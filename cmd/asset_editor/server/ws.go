@@ -97,6 +97,10 @@ func (h *Hub) watch() {
 	if err := addDirRecursive(watcher, scriptsDir); err != nil {
 		log.Printf("fsnotify add scripts: %v", err)
 	}
+	overlaysDir := filepath.Join(h.assetsDir, "overlays")
+	if err := addDirRecursive(watcher, overlaysDir); err != nil {
+		log.Printf("fsnotify add overlays: %v", err)
+	}
 
 	// Debounce: collapse rapid events on the same path.
 	const debounce = 200 * time.Millisecond

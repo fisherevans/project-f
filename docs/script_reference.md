@@ -425,6 +425,15 @@ Display dialogue text from the handler's entity speaker
 
 - `text` (string (required)): The dialogue text to display
 
+#### `highlight_flow`
+
+Display a highlight overlay flow defined in assets/overlays/
+
+- **Param style:** string
+**Parameters:**
+
+- `name` (string (required)): Flow name (filename without extension from assets/overlays/)
+
 #### `highlight_sequence`
 
 Display a series of UI highlights with messages, used for tutorials
@@ -432,7 +441,7 @@ Display a series of UI highlights with messages, used for tutorials
 - **Param style:** map
 **Parameters:**
 
-- `targets` (any (required)): List of highlight target definitions (region, message, badge)
+- `targets` (any (required)): List of highlight target definitions (rect or region, message, badge)
 
 #### `pick_chatter`
 
