@@ -26,20 +26,17 @@ func (s *Server) handleSetHighlight(w http.ResponseWriter, r *http.Request) {
 		if req.FlowName != "" {
 			f, ok := overlays.GetFlow(req.FlowName)
 			if !ok {
-				writeJSON(w, http.StatusNotFound, map[string]string{"error": "unknown flow: " + req.FlowName})
-				return nil, nil
+				return nil, fmt.Errorf("unknown flow: %s", req.FlowName)
 			}
 			flow = f
 		} else if req.Flow != nil {
 			flow = *req.Flow
 		} else {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "provide flowName or flow"})
-			return nil, nil
+			return nil, fmt.Errorf("provide flowName or flow")
 		}
 		targets, err := overlays.ResolveTargetsWithExtra(flow, req.Rects)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-			return nil, nil
+			return nil, fmt.Errorf("resolve targets: %w", err)
 		}
 		advState.SetHighlightSequence(targets)
 		return map[string]string{

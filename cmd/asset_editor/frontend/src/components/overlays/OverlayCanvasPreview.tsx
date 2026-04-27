@@ -17,6 +17,11 @@ function resolveRect(target: OverlayTarget, namedRects: Record<string, OverlayRe
     return null
 }
 
+// Game uses pixel/OpenGL coords (y=0 at bottom). HTML canvas uses y=0 at top.
+function toCanvasY(rect: OverlayRect): number {
+    return CANVAS_H - rect.y - rect.h
+}
+
 export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelectTarget }: Props) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -49,7 +54,7 @@ export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelec
             if (!rect) return
 
             const x = offsetX + rect.x * scale
-            const y = offsetY + rect.y * scale
+            const y = offsetY + toCanvasY(rect) * scale
             const w = rect.w * scale
             const h = rect.h * scale
 
@@ -101,7 +106,7 @@ export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelec
             const inUse = targets.some(t => t.rect === name)
             if (inUse) continue
             const x = offsetX + rect.x * scale
-            const y = offsetY + rect.y * scale
+            const y = offsetY + toCanvasY(rect) * scale
             const w = rect.w * scale
             const h = rect.h * scale
             ctx.strokeRect(x, y, w, h)
@@ -135,7 +140,7 @@ export function OverlayCanvasPreview({ targets, namedRects, activeIndex, onSelec
             const r = resolveRect(targets[i], namedRects)
             if (!r) continue
             const x = offsetX + r.x * scale
-            const y = offsetY + r.y * scale
+            const y = offsetY + toCanvasY(r) * scale
             const w = r.w * scale
             const h = r.h * scale
             if (clickX >= x && clickX <= x + w && clickY >= y && clickY <= y + h) {

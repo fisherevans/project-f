@@ -86,8 +86,3 @@ type SetGlobalRequest struct {
     Type  string `json:"type"`
     Value any    `json:"value"`
 }
-
-type StateError struct {
-    Error       string `json:"error"`
-    ActiveState string `json:"active_state"`
-}

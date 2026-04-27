@@ -1,6 +1,7 @@
 package debugapi
 
 import (
+    "fmt"
     "net/http"
     "reflect"
 
@@ -13,11 +14,7 @@ func (s *Server) requireAdventure(w http.ResponseWriter, r *http.Request, fn fun
         active := game.GetActiveState()
         advState, ok := active.(*adventure.State)
         if !ok {
-            writeJSON(w, http.StatusConflict, StateError{
-                Error:       "requires adventure state",
-                ActiveState: reflect.TypeOf(active).String(),
-            })
-            return nil, nil
+            return nil, fmt.Errorf("requires adventure state (active: %s)", reflect.TypeOf(active).String())
         }
         return fn(advState)
     })
