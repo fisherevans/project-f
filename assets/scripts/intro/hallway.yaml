@@ -202,31 +202,26 @@ custom_actions:
         description: "Run state key for this door slot"
     steps:
       - if:
+          when: "global['intro.has_equipment_key'] != true"
+          then:
+            - self_dialogue: "This looks like a slot for a key card..."
+            - return
+      - if:
           when: "param.run_state_key == '' || param.run_state_key == 'not_it'"
           then:
-            - if:
-                when: "global['intro.has_equipment_key'] == true"
-                then:
-                  - play_sound: "adventure/beeps/error"
-                  - self_dialogue: "Yeah, that key card doesn't work in this slot..."
-                else:
-                  - self_dialogue: "This looks like a slot for a key card..."
-          else:
-            - if:
-                when: "global['intro.equipment_door_state'] == 'open' || global['intro.equipment_door_state'] == true"
-                then:
-                  - self_dialogue: "The door is already open."
-                else:
-                  - if:
-                      when: "global['intro.has_equipment_key'] != true"
-                      then:
-                        - self_dialogue: "This looks like a slot for a key card..."
-                      else:
-                        - play_sound: "adventure/beeps/success"
-                        - self_dialogue: "That worked!"
-                        - set_global:
-                            key: "{{param.run_state_key}}"
-                            value: open
+            - play_sound: "adventure/beeps/error"
+            - self_dialogue: "Yeah, that key card doesn't work in this slot..."
+            - return
+      - if:
+          when: "global['intro.equipment_door_state'] == 'open' || global['intro.equipment_door_state'] == true"
+          then:
+            - self_dialogue: "The door is already open."
+            - return
+      - play_sound: "adventure/beeps/success"
+      - self_dialogue: "That worked!"
+      - set_global:
+          key: "{{param.run_state_key}}"
+          value: open
 
 property_templates:
   intro.hallway_npc:
