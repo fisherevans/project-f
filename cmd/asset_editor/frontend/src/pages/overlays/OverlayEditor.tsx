@@ -45,6 +45,10 @@ export function OverlayEditor() {
     const [activeTarget, setActiveTarget] = useState(0)
     const [dirty, setDirty] = useState(false)
     const [previewError, setPreviewError] = useState<string | null>(null)
+    const [previewDuration, setPreviewDuration] = useState(() => {
+        const stored = localStorage.getItem("overlay-preview-duration")
+        return stored ? parseFloat(stored) : 5
+    })
 
     usePageTitle(name ? `${name} - Overlays` : "Overlays")
     useUnsavedChanges(dirty)
@@ -102,7 +106,7 @@ export function OverlayEditor() {
     const handlePreview = () => {
         setPreviewError(null)
         previewMutation.mutate(
-            { flow, rects: namedRects },
+            { flow, rects: namedRects, duration: previewDuration },
             { onError: (err) => setPreviewError(err instanceof Error ? err.message : "Preview failed") },
         )
     }
@@ -111,7 +115,7 @@ export function OverlayEditor() {
         setPreviewError(null)
         const singleFlow: OverlayFlow = { targets: [flow.targets[index]] }
         previewMutation.mutate(
-            { flow: singleFlow, rects: namedRects },
+            { flow: singleFlow, rects: namedRects, duration: previewDuration },
             { onError: (err) => setPreviewError(err instanceof Error ? err.message : "Preview failed") },
         )
     }
@@ -165,7 +169,22 @@ export function OverlayEditor() {
                         {dirty && <span className="ml-2 text-accent-amber">unsaved</span>}
                     </div>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex items-center gap-1">
+                    <Input
+                        className="h-7 w-14 text-xs font-mono text-center"
+                        type="number"
+                        min={1}
+                        max={30}
+                        step={1}
+                        value={previewDuration}
+                        onChange={e => {
+                            const v = parseFloat(e.target.value) || 5
+                            setPreviewDuration(v)
+                            localStorage.setItem("overlay-preview-duration", String(v))
+                        }}
+                        title="Seconds per step"
+                    />
+                    <span className="text-[10px] text-muted-foreground mr-1">s/step</span>
                     <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handlePreview} disabled={previewMutation.isPending}>
                         <Play className="h-3 w-3 mr-1" /> Preview
                     </Button>

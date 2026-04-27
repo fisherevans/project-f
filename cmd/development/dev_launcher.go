@@ -18,13 +18,14 @@ func main() {
     setup.SetupLogging()
 
     queue := debugapi.NewCommandQueue(64)
-    debugServer := debugapi.NewServer(queue)
 
     instance := runtime.NewInstance("default", func() any {
         return game.StartupDeviceIntent{}
     }).
         WithDevScenes(devscenes.Scenes()).
         WithDebugDrain(queue.DrainOnGameThread)
+
+    debugServer := debugapi.NewServer(queue, instance.DebugHighlight)
 
     go func() { // expose pprof to diagnose memory usage
         http.ListenAndServe("localhost:6060", nil)

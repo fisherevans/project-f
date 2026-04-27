@@ -2,17 +2,26 @@ package debugapi
 
 import (
     "net/http"
+
+    "fisherevans.com/project/f/internal/util/highlighter"
 )
 
-type Server struct {
-    mux   *http.ServeMux
-    queue *CommandQueue
+type HighlightController interface {
+    Show(targets []highlighter.Target, durationPerStep float64)
+    Dismiss()
 }
 
-func NewServer(queue *CommandQueue) *Server {
+type Server struct {
+    mux       *http.ServeMux
+    queue     *CommandQueue
+    highlight HighlightController
+}
+
+func NewServer(queue *CommandQueue, highlight HighlightController) *Server {
     s := &Server{
-        mux:   http.NewServeMux(),
-        queue: queue,
+        mux:       http.NewServeMux(),
+        queue:     queue,
+        highlight: highlight,
     }
     s.routes()
     return s

@@ -77,6 +77,7 @@ export interface PreviewHighlightRequest {
     flowName?: string
     flow?: OverlayFlow
     rects?: Record<string, OverlayRect>
+    duration?: number
 }
 
 const DEBUG_API = "http://localhost:8091/api/v1"

@@ -34,12 +34,14 @@ type Instance struct {
 	devScenes          []DevScene
 	window             *opengl.Window
 	debugDrain         func()
+	DebugHighlight     *DebugHighlight
 }
 
 func NewInstance(saveId string, resetIntentFactory func() any) *Instance {
 	return &Instance{
 		saveId:             saveId,
 		resetIntentFactory: resetIntentFactory,
+		DebugHighlight:     newDebugHighlight(),
 	}
 }
 
@@ -89,6 +91,8 @@ func (i *Instance) initialize() {
 		if err := overlays.LoadFromFS(assets.FS); err != nil {
 			log.Fatal().Err(err).Msg("failed to load overlay flows")
 		}
+
+		i.DebugHighlight.init()
 
 		registerIntents()
 
@@ -277,6 +281,11 @@ func (i *Instance) Run() {
 		// Render scene to canvas
 		i.renderScene(sceneCanvas, deltaTime)
 		game.GetActiveState().OnTick(sceneCanvas, sceneCanvas.Bounds(), gameDelta)
+
+		// Debug highlight overlay (rendered at game resolution, on top of state)
+		if i.DebugHighlight.IsActive() {
+			i.DebugHighlight.Render(sceneCanvas, gameDelta)
+		}
 
 		// Update canvas scale and pixel grid canvas
 		canvasScale = overlay.GameCanvasScale(i.window.Bounds())
