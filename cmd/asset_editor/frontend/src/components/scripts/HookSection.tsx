@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Plus, Trash2, BookOpen } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, BookOpen, ClipboardPaste, X } from "lucide-react";
 import { ReferencePopover } from "./ReferencePopover";
 import { RuleEditor } from "./RuleEditor";
+import { useScriptClipboard, pasteItem } from "./ScriptClipboard";
 import { createEmptyRule, moveItem } from "@/lib/scriptUtils";
-import type { HookDef, ScriptSchema, EventHookDef } from "@/types/scripts";
+import type { HookDef, RuleDef, ScriptSchema, EventHookDef } from "@/types/scripts";
 
 interface HookSectionProps {
     hookKey: string;
@@ -18,11 +19,29 @@ interface HookSectionProps {
 
 export function HookSection({ hookKey, hookDef, hook, schema, onChange, onRemove }: HookSectionProps) {
     const [expanded, setExpanded] = useState(true);
+    const [fullscreenRule, setFullscreenRule] = useState<number | null>(null);
     const rules = hook.rules;
     const isAllMode = hook.mode === "all";
+    const clipboard = useScriptClipboard();
+    const canPasteRule = clipboard.item?.type === "rule";
 
     const updateRules = (newRules: typeof rules) => {
         onChange({ ...hook, rules: newRules });
+    };
+
+    const cloneRule = (index: number) => {
+        const cloned: RuleDef = JSON.parse(JSON.stringify(rules[index]));
+        const next = [...rules];
+        next.splice(index + 1, 0, cloned);
+        updateRules(next);
+    };
+
+    const pasteRuleAt = (index: number) => {
+        if (clipboard.item?.type !== "rule") return;
+        const pasted = pasteItem(clipboard.item.data);
+        const next = [...rules];
+        next.splice(index, 0, pasted);
+        updateRules(next);
     };
 
     return (
@@ -74,19 +93,97 @@ export function HookSection({ hookKey, hookDef, hook, schema, onChange, onRemove
                             onRemove={() => updateRules(rules.filter((_, j) => j !== i))}
                             onMoveUp={i > 0 ? () => updateRules(moveItem(rules, i, i - 1)) : undefined}
                             onMoveDown={i < rules.length - 1 ? () => updateRules(moveItem(rules, i, i + 1)) : undefined}
+                            onClone={() => cloneRule(i)}
+                            onFullscreen={() => setFullscreenRule(i)}
                         />
                     ))}
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-xs text-muted-foreground"
-                        onClick={() => updateRules([...rules, createEmptyRule()])}
-                    >
-                        <Plus className="mr-1 h-3 w-3" />
-                        Add rule
-                    </Button>
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-xs text-muted-foreground"
+                            onClick={() => updateRules([...rules, createEmptyRule()])}
+                        >
+                            <Plus className="mr-1 h-3 w-3" />
+                            Add rule
+                        </Button>
+                        {canPasteRule && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-xs text-accent-violet"
+                                onClick={() => pasteRuleAt(rules.length)}
+                            >
+                                <ClipboardPaste className="mr-1 h-3 w-3" />
+                                Paste rule
+                            </Button>
+                        )}
+                    </div>
                 </div>
             )}
+            {fullscreenRule !== null && rules[fullscreenRule] && (
+                <FullscreenRuleModal
+                    rule={rules[fullscreenRule]}
+                    ruleIndex={fullscreenRule}
+                    hookKey={hookKey}
+                    hookDef={hookDef}
+                    schema={schema}
+                    onChange={(updated) => {
+                        const next = [...rules];
+                        next[fullscreenRule] = updated;
+                        updateRules(next);
+                    }}
+                    onClose={() => setFullscreenRule(null)}
+                />
+            )}
+        </div>
+    );
+}
+
+function FullscreenRuleModal({
+    rule,
+    ruleIndex,
+    hookKey,
+    hookDef,
+    schema,
+    onChange,
+    onClose,
+}: {
+    rule: RuleDef;
+    ruleIndex: number;
+    hookKey: string;
+    hookDef?: EventHookDef;
+    schema: ScriptSchema;
+    onChange: (rule: RuleDef) => void;
+    onClose: () => void;
+}) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+            <div
+                className="bg-popover border border-border rounded-lg shadow-xl flex flex-col"
+                style={{ width: "min(90vw, 900px)", height: "min(85vh, 800px)" }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between border-b border-border px-4 py-2.5 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <code className="text-sm font-mono font-semibold">{hookKey}</code>
+                        <span className="text-xs text-muted-foreground">Rule {ruleIndex + 1}</span>
+                    </div>
+                    <button className="text-muted-foreground hover:text-foreground" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                    <RuleEditor
+                        rule={rule}
+                        ruleIndex={ruleIndex}
+                        hookDef={hookDef}
+                        schema={schema}
+                        onChange={onChange}
+                        onRemove={() => {}}
+                    />
+                </div>
+            </div>
         </div>
     );
 }

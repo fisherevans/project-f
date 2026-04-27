@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, Plus, ArrowUp, ArrowDown, Maximize2, Copy, ClipboardPaste } from "lucide-react";
 import { StepList } from "./StepList";
 import { ConditionEditor, createEmptyCondition } from "./ConditionEditor";
 import { ZoneIdInput } from "./inputs/ZoneIdInput";
+import { useScriptClipboard, pasteItem } from "./ScriptClipboard";
 import type { RuleDef, ScriptSchema, EventHookDef } from "@/types/scripts";
 
 interface RuleEditorProps {
@@ -15,16 +17,33 @@ interface RuleEditorProps {
     onRemove: () => void;
     onMoveUp?: () => void;
     onMoveDown?: () => void;
+    onClone?: () => void;
+    onFullscreen?: () => void;
 }
 
-export function RuleEditor({ rule, ruleIndex, hookDef, schema, onChange, onRemove, onMoveUp, onMoveDown }: RuleEditorProps) {
+export function RuleEditor({ rule, ruleIndex, hookDef, schema, onChange, onRemove, onMoveUp, onMoveDown, onClone, onFullscreen }: RuleEditorProps) {
     const hasFilterFields = hookDef?.filterFields && hookDef.filterFields.length > 0;
+    const clipboard = useScriptClipboard();
+    const canPasteCondition = clipboard.item?.type === "condition";
 
     return (
         <div className="rounded border border-border/50 bg-muted/10">
             <div className="flex items-center justify-between border-b border-border/30 px-2 py-1">
                 <span className="text-xs font-medium text-muted-foreground">Rule {ruleIndex + 1}</span>
                 <div className="flex items-center">
+                    {onFullscreen && (
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={onFullscreen} title="Edit fullscreen">
+                            <Maximize2 className="h-3 w-3" />
+                        </Button>
+                    )}
+                    {onClone && (
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={onClone} title="Clone rule">
+                            <Copy className="h-3 w-3" />
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => clipboard.copyRule(rule)} title="Copy rule to clipboard">
+                        <ClipboardPaste className="h-3 w-3" />
+                    </Button>
                     {onMoveUp && (
                         <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={onMoveUp}>
                             <ArrowUp className="h-3 w-3" />
@@ -56,6 +75,12 @@ export function RuleEditor({ rule, ruleIndex, hookDef, schema, onChange, onRemov
                     onRemove={() => {
                         const { when: _, ...rest } = rule;
                         onChange(rest as RuleDef);
+                    }}
+                    canPaste={canPasteCondition}
+                    onPaste={() => {
+                        if (clipboard.item?.type === "condition") {
+                            onChange({ ...rule, when: pasteItem(clipboard.item.data) });
+                        }
                     }}
                 />
 
@@ -149,23 +174,38 @@ function FilterSection({ filter, hookDef, onChange }: {
     );
 }
 
-function ConditionSection({ condition, schema, onChange, onRemove }: {
+function ConditionSection({ condition, schema, onChange, onRemove, canPaste, onPaste }: {
     condition?: import("@/types/scripts").ConditionNode;
     schema: ScriptSchema;
     onChange: (condition: import("@/types/scripts").ConditionNode) => void;
     onRemove: () => void;
+    canPaste?: boolean;
+    onPaste?: () => void;
 }) {
     if (!condition) {
         return (
-            <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-xs text-muted-foreground"
-                onClick={() => onChange(createEmptyCondition())}
-            >
-                <Plus className="mr-1 h-3 w-3" />
-                Add condition
-            </Button>
+            <div className="flex items-center gap-1">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-muted-foreground"
+                    onClick={() => onChange(createEmptyCondition())}
+                >
+                    <Plus className="mr-1 h-3 w-3" />
+                    Add condition
+                </Button>
+                {canPaste && onPaste && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs text-accent-violet"
+                        onClick={onPaste}
+                    >
+                        <ClipboardPaste className="mr-1 h-3 w-3" />
+                        Paste condition
+                    </Button>
+                )}
+            </div>
         );
     }
 
@@ -186,4 +226,3 @@ function ConditionSection({ condition, schema, onChange, onRemove }: {
         </div>
     );
 }
-

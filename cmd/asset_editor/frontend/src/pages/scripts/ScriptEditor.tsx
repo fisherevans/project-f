@@ -12,6 +12,7 @@ import { SequenceDetail } from "@/components/scripts/SequenceDetail";
 import { ConstDetail } from "@/components/scripts/ConstDetail";
 import { PropertyTemplateDetail } from "@/components/scripts/PropertyTemplateDetail";
 import { ExprContextProvider } from "@/components/scripts/ExprContext";
+import { ScriptClipboardProvider } from "@/components/scripts/ScriptClipboard";
 import { parseScript, stringifyScript, normalizeYaml } from "@/lib/scriptUtils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
@@ -405,6 +406,7 @@ export function ScriptEditor() {
 
                 <TabsContent value="structured" className="flex-1 overflow-hidden m-0 p-0 min-h-0">
                     {schema ? (
+                        <ScriptClipboardProvider>
                         <ExprContextProvider
                             handlerVarKeys={selection?.type === "handler" && parsed.handlers[selection.name]?.var ? Object.keys(parsed.handlers[selection.name].var!) : []}
                             constKeys={parsed.consts ? Object.keys(parsed.consts) : []}
@@ -426,6 +428,7 @@ export function ScriptEditor() {
                                 </div>
                             </div>
                         </ExprContextProvider>
+                        </ScriptClipboardProvider>
                     ) : (
                         <div className="p-4 text-muted-foreground">Loading schema...</div>
                     )}

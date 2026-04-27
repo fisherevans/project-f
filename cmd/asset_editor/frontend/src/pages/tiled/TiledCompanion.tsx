@@ -13,6 +13,7 @@ import { parseScript, stringifyScript } from "@/lib/scriptUtils";
 import { apiFetch } from "@/api/client";
 import { HandlerDetail } from "@/components/scripts/HandlerDetail";
 import { ExprContextProvider } from "@/components/scripts/ExprContext";
+import { ScriptClipboardProvider } from "@/components/scripts/ScriptClipboard";
 import type { CrossFileEntry } from "@/components/scripts/ExprContext";
 import {
     Circle,
@@ -951,6 +952,7 @@ function HandlerDefinitionSection({
                         </div>
                     )}
                     <div className="border border-border rounded-md overflow-hidden">
+                        <ScriptClipboardProvider>
                         <ExprContextProvider
                             handlerVarKeys={handlerVarKeys}
                             constKeys={constKeys}
@@ -965,6 +967,7 @@ function HandlerDefinitionSection({
                                 onChange={handleChange}
                             />
                         </ExprContextProvider>
+                        </ScriptClipboardProvider>
                     </div>
                 </div>
             )}

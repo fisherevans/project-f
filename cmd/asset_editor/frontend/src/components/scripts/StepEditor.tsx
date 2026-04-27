@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus, BookOpen } from "lucide-react";
+import { ChevronDown, ChevronRight, X, ArrowUp, ArrowDown, Plus, BookOpen, Copy, ClipboardPaste } from "lucide-react";
 import { getCategoryColor } from "./StepKindPicker";
 import { ReferencePopover } from "./ReferencePopover";
 import { StepParamForm } from "./StepParamForm";
 import { StepList } from "./StepList";
 import { ExpressionInput } from "./inputs/ExpressionInput";
 import { useExprContext } from "./ExprContext";
+import { useScriptClipboard } from "./ScriptClipboard";
 import { getStepSubSteps, setStepSubSteps, parseSteps, serializeSteps } from "@/lib/scriptUtils";
 import type { StepNode, ScriptSchema, StepKindDef, CustomActionDef } from "@/types/scripts";
 
@@ -19,6 +20,9 @@ interface StepEditorProps {
     onRemove: () => void;
     onMoveUp?: () => void;
     onMoveDown?: () => void;
+    onClone?: () => void;
+    onPasteBefore?: () => void;
+    onPasteAfter?: () => void;
 }
 
 function formatParamValue(v: unknown): string {
@@ -241,8 +245,10 @@ function SwitchCasesEditor({ step, schema, onChange }: { step: StepNode; schema:
     );
 }
 
-export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMoveUp, onMoveDown }: StepEditorProps) {
+export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMoveUp, onMoveDown, onClone, onPasteBefore, onPasteAfter }: StepEditorProps) {
     const exprCtx = useExprContext();
+    const clipboard = useScriptClipboard();
+    const [showActions, setShowActions] = useState(false);
     const stepDef = schema.stepKinds[step.kind];
     const category = stepDef?.category ?? "unknown";
     const expandable = hasExpandableContent(step, stepDef);
@@ -312,7 +318,65 @@ export function StepEditor({ step, stepIndex, schema, onChange, onRemove, onMove
                         {actionDef.description}
                     </span>
                 )}
-                <div className="flex items-center shrink-0">
+                <div className="relative flex items-center shrink-0">
+                    {onClone && (
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-0 group-hover/step:opacity-100 text-muted-foreground hover:text-foreground" onClick={onClone} title="Clone step">
+                            <Copy className="h-3 w-3" />
+                        </Button>
+                    )}
+                    {(onPasteBefore || onPasteAfter) && (
+                        <div className="relative">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 opacity-0 group-hover/step:opacity-100 text-accent-violet hover:text-accent-violet"
+                                onClick={() => setShowActions(!showActions)}
+                                title="Paste options"
+                            >
+                                <ClipboardPaste className="h-3 w-3" />
+                            </Button>
+                            {showActions && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
+                                    <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-md shadow-lg py-0.5 min-w-[120px]">
+                                        {onPasteBefore && (
+                                            <button
+                                                className="flex w-full items-center gap-1.5 px-2 py-1 text-xs hover:bg-accent text-left"
+                                                onClick={() => { onPasteBefore(); setShowActions(false); }}
+                                            >
+                                                Paste before
+                                            </button>
+                                        )}
+                                        {onPasteAfter && (
+                                            <button
+                                                className="flex w-full items-center gap-1.5 px-2 py-1 text-xs hover:bg-accent text-left"
+                                                onClick={() => { onPasteAfter(); setShowActions(false); }}
+                                            >
+                                                Paste after
+                                            </button>
+                                        )}
+                                        <button
+                                            className="flex w-full items-center gap-1.5 px-2 py-1 text-xs hover:bg-accent text-left"
+                                            onClick={() => { clipboard.copyStep(step); setShowActions(false); }}
+                                        >
+                                            Copy step
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+                    {!onClone && !onPasteBefore && !onPasteAfter && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 opacity-0 group-hover/step:opacity-100 text-muted-foreground hover:text-foreground"
+                            onClick={() => clipboard.copyStep(step)}
+                            title="Copy step"
+                        >
+                            <ClipboardPaste className="h-3 w-3" />
+                        </Button>
+                    )}
                     {onMoveUp && (
                         <Button variant="ghost" size="sm" className="h-5 w-5 p-0 opacity-0 group-hover/step:opacity-100 text-muted-foreground hover:text-foreground" onClick={onMoveUp}>
                             <ArrowUp className="h-3 w-3" />
