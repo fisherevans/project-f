@@ -70,3 +70,9 @@ type ScriptFileDetail struct {
     ScriptFileEntry
     RawYAML string `json:"rawYaml"`
 }
+
+type PropertyTemplateEntry struct {
+    Name       string         `json:"name"`
+    Properties map[string]any `json:"properties"`
+    ScriptFile string         `json:"scriptFile"`
+}

@@ -147,6 +147,50 @@ func (s *ScriptService) SaveScript(name string, content string) error {
 	return nil
 }
 
+func (s *ScriptService) ListPropertyTemplates() ([]PropertyTemplateEntry, error) {
+	root := s.scriptsDir()
+	var entries []PropertyTemplateEntry
+
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			return nil
+		}
+		ext := strings.ToLower(filepath.Ext(d.Name()))
+		if ext != ".yaml" && ext != ".yml" {
+			return nil
+		}
+
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return nil
+		}
+
+		rel, _ := filepath.Rel(root, path)
+
+		var raw struct {
+			PropertyTemplates map[string]map[string]any `yaml:"property_templates"`
+		}
+		if err := yaml.Unmarshal(data, &raw); err != nil {
+			return nil
+		}
+		for name, props := range raw.PropertyTemplates {
+			entries = append(entries, PropertyTemplateEntry{
+				Name:       name,
+				Properties: props,
+				ScriptFile: rel,
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walking scripts: %w", err)
+	}
+	return entries, nil
+}
+
 func (s *ScriptService) DeleteScript(name string) error {
 	root := s.scriptsDir()
 	path, err := safePath(root, name)

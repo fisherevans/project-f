@@ -86,6 +86,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("PUT /api/v1/scripts/{name...}", s.handleSaveScript)
 	s.mux.HandleFunc("DELETE /api/v1/scripts/{name...}", s.handleDeleteScript)
 
+	s.mux.HandleFunc("GET /api/v1/templates", s.handleListPropertyTemplates)
+
 	s.mux.HandleFunc("GET /api/v1/rpg/skills", s.handleListSkills)
 	s.mux.HandleFunc("GET /api/v1/rpg/skills/{id}", s.handleGetSkill)
 	s.mux.HandleFunc("PUT /api/v1/rpg/skills/{id}", s.handleSaveSkill)

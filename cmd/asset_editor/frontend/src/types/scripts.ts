@@ -69,6 +69,14 @@ export interface TemplateVarDef {
     description: string;
 }
 
+// Property template types
+
+export interface PropertyTemplateEntry {
+    name: string;
+    properties: Record<string, unknown>;
+    scriptFile: string;
+}
+
 // Tiled cross-reference types
 
 export interface TiledEntityRef {

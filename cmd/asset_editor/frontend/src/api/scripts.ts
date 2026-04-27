@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/api/client"
-import type { ScriptFileEntry, ScriptFileDetail, ScriptSchema, TiledHandlerUsage } from "@/types/scripts"
+import type { ScriptFileEntry, ScriptFileDetail, ScriptSchema, TiledHandlerUsage, PropertyTemplateEntry } from "@/types/scripts"
 
 export const scriptKeys = {
     all: ["scripts"] as const,
@@ -8,6 +8,7 @@ export const scriptKeys = {
     detail: (path: string) => [...scriptKeys.all, "detail", path] as const,
     schema: () => [...scriptKeys.all, "schema"] as const,
     tiledUsages: () => [...scriptKeys.all, "tiled-usages"] as const,
+    templates: () => [...scriptKeys.all, "templates"] as const,
 }
 
 export function useScriptSchema() {
@@ -52,6 +53,14 @@ export async function validateExpr(expression: string): Promise<{ valid: boolean
     return apiFetch<{ valid: boolean; error?: string }>("/scripts/_validate-expr", {
         method: "POST",
         body: JSON.stringify({ expression }),
+    })
+}
+
+export function usePropertyTemplates() {
+    return useQuery({
+        queryKey: scriptKeys.templates(),
+        queryFn: () => apiFetch<PropertyTemplateEntry[]>("/templates"),
+        staleTime: 30_000,
     })
 }
 

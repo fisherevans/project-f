@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { AnimationPicker } from "@/components/scripts/inputs/AnimationPicker";
 import { ColorInput } from "@/components/scripts/inputs/ColorInput";
+import { TemplateSection, useResolvedTemplate, resolveProperty } from "@/pages/tiled/TemplateSection";
 
 interface PendingCommand {
     id: string;
@@ -266,9 +267,14 @@ function MultiObjectView({ objects }: { objects: TiledSelectedObject[] }) {
 }
 
 function SingleObjectView({ object }: { object: TiledSelectedObject }) {
-    const scriptRef = object.properties.script_ref || "";
     const zoneId = object.properties.zone_id || "";
     const { data: scripts } = useScripts();
+    const templateData = useResolvedTemplate(object);
+
+    // Resolve script_ref from entity properties, falling back to template
+    const resolvedRef = resolveProperty(object, templateData, "script_ref");
+    const scriptRef = resolvedRef?.value ?? "";
+    const scriptRefFromTemplate = resolvedRef?.source === "template";
 
     // Find which script file contains this handler
     const scriptPath = useMemo(() => {
@@ -287,11 +293,13 @@ function SingleObjectView({ object }: { object: TiledSelectedObject }) {
         <ScrollArea className="h-full">
             <div className="p-4 space-y-4">
                 <ObjectIdentity object={object} />
+                <TemplateSection object={object} />
                 {isZone && <ZoneSection object={object} zoneId={zoneId} scripts={scripts ?? []} />}
                 {!isZone && (
                     <HandlerSection
                         object={object}
                         scriptRef={scriptRef}
+                        scriptRefFromTemplate={scriptRefFromTemplate}
                         scriptPath={scriptPath}
                         scripts={scripts ?? []}
                     />
@@ -449,11 +457,13 @@ function ObjectIdentity({ object }: { object: TiledSelectedObject }) {
 function HandlerSection({
     object,
     scriptRef,
+    scriptRefFromTemplate,
     scriptPath,
     scripts,
 }: {
     object: TiledSelectedObject;
     scriptRef: string;
+    scriptRefFromTemplate?: boolean;
     scriptPath: string | null;
     scripts: ScriptFileEntry[];
 }) {
@@ -567,6 +577,11 @@ function HandlerSection({
                         <>
                             <Circle className="h-2.5 w-2.5 fill-accent-green text-accent-green" />
                             <span className="text-xs font-mono font-medium">{scriptRef}</span>
+                            {scriptRefFromTemplate && (
+                                <span className="text-[9px] px-1 rounded bg-accent-violet-tint text-accent-violet">
+                                    from template
+                                </span>
+                            )}
                             {!scriptPath && (
                                 <span className="text-[10px] text-accent-red flex items-center gap-0.5">
                                     <AlertTriangle className="h-2.5 w-2.5" /> not found

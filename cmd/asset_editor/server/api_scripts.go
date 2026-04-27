@@ -65,6 +65,15 @@ func (s *Server) handleSaveScript(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, detail)
 }
 
+func (s *Server) handleListPropertyTemplates(w http.ResponseWriter, r *http.Request) {
+	entries, err := s.scripts.ListPropertyTemplates()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, entries)
+}
+
 func (s *Server) handleDeleteScript(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 	if err := s.scripts.DeleteScript(name); err != nil {
