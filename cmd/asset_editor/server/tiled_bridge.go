@@ -24,6 +24,7 @@ type TiledSelection struct {
 	MapFile string               `json:"mapFile"`
 	Objects []TiledSelectedObject `json:"objects"`
 	Time    time.Time            `json:"time"`
+	Acks    []TiledCommandAck    `json:"acks,omitempty"`
 }
 
 type TiledSelectedObject struct {
@@ -61,8 +62,9 @@ func NewTiledBridge() *TiledBridge {
 	return &TiledBridge{}
 }
 
-func (tb *TiledBridge) SetSelection(sel *TiledSelection) {
+func (tb *TiledBridge) SetSelection(sel *TiledSelection) []TiledCommand {
 	tb.mu.Lock()
+	defer tb.mu.Unlock()
 	sel.Time = time.Now()
 	tb.selection = sel
 	tb.lastHeartbeat = sel.Time
@@ -73,7 +75,9 @@ func (tb *TiledBridge) SetSelection(sel *TiledSelection) {
 		default:
 		}
 	}
-	tb.mu.Unlock()
+	cmds := tb.commands
+	tb.commands = nil
+	return cmds
 }
 
 func (tb *TiledBridge) GetSelection() *TiledSelection {
@@ -160,8 +164,16 @@ func (s *Server) handleTiledBridgeSelection(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "invalid json: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	s.tiledBridge.SetSelection(&sel)
-	w.WriteHeader(http.StatusNoContent)
+	acks := sel.Acks
+	sel.Acks = nil
+	if len(acks) > 0 {
+		s.tiledBridge.AckCommands(acks)
+	}
+	cmds := s.tiledBridge.SetSelection(&sel)
+	if cmds == nil {
+		cmds = []TiledCommand{}
+	}
+	writeJSON(w, cmds)
 }
 
 func (s *Server) handleTiledBridgeGetSelection(w http.ResponseWriter, r *http.Request) {

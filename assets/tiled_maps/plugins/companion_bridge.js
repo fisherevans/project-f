@@ -60,8 +60,8 @@ function httpPostWithResponse(path, payload) {
             "-s", "-X", "POST",
             "-H", "Content-Type: application/json",
             "-d", payload,
-            "--connect-timeout", "1",
-            "--max-time", "2",
+            "--connect-timeout", "0.2",
+            "--max-time", "1",
             BRIDGE_URL + path
         ]);
         output = proc.readStdOut();
@@ -79,8 +79,8 @@ function httpPost(path, payload) {
             "-s", "-X", "POST",
             "-H", "Content-Type: application/json",
             "-d", payload,
-            "--connect-timeout", "1",
-            "--max-time", "2",
+            "--connect-timeout", "0.2",
+            "--max-time", "1",
             BRIDGE_URL + path
         ]);
     } catch (e) {
@@ -95,9 +95,17 @@ function pushSelection() {
         mapFile: getMapFile(),
         objects: serializeSelectedObjects()
     });
-    // POST selection doubles as heartbeat (server updates lastHeartbeat)
-    httpPost("/selection", payload);
-    pollCommands();
+    // Selection POST returns pending commands in the response,
+    // avoiding a second round trip for heartbeat/poll.
+    var output = httpPostWithResponse("/selection", payload);
+    if (output && output.trim() !== "" && output.trim() !== "[]") {
+        try {
+            var commands = JSON.parse(output);
+            applyCommands(commands);
+        } catch (e) {
+            // parse error
+        }
+    }
 }
 
 function pollCommands() {
@@ -170,14 +178,13 @@ function applyCommands(commands) {
         tiled.alert("Companion bridge failed to apply " + errors.length + " command(s):\n\n" + errors.join("\n"));
     }
 
-    sendAcks(acks);
-
-    // Push updated state after applying
+    // Push updated state + acks in a single request
     var payload = JSON.stringify({
         mapFile: getMapFile(),
-        objects: serializeSelectedObjects()
+        objects: serializeSelectedObjects(),
+        acks: acks
     });
-    httpPost("/selection", payload);
+    httpPostWithResponse("/selection", payload);
 }
 
 function sendAcks(acks) {
