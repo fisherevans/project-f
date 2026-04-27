@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useOverlay, useSaveOverlay, useDeleteOverlay, useNamedRects, usePreviewHighlight, useDismissHighlight } from "@/api/overlays"
+import { useOverlay, useSaveOverlay, useDeleteOverlay, useNamedRects, useSaveNamedRects, usePreviewHighlight, useDismissHighlight } from "@/api/overlays"
 import { usePageTitle } from "@/hooks/usePageTitle"
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges"
 import { OverlayCanvasPreview } from "@/components/overlays/OverlayCanvasPreview"
-import { ArrowLeft, Save, Trash2, Plus, GripVertical, ChevronUp, ChevronDown, Play, X, Eye } from "lucide-react"
+import { ArrowLeft, Save, Trash2, Plus, GripVertical, ChevronUp, ChevronDown, Play, X, Eye, Bookmark } from "lucide-react"
 import YAML from "yaml"
 import type { OverlayFlow, OverlayTarget, OverlayRect } from "@/types/overlays"
 
@@ -38,6 +38,7 @@ export function OverlayEditor() {
     const { data: rectsData } = useNamedRects()
     const saveMutation = useSaveOverlay()
     const deleteMutation = useDeleteOverlay()
+    const saveRectsMutation = useSaveNamedRects()
     const previewMutation = usePreviewHighlight()
     const dismissMutation = useDismissHighlight()
 
@@ -148,6 +149,19 @@ export function OverlayEditor() {
             return { ...f, targets }
         })
         setActiveTarget(newIndex)
+    }
+
+    const handlePromoteToNamed = (region: OverlayRect) => {
+        const rectName = prompt("Name for this rect:")
+        if (!rectName) return
+        const sanitized = rectName.replace(/[^a-z0-9_]/gi, "_").toLowerCase()
+        const updated = { ...namedRects, [sanitized]: region }
+        const yaml = YAML.stringify(updated, { indent: 2 })
+        saveRectsMutation.mutate(yaml, {
+            onSuccess: () => {
+                updateTarget(activeTarget, t => ({ ...t, rect: sanitized, region: undefined }))
+            },
+        })
     }
 
     if (isLoading && !isNew) return <div className="p-4 text-sm text-muted-foreground">Loading...</div>
@@ -298,6 +312,7 @@ export function OverlayEditor() {
                             target={current}
                             namedRects={namedRects}
                             onChange={updated => updateTarget(activeTarget, () => updated)}
+                            onPromoteToNamed={handlePromoteToNamed}
                         />
                     ) : (
                         <p className="text-sm text-muted-foreground">Select a target to edit</p>
@@ -312,9 +327,10 @@ interface TargetEditorProps {
     target: OverlayTarget
     namedRects: Record<string, OverlayRect>
     onChange: (target: OverlayTarget) => void
+    onPromoteToNamed?: (region: OverlayRect) => void
 }
 
-function TargetEditor({ target, namedRects, onChange }: TargetEditorProps) {
+function TargetEditor({ target, namedRects, onChange, onPromoteToNamed }: TargetEditorProps) {
     const useNamedRect = !!target.rect || (!target.rect && !target.region)
     const isNamed = useNamedRect && !target.region
 
@@ -376,21 +392,49 @@ function TargetEditor({ target, namedRects, onChange }: TargetEditorProps) {
                         )}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-4 gap-2">
-                        {(["x", "y", "w", "h"] as const).map(field => (
-                            <div key={field} className="space-y-1">
-                                <label className="text-[10px] font-medium text-muted-foreground uppercase">{field}</label>
-                                <Input
-                                    className="h-7 text-xs font-mono"
-                                    type="number"
-                                    value={target.region?.[field] ?? 0}
-                                    onChange={e => onChange({
-                                        ...target,
-                                        region: { ...target.region!, [field]: parseInt(e.target.value) || 0 },
-                                    })}
-                                />
-                            </div>
-                        ))}
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-4 gap-2">
+                            {(["x", "y", "w", "h"] as const).map(field => (
+                                <div key={field} className="space-y-1">
+                                    <label className="text-[10px] font-medium text-muted-foreground uppercase">{field}</label>
+                                    <Input
+                                        className="h-7 text-xs font-mono text-center"
+                                        type="number"
+                                        value={target.region?.[field] ?? 0}
+                                        onChange={e => onChange({
+                                            ...target,
+                                            region: { ...target.region!, [field]: parseInt(e.target.value) || 0 },
+                                        })}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                            <InlineQuickBtn label="X=0" onClick={() => onChange({ ...target, region: { ...target.region!, x: 0 } })} />
+                            <InlineQuickBtn label="Y=0" onClick={() => onChange({ ...target, region: { ...target.region!, y: 0 } })} />
+                            <InlineQuickBtn label="W=240" onClick={() => onChange({ ...target, region: { ...target.region!, w: 240 } })} />
+                            <InlineQuickBtn label="H=160" onClick={() => onChange({ ...target, region: { ...target.region!, h: 160 } })} />
+                            <InlineQuickBtn label="Full W" title="X=0, W=240" onClick={() => onChange({ ...target, region: { ...target.region!, x: 0, w: 240 } })} />
+                            <InlineQuickBtn label="Full H" title="Y=0, H=160" onClick={() => onChange({ ...target, region: { ...target.region!, y: 0, h: 160 } })} />
+                            <InlineQuickBtn label="Center" title="Center on screen" onClick={() => onChange({
+                                ...target,
+                                region: {
+                                    ...target.region!,
+                                    x: Math.floor((240 - (target.region?.w ?? 32)) / 2),
+                                    y: Math.floor((160 - (target.region?.h ?? 32)) / 2),
+                                },
+                            })} />
+                        </div>
+                        {onPromoteToNamed && target.region && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => onPromoteToNamed(target.region!)}
+                            >
+                                <Bookmark className="h-3 w-3 mr-1" /> Save as Named Rect
+                            </Button>
+                        )}
                     </div>
                 )}
             </section>
@@ -546,6 +590,18 @@ function TargetEditor({ target, namedRects, onChange }: TargetEditorProps) {
                 </label>
             </section>
         </div>
+    )
+}
+
+function InlineQuickBtn({ label, title, onClick }: { label: string; title?: string; onClick: () => void }) {
+    return (
+        <button
+            className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-accent-blue-tint text-accent-blue hover:bg-accent-blue-edge/30 transition-colors"
+            title={title ?? label}
+            onClick={onClick}
+        >
+            {label}
+        </button>
     )
 }
 
