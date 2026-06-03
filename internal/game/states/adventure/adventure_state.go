@@ -426,6 +426,14 @@ func (s *State) ExecuteSystemEffectsInOrder(effects ...Effect) {
 	s.ExecuteSystemEffects(NewSerialPlan(effects...))
 }
 
+// ReloadMap re-loads the current map, re-instantiating all entities and their
+// event handlers. Used by the dev hot-reload path so script changes take effect
+// on a live map. The player returns to the map's default spawn, not its current
+// position.
+func (s *State) ReloadMap() {
+	s.ExecuteSystemEffects(NewLoadMapEffect(s.MapName()))
+}
+
 func (s *State) SetHighlightSequence(targets []highlighter.Target) {
 	s.highlighter.AppendTargets(targets...)
 }

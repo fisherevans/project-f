@@ -20,6 +20,27 @@ func LoadFromFS(fsys fs.FS) error {
     return nil
 }
 
+// Reload clears the skill/primortal registries and reloads them from fsys.
+// Intended for the dev hot-reload path. Note: this only refreshes the static
+// definition registries; runtime combat state or save data referencing old IDs
+// is not migrated.
+func Reload(fsys fs.FS) error {
+    for k := range Skills {
+        delete(Skills, k)
+    }
+    for k := range Primortals {
+        delete(Primortals, k)
+    }
+    for k := range XenoLogEntries {
+        delete(XenoLogEntries, k)
+    }
+    for k := range reservedUnlockableSkill {
+        delete(reservedUnlockableSkill, k)
+    }
+    MaxXenoLogEntryIndex = 0
+    return LoadFromFS(fsys)
+}
+
 func LoadSkillsFromFS(fsys fs.FS, dir string) error {
     entries, err := fs.ReadDir(fsys, dir)
     if err != nil {

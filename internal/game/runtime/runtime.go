@@ -1,27 +1,25 @@
 package runtime
 
 import (
+	"fisherevans.com/project/f/assets"
+	"fisherevans.com/project/f/internal/game"
+	"fisherevans.com/project/f/internal/game/audio"
+	"fisherevans.com/project/f/internal/game/overlay"
+	"fisherevans.com/project/f/internal/game/rpg"
+	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/overlays"
+	"fisherevans.com/project/f/internal/resources"
+	"fisherevans.com/project/f/internal/util"
 	"fmt"
+	"github.com/gopxl/pixel/v2"
+	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/gopxl/pixel/v2/ext/text"
+	"github.com/rs/zerolog/log"
 	"image/color"
 	"math"
 	"os"
 	"runtime"
 	"time"
-
-	"fisherevans.com/project/f/assets"
-	"fisherevans.com/project/f/internal/game/audio"
-	"fisherevans.com/project/f/internal/game/overlay"
-	"fisherevans.com/project/f/internal/game/rpg"
-	"fisherevans.com/project/f/internal/resources"
-	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/backends/opengl"
-	"github.com/gopxl/pixel/v2/ext/text"
-	"github.com/rs/zerolog/log"
-
-	"fisherevans.com/project/f/internal/game"
-	"fisherevans.com/project/f/internal/game/shaders"
-	"fisherevans.com/project/f/internal/overlays"
-	"fisherevans.com/project/f/internal/util"
 )
 
 // DevScene is a named entry point exposed to the overlay's scene-select panel.
@@ -35,6 +33,7 @@ type Instance struct {
 	window             *opengl.Window
 	debugDrain         func()
 	DebugHighlight     *DebugHighlight
+	harness            *Harness
 }
 
 func NewInstance(saveId string, resetIntentFactory func() any) *Instance {
@@ -54,6 +53,13 @@ func (i *Instance) WithDevScenes(scenes []DevScene) *Instance {
 
 func (i *Instance) WithDebugDrain(fn func()) *Instance {
 	i.debugDrain = fn
+	return i
+}
+
+// WithHarness attaches a control surface used by the dev debug API to pause,
+// single-step, inject input, and capture frames. Dev builds only.
+func (i *Instance) WithHarness(h *Harness) *Instance {
+	i.harness = h
 	return i
 }
 
@@ -168,7 +174,6 @@ func (i *Instance) initialize() {
 
 }
 
-
 func (i *Instance) Run() {
 	i.initialize()
 	signalReady()
@@ -243,6 +248,12 @@ func (i *Instance) Run() {
 	sceneRecorder := NewRecorder("original", sceneCanvas.Canvas, 60)
 	pixelGridRecorder := NewRecorder("scaled", pixelGridCanvas.Canvas, 60)
 
+	// Expose canvases to the dev harness and signal that the loop is live.
+	if i.harness != nil {
+		i.harness.setCanvases(sceneCanvas, pixelGridCanvas)
+		i.harness.markReady()
+	}
+
 	// Setup frame timing
 	last := time.Now()
 	frameStats := util.NewFrameStats(600)
@@ -267,10 +278,17 @@ func (i *Instance) Run() {
 		ov.UpdateInput(i.window, deltaTime)
 
 		// Inject virtual gamepad state before keyboard is merged in UpdateControls
-		game.SetVirtualControls(ov.VirtualControls())
+		virtualControls := ov.VirtualControls()
+		if i.harness != nil {
+			virtualControls = i.harness.mergeInput(virtualControls)
+		}
+		game.SetVirtualControls(virtualControls)
 
 		// Scale game time by the speed setting
 		gameDelta := deltaTime * game.CurrentSave().SystemSettings.Debugging.GameTimeSpeed
+		if i.harness != nil {
+			gameDelta = i.harness.gameDelta(gameDelta)
+		}
 
 		// Update game state
 		game.ApplyIntent()
@@ -295,6 +313,9 @@ func (i *Instance) Run() {
 			lastSceneCanvasScale = canvasScale
 			pixelGridCanvas = i.createPixelGridCanvas(canvasScale)
 			pixelGridRecorder.UpdateCanvas(pixelGridCanvas.Canvas)
+			if i.harness != nil {
+				i.harness.setScaledCanvas(pixelGridCanvas)
+			}
 		} else if game.Flags().JustChanged("retro_frame_reset") {
 			i.applyPixelGridShader(pixelGridCanvas, canvasScale)
 		}
@@ -317,6 +338,11 @@ func (i *Instance) Run() {
 		// Track game logic timing
 		gameLogicDur := time.Now().Sub(now).Seconds()
 		gameLogicStats.AddFrameTime(gameLogicDur)
+
+		// Service harness capture requests against the freshly-rendered frame.
+		if i.harness != nil {
+			i.harness.endFrame()
+		}
 
 		i.window.Update()
 	}
@@ -343,7 +369,6 @@ func (i *Instance) applyPixelGridShader(c *shaders.Canvas, scale float64) {
 		float32(subpixel),
 	)
 }
-
 
 func (i *Instance) renderScene(sceneCanvas *shaders.Canvas, deltaTime float64) {
 	i.window.Clear(color.RGBA{A: 255})

@@ -3,8 +3,6 @@ package adventure
 import (
 	"fmt"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 var builtinConditionKinds = map[string]bool{
@@ -15,7 +13,10 @@ var builtinConditionKinds = map[string]bool{
 	"expr":        true,
 }
 
-func validateScriptFiles() {
+// validateScriptFiles returns a list of validation errors across all loaded
+// script defs. Callers decide whether to treat them as fatal (boot) or
+// recoverable (hot reload).
+func validateScriptFiles() []string {
 	var errors []string
 
 	for name, handler := range scriptHandlerDefs {
@@ -34,9 +35,7 @@ func validateScriptFiles() {
 		}
 	}
 
-	if len(errors) > 0 {
-		log.Fatal().Strs("errors", errors).Int("count", len(errors)).Msg("script validation failed")
-	}
+	return errors
 }
 
 func validateHandler(handler *HandlerDef) []string {

@@ -41,6 +41,19 @@ Starts from the title screen with log output to `game_data/logs.txt`.
 go build -ldflags="-s -w" ./cmd/release
 ```
 
+**Drive the game from an agent (run, screenshot, input, step, hot-reload):**
+```
+go build -o /tmp/primortal-dev ./cmd/development
+PRIMORTAL_BOOT_MAP=hq /tmp/primortal-dev &   # boot straight into a map
+go build -o /tmp/gamectl ./cmd/gamectl
+/tmp/gamectl wait && /tmp/gamectl shot frame.png
+```
+The dev build exposes a debug HTTP API on `:8091`; `gamectl` wraps it. You can
+boot into a target state, capture frames as PNGs, inject controller input, pause
+and single-step game logic, and hot-reload `assets/scripts`, RPG data, and
+overlay flows without rebuilding. This is the primary loop for developing and
+verifying gameplay changes. Full reference: `docs/agent_harness.md`.
+
 **Scaffold a new sprite sheet (PNG + YAML sidecar + .aseprite):**
 ```
 go run ./cmd/sprite_new \
