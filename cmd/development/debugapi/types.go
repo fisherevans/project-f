@@ -112,6 +112,11 @@ type StepRequest struct {
     Dt     float64 `json:"dt,omitempty"`
 }
 
+type DeterminismRequest struct {
+    Enabled bool   `json:"enabled"`
+    Seed    uint64 `json:"seed,omitempty"`
+}
+
 type ReloadResponse struct {
     Kind    string `json:"kind"`
     Status  string `json:"status"`

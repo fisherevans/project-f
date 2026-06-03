@@ -65,6 +65,8 @@ func main() {
         err = cmdRun(args)
     case "step":
         err = cmdStep(args)
+    case "determinism":
+        err = cmdDeterminism(args)
     case "move":
         err = cmdMove(args)
     case "tap":
@@ -117,6 +119,7 @@ Time:
   pause                        freeze game logic (rendering continues)
   run [-speed 1.0]             resume game logic
   step [N] [-dt 0.0167] [-shot path]   advance N fixed-dt frames (blocking), optional capture
+  determinism [on|off] [-seed N]       seed the shared RNG for reproducible frames (reapplied on reset)
 
 Input (synthetic controller):
   tap A|B|Start|Select [-frames 1]     momentary press
@@ -434,6 +437,19 @@ func cmdStep(args []string) error {
         return capture("scene", shot)
     }
     return nil
+}
+
+func cmdDeterminism(args []string) error {
+    f := parse(popAddr(args))
+    on := true
+    if len(f.pos) > 0 && (f.pos[0] == "off" || f.pos[0] == "false") {
+        on = false
+    }
+    body := map[string]any{"enabled": on}
+    if seed, ok := f.ints["seed"]; ok {
+        body["seed"] = seed
+    }
+    return postJSON("/api/v1/debug/determinism", body)
 }
 
 func cmdMove(args []string) error {

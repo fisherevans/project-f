@@ -82,10 +82,26 @@ gamectl compare base.png cand.png  # pixel-diff two PNGs, writes a .diff.png
 ```
 
 Golden-image regression: while the game is `pause`d, nothing advances, so
-repeated captures of the same state are byte-identical. That makes paused frames
-a reliable baseline - `gamectl compare` reports the fraction of differing pixels,
-writes a magenta diff image, and exits non-zero when the diff exceeds `-tol`.
-(Comparing across `step` sequences is not yet stable; see Limitations.)
+repeated captures of the same state are byte-identical. `gamectl compare` reports
+the fraction of differing pixels, writes a magenta diff image, and exits non-zero
+when the diff exceeds `-tol`.
+
+To make a *stepped* sequence reproducible too, turn on determinism with a fixed
+seed: `determinism on -seed N` routes the game's shared RNG
+(`internal/util/rng`) through a seeded source and re-seeds it on every `reset`.
+The canonical golden recipe is:
+
+```
+gamectl determinism on -seed 42
+gamectl pause
+gamectl reset
+gamectl step 120 -shot baseline.png
+```
+
+Run from two separate launches this produces byte-identical PNGs (verified for
+adventure and combat scenes; the same HQ scene differs ~3% across launches
+without determinism). Audio randomness is intentionally not seeded - it runs on
+the speaker goroutine, where interleaving would break reproducibility.
 
 Time control:
 
@@ -93,6 +109,8 @@ Time control:
 gamectl pause                  # freeze game logic (rendering continues)
 gamectl run                    # resume (optional -speed 2.0)
 gamectl step 30 -shot s.png    # advance exactly 30 fixed-dt frames, then capture
+gamectl determinism on -seed 42   # seed the shared RNG (reapplied on reset)
+gamectl determinism off
 ```
 
 `step` is synchronous: it blocks until all frames have been applied, so the state
@@ -174,10 +192,10 @@ thread via a command queue, so they are safe to call concurrently with the loop.
 
 - Frame capture and stepping require the dev build; release builds do not expose
   the harness.
-- Golden-image regression works for paused states (captures are stable while
-  paused). Comparing frames across `step` sequences is not yet deterministic:
-  `rand`/`randf` in scripts and animation jitter are not seedable. Tracked in the
-  determinism follow-up.
+- Determinism covers game-thread randomness routed through `internal/util/rng`.
+  Anything that consumes the standard library `math/rand` directly (or runs off
+  the game thread, like audio) is not covered; add new gameplay randomness via
+  the `rng` package to keep it reproducible.
 - Swapping the active save at runtime (`gamectl save load <id>`) resets into the
   boot state, so any unsaved progress in the current run is discarded. To pin a
   fixture from the start instead, launch with `PRIMORTAL_SAVE`.

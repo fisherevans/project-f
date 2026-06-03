@@ -1,8 +1,8 @@
 package anim
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"fmt"
-	"math/rand/v2"
 	"slices"
 	"strings"
 
@@ -312,7 +312,7 @@ func (a *AnimatedSprite) progress() {
 		nextFrame := a.currentFrame + 1
 		a.progression -= dur
 		if a.randomized {
-			nextFrame = rand.IntN(len(a.frames))
+			nextFrame = rng.IntN(len(a.frames))
 		} else if nextFrame >= len(a.frames) {
 			if a.repeat {
 				nextFrame = 0
@@ -324,7 +324,7 @@ func (a *AnimatedSprite) progress() {
 		a.currentFrame = nextFrame
 		// update next jitter based on new frames weight
 		maxNextJitter := a.frames[a.currentFrame].weight * a.jitterPercent
-		a.nextJitter = maxNextJitter*rand.Float64() - maxNextJitter/2
+		a.nextJitter = maxNextJitter*rng.Float64() - maxNextJitter/2
 	}
 }
 

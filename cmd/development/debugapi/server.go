@@ -22,6 +22,7 @@ type RuntimeControl interface {
     InjectInput(a, b, start, sel bool, dir string, frames int)
     ClearInput()
     Reset()
+    SetDeterminism(on bool, seed uint64)
 }
 
 type Server struct {
@@ -83,6 +84,7 @@ func (s *Server) routes() {
     s.mux.HandleFunc("DELETE /api/v1/debug/input", s.handleClearInput)
     s.mux.HandleFunc("POST /api/v1/debug/time", s.handleTime)
     s.mux.HandleFunc("POST /api/v1/debug/step", s.handleStep)
+    s.mux.HandleFunc("POST /api/v1/debug/determinism", s.handleDeterminism)
     s.mux.HandleFunc("POST /api/v1/debug/reset", s.handleReset)
     s.mux.HandleFunc("POST /api/v1/debug/reload/{kind}", s.handleReload)
 }

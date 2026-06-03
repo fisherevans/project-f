@@ -1,7 +1,7 @@
 package combat
 
 import (
-	"math/rand"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game"
 	"github.com/gopxl/pixel/v2"
@@ -34,7 +34,7 @@ func NewPrimortalOpponent(cfg game.CombatOpponent) *PrimortalOpponent {
 	}
 	syncVariance := archetype.AdditionalSyncVariance
 	if syncVariance > 0 {
-		syncVariance = rand.Intn(syncVariance)
+		syncVariance = rng.Intn(syncVariance)
 	}
 	return &PrimortalOpponent{
 		CurrentCombatantSkills: NewCurrentCombatantSkills(),

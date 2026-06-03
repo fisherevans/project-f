@@ -35,5 +35,12 @@ func (i *Instance) ClearInput() {
 }
 
 func (i *Instance) Reset() {
+	if i.harness != nil {
+		i.harness.reseedIfDeterministic()
+	}
 	game.SetActiveStateIntent(i.resetIntentFactory())
+}
+
+func (i *Instance) SetDeterminism(on bool, seed uint64) {
+	i.harness.SetDeterminism(on, seed)
 }

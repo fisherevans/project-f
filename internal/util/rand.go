@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"fisherevans.com/project/f/internal/util/rng"
 	"github.com/gopxl/pixel/v2"
 )
 
@@ -15,7 +16,7 @@ func RandBetween(low, high float64) float64 {
 		high = swap
 	}
 	diff := high - low
-	return low + rand.Float64()*diff
+	return low + rng.Float64()*diff
 }
 
 // GenerateSpaced generated random, but evenly distributed points within a rectangle

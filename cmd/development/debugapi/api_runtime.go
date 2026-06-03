@@ -72,6 +72,16 @@ func (s *Server) handleStep(w http.ResponseWriter, r *http.Request) {
     writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "frames": frames})
 }
 
+func (s *Server) handleDeterminism(w http.ResponseWriter, r *http.Request) {
+    var req DeterminismRequest
+    if err := readJSON(r, &req); err != nil {
+        writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
+        return
+    }
+    s.rt.SetDeterminism(req.Enabled, req.Seed)
+    writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "enabled": req.Enabled, "seed": req.Seed})
+}
+
 func (s *Server) handleReset(w http.ResponseWriter, r *http.Request) {
     s.queue.handleOnGameThread(w, r, func() (any, error) {
         s.rt.Reset()

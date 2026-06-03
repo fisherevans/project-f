@@ -1,7 +1,7 @@
 package adventure
 
 import (
-	"math/rand"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/audio"
@@ -62,10 +62,10 @@ func (p *StepSoundProvider) Update(timeDelta float64, cameraProximityDistance fl
 	if p.timeUntilNextStep > 0 {
 		return
 	}
-	p.timeUntilNextStep = (stepSoundFrequency + rand.Float64()*stepSoundFrequencyJitter) * frequencyScale
+	p.timeUntilNextStep = (stepSoundFrequency + rng.Float64()*stepSoundFrequencyJitter) * frequencyScale
 	soundName := p.soundSupplier.Next()
 	volume := stepSoundVolumeMultiplier
-	volume *= interp.Lerp(stepSoundMinVolume, stepSoundMaxVolume, rand.Float64())
+	volume *= interp.Lerp(stepSoundMinVolume, stepSoundMaxVolume, rng.Float64())
 	volume *= p.falloff.AttenuationVolume(cameraProximityDistance)
 	if volume <= 0 {
 		return

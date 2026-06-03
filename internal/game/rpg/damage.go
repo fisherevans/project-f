@@ -1,9 +1,9 @@
 package rpg
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"fmt"
 	"math"
-	"math/rand"
 
 	"github.com/rs/zerolog/log"
 )
@@ -88,7 +88,7 @@ func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantS
 			log.Info().Msgf(" - %s", note)
 		}
 	}()
-	if dmg.MissRate > 0 && rand.Float64() < dmg.MissRate {
+	if dmg.MissRate > 0 && rng.Float64() < dmg.MissRate {
 		return DamageResult{
 			Missed: true,
 		}
@@ -96,7 +96,7 @@ func ComputeDamage(dmg SkillTickDamage, source CombatantStats, target CombatantS
 
 	targetDamage := float64(dmg.Amount)
 	if dmg.RandomVariance > 0 {
-		targetDamage += float64(dmg.RandomVariance) * (2*rand.Float64() - 1)
+		targetDamage += float64(dmg.RandomVariance) * (2*rng.Float64() - 1)
 	}
 	sourceDamage := 0.0
 

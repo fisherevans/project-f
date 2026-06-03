@@ -1,7 +1,7 @@
 package adventure
 
 import (
-	"math/rand/v2"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/util"
@@ -46,7 +46,7 @@ func init() {
 						"This is deeply unsettling.",
 						"Do you mind? I just want to go home!",
 					}
-					quip := quips[rand.IntN(len(quips))]
+					quip := quips[rng.IntN(len(quips))]
 					return NewOutput().WithSerialPlan(
 						NewMutateEntityBehaviorEffect(playerId).WithDisableBy("control"),
 						NewOverrideCameraEffect().WithFollow(FollowCamera{EntityId: util.Ptr("controlled_npc")}),

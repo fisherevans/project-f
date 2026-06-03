@@ -9,6 +9,7 @@ import (
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
 	"fisherevans.com/project/f/internal/game/shaders"
+	"fisherevans.com/project/f/internal/util/rng"
 )
 
 // Harness is the runtime control surface for the dev debug API. It lets an
@@ -32,6 +33,10 @@ type Harness struct {
 	// input injection
 	injected     input.VirtualState
 	injectFrames int // remaining frames to re-apply injected state
+
+	// determinism
+	deterministic bool
+	seed          uint64
 
 	// capture targets, set once the loop has built its canvases
 	sceneCanvas  *shaders.Canvas
@@ -220,6 +225,38 @@ func (h *Harness) ClearInput() {
 	h.injected = input.VirtualState{}
 	h.injectFrames = 0
 	h.mu.Unlock()
+}
+
+// SetDeterminism enables or disables deterministic mode. When enabled, the
+// shared RNG (internal/util/rng) is seeded to `seed` immediately and re-seeded
+// on every Reset, so a fixed sequence of operations (reset, pause, step N,
+// screenshot) produces byte-identical frames across runs.
+func (h *Harness) SetDeterminism(on bool, seed uint64) {
+	h.mu.Lock()
+	h.deterministic = on
+	h.seed = seed
+	h.mu.Unlock()
+	if on {
+		rng.SetSeed(seed)
+	}
+}
+
+// reseedIfDeterministic restarts the RNG stream from the configured seed when
+// deterministic mode is on. Called on Reset so each reset is reproducible.
+func (h *Harness) reseedIfDeterministic() {
+	h.mu.Lock()
+	on, seed := h.deterministic, h.seed
+	h.mu.Unlock()
+	if on {
+		rng.SetSeed(seed)
+	}
+}
+
+// Deterministic reports whether deterministic mode is on and the active seed.
+func (h *Harness) Deterministic() (bool, uint64) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.deterministic, h.seed
 }
 
 // CapturePNG requests a frame capture serviced by the game loop and blocks

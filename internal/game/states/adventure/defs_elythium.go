@@ -1,7 +1,7 @@
 package adventure
 
 import (
-	"math/rand"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -60,7 +60,7 @@ func init() {
 				}
 				if cfg.ResetTime+cfg.ResetTimeJitter > 0 {
 					effects = append(effects,
-						NewTimerEffect(cfg.ResetTime+rand.Float64()*cfg.ResetTimeJitter).WithTimerId(thisEntity.GetId()+".reset"))
+						NewTimerEffect(cfg.ResetTime+rng.Float64()*cfg.ResetTimeJitter).WithTimerId(thisEntity.GetId()+".reset"))
 				}
 				return NewOutput().WithEffects(effects...)
 			})

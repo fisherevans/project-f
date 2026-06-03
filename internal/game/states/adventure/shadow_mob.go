@@ -1,8 +1,8 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"math"
-	"math/rand"
 	"slices"
 
 	"fisherevans.com/project/f/internal/game"
@@ -205,7 +205,7 @@ func DefaultShadowMobConfig(params ShadowMobParams) ShadowMobConfig {
 			)
 			if params.RespawnDelay+params.RespawnJitter > 0 {
 				effects = append(effects,
-					NewTimerEffect(params.RespawnDelay+rand.Float64()*params.RespawnDelay),
+					NewTimerEffect(params.RespawnDelay+rng.Float64()*params.RespawnDelay),
 					NewFunctionEffect(func(_ EntityReader, _ *State) {
 						s.mobs = append(s.mobs, m)
 					}))
@@ -407,7 +407,7 @@ func (m *ShadowMob) Update(s *State, timeDelta float64) {
 		isStuck := m.vel.Len() < 0.2 && m.state != ShadowMobStateTriggering
 		if m.pathTimer <= 0 || (isStuck && m.pathTimer < 0.1) {
 			m.updatePath(s, playerPos)
-			m.pathTimer = 0.2 + rand.Float64()*0.2 // 200-400ms refresh
+			m.pathTimer = 0.2 + rng.Float64()*0.2 // 200-400ms refresh
 		}
 
 	}
@@ -601,7 +601,7 @@ func (m *ShadowMob) pickNewTarget(s *State) {
 	if m.leashRadius <= 0 {
 		// Just pick a random direction nearby if no leash
 		for i := 0; i < 20; i++ {
-			angle := rand.Float64() * 2 * math.Pi
+			angle := rng.Float64() * 2 * math.Pi
 			dist := randRange(2, 5)
 			candidate := m.Location.Add(pixel.V(math.Cos(angle), math.Sin(angle)).Scaled(dist))
 			if s == nil || (m.canTraverse(s, candidate, candidate, m.radius) && m.canTraverse(s, m.Location, candidate, m.radius)) {
@@ -616,8 +616,8 @@ func (m *ShadowMob) pickNewTarget(s *State) {
 
 	// Try to find a valid tile within the leash
 	for i := 0; i < 20; i++ {
-		angle := rand.Float64() * 2 * math.Pi
-		dist := rand.Float64() * m.leashRadius
+		angle := rng.Float64() * 2 * math.Pi
+		dist := rng.Float64() * m.leashRadius
 		candidate := m.origin.Add(pixel.V(math.Cos(angle), math.Sin(angle)).Scaled(dist))
 
 		// Check if the candidate point is traversable AND we can reach it from where we are
@@ -629,7 +629,7 @@ func (m *ShadowMob) pickNewTarget(s *State) {
 
 	// If we can't find anything reachable in the leash, try picking something very close to us that is reachable
 	for i := 0; i < 10; i++ {
-		angle := rand.Float64() * 2 * math.Pi
+		angle := rng.Float64() * 2 * math.Pi
 		dist := randRange(0.5, 1.5)
 		candidate := m.Location.Add(pixel.V(math.Cos(angle), math.Sin(angle)).Scaled(dist))
 		// Still check leash
@@ -739,7 +739,7 @@ func randRange(min, max float64) float64 {
 	if max <= min {
 		return min
 	}
-	return min + rand.Float64()*(max-min)
+	return min + rng.Float64()*(max-min)
 }
 
 func (m *ShadowMob) updateSenseRadius(dt float64) {

@@ -1,8 +1,8 @@
 package combat
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"fmt"
-	"math/rand"
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/text"
@@ -34,10 +34,10 @@ func newBaseFx(combatant Combatant) *baseFx {
 	var p, v pixel.Vec
 	if combatant.IsPlayer() {
 		p = pixel.V(game.GameWidth*0.15, game.GameHeight*0.5)
-		v = pixel.V(20, rand.Float64()*50+50)
+		v = pixel.V(20, rng.Float64()*50+50)
 	} else {
 		p = pixel.V(game.GameWidth*0.85, game.GameHeight*0.5)
-		v = pixel.V(-20, rand.Float64()*50+50)
+		v = pixel.V(-20, rng.Float64()*50+50)
 	}
 	return &baseFx{
 		Position:   p,
