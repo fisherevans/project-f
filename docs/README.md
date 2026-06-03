@@ -1,6 +1,6 @@
 # Primortal
 
-"Primortal" is a singke player, 2D pixelart, sci-fi, catch-em-all roguelike built in Go using a custom engine inspired by retro RPG games, pulling in modern themes and mechanics. The game is designed to be played in the form factor of a Game Boy Advance.
+"Primortal" is a single player, 2D pixelart, sci-fi, catch-em-all roguelike built in Go using a custom engine inspired by retro RPG games, pulling in modern themes and mechanics. The game is designed to be played in the form factor of a Game Boy Advance.
 
 
 You play as an astrobiologist remotely piloting a humanoid Animech to explore alien worlds, capturing life forms and harnessing their powers. While playing, you uncover the truth behind the corporation that employs you in this dystopian world. Combat is a tactical mix or turn based skill selection, and well timed execution.
