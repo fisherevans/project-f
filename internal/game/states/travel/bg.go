@@ -1,8 +1,8 @@
 package travel
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"math"
-	"math/rand"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
@@ -30,18 +30,18 @@ type bgSprite struct {
 }
 
 func newStarBgSprite() *bgSprite {
-	x := rand.Float64() * (game.GameWidth)
-	y := rand.Float64()*(maxY-minY) + minY
-	maskHue := float64(rand.Intn(325-188)+188) / 360.0
+	x := rng.Float64() * (game.GameWidth)
+	y := rng.Float64()*(maxY-minY) + minY
+	maskHue := float64(rng.Intn(325-188)+188) / 360.0
 	return &bgSprite{
 		position: pixel.V(x, y),
 		// randoms
 		mask:        colors.HSLToRGBA(maskHue, 1, 1),
-		sprite:      atlas.GetTilesheetSprite("adventure/hud/elythium_sparkle", rand.Intn(5)+1, 1),
-		speed:       0.5 + 10*rand.Float64(),
-		baseAlpha:   0.3 + rand.Float64()*0.7,
-		flashAmount: rand.Float64(),
-		flashSpeed:  0.5 + 4*rand.Float64(),
+		sprite:      atlas.GetTilesheetSprite("adventure/hud/elythium_sparkle", rng.Intn(5)+1, 1),
+		speed:       0.5 + 10*rng.Float64(),
+		baseAlpha:   0.3 + rng.Float64()*0.7,
+		flashAmount: rng.Float64(),
+		flashSpeed:  0.5 + 4*rng.Float64(),
 	}
 }
 

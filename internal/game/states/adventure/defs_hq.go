@@ -1,7 +1,7 @@
 package adventure
 
 import (
-	"math/rand"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/input"
@@ -105,8 +105,8 @@ func init() {
 					startY := bottomLeft.GetPreciseLocation().Y - 0.5
 					endY := topLeft.GetPreciseLocation().Y + 0.5
 					for i := 0; i < 100; i++ {
-						x := rand.Float64()*(endX-startX) + startX
-						y := rand.Float64()*(endY-startY) + startY
+						x := rng.Float64()*(endX-startX) + startX
+						y := rng.Float64()*(endY-startY) + startY
 						s.addBackgroundFx(newStarFx(pixel.V(x, y), startX, endX))
 					}
 				}))

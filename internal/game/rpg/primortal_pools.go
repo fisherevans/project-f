@@ -1,6 +1,6 @@
 package rpg
 
-import "math/rand"
+import "fisherevans.com/project/f/internal/util/rng"
 
 func init() {
 	addOpponentPool("intro.training.8.pool", []opponentPoolMember{
@@ -34,7 +34,7 @@ func (op opponentPool) Random() (PrimortalType, string) {
 	if len(op.members) == 0 {
 		panic("no members")
 	}
-	n := rand.Intn(op.totalWeight)
+	n := rng.Intn(op.totalWeight)
 	for _, member := range op.members {
 		n -= member.weight
 		if n <= 0 {

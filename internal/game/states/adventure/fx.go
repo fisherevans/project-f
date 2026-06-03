@@ -1,8 +1,8 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"math"
-	"math/rand"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/resources"
@@ -112,18 +112,18 @@ type starFx struct {
 }
 
 func newStarFx(location pixel.Vec, startX, endX float64) *starFx {
-	maskHue := float64(rand.Intn(325-188)+188) / 360.0
+	maskHue := float64(rng.Intn(325-188)+188) / 360.0
 	return &starFx{
 		preciseMapLocation: location,
 		startX:             startX,
 		endX:               endX,
 		// randoms
 		mask:        colors.HSLToRGBA(maskHue, 1, 1),
-		sprite:      atlas.GetTilesheetSprite("adventure/hud/elythium_sparkle", rand.Intn(5)+1, 1),
-		speed:       0.5 + 2*rand.Float64(),
-		baseAlpha:   0.5 + rand.Float64()*0.5,
-		flashAmount: rand.Float64(),
-		flashSpeed:  0.25 + 2*rand.Float64(),
+		sprite:      atlas.GetTilesheetSprite("adventure/hud/elythium_sparkle", rng.Intn(5)+1, 1),
+		speed:       0.5 + 2*rng.Float64(),
+		baseAlpha:   0.5 + rng.Float64()*0.5,
+		flashAmount: rng.Float64(),
+		flashSpeed:  0.25 + 2*rng.Float64(),
 	}
 }
 

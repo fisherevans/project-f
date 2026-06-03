@@ -1,9 +1,9 @@
 package xenolog
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"fmt"
 	"math"
-	"math/rand"
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
@@ -210,7 +210,7 @@ func newSkillNodeAnimation(speed string, mask pixel.RGBA) *skillNodeAnimation {
 		animation: skillNodeAnimUnlockable(speed),
 		mask:      mask,
 	}
-	a.animation.Update(rand.Float64() * 1000)
+	a.animation.Update(rng.Float64() * 1000)
 	return a
 }
 
@@ -352,15 +352,15 @@ func newRandomEffectParticle() *effectParticle {
 		screenColors.Highlight,
 		screenColors.Text,
 	}
-	startColor := possibleStartColors[rand.Intn(len(possibleStartColors))]
-	speed := rand.Float64() * 15
-	angle := rand.Float64() * 2 * math.Pi
+	startColor := possibleStartColors[rng.Intn(len(possibleStartColors))]
+	speed := rng.Float64() * 15
+	angle := rng.Float64() * 2 * math.Pi
 	velocity := pixel.V(math.Sin(angle)*speed, math.Cos(angle)*speed)
-	age := rand.Float64() - 0.5
+	age := rng.Float64() - 0.5
 	if age > 0 {
 		age = 0
 	}
-	maxAge := 1.0 + rand.Float64()*2.0
+	maxAge := 1.0 + rng.Float64()*2.0
 	return newEffectParticle(startColor, colors.WithAlpha(screenColors.Clear, 0), velocity, age, maxAge)
 }
 

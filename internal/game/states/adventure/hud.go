@@ -1,8 +1,8 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"math"
-	"math/rand"
 
 	"fisherevans.com/project/f/internal/game/rpg"
 	"fisherevans.com/project/f/internal/util/colors"
@@ -45,7 +45,7 @@ func NewHud(state *State) *Hud {
 			pixel.V(0, 0),
 			particles.WithFading(0.4, 0.4),
 			particles.WithColorMaskSupplier(func() pixel.RGBA {
-				mask := colors.Lerp(elythiumBarColorA, elythiumBarColorB, rand.Float64())
+				mask := colors.Lerp(elythiumBarColorA, elythiumBarColorB, rng.Float64())
 				mask = colors.Lerp(colors.White.RGBA, mask, 0.2)
 				return mask
 			}),

@@ -1,7 +1,7 @@
 package adventure
 
 import (
-	"math/rand"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game/anim"
 	"fisherevans.com/project/f/internal/game/input"
@@ -16,7 +16,7 @@ func init() {
 		entity := system.RegisterEntity(params.EntityId, params.Location)
 		system.SetDebugType(params.EntityId, "npc")
 		renderer := AttachMovementBasedEntityRenderer(entity)
-		color := colors.HSLToRGBA(rand.Float64(), 1, 0.65)
+		color := colors.HSLToRGBA(rng.Float64(), 1, 0.65)
 		for moveState, animations := range map[MoveState]map[input.Direction]*anim.AnimatedSprite{
 			MoveStateIdle:    anim.AshaIdle(atlas),
 			MoveStateWalking: anim.AshaWalk(atlas),
@@ -126,8 +126,8 @@ func (b *NPCBehavior) doMovement() {
 	if !b.DoesMove {
 		return
 	}
-	if rand.Float64() < b.IdleChance {
-		b.idleDuration = rand.Float64() * b.MaxIdleDuration
+	if rng.Float64() < b.IdleChance {
+		b.idleDuration = rng.Float64() * b.MaxIdleDuration
 		return
 	}
 	nextLocation := b.entity.GetLocation().Moved(b.entity.GetFacingDirection())
@@ -145,7 +145,7 @@ func (b *NPCBehavior) doMovement() {
 			dir = b.entity.GetFacingDirection().Opposite()
 		}
 	} else {
-		dir = input.Directions[int(rand.Float64()*float64(len(input.Directions)))]
+		dir = input.Directions[int(rng.Float64()*float64(len(input.Directions)))]
 	}
 	b.entity.GetSystem().state.ExecuteSystemEffects(
 		NewEntityFaceDirectionEffect(b.entity.GetId()).WithDirection(dir),

@@ -2,7 +2,8 @@ package util
 
 import (
 	"fmt"
-	"math/rand"
+
+	"fisherevans.com/project/f/internal/util/rng"
 )
 
 type StringList []string
@@ -11,7 +12,7 @@ func (s StringList) Random() string {
 	if len(s) == 0 {
 		return ""
 	}
-	return s[rand.Intn(len(s))]
+	return s[rng.Intn(len(s))]
 }
 
 func (s StringList) Randomf(args ...interface{}) string {

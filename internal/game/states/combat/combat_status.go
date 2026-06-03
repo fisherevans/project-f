@@ -3,12 +3,12 @@ package combat
 import (
 	"fmt"
 	"math"
-	"math/rand"
 	"strings"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/util"
 	"fisherevans.com/project/f/internal/util/interp"
+	"fisherevans.com/project/f/internal/util/rng"
 	"github.com/gopxl/pixel/v2"
 	"github.com/rs/zerolog/log"
 
@@ -106,12 +106,10 @@ func (s *CombatStatus) Level() rpg.StatusLevel {
 	return level
 }
 
-var rng = rand.New(rand.NewSource(int64(rand.Int())))
-
 func (s *CombatStatus) generateChangeEffects(animName string, mask pixel.RGBA, areaW, areaH float64) {
 	log.Info().Any("status", s.Status).Str("anim", animName).Msg("generating change effects")
 	s.renderEffects = nil
-	deltas := util.GenerateSpaced(0, 0, areaW, areaH, 6, rng)
+	deltas := util.GenerateSpaced(0, 0, areaW, areaH, 6, rng.NewV1())
 	for _, delta := range deltas {
 		duration := util.RandBetween(statusFadeOut/2.0, statusFadeOut)
 		s.renderEffects = append(s.renderEffects, &changeAnimation{

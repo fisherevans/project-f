@@ -86,3 +86,39 @@ type SetGlobalRequest struct {
     Type  string `json:"type"`
     Value any    `json:"value"`
 }
+
+type HealthResponse struct {
+    Ready bool   `json:"ready"`
+    State string `json:"state"`
+    Frame int64  `json:"frame"`
+}
+
+type InputRequest struct {
+    A      bool   `json:"a,omitempty"`
+    B      bool   `json:"b,omitempty"`
+    Start  bool   `json:"start,omitempty"`
+    Select bool   `json:"select,omitempty"`
+    Dir    string `json:"dir,omitempty"` // Up | Down | Left | Right (empty = none)
+    Frames int    `json:"frames,omitempty"`
+}
+
+type TimeRequest struct {
+    Mode  string  `json:"mode"` // run | pause
+    Speed float64 `json:"speed,omitempty"`
+}
+
+type StepRequest struct {
+    Frames int     `json:"frames,omitempty"`
+    Dt     float64 `json:"dt,omitempty"`
+}
+
+type DeterminismRequest struct {
+    Enabled bool   `json:"enabled"`
+    Seed    uint64 `json:"seed,omitempty"`
+}
+
+type ReloadResponse struct {
+    Kind    string `json:"kind"`
+    Status  string `json:"status"`
+    Message string `json:"message,omitempty"`
+}

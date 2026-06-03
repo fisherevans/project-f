@@ -1,7 +1,7 @@
 package adventure
 
 import (
-	"math/rand/v2"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"github.com/rs/zerolog/log"
 )
@@ -74,7 +74,7 @@ func NewSoundPool(isRandom bool, names ...string) *SoundPool {
 
 func (s *SoundPool) Next() string {
 	if s.isRandom {
-		s.next = rand.IntN(len(s.names))
+		s.next = rng.IntN(len(s.names))
 	} else {
 		s.next++
 		if s.next >= len(s.names) {
@@ -99,7 +99,7 @@ func NewSoundSupplierPool(isRandom bool, suppliers ...SoundSupplier) *SoundSuppl
 
 func (s *SoundSupplierPool) Next() string {
 	if s.isRandom {
-		s.next = rand.IntN(len(s.suppliers))
+		s.next = rng.IntN(len(s.suppliers))
 	} else {
 		s.next++
 		if s.next >= len(s.suppliers) {

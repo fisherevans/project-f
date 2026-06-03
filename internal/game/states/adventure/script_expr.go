@@ -1,9 +1,9 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"fmt"
 	"math"
-	"math/rand/v2"
 	"regexp"
 	"strings"
 
@@ -84,11 +84,11 @@ var exprFunctions = []expr.Option{
 		if n <= 0 {
 			return 0, nil
 		}
-		return rand.IntN(n), nil
+		return rng.IntN(n), nil
 	}, new(func(any) int)),
 
 	expr.Function("randf", func(params ...any) (any, error) {
-		return rand.Float64(), nil
+		return rng.Float64(), nil
 	}, new(func() float64)),
 
 	// Note: contains/startsWith/endsWith are built-in operators in expr:

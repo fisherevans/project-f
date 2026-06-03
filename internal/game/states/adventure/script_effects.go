@@ -1,8 +1,8 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"fmt"
-	"math/rand/v2"
 
 	"fisherevans.com/project/f/internal/game/input"
 	"github.com/gopxl/pixel/v2"
@@ -149,20 +149,20 @@ type NullEntity struct {
 	id string
 }
 
-func (e *NullEntity) GetId() string                               { return e.id }
-func (e *NullEntity) GetLocation() MapLocation                    { return MapLocation{} }
-func (e *NullEntity) GetPreciseLocation() pixel.Vec               { return pixel.ZV }
-func (e *NullEntity) GetFacingDirection() input.Direction          { return input.NotPressed }
-func (e *NullEntity) IsMoving() bool                              { return false }
-func (e *NullEntity) GetMovementState() MoveState                 { return MoveStateIdle }
-func (e *NullEntity) GetMovementSpeed(_ MoveState) float64        { return 0 }
-func (e *NullEntity) GetMetadata() *EntityMetadata                { return nil }
-func (e *NullEntity) GetBehavior() (EntityBehavior, bool)         { return nil, false }
-func (e *NullEntity) HasPushedBehavior() bool                     { return false }
-func (e *NullEntity) IsBehaviorEnabled() bool                     { return false }
-func (e *NullEntity) IsSoundEnabled() bool                        { return false }
-func (e *NullEntity) GetPresence() (EntityPresence, bool)         { return nil, false }
-func (e *NullEntity) GetRenderer() (EntityRenderer, bool)         { return nil, false }
+func (e *NullEntity) GetId() string                        { return e.id }
+func (e *NullEntity) GetLocation() MapLocation             { return MapLocation{} }
+func (e *NullEntity) GetPreciseLocation() pixel.Vec        { return pixel.ZV }
+func (e *NullEntity) GetFacingDirection() input.Direction  { return input.NotPressed }
+func (e *NullEntity) IsMoving() bool                       { return false }
+func (e *NullEntity) GetMovementState() MoveState          { return MoveStateIdle }
+func (e *NullEntity) GetMovementSpeed(_ MoveState) float64 { return 0 }
+func (e *NullEntity) GetMetadata() *EntityMetadata         { return nil }
+func (e *NullEntity) GetBehavior() (EntityBehavior, bool)  { return nil, false }
+func (e *NullEntity) HasPushedBehavior() bool              { return false }
+func (e *NullEntity) IsBehaviorEnabled() bool              { return false }
+func (e *NullEntity) IsSoundEnabled() bool                 { return false }
+func (e *NullEntity) GetPresence() (EntityPresence, bool)  { return nil, false }
+func (e *NullEntity) GetRenderer() (EntityRenderer, bool)  { return nil, false }
 
 // helpers
 
@@ -218,14 +218,13 @@ func mapHas(m map[string]any, key string) bool {
 	return ok
 }
 
-
 func selectFromList(list []string, mode string, counter int) string {
 	if len(list) == 0 {
 		return ""
 	}
 	switch mode {
 	case "random":
-		return list[rand.IntN(len(list))]
+		return list[rng.IntN(len(list))]
 	case "capped":
 		idx := min(counter, len(list)-1)
 		return list[idx]

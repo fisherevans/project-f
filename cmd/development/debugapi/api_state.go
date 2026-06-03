@@ -7,6 +7,7 @@ import (
 
     "fisherevans.com/project/f/internal/game"
     "fisherevans.com/project/f/internal/game/states/adventure"
+    "fisherevans.com/project/f/internal/game/states/combat"
 )
 
 func (s *Server) handleGetState(w http.ResponseWriter, r *http.Request) {
@@ -18,14 +19,17 @@ func (s *Server) handleGetState(w http.ResponseWriter, r *http.Request) {
             Type: typeName,
         }
 
-        if advState, ok := active.(*adventure.State); ok {
+        switch st := active.(type) {
+        case *adventure.State:
             info.Capabilities = []string{"entities", "teleport", "map", "command"}
-            info.MapName = advState.MapName()
-            if p := advState.Globals().Player(); p != nil {
+            info.MapName = st.MapName()
+            if p := st.Globals().Player(); p != nil {
                 loc := p.GetPreciseLocation()
                 info.PlayerPos = &Vec2{X: loc.X, Y: loc.Y}
             }
-        } else {
+        case *combat.State:
+            info.Capabilities = []string{"combat", "command"}
+        default:
             info.Capabilities = []string{"command"}
         }
 

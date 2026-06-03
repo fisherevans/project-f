@@ -86,9 +86,20 @@ type CombatIntent struct {
 	OnComplete       CombatIntentComplete
 }
 
+// TileLocation is a map tile coordinate. Used as an optional explicit spawn
+// override on AdventureIntent (and elsewhere) without depending on the
+// adventure package's MapLocation type.
+type TileLocation struct {
+	X, Y int
+}
+
 type AdventureIntent struct {
 	MapName  string
 	Waypoint string
+	// Spawn, when set, places the player at this tile instead of the Waypoint.
+	// Used by the dev hot-reload path to preserve the player's position across a
+	// map reload.
+	Spawn *TileLocation
 }
 
 type SwapStateIntent struct {

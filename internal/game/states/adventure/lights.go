@@ -1,8 +1,8 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"math"
-	"math/rand"
 
 	"fisherevans.com/project/f/internal/util/colors"
 	"fisherevans.com/project/f/internal/util/pixelutil"
@@ -131,7 +131,7 @@ type LightModifierJitterUpdate struct {
 func (f *LightModifierJitterUpdate) Update(timeDelta float64) bool {
 	f.secondsLeft -= timeDelta
 	if f.secondsLeft <= 0 {
-		f.secondsLeft = f.FrequencyVariation/0.5 - rand.Float64()*f.FrequencyVariation + f.FrequencySeconds
+		f.secondsLeft = f.FrequencyVariation/0.5 - rng.Float64()*f.FrequencyVariation + f.FrequencySeconds
 		return true
 	}
 	return false
@@ -148,8 +148,8 @@ type LightModifierFlicker struct {
 
 func (l *LightModifierFlicker) Update(timeDelta float64) {
 	if l.Jitter.Update(timeDelta) {
-		l.sizeMultiplier = 1.0 - rand.Float64()*l.SizeVariation
-		l.brightnessMultiplier = 1.0 - rand.Float64()*l.BrightnessVariation
+		l.sizeMultiplier = 1.0 - rng.Float64()*l.SizeVariation
+		l.brightnessMultiplier = 1.0 - rng.Float64()*l.BrightnessVariation
 	}
 }
 

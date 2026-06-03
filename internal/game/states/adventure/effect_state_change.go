@@ -1,7 +1,7 @@
 package adventure
 
 import (
-	"math/rand"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/rpg"
@@ -104,7 +104,7 @@ func (e *EffectTriggerCombat) Process(source EntityReader, s *State) bool {
 					"pumbl",
 				}
 				opponent = game.CombatOpponent{
-					Type: options[rand.Intn(len(options))],
+					Type: options[rng.Intn(len(options))],
 				}
 			}
 			var reward game.CombatReward

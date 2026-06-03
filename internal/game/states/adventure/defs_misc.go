@@ -1,8 +1,8 @@
 package adventure
 
 import (
+	"fisherevans.com/project/f/internal/util/rng"
 	"fmt"
-	"math/rand"
 
 	"fisherevans.com/project/f/internal/game"
 	"fisherevans.com/project/f/internal/game/anim"
@@ -68,15 +68,15 @@ func init() {
 			quipTimerId := "dummy-quips-trigger"
 			handler := NewBasicHandler(None{}).
 				WithInit(func(thisEntity EntityReader, globals StateGlobalsReader, state None) *HandlerOutput {
-					return NewOutput().WithEffects(NewTimerEffect(10 + rand.Float64()*10).WithTimerId(quipTimerId))
+					return NewOutput().WithEffects(NewTimerEffect(10 + rng.Float64()*10).WithTimerId(quipTimerId))
 				}).
 				WithTimerComplete(func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventTimerComplete) *HandlerOutput {
 					if event.TimerId != quipTimerId {
 						return nil
 					}
 					return NewOutput().WithEffects(
-						NewChatterEffect(params.EntityId, 4, dummyQuips[rand.Intn(len(dummyQuips))]),
-						NewTimerEffect(10+rand.Float64()*10).WithTimerId(quipTimerId))
+						NewChatterEffect(params.EntityId, 4, dummyQuips[rng.Intn(len(dummyQuips))]),
+						NewTimerEffect(10+rng.Float64()*10).WithTimerId(quipTimerId))
 				}).
 				WithOnInteract(func(thisEntity EntityReader, globals StateGlobalsReader, state None, event *EventOnInteract) *HandlerOutput {
 					if thisEntity.GetId() != event.TargetId {

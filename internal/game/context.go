@@ -160,6 +160,29 @@ func CurrentSave() *rpg.GameSave {
 	return ctx.save
 }
 
+// SwapSave replaces the active save with the one identified by saveId, loading
+// it from disk (or creating a fresh default if it does not exist). The active
+// state still references the previous save's data, so callers must trigger a
+// state reset afterward for the swap to take full effect. Intended for the dev
+// harness; not safe to call mid-frame from gameplay code.
+func SwapSave(saveId string) error {
+	saves, err := rpg.LoadGameSaves()
+	if err != nil {
+		return err
+	}
+	save, ok := saves[saveId]
+	if !ok {
+		save = &rpg.GameSave{
+			SaveId:        saveId,
+			CharacterName: "Todd",
+		}
+		save.FillDefaults()
+		log.Info().Str("saveId", saveId).Msg("swap: new save initialized")
+	}
+	ctx.save = save
+	return nil
+}
+
 func CurrentSaveOrNil() *rpg.GameSave {
 	if ctx == nil {
 		return nil

@@ -1,7 +1,7 @@
 package combat
 
 import (
-	"math/rand"
+	"fisherevans.com/project/f/internal/util/rng"
 
 	"fisherevans.com/project/f/internal/game/rpg"
 )
@@ -54,7 +54,7 @@ func (r *RandomSkillChooser) NextSkill() *rpg.SkillId {
 	if len(r.options) == 0 {
 		panic("no options")
 	}
-	n := rand.Intn(r.totalWeight)
+	n := rng.Intn(r.totalWeight)
 	for _, option := range r.options {
 		n -= option.weight
 		if n <= 0 {
