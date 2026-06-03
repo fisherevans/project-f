@@ -124,8 +124,8 @@ embedded asset snapshot the binary was built with. So edits to YAML take effect
 without rebuilding.
 
 - **scripts**: re-parses every file under `assets/scripts/`, then reloads the
-  current map so live entities pick up fresh handler instances. The player
-  returns to the map's default spawn (re-`tp` if you need a specific spot). If an
+  current map so live entities pick up fresh handler instances. The player's tile
+  position is preserved across the reload. If an
   edit fails to parse or validate, the reload is rejected with the error and the
   last known-good embedded scripts are restored, so the running game is never left
   half-loaded.
@@ -168,6 +168,5 @@ thread via a command queue, so they are safe to call concurrently with the loop.
 - Visual regression against golden PNGs is not yet deterministic: `rand`/`randf`
   in scripts and animation jitter are not seedable, and animation clocks are not
   frozen, so frames vary run to run. Tracked as a follow-up.
-- Hot-reloading scripts resets the player to spawn. Live save swapping (loading a
-  different save into a running process) is not supported; use `PRIMORTAL_SAVE` at
-  launch instead.
+- Live save swapping (loading a different save into a running process) is not
+  supported; use `PRIMORTAL_SAVE` at launch instead.

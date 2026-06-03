@@ -88,8 +88,8 @@ type State struct {
 	overlays    *OverlaySystem
 	timers      *timers
 	conditions  *Conditions
-	zones     *zones
-	zoneRects []resources.Zone
+	zones       *zones
+	zoneRects   []resources.Zone
 	tooltips    *Tooltips
 	highlighter *highlighter.SequencedDrawer
 
@@ -178,6 +178,13 @@ func New(i game.AdventureIntent) game.State {
 	a.entities.SetDebugType("system", "system")
 
 	initializeMap(a, m, i.Waypoint)
+
+	// Optional explicit spawn override (dev hot-reload preserves player position).
+	if i.Spawn != nil {
+		if p, ok := a.entities.GetEntity(a.player); ok {
+			p.Teleport(MapLocation{X: i.Spawn.X, Y: i.Spawn.Y})
+		}
+	}
 
 	a.initCommands()
 
@@ -428,10 +435,15 @@ func (s *State) ExecuteSystemEffectsInOrder(effects ...Effect) {
 
 // ReloadMap re-loads the current map, re-instantiating all entities and their
 // event handlers. Used by the dev hot-reload path so script changes take effect
-// on a live map. The player returns to the map's default spawn, not its current
-// position.
+// on a live map. The player's current tile position is preserved across the
+// reload.
 func (s *State) ReloadMap() {
-	s.ExecuteSystemEffects(NewLoadMapEffect(s.MapName()))
+	intent := game.AdventureIntent{MapName: s.mapName}
+	if p, ok := s.entities.GetEntity(s.player); ok {
+		loc := p.GetLocation()
+		intent.Spawn = &game.TileLocation{X: loc.X, Y: loc.Y}
+	}
+	game.SetActiveStateIntent(intent)
 }
 
 func (s *State) SetHighlightSequence(targets []highlighter.Target) {

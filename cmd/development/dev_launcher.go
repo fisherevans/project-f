@@ -107,7 +107,7 @@ func installReload() {
             }
             if adv, ok := game.GetActiveState().(*adventure.State); ok {
                 adv.ReloadMap()
-                return "scripts reloaded; current map reloading (player returns to spawn)", nil
+                return "scripts reloaded; current map reloading (player position preserved)", nil
             }
             return "scripts reloaded (no live adventure map to rebind)", nil
         case "rpg":
