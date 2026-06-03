@@ -51,7 +51,7 @@ func main() {
     case "combat":
         err = get("/api/v1/debug/combat")
     case "save":
-        err = get("/api/v1/debug/save")
+        err = cmdSave(args)
     case "shot", "screenshot":
         err = cmdShot(args)
     case "pause":
@@ -101,7 +101,7 @@ Status:
   state                        active state detail (map, player pos)
   entities [-player]           list entities (or just the player)
   combat                       combat state (sync/shield/statuses/phase) when in combat
-  save                         dump the active save as JSON
+  save [load <id>]             dump the active save, or swap to save <id> and reset
   wait [-timeout 60]           block until the API reports ready
 
 Capture:
@@ -435,6 +435,15 @@ func cmdInput(args []string) error {
         body["frames"] = n
     }
     return postJSON("/api/v1/debug/input", body)
+}
+
+func cmdSave(args []string) error {
+    a := popAddr(args)
+    if len(a) >= 2 && a[0] == "load" {
+        return postJSON("/api/v1/debug/save/load", map[string]any{"id": a[1]})
+    }
+    // default: dump the active save
+    return get("/api/v1/debug/save")
 }
 
 func cmdReload(args []string) error {

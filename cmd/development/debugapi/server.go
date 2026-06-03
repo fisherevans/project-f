@@ -57,6 +57,7 @@ func (s *Server) routes() {
     s.mux.HandleFunc("GET /api/v1/debug/health", s.handleHealth)
     s.mux.HandleFunc("GET /api/v1/debug/state", s.handleGetState)
     s.mux.HandleFunc("GET /api/v1/debug/save", s.handleGetSave)
+    s.mux.HandleFunc("POST /api/v1/debug/save/load", s.handleLoadSave)
 
     s.mux.HandleFunc("GET /api/v1/debug/globals", s.handleListGlobals)
     s.mux.HandleFunc("GET /api/v1/debug/globals/{key...}", s.handleGetGlobal)

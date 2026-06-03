@@ -109,6 +109,7 @@ State control:
 
 ```
 gamectl reset                       # back to the boot state
+gamectl save load 1                 # swap the active save to id "1" and reset
 gamectl reload scripts              # re-parse assets/scripts/** from disk
 gamectl reload rpg                  # re-load skills/primortals
 gamectl reload overlays             # re-load overlay flows/rects
@@ -168,5 +169,6 @@ thread via a command queue, so they are safe to call concurrently with the loop.
 - Visual regression against golden PNGs is not yet deterministic: `rand`/`randf`
   in scripts and animation jitter are not seedable, and animation clocks are not
   frozen, so frames vary run to run. Tracked as a follow-up.
-- Live save swapping (loading a different save into a running process) is not
-  supported; use `PRIMORTAL_SAVE` at launch instead.
+- Swapping the active save at runtime (`gamectl save load <id>`) resets into the
+  boot state, so any unsaved progress in the current run is discarded. To pin a
+  fixture from the start instead, launch with `PRIMORTAL_SAVE`.
