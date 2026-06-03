@@ -25,6 +25,9 @@ import (
     "bytes"
     "encoding/json"
     "fmt"
+    "image"
+    "image/color"
+    "image/png"
     "io"
     "net/http"
     "os"
@@ -54,6 +57,8 @@ func main() {
         err = cmdSave(args)
     case "shot", "screenshot":
         err = cmdShot(args)
+    case "compare":
+        err = cmdCompare(args)
     case "pause":
         err = postJSON("/api/v1/debug/time", map[string]any{"mode": "pause"})
     case "run", "resume":
@@ -105,7 +110,8 @@ Status:
   wait [-timeout 60]           block until the API reports ready
 
 Capture:
-  shot [-layer scene|scaled] [path]   capture a PNG (default: scene -> timestamped /tmp file)
+  shot [-layer scene|scaled] [-compare baseline.png] [-tol 0.0] [path]   capture a PNG (optionally diff vs a baseline)
+  compare <baseline.png> <candidate.png> [-tol 0.0]   pixel-diff two PNGs, write a diff image
 
 Time:
   pause                        freeze game logic (rendering continues)
@@ -314,7 +320,76 @@ func cmdShot(args []string) error {
     if len(f.pos) > 0 {
         path = f.pos[0]
     }
-    return capture(layer, path)
+    if err := capture(layer, path); err != nil {
+        return err
+    }
+    if baseline := f.strs["compare"]; baseline != "" {
+        tol := f.floats["tol"]
+        return compareImages(baseline, path, tol)
+    }
+    return nil
+}
+
+func cmdCompare(args []string) error {
+    f := parse(popAddr(args))
+    if len(f.pos) < 2 {
+        return fmt.Errorf("usage: gamectl compare <baseline.png> <candidate.png> [-tol 0.0]")
+    }
+    return compareImages(f.pos[0], f.pos[1], f.floats["tol"])
+}
+
+// compareImages reports the fraction of differing pixels between two PNGs,
+// writes a diff image (differing pixels in magenta) next to the candidate, and
+// returns a non-nil error when the diff fraction exceeds tol. A tol of 0
+// requires a byte-for-byte pixel match.
+func compareImages(baselinePath, candidatePath string, tol float64) error {
+    a, err := loadPNG(baselinePath)
+    if err != nil {
+        return fmt.Errorf("baseline: %w", err)
+    }
+    b, err := loadPNG(candidatePath)
+    if err != nil {
+        return fmt.Errorf("candidate: %w", err)
+    }
+    ab, bb := a.Bounds(), b.Bounds()
+    if ab.Dx() != bb.Dx() || ab.Dy() != bb.Dy() {
+        return fmt.Errorf("dimension mismatch: baseline %dx%d vs candidate %dx%d", ab.Dx(), ab.Dy(), bb.Dx(), bb.Dy())
+    }
+    diff := image.NewRGBA(ab)
+    var differing int
+    total := ab.Dx() * ab.Dy()
+    for y := ab.Min.Y; y < ab.Max.Y; y++ {
+        for x := ab.Min.X; x < ab.Max.X; x++ {
+            ar, ag, abl, aa := a.At(x, y).RGBA()
+            br, bg, bbl, ba := b.At(x, y).RGBA()
+            if ar != br || ag != bg || abl != bbl || aa != ba {
+                differing++
+                diff.Set(x, y, color.RGBA{R: 255, G: 0, B: 255, A: 255})
+            } else {
+                diff.Set(x, y, color.RGBA{R: uint8(ar >> 8), G: uint8(ag >> 8), B: uint8(abl >> 8), A: 64})
+            }
+        }
+    }
+    frac := float64(differing) / float64(total)
+    diffPath := candidatePath + ".diff.png"
+    if f, ferr := os.Create(diffPath); ferr == nil {
+        png.Encode(f, diff)
+        f.Close()
+    }
+    fmt.Printf("diff: %.4f%% (%d/%d pixels), diff image: %s\n", frac*100, differing, total, diffPath)
+    if frac > tol {
+        return fmt.Errorf("diff %.4f exceeds tolerance %.4f", frac, tol)
+    }
+    return nil
+}
+
+func loadPNG(path string) (image.Image, error) {
+    f, err := os.Open(path)
+    if err != nil {
+        return nil, err
+    }
+    defer f.Close()
+    return png.Decode(f)
 }
 
 func capture(layer, path string) error {

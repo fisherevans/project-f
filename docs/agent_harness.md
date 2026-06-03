@@ -77,7 +77,15 @@ Capture (PNG written to disk; the path is printed so you can open it):
 ```
 gamectl shot frame.png             # 240x160 crisp scene (best for assertions)
 gamectl shot -layer scaled out.png # window-resolution, post pixel-grid shader
+gamectl shot -compare base.png -tol 0.01 cand.png   # capture and diff vs a baseline
+gamectl compare base.png cand.png  # pixel-diff two PNGs, writes a .diff.png
 ```
+
+Golden-image regression: while the game is `pause`d, nothing advances, so
+repeated captures of the same state are byte-identical. That makes paused frames
+a reliable baseline - `gamectl compare` reports the fraction of differing pixels,
+writes a magenta diff image, and exits non-zero when the diff exceeds `-tol`.
+(Comparing across `step` sequences is not yet stable; see Limitations.)
 
 Time control:
 
@@ -166,9 +174,10 @@ thread via a command queue, so they are safe to call concurrently with the loop.
 
 - Frame capture and stepping require the dev build; release builds do not expose
   the harness.
-- Visual regression against golden PNGs is not yet deterministic: `rand`/`randf`
-  in scripts and animation jitter are not seedable, and animation clocks are not
-  frozen, so frames vary run to run. Tracked as a follow-up.
+- Golden-image regression works for paused states (captures are stable while
+  paused). Comparing frames across `step` sequences is not yet deterministic:
+  `rand`/`randf` in scripts and animation jitter are not seedable. Tracked in the
+  determinism follow-up.
 - Swapping the active save at runtime (`gamectl save load <id>`) resets into the
   boot state, so any unsaved progress in the current run is discarded. To pin a
   fixture from the start instead, launch with `PRIMORTAL_SAVE`.
