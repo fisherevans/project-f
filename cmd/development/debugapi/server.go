@@ -67,6 +67,7 @@ func (s *Server) routes() {
     s.mux.HandleFunc("POST /api/v1/debug/teleport", s.handleTeleport)
     s.mux.HandleFunc("POST /api/v1/debug/map", s.handleLoadMap)
 
+    s.mux.HandleFunc("GET /api/v1/debug/combat", s.handleGetCombat)
     s.mux.HandleFunc("GET /api/v1/debug/entities", s.handleListEntities)
     s.mux.HandleFunc("GET /api/v1/debug/entities/{id}", s.handleGetEntity)
     s.mux.HandleFunc("GET /api/v1/debug/teleports", s.handleListTeleports)

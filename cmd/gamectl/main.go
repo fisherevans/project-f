@@ -48,6 +48,8 @@ func main() {
         err = get("/api/v1/debug/state")
     case "entities":
         err = cmdEntities(args)
+    case "combat":
+        err = get("/api/v1/debug/combat")
     case "save":
         err = get("/api/v1/debug/save")
     case "shot", "screenshot":
@@ -98,6 +100,7 @@ Status:
   health                       readiness, active state, frame counter
   state                        active state detail (map, player pos)
   entities [-player]           list entities (or just the player)
+  combat                       combat state (sync/shield/statuses/phase) when in combat
   save                         dump the active save as JSON
   wait [-timeout 60]           block until the API reports ready
 
